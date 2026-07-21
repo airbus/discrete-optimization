@@ -1,0 +1,332 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;Wagner-Whitin dynamic programming solver for uncapacitated single-item lot sizing.</span>
+
+<span class="sd">This module implements the classical Wagner-Whitin algorithm (1958) that solves</span>
+<span class="sd">the uncapacitated single-item lot sizing problem optimally in O(T²) time.</span>
+
+<span class="sd">References:</span>
+<span class="sd">    Wagner, H. M., &amp; Whitin, T. M. (1958).</span>
+<span class="sd">    Dynamic version of the economic lot size model.</span>
+<span class="sd">    Management science, 5(1), 89-96.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.production_solution</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProductionDecision</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.uncapacitatedsingleitem.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">UncapacitatedSingleItemLSP</span><span class="p">,</span>
+    <span class="n">UncapacitatedSingleItemSolution</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="WagnerWhitinSolver">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.WagnerWhitinSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WagnerWhitinSolver</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wagner-Whitin dynamic programming solver.</span>
+
+<span class="sd">    This solver computes the optimal solution for the uncapacitated single-item</span>
+<span class="sd">    lot sizing problem in O(T²) time using dynamic programming.</span>
+
+<span class="sd">    The algorithm exploits the Zero Inventory Ordering (ZIO) property:</span>
+<span class="sd">    In an optimal solution, production in period t (if any) should satisfy</span>
+<span class="sd">    demand for an integer number of consecutive future periods, with zero</span>
+<span class="sd">    inventory before period t.</span>
+
+<span class="sd">    This means we only need to consider T² possible solutions (for each period,</span>
+<span class="sd">    consider producing to satisfy demand up to each future period).</span>
+
+<span class="sd">    The dynamic programming recurrence is:</span>
+<span class="sd">        f[t] = min over k in [0, t) of [f[k] + cost(k, t)]</span>
+
+<span class="sd">    Where:</span>
+<span class="sd">        f[t] = minimum cost to satisfy demands from period 0 to t-1</span>
+<span class="sd">        cost(k, t) = cost to produce in period k to satisfy demands k to t-1</span>
+<span class="sd">                   = setup_cost[k] + production_cost[k] * sum(demands[k:t])</span>
+<span class="sd">                     + sum of inventory costs for holding from k to t</span>
+
+<span class="sd">    Base case: f[0] = 0 (no cost before first period)</span>
+
+<span class="sd">    Time complexity: O(T²) where T is the horizon</span>
+<span class="sd">    Space complexity: O(T)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">UncapacitatedSingleItemLSP</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">UncapacitatedSingleItemLSP</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize Wagner-Whitin solver.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            problem: Uncapacitated single-item lot sizing problem instance</span>
+<span class="sd">            **kwargs: Additional solver parameters (ignored)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WagnerWhitinSolver.solve">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.WagnerWhitinSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Solve the problem optimally using Wagner-Whitin algorithm.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            **kwargs: Additional parameters (ignored)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ResultStorage containing the optimal solution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Running Wagner-Whitin DP algorithm...&quot;</span><span class="p">)</span>
+
+        <span class="n">T</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Single item</span>
+
+        <span class="c1"># Precompute cumulative demands for efficiency</span>
+        <span class="n">demands</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_demand</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">T</span><span class="p">)]</span>
+        <span class="n">cumul_demands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">([</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">demands</span><span class="p">)</span>  <span class="c1"># cumul_demands[t] = sum(demands[0:t])</span>
+
+        <span class="c1"># DP table: f[t] = minimum cost to satisfy demands from 0 to t-1</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)]</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">f</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># Base case: no cost before first period</span>
+
+        <span class="c1"># Backtracking: best_k[t] = best production period for subproblem ending at t</span>
+        <span class="n">best_k</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Dynamic programming: compute f[t] for t = 1, 2, ..., T</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">T</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="c1"># Try all possible last production periods k in [0, t)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+                <span class="c1"># Cost to produce in period k to satisfy demands from k to t-1</span>
+                <span class="n">cost_k_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_production_cost</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">cumul_demands</span><span class="p">)</span>
+
+                <span class="c1"># Total cost: cost up to k + cost to produce k to t</span>
+                <span class="n">total_cost</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+</span> <span class="n">cost_k_t</span>
+
+                <span class="c1"># Update if better</span>
+                <span class="k">if</span> <span class="n">total_cost</span> <span class="o">&lt;</span> <span class="n">f</span><span class="p">[</span><span class="n">t</span><span class="p">]:</span>
+                    <span class="n">f</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">total_cost</span>
+                    <span class="n">best_k</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
+
+        <span class="c1"># Backtrack to find optimal production plan</span>
+        <span class="n">production_decisions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">T</span>
+        <span class="k">while</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">best_k</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No valid production plan found for period </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Produce in period k to satisfy demands from k to t-1</span>
+            <span class="n">quantity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cumul_demands</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">-</span> <span class="n">cumul_demands</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">quantity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">production_decisions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ProductionDecision</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">quantity</span><span class="o">=</span><span class="n">quantity</span><span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="n">t</span> <span class="o">=</span> <span class="n">k</span>
+
+        <span class="c1"># Reverse to get chronological order</span>
+        <span class="n">production_decisions</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+
+        <span class="c1"># Create solution</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">UncapacitatedSingleItemSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">production_periods</span><span class="o">=</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">period</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">production_decisions</span><span class="p">],</span>
+            <span class="n">production_quantities</span><span class="o">=</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">quantity</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">production_decisions</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Verify solution</span>
+        <span class="n">optimal_cost</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
+        <span class="n">computed_cost</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">compute_total_cost</span><span class="p">()</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Optimal cost: </span><span class="si">{</span><span class="n">optimal_cost</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Computed cost: </span><span class="si">{</span><span class="n">computed_cost</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Production periods: </span><span class="si">{</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">period</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">production_decisions</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">optimal_cost</span> <span class="o">-</span> <span class="n">computed_cost</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Cost mismatch: DP says </span><span class="si">{</span><span class="n">optimal_cost</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;solution says </span><span class="si">{</span><span class="n">computed_cost</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Create result storage</span>
+        <span class="n">result_storage</span> <span class="o">=</span> <span class="n">ResultStorage</span><span class="p">(</span>
+            <span class="n">mode_optim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_objective_register</span><span class="p">()</span><span class="o">.</span><span class="n">objective_sense</span><span class="p">,</span>
+            <span class="n">list_solution_fits</span><span class="o">=</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">solution</span><span class="p">)))</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result_storage</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_production_cost</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">t</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">cumul_demands</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute cost to produce in period k to satisfy demands from k to t-1.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            k: Production period</span>
+<span class="sd">            t: End period (exclusive)</span>
+<span class="sd">            cumul_demands: Cumulative demands array</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Total cost (setup + production + inventory)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Setup cost in period k</span>
+        <span class="n">setup_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_setup_cost</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+
+        <span class="c1"># Production quantity: sum of demands from k to t-1</span>
+        <span class="n">quantity</span> <span class="o">=</span> <span class="n">cumul_demands</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">-</span> <span class="n">cumul_demands</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+        <span class="c1"># Production cost</span>
+        <span class="n">production_cost_per_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_production_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+        <span class="n">production_cost</span> <span class="o">=</span> <span class="n">production_cost_per_unit</span> <span class="o">*</span> <span class="n">quantity</span>
+
+        <span class="c1"># Inventory cost: for each period p in [k, t-1], we hold inventory</span>
+        <span class="c1"># Inventory at end of period p = demands still to be delivered = sum(demands[p+1:t])</span>
+        <span class="c1"># which is: cumul_demands[t] - cumul_demands[p+1]</span>
+        <span class="n">inventory_cost</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+            <span class="c1"># Inventory at end of period p (demands p+1 through t-1 not yet delivered)</span>
+            <span class="n">inv</span> <span class="o">=</span> <span class="n">cumul_demands</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">-</span> <span class="n">cumul_demands</span><span class="p">[</span><span class="n">p</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">inv_cost_per_unit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_inventory_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+            <span class="n">inventory_cost</span> <span class="o">+=</span> <span class="n">inv</span> <span class="o">*</span> <span class="n">inv_cost_per_unit</span>
+
+        <span class="n">total_cost</span> <span class="o">=</span> <span class="n">setup_cost</span> <span class="o">+</span> <span class="n">production_cost</span> <span class="o">+</span> <span class="n">inventory_cost</span>
+
+        <span class="k">return</span> <span class="n">total_cost</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

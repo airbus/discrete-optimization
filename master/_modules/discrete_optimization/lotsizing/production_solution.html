@@ -1,0 +1,624 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.production_solution &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.production_solution</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.lotsizing.production_solution</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;Generic production-based solution with inventory and backlog computation.</span>
+
+<span class="sd">This module provides a base solution class that handles the core logic of computing</span>
+<span class="sd">inventory levels, deliveries, and backlog from production decisions. This should work</span>
+<span class="sd">for most lot sizing variants and provides a solid foundation for the mixin solutions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Item</span><span class="p">,</span> <span class="n">LotSizingProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.generic_lotsizing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GenericLotSizingProblem</span><span class="p">,</span>
+    <span class="n">GenericLotSizingSolution</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ProductionDecision">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionDecision">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProductionDecision</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a production decision.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        item: Item/product type being produced</span>
+<span class="sd">        period: Time period of production (0 to horizon-1)</span>
+<span class="sd">        quantity: Production quantity X_it</span>
+<span class="sd">        setup: Whether a setup Y_it occurs (derived from quantity &gt; 0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">item</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># Using int for simplicity, will be generic in solutions</span>
+    <span class="n">period</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Setup occurs if production quantity &gt; 0.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="DeliveryDecision">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.DeliveryDecision">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DeliveryDecision</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a delivery decision.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        item: Item/product type being delivered</span>
+<span class="sd">        period: Time period of delivery (0 to horizon-1)</span>
+<span class="sd">        quantity: Delivery quantity D_it</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">item</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># Using int for simplicity, will be generic in solutions</span>
+    <span class="n">period</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="ProductionBasedSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProductionBasedSolution</span><span class="p">(</span><span class="n">GenericLotSizingSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic solution based on production decisions.</span>
+
+<span class="sd">    This class provides a concrete implementation of GenericLotSizingSolution</span>
+<span class="sd">    that automatically computes inventory, deliveries, and backlog from production decisions.</span>
+
+<span class="sd">    Key features:</span>
+<span class="sd">    - Inventory levels computed over time</span>
+<span class="sd">    - Delivery quantities to satisfy demands</span>
+<span class="sd">    - Backlog quantities (delayed demands)</span>
+
+<span class="sd">    The computation follows the inventory balance equation:</span>
+<span class="sd">        I_it = I_i,t-1 + X_it - D_it</span>
+
+<span class="sd">    Where:</span>
+<span class="sd">    - I_it: Inventory at end of period t</span>
+<span class="sd">    - X_it: Production in period t</span>
+<span class="sd">    - D_it: Delivery in period t (satisfying demand)</span>
+
+<span class="sd">    This implementation assumes:</span>
+<span class="sd">    - Productions are provided as list of ProductionDecision objects</span>
+<span class="sd">    - Demands are available via problem.get_demand() (from DemandsProblem mixin)</span>
+<span class="sd">    - Deliveries are computed to satisfy demands ASAP from available stock</span>
+
+<span class="sd">    Subclasses can override delivery computation for different policies.</span>
+<span class="sd">    Subclasses automatically get all GenericLotSizingSolution mixin methods</span>
+<span class="sd">    (check_demand_satisfaction, check_capacity_constraints, compute_total_*_cost, etc.)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">GenericLotSizingProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">LotSizingProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+        <span class="n">productions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProductionDecision</span><span class="p">],</span>
+        <span class="n">deliveries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DeliveryDecision</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize production-based solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            problem: The lot sizing problem instance</span>
+<span class="sd">            productions: List of production decisions</span>
+<span class="sd">            deliveries: Optional list of delivery decisions. If provided, these will be used</span>
+<span class="sd">                       directly instead of being computed from production and demand.</span>
+<span class="sd">                       If None, deliveries will be computed automatically.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">productions</span> <span class="o">=</span> <span class="n">productions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deliveries</span> <span class="o">=</span> <span class="n">deliveries</span>
+
+        <span class="c1"># Computed derived values (cached)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inventory_levels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Item</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Item</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_backlog_quantities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Item</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_production_array</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Item</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Compute all derived values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_all_derived_values</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_all_derived_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute inventory, deliveries, and backlog from production decisions.</span>
+
+<span class="sd">        This implements the core lot sizing logic:</span>
+<span class="sd">        1. Build production array from decisions</span>
+<span class="sd">        2. Build delivery array from decisions (if provided) or compute from stock</span>
+<span class="sd">        3. Compute inventory levels (stock - deliveries)</span>
+<span class="sd">        4. Compute backlog (unsatisfied cumulative demand)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Reset cached values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inventory_levels</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_backlog_quantities</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_production_array</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Build production array: production[item][period] = quantity</span>
+        <span class="n">production_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Item</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">item</span><span class="p">:</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)}</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">prod</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">productions</span><span class="p">:</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_item_from_index</span><span class="p">(</span><span class="n">prod</span><span class="o">.</span><span class="n">item</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prod</span><span class="o">.</span><span class="n">item</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+                <span class="k">else</span> <span class="n">prod</span><span class="o">.</span><span class="n">item</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">production_dict</span><span class="p">:</span>
+                <span class="n">production_dict</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">prod</span><span class="o">.</span><span class="n">period</span><span class="p">]</span> <span class="o">=</span> <span class="n">prod</span><span class="o">.</span><span class="n">quantity</span>
+
+        <span class="c1"># Convert to numpy arrays for efficient computation</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="n">prod_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">production_dict</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)],</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_production_array</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="n">prod_array</span>
+
+        <span class="c1"># Build delivery array if deliveries are provided</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">deliveries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">delivery_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Item</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">item</span><span class="p">:</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)}</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+            <span class="p">}</span>
+
+            <span class="k">for</span> <span class="n">deliv</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">deliveries</span><span class="p">:</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_item_from_index</span><span class="p">(</span><span class="n">deliv</span><span class="o">.</span><span class="n">item</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">deliv</span><span class="o">.</span><span class="n">item</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+                    <span class="k">else</span> <span class="n">deliv</span><span class="o">.</span><span class="n">item</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">delivery_dict</span><span class="p">:</span>
+                    <span class="n">delivery_dict</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">deliv</span><span class="o">.</span><span class="n">period</span><span class="p">]</span> <span class="o">=</span> <span class="n">deliv</span><span class="o">.</span><span class="n">quantity</span>
+
+            <span class="c1"># Convert to numpy arrays</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+                <span class="n">deliv_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">delivery_dict</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)],</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="n">deliv_array</span>
+
+        <span class="c1"># Compute for each item</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_item_inventory_and_deliveries</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_item_inventory_and_deliveries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute inventory, deliveries, and backlog for a single item.</span>
+
+<span class="sd">        If deliveries were provided in __init__, use them directly.</span>
+<span class="sd">        Otherwise, implement a greedy delivery policy: deliver as much as possible</span>
+<span class="sd">        from available stock to satisfy cumulative demand.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item to compute for</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">horizon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span>
+
+        <span class="c1"># Get production array</span>
+        <span class="n">production</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_production_array</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+
+        <span class="c1"># Get demands if problem has DemandsProblem mixin</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">demands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_demand</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">horizon</span><span class="p">)],</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="c1"># No demands defined, assume zero</span>
+            <span class="n">demands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">horizon</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+
+        <span class="c1"># Initialize arrays</span>
+        <span class="n">inventory</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">horizon</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="n">backlog</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">horizon</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+
+        <span class="c1"># Check if deliveries were provided or need to be computed</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span><span class="p">:</span>
+            <span class="c1"># Deliveries already set from provided list</span>
+            <span class="n">deliveries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Need to compute deliveries</span>
+            <span class="n">deliveries</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">horizon</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+
+        <span class="c1"># Track cumulative quantities</span>
+        <span class="n">cumul_production</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">cumul_demand</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">cumul_delivered</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">horizon</span><span class="p">):</span>
+            <span class="c1"># Update cumulative production</span>
+            <span class="n">cumul_production</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">production</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+
+            <span class="c1"># Update cumulative demand</span>
+            <span class="n">cumul_demand</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">demands</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span><span class="p">:</span>
+                <span class="c1"># Compute deliveries if not provided</span>
+                <span class="c1"># Compute stock available (production so far - delivered so far)</span>
+                <span class="n">stock_available</span> <span class="o">=</span> <span class="n">cumul_production</span> <span class="o">-</span> <span class="n">cumul_delivered</span>
+
+                <span class="c1"># Compute how much we can deliver (limited by stock and remaining demand)</span>
+                <span class="n">remaining_demand</span> <span class="o">=</span> <span class="n">cumul_demand</span> <span class="o">-</span> <span class="n">cumul_delivered</span>
+                <span class="n">can_deliver</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">stock_available</span><span class="p">,</span> <span class="n">remaining_demand</span><span class="p">)</span>
+
+                <span class="n">deliveries</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">can_deliver</span>
+
+            <span class="n">cumul_delivered</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">deliveries</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+
+            <span class="c1"># Update inventory (stock remaining after delivery)</span>
+            <span class="n">inventory</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">cumul_production</span> <span class="o">-</span> <span class="n">cumul_delivered</span>
+
+            <span class="c1"># Update backlog (cumulative demand not yet satisfied)</span>
+            <span class="n">backlog</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">cumul_demand</span> <span class="o">-</span> <span class="n">cumul_delivered</span>
+
+        <span class="c1"># Store computed values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inventory_levels</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="n">inventory</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="n">deliveries</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_backlog_quantities</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="n">backlog</span>
+
+<div class="viewcode-block" id="ProductionBasedSolution.invalidate_cache">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.invalidate_cache">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">invalidate_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Invalidate cached computed values.</span>
+
+<span class="sd">        Call this when productions are modified externally.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inventory_levels</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_backlog_quantities</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_production_array</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.get_production_quantity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.get_production_quantity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_production_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get production quantity for given item and period.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+<span class="sd">            period: Time period</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Production quantity X_it</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_production_array</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_all_derived_values</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_production_array</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">period</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.has_setup">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.has_setup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if setup occurs for given item and period.</span>
+
+<span class="sd">        Setup occurs if production quantity &gt; 0.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+<span class="sd">            period: Time period</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if setup Y_it = 1, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_production_quantity</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.get_delivery_quantity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.get_delivery_quantity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_delivery_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get delivery quantity for given item and period.</span>
+
+<span class="sd">        Delivery quantity D_it is the amount delivered to satisfy demand in period t.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+<span class="sd">            period: Time period</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Delivery quantity D_it</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_all_derived_values</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">period</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.get_inventory_level">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.get_inventory_level">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_inventory_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get inventory level at end of period.</span>
+
+<span class="sd">        Inventory I_it is the stock remaining at end of period t.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+<span class="sd">            period: Time period</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Inventory level I_it</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inventory_levels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_all_derived_values</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inventory_levels</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">period</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.get_backlog_quantity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.get_backlog_quantity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_backlog_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get backlog quantity at end of period.</span>
+
+<span class="sd">        Backlog B_it is the cumulative demand not yet satisfied at end of period t.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+<span class="sd">            period: Time period</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Backlog quantity B_it</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backlog_quantities</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_all_derived_values</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_backlog_quantities</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">period</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.get_production_sequence">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.get_production_sequence">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_production_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Item</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get production sequence as list of (period, item) tuples.</span>
+
+<span class="sd">        Sorted by period, useful for computing changeover costs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of (period, item) tuples where production occurs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sequence</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">prod</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">productions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">prod</span><span class="o">.</span><span class="n">quantity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Only include actual production (setup)</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_item_from_index</span><span class="p">(</span><span class="n">prod</span><span class="o">.</span><span class="n">item</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prod</span><span class="o">.</span><span class="n">item</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+                    <span class="k">else</span> <span class="n">prod</span><span class="o">.</span><span class="n">item</span>
+                <span class="p">)</span>
+                <span class="n">sequence</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">prod</span><span class="o">.</span><span class="n">period</span><span class="p">,</span> <span class="n">item</span><span class="p">))</span>
+
+        <span class="c1"># Sort by period</span>
+        <span class="n">sequence</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">sequence</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.get_production_quantity_array">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.get_production_quantity_array">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_production_quantity_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get production quantities for all periods for given item.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Array of production quantities [X_i0, X_i1, ..., X_i,T-1]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_production_array</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_all_derived_values</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_production_array</span><span class="p">[</span><span class="n">item</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.get_delivery_quantity_array">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.get_delivery_quantity_array">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_delivery_quantity_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get delivery quantities for all periods for given item.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Array of delivery quantities [D_i0, D_i1, ..., D_i,T-1]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_all_derived_values</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delivery_quantities</span><span class="p">[</span><span class="n">item</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.get_inventory_level_array">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.get_inventory_level_array">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_inventory_level_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get inventory levels for all periods for given item.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Array of inventory levels [I_i0, I_i1, ..., I_i,T-1]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inventory_levels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_all_derived_values</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inventory_levels</span><span class="p">[</span><span class="n">item</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.get_backlog_quantity_array">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.get_backlog_quantity_array">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_backlog_quantity_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get backlog quantities for all periods for given item.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Array of backlog quantities [B_i0, B_i1, ..., B_i,T-1]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backlog_quantities</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_all_derived_values</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_backlog_quantities</span><span class="p">[</span><span class="n">item</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.copy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProductionBasedSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a copy of this solution.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            New solution with copied production and delivery decisions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ProductionBasedSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">productions</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">productions</span><span class="p">),</span>
+            <span class="n">deliveries</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deliveries</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">deliveries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProductionBasedSolution.lazy_copy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution.lazy_copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lazy_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProductionBasedSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a lazy copy sharing production and delivery lists.</span>
+
+<span class="sd">        Warning: Modifying productions or deliveries will affect both solutions.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            New solution sharing production and delivery lists</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ProductionBasedSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">productions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">productions</span><span class="p">,</span>
+            <span class="n">deliveries</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">deliveries</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;String representation of solution.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;ProductionBasedSolution(&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;nb_productions=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">productions</span><span class="p">)</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;horizon=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;nb_items=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,729 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.multibatching.solvers.asp &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../solvers.html">discrete_optimization.multibatching.solvers</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.multibatching.solvers.asp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.multibatching.solvers.asp</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">clingo</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="n">clingcon_available</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">clingcon</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClingconTheory</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">clingcon_available</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">clingcon_available</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">clingo.ast</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProgramBuilder</span><span class="p">,</span> <span class="n">parse_string</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.callback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callback</span><span class="p">,</span>
+    <span class="n">CallbackList</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParamsObjectiveFunction</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverDO</span><span class="p">,</span> <span class="n">StatusSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.multibatching.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultibatchingProblem</span><span class="p">,</span>
+    <span class="n">MultibatchingSolution</span><span class="p">,</span>
+    <span class="n">PackingTransport</span><span class="p">,</span>
+    <span class="n">TransportLink</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.multibatching.solvers.solver_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">precompute_valid_links</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># Logic Program Content</span>
+<span class="n">ASP_MODEL_CONTENT</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">#const cap_size_divide = 100.</span>
+<span class="s2">#const max_freq = 30.</span>
+
+<span class="s2">totalSupply(P, Max) :- Max = #sum {V, L : demandOffer(P,L,V), V &gt; 0}, product(P).</span>
+
+<span class="s2">hasDemand(P, L) :- demandOffer(P, L, V), V &lt; 0.</span>
+<span class="s2">hasOffer(P, L)  :- demandOffer(P, L, V), V &gt; 0.</span>
+
+<span class="s2">demand(P, L, Val * -1) :- demandOffer(P, L, Val), Val &lt; 0.</span>
+<span class="s2">demand(P, L, 0)        :- product(P), location(L), not hasDemand(P, L).</span>
+
+<span class="s2">offer(P, L, Val) :- demandOffer(P, L, Val), Val &gt; 0.</span>
+<span class="s2">offer(P, L, 0)   :- product(P), location(L), not hasOffer(P, L).</span>
+
+<span class="s2">requiredNet(P, L, Net) :- demand(P,L,D), offer(P,L,O), Net = D - O.</span>
+<span class="s2">requiredNet(P, L, 0) :- not demand(P,L,_), not offer(P,L,_), location(L), product(P).</span>
+
+<span class="s2">flow(From, To, TR, P) :- possibleFlow(From, To, TR, P), tRCapSmall(TR,Cap), productSizeSmall(P,S), Cap&gt;=S.</span>
+
+<span class="s2">tRCapSmall(TR,Cap) :- transportCapacity(TR,CapB), Cap=CapB/cap_size_divide.</span>
+<span class="s2">productSizeSmall(P,S) :- productSize(P,SB), S = SB/cap_size_divide.</span>
+
+<span class="s2">&amp;dom { 0..Max } = load(From, To, TR, P) :- flow(From, To, TR,P), totalSupply(P, Max).</span>
+
+<span class="s2">&amp;sum { load(From, L, TR, P): flow(From, L, TR, P)} = flow_in(P, L) :-  location(L), product(P).</span>
+<span class="s2">&amp;sum { load(L, To, TR, P): flow(L, To, TR, P)} = flow_out(P, L) :-  location(L), product(P).</span>
+<span class="s2">&amp;sum { flow_in(P,L); -1 * flow_out(P,L)} = Net :- requiredNet(P, L, Net).</span>
+
+<span class="s2">activeFlow(From,To,TR,P) :-  &amp;sum { load(From, To, TR, P):flow(From, To, TR, P)} &gt; 0,flow(From, To, TR, P).</span>
+
+<span class="s2">freq(1..max_freq).</span>
+<span class="s2">1{routeFreq(From, To, TR, Freq, C*Freq) : freq(Freq), tRCapSmall(TR,C) }1 :- activeFlow(From,To,TR,_).</span>
+
+<span class="si">% u</span><span class="s2">pper bound</span>
+<span class="s2">&amp;sum{S*load(F, T, TR, P) : flow(F, T, TR, P),productSizeSmall(P,S)} &lt;= TotalCap :-</span>
+<span class="s2">routeFreq(F, T, TR, Freq, TotalCap).</span>
+<span class="si">% lo</span><span class="s2">wer bound</span>
+<span class="s2">:- &amp;sum{S*load(F, T, TR, P) :flow(F, T, TR, P),productSizeSmall(P,S)} &lt;= Minus1 ,</span>
+<span class="s2">routeFreq(F, T, TR, Freq, TotalCap), tRCapSmall(TR,C), Minus1=TotalCap-C, Freq&gt;1.</span>
+
+<span class="s2">:- &amp;sum{flow_in(P,L)}&gt;0, demandOffer(P,L,N), N&gt;0.</span>
+<span class="s2">:- &amp;sum{flow_out(P,From)} &gt; Max, totalSupply(P, Max), flow(From, _, _,P).</span>
+<span class="s2">:- &amp;sum{flow_in(P,To)} &gt; Max, totalSupply(P, Max), flow(_, To, _,P).</span>
+
+<span class="s2">smallDistance(From,To,TR,D) :- flow(From,To,TR,_), route(From,To,TR,Dis,_), D=Dis/10.</span>
+<span class="s2">smallEmission(TR,E) :- transportCO2(TR,Em), route(From,To,TR,_,_), E=Em/10.</span>
+
+<span class="s2">#minimize{(D*Freq*E)/10000,From,To,TR: routeFreq(From, To, TR, Freq, _),smallDistance(From, To, TR,D),smallEmission(TR,E)}.</span>
+<span class="s2">#minimize{(C*Freq),From,To,TR: routeFreq(From, To, TR, Freq, _),route(From, To, TR,D, C)}.</span>
+
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="ClingconMultibatchingSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ClingconMultibatchingSolver</span><span class="p">(</span><span class="n">SolverDO</span><span class="p">):</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">MultibatchingProblem</span>
+
+    <span class="n">all_dataframes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">modelIndex</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">start_solving</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">modelAtomTemplates</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;totalSupply&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;totalSupply&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">,</span> <span class="s2">&quot;amount&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;route&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;route&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;idx&quot;</span><span class="p">,</span> <span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">,</span> <span class="s2">&quot;cost&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;routeCostTotal&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;routeCostTotal&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;cost&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;routeFreq&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;routeFreq&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;freq&quot;</span><span class="p">,</span> <span class="s2">&quot;maxcapacity&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;activeFlow&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;activeFlow&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;product&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;demandOffer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;demandOffer&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="s2">&quot;amount&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;requiredNet&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;requiredNet&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="s2">&quot;amount&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;productTR&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;productTR&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">,</span> <span class="s2">&quot;transportresource&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;productSize&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;productSize&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">,</span> <span class="s2">&quot;size&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;possibleFlow&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;possibleFlow&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;product&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;transportCapacity&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;transportCapacity&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;capacity&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;transportCost&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;transportCost&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;transportationCost&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;transportCO2&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;transportCO2&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;CO2&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;productOnFlow&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;productOnFlow&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;product&quot;</span><span class="p">,</span> <span class="s2">&quot;amount&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">]</span>
+
+    <span class="n">modelAggregateTemplates</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;route_freq_cap&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;route_freq_cap&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;freq&quot;</span><span class="p">,</span> <span class="s2">&quot;total&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;flow_out&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;flow_out&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="s2">&quot;amount&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;flow_in&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;flow_in&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="s2">&quot;amount&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;req&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;req&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;product&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="s2">&quot;amount&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;route_cost_total&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;route_cost_total&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;cost&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;load&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;load&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;product&quot;</span><span class="p">,</span> <span class="s2">&quot;amount&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;active_flow&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;active_flow&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;columns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;from&quot;</span><span class="p">,</span> <span class="s2">&quot;to&quot;</span><span class="p">,</span> <span class="s2">&quot;transportresource&quot;</span><span class="p">,</span> <span class="s2">&quot;val&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">MultibatchingProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">clingo</span><span class="o">.</span><span class="n">Control</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;ClingconTheory&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name_to_location</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name_to_transport_type</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name_to_product</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">route_key_to_link</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">,</span> <span class="n">TransportLink</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="ClingconMultibatchingSolver.sanitize">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.sanitize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sanitize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span></div>
+
+
+<div class="viewcode-block" id="ClingconMultibatchingSolver.sanitize_num">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.sanitize_num">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sanitize_num</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensures input is a valid integer for Clingcon constraints.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>  <span class="c1"># float handles &quot;10.0&quot; strings better than int()</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error sanitizing value </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ClingconMultibatchingSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Check if we should use shortest path heuristic</span>
+        <span class="n">use_shortest_path</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;restrict_to_shortest_paths&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">sp_tolerance</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;shortest_path_tolerance&quot;</span><span class="p">,</span> <span class="mf">0.0</span>
+        <span class="p">)</span>  <span class="c1"># 0.0 = Strict, 0.2 = +20% length allowed</span>
+
+        <span class="c1"># Default options</span>
+        <span class="n">clingo_args</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;clingo_args&quot;</span><span class="p">,</span>
+            <span class="p">[</span>
+                <span class="s2">&quot;--models=0&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;--opt-mode=opt&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;--parallel-mode=4,split&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;--configuration=crafty&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;--restart-on-model&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;--opt-strategy=bb&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span> <span class="o">=</span> <span class="n">clingo</span><span class="o">.</span><span class="n">Control</span><span class="p">(</span><span class="n">clingo_args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theory</span> <span class="o">=</span> <span class="n">ClingconTheory</span><span class="p">()</span>
+
+        <span class="c1"># 1. Register Clingcon theory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theory</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="p">)</span>
+
+        <span class="c1"># 2. Add Logic Program using the rewriter</span>
+        <span class="c1"># This fixes the &quot;no definition found for theory atom&quot; error</span>
+        <span class="k">with</span> <span class="n">ProgramBuilder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="p">)</span> <span class="k">as</span> <span class="n">bld</span><span class="p">:</span>
+            <span class="c1"># Parse main model</span>
+            <span class="n">parse_string</span><span class="p">(</span>
+                <span class="n">ASP_MODEL_CONTENT</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ast</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">theory</span><span class="o">.</span><span class="n">rewrite_ast</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">bld</span><span class="o">.</span><span class="n">add</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Generate and parse facts</span>
+            <span class="n">valid_links_map</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">use_shortest_path</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Computing valid links (Shortest Path Heuristic, tol=</span><span class="si">{</span><span class="n">sp_tolerance</span><span class="si">}</span><span class="s2">)...&quot;</span>
+                <span class="p">)</span>
+                <span class="n">valid_links_map</span> <span class="o">=</span> <span class="n">precompute_valid_links</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="n">sp_tolerance</span>
+                <span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Valid links computed for shortest path filtering&quot;</span><span class="p">)</span>
+
+            <span class="n">facts_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_facts</span><span class="p">(</span>
+                <span class="n">scale_emission_cost</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;scale_emission_cost&quot;</span><span class="p">,</span> <span class="mi">100000</span><span class="p">),</span>
+                <span class="n">valid_links_map</span><span class="o">=</span><span class="n">valid_links_map</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Generated ASP Facts:</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">facts_str</span><span class="p">)</span>
+            <span class="n">parse_string</span><span class="p">(</span><span class="n">facts_str</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ast</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">theory</span><span class="o">.</span><span class="n">rewrite_ast</span><span class="p">(</span><span class="n">ast</span><span class="p">,</span> <span class="n">bld</span><span class="o">.</span><span class="n">add</span><span class="p">))</span>
+
+        <span class="c1"># 3. Ground</span>
+
+        <span class="n">start_time_grounding</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Grounding logic program...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="o">.</span><span class="n">ground</span><span class="p">([(</span><span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="p">[])])</span>
+        <span class="n">end_time_grounding</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Grounding done (</span><span class="si">{</span><span class="nb">round</span><span class="p">((</span><span class="n">end_time_grounding</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time_grounding</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">60</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> minutes).&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># 4. Prepare theory (must happen after grounding)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theory</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ClingconMultibatchingSolver.solve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">callbacks_list</span> <span class="o">=</span> <span class="n">CallbackList</span><span class="p">(</span><span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">)</span>
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_start</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">on_model_wrapper</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">clingo</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">modelIndex</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">modelIndex</span><span class="si">}</span><span class="s2">] found.&quot;</span><span class="p">)</span>
+                <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_solution</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+                <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+                <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+                <span class="n">stopping</span> <span class="o">=</span> <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span>
+                    <span class="n">step</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">),</span> <span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="ow">not</span> <span class="n">stopping</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in on_model_wrapper: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">raise</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting Clingcon solve...&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Timeout handling via async handle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_solving</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">time_limit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">on_model</span><span class="o">=</span><span class="n">on_model_wrapper</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">ctl</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">on_model</span><span class="o">=</span><span class="n">on_model_wrapper</span><span class="p">,</span> <span class="n">async_</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+                <span class="n">finished</span> <span class="o">=</span> <span class="n">handle</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">time_limit</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">finished</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time limit of </span><span class="si">{</span><span class="n">time_limit</span><span class="si">}</span><span class="s2">s reached.&quot;</span><span class="p">)</span>
+                    <span class="n">handle</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">SATISFIED</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span>
+
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_end</span><span class="p">(</span><span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="ClingconMultibatchingSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">clingo</span><span class="o">.</span><span class="n">Model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultibatchingSolution</span><span class="p">:</span>
+        <span class="n">assignment</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theory</span><span class="o">.</span><span class="n">assignment</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">thread_id</span><span class="p">))</span>
+        <span class="n">flows_aggregation</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">template</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modelAggregateTemplates</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{},</span> <span class="n">columns</span><span class="o">=</span><span class="n">template</span><span class="p">[</span><span class="s2">&quot;columns&quot;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">all_dataframes</span><span class="p">[</span><span class="n">template</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">df</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">assignment</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;load&quot;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">args</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">arguments</span>
+                    <span class="n">from_name</span><span class="p">,</span> <span class="n">to_name</span><span class="p">,</span> <span class="n">tr_name</span><span class="p">,</span> <span class="n">p_name</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+                    <span class="n">route_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">from_name</span><span class="p">,</span> <span class="n">to_name</span><span class="p">,</span> <span class="n">tr_name</span><span class="p">)</span>
+                    <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">route_key_to_link</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">route_key</span><span class="p">)</span>
+                    <span class="n">product</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name_to_product</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p_name</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">link</span> <span class="ow">and</span> <span class="n">product</span><span class="p">:</span>
+                        <span class="n">flows_aggregation</span><span class="p">[</span><span class="n">link</span><span class="p">][</span><span class="n">product</span><span class="p">]</span> <span class="o">+=</span> <span class="n">value</span>
+                        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_dataframes</span><span class="p">[</span><span class="s2">&quot;load&quot;</span><span class="p">]</span>
+                        <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span>
+                            <span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">from_name</span><span class="p">,</span>
+                            <span class="s2">&quot;to&quot;</span><span class="p">:</span> <span class="n">to_name</span><span class="p">,</span>
+                            <span class="s2">&quot;transportresource&quot;</span><span class="p">:</span> <span class="n">tr_name</span><span class="p">,</span>
+                            <span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="n">p_name</span><span class="p">,</span>
+                            <span class="s2">&quot;amount&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span>
+                        <span class="p">}</span>
+
+                    <span class="n">output_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;output/model_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">modelIndex</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_dir</span><span class="si">}</span><span class="s2">/load.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+                <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error parsing load variable </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;flow_in&quot;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_dataframes</span><span class="p">[</span><span class="s2">&quot;flow_in&quot;</span><span class="p">]</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">arguments</span>
+                <span class="n">p_name</span><span class="p">,</span> <span class="n">to_name</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+                <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="n">p_name</span><span class="p">,</span>
+                    <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">to_name</span><span class="p">,</span>
+                    <span class="s2">&quot;amount&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span>
+                <span class="p">}</span>
+
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;flow_out&quot;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_dataframes</span><span class="p">[</span><span class="s2">&quot;flow_out&quot;</span><span class="p">]</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">arguments</span>
+                <span class="n">p_name</span><span class="p">,</span> <span class="n">from_name</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+                <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="n">p_name</span><span class="p">,</span>
+                    <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">from_name</span><span class="p">,</span>
+                    <span class="s2">&quot;amount&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span>
+                <span class="p">}</span>
+
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;route_cost_total&quot;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_dataframes</span><span class="p">[</span><span class="s2">&quot;route_cost_total&quot;</span><span class="p">]</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">arguments</span>
+                <span class="n">from_name</span><span class="p">,</span> <span class="n">to_name</span><span class="p">,</span> <span class="n">tr_name</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+                <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;from&quot;</span><span class="p">:</span> <span class="n">from_name</span><span class="p">,</span>
+                    <span class="s2">&quot;to&quot;</span><span class="p">:</span> <span class="n">to_name</span><span class="p">,</span>
+                    <span class="s2">&quot;transportresource&quot;</span><span class="p">:</span> <span class="n">tr_name</span><span class="p">,</span>
+                    <span class="s2">&quot;cost&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span>
+                <span class="p">}</span>
+
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;req&quot;</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_dataframes</span><span class="p">[</span><span class="s2">&quot;req&quot;</span><span class="p">]</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">arguments</span>
+                <span class="n">p_name</span><span class="p">,</span> <span class="n">loc_name</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+                <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;product&quot;</span><span class="p">:</span> <span class="n">p_name</span><span class="p">,</span>
+                    <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">loc_name</span><span class="p">,</span>
+                    <span class="s2">&quot;amount&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span>
+                <span class="p">}</span>
+
+        <span class="n">list_flows</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">link</span><span class="p">,</span> <span class="n">product_quantities</span> <span class="ow">in</span> <span class="n">flows_aggregation</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># Store the total quantities directly with frequency=1</span>
+            <span class="c1"># This preserves exact flow balance from the ASP model</span>
+            <span class="c1"># The post-processing step (PackingViaBinPacking or GreedyPackingForMultibatching)</span>
+            <span class="c1"># will handle splitting into feasible trips</span>
+            <span class="n">packing</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">total_quantity</span> <span class="ow">in</span> <span class="n">product_quantities</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">total_quantity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">packing</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_quantity</span><span class="p">)</span>
+
+            <span class="n">list_flows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PackingTransport</span><span class="p">(</span><span class="n">link</span><span class="p">,</span> <span class="n">packing</span><span class="p">,</span> <span class="n">nb_packing</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">sol</span> <span class="o">=</span> <span class="n">MultibatchingSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">list_flows</span><span class="o">=</span><span class="n">list_flows</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sol</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_facts</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">scale_emission_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100000.0</span><span class="p">,</span>
+        <span class="n">valid_links_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">set</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="c1"># Same generation logic as before, ensure it returns a valid ASP string</span>
+        <span class="n">facts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">possibleFlow_facts</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Locations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name_to_location</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">loc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations</span><span class="p">:</span>
+            <span class="n">s_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">loc</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name_to_location</span><span class="p">[</span><span class="n">s_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">loc</span>
+            <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;location(</span><span class="si">{</span><span class="n">s_name</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Transport Resources</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name_to_transport_type</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">tt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_types</span><span class="p">:</span>
+            <span class="n">s_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">tt</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;tr</span><span class="si">{</span><span class="n">tt</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name_to_transport_type</span><span class="p">[</span><span class="n">s_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">tt</span>
+            <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;transportResource(</span><span class="si">{</span><span class="n">s_name</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+            <span class="n">co2</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">emissions</span> <span class="o">*</span> <span class="n">scale_emission_cost</span><span class="p">)</span>
+            <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;transportCO2(</span><span class="si">{</span><span class="n">s_name</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">co2</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+            <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;transportCost(</span><span class="si">{</span><span class="n">s_name</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">sanitize_num</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">cost</span><span class="p">))</span><span class="si">}</span><span class="s2">).&quot;</span>
+            <span class="p">)</span>
+            <span class="n">scaled_cap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">capacity</span><span class="p">))</span>
+            <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;transportCapacity(</span><span class="si">{</span><span class="n">s_name</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">scaled_cap</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+            <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;transportSpeed(</span><span class="si">{</span><span class="n">s_name</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sanitize_num</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">speed</span><span class="p">)</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Routes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">route_key_to_link</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">):</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">location_l1</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">location_l2</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">tr_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span>
+                <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">if</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;tr</span><span class="si">{</span><span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">route_key_to_link</span><span class="p">[(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">tr_name</span><span class="p">)]</span> <span class="o">=</span> <span class="n">tl</span>
+            <span class="n">dist</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">distance</span><span class="p">)</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sanitize_num</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">cost</span><span class="p">)</span> <span class="o">*</span> <span class="n">dist</span><span class="p">)</span>
+            <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;route(</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">tr_name</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">dist</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">cost</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Products</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name_to_product</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">:</span>
+            <span class="n">s_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;p</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name_to_product</span><span class="p">[</span><span class="n">s_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span>
+            <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;product(</span><span class="si">{</span><span class="n">s_name</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+            <span class="n">scaled_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;productSize(</span><span class="si">{</span><span class="n">s_name</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">scaled_size</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">valid_tr</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">valid_transports</span><span class="p">:</span>
+                <span class="n">tr_s_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span>
+                    <span class="n">valid_tr</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">valid_tr</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;tr</span><span class="si">{</span><span class="n">valid_tr</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;productTR(</span><span class="si">{</span><span class="n">s_name</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">tr_s_name</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Generate possibleFlow facts (with optional filtering)</span>
+        <span class="k">if</span> <span class="n">valid_links_map</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generating possibleFlow facts with shortest path filtering...&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">:</span>
+                <span class="n">p_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;p</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">valid_link_indices</span> <span class="o">=</span> <span class="n">valid_links_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Product </span><span class="si">{</span><span class="n">p_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">valid_link_indices</span><span class="p">)</span><span class="si">}</span><span class="s2"> valid links&quot;</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">index_tl</span> <span class="ow">in</span> <span class="n">valid_link_indices</span><span class="p">:</span>
+                    <span class="n">tl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">[</span><span class="n">index_tl</span><span class="p">]</span>
+                    <span class="n">source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">location_l1</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="n">dest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">location_l2</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="n">tr_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span>
+                        <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">name</span>
+                        <span class="k">if</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">name</span>
+                        <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;tr</span><span class="si">{</span><span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">possibleFlow_facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;possibleFlow(</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">tr_name</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">p_name</span><span class="si">}</span><span class="s2">).&quot;</span>
+                    <span class="p">)</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Generated </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">possibleFlow_facts</span><span class="p">)</span><span class="si">}</span><span class="s2"> possibleFlow facts using shortest path heuristic&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Generate all possible flows when not using shortest path heuristic</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generating all possibleFlow facts (no filtering)...&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">:</span>
+                <span class="n">p_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;p</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">tl</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">:</span>
+                    <span class="c1"># Check if product can use this transport type</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">valid_transports</span>
+                        <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;=</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span>
+                    <span class="p">):</span>
+                        <span class="n">source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">location_l1</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                        <span class="n">dest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">location_l2</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                        <span class="n">tr_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span>
+                            <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">name</span>
+                            <span class="k">if</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">name</span>
+                            <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;tr</span><span class="si">{</span><span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+                        <span class="n">possibleFlow_facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;possibleFlow(</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">tr_name</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">p_name</span><span class="si">}</span><span class="s2">).&quot;</span>
+                        <span class="p">)</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Generated </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">possibleFlow_facts</span><span class="p">)</span><span class="si">}</span><span class="s2"> possibleFlow facts (all valid combinations)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Demand/Offers</span>
+        <span class="k">for</span> <span class="n">loc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations</span><span class="p">:</span>
+            <span class="n">loc_s_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">loc</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">amount</span> <span class="ow">in</span> <span class="n">loc</span><span class="o">.</span><span class="n">net_supply</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">amount</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">p_s_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;p</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">facts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;demandOffer(</span><span class="si">{</span><span class="n">p_s_name</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">loc_s_name</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">amount</span><span class="p">)</span><span class="si">}</span><span class="s2">).&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Combine all facts (including possibleFlow if generated)</span>
+        <span class="n">all_facts</span> <span class="o">=</span> <span class="n">facts</span> <span class="o">+</span> <span class="n">possibleFlow_facts</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;factsASP.lp&quot;</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">file_out</span><span class="p">:</span>
+            <span class="n">file_out</span><span class="o">.</span><span class="n">writelines</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">all_facts</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">all_facts</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ClingconMultibatchingSolver.extract_clingo_number">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.extract_clingo_number">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_clingo_number</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract numeric value from Clingo symbols or convert to number.&quot;&quot;&quot;</span>
+        <span class="c1"># Case A: It&#39;s a Clingo Symbol (has .number attribute)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="s2">&quot;number&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">val</span><span class="o">.</span><span class="n">number</span>
+        <span class="c1"># Case B: It&#39;s already a Python int or float</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">val</span>
+        <span class="c1"># Case C: It&#39;s a string that looks like a number (&quot;6&quot;)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mi">0</span>  <span class="c1"># Default fallback if data is bad</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

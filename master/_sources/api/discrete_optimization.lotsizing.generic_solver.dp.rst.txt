@@ -1,0 +1,21 @@
+discrete\_optimization.lotsizing.generic\_solver.dp package
+===========================================================
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.generic\_solver.dp.generic\_dp\_solver module
+------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,314 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.changeover &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.changeover</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.lotsizing.changeover</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;Sequence-dependent changeover costs mixin for lot sizing problems.</span>
+
+<span class="sd">This module provides mixins for problems where the cost of setup depends on</span>
+<span class="sd">the sequence of production (which item was produced previously).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Item</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.demands</span><span class="w"> </span><span class="kn">import</span> <span class="n">DemandsProblem</span><span class="p">,</span> <span class="n">DemandsSolution</span>
+
+
+<div class="viewcode-block" id="ChangeoverCostsProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.ChangeoverCostsProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChangeoverCostsProblem</span><span class="p">(</span><span class="n">DemandsProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin for sequence-dependent changeover costs.</span>
+
+<span class="sd">    Relevant for multi-item problems where the order of production matters.</span>
+<span class="sd">    Changeover cost c_ij is the cost to switch from producing item i to item j.</span>
+
+<span class="sd">    This is different from setup costs which are item-specific and time-dependent.</span>
+<span class="sd">    Changeover costs depend on the production sequence.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ChangeoverCostsProblem.get_changeover_cost">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.ChangeoverCostsProblem.get_changeover_cost">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_changeover_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">to_item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get sequence-dependent changeover cost.</span>
+
+<span class="sd">        Cost incurred when switching production from item i to item j.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            from_item: Item produced previously</span>
+<span class="sd">            to_item: Item to be produced next</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Changeover cost c_ij (non-negative)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_changeover_array</span><span class="p">()[</span><span class="n">from_item</span><span class="p">][</span><span class="n">to_item</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="ChangeoverCostsProblem.get_changeover_array">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.ChangeoverCostsProblem.get_changeover_array">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_changeover_array</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span> <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="ChangeoverCostsProblem.get_max_changeover_cost">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.ChangeoverCostsProblem.get_max_changeover_cost">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_max_changeover_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_changeover_array</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">y</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="ChangeoverCostsProblem.has_changeover_costs">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.ChangeoverCostsProblem.has_changeover_costs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_changeover_costs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if changeover costs are significant.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if any changeover cost is non-zero</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Default: check if any changeover cost is non-zero</span>
+        <span class="c1"># Can be overridden for efficiency</span>
+        <span class="k">for</span> <span class="n">item_i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">item_j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_changeover_cost</span><span class="p">(</span><span class="n">item_i</span><span class="p">,</span> <span class="n">item_j</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ChangeoverCostsSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.ChangeoverCostsSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChangeoverCostsSolution</span><span class="p">(</span><span class="n">DemandsSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solution mixin for changeover cost computation.&quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">ChangeoverCostsProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ChangeoverCostsSolution.get_production_sequence">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.ChangeoverCostsSolution.get_production_sequence">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_production_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Item</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get production sequence as list of (period, item) tuples.</span>
+
+<span class="sd">        The sequence should be sorted by period and include only periods</span>
+<span class="sd">        where production actually occurs (setup happens).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of (period, item) tuples representing production sequence</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="ChangeoverCostsSolution.compute_total_changeover_cost">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.ChangeoverCostsSolution.compute_total_changeover_cost">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_total_changeover_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute total changeover cost based on production sequence.</span>
+
+<span class="sd">        Sum of changeover costs for consecutive items in the production sequence.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Total changeover cost</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sequence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_production_sequence</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>  <span class="c1"># No changeovers</span>
+
+        <span class="n">total_cost</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">item_from</span> <span class="o">=</span> <span class="n">sequence</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">item_to</span> <span class="o">=</span> <span class="n">sequence</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_changeover_cost</span><span class="p">(</span><span class="n">item_from</span><span class="p">,</span> <span class="n">item_to</span><span class="p">)</span>
+            <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">cost</span>
+
+        <span class="k">return</span> <span class="n">total_cost</span></div>
+
+
+<div class="viewcode-block" id="ChangeoverCostsSolution.get_changeover_count">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.ChangeoverCostsSolution.get_changeover_count">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_changeover_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get number of changeovers (switches between items).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Number of times production switches from one item to another</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sequence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_production_sequence</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">item1</span> <span class="o">=</span> <span class="n">sequence</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">item2</span> <span class="o">=</span> <span class="n">sequence</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">item1</span> <span class="o">!=</span> <span class="n">item2</span><span class="p">:</span>
+                <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">count</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WithoutChangeoverCostsProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WithoutChangeoverCostsProblem</span><span class="p">(</span><span class="n">ChangeoverCostsProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Utility mixin for problems without changeover costs.</span>
+
+<span class="sd">    All changeover costs are zero - sequence doesn&#39;t matter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">nb_items</span><span class="p">:</span> <span class="nb">int</span>
+
+<div class="viewcode-block" id="WithoutChangeoverCostsProblem.get_changeover_array">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsProblem.get_changeover_array">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_changeover_array</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="WithoutChangeoverCostsProblem.has_changeover_costs">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsProblem.has_changeover_costs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_changeover_costs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;No changeover costs.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WithoutChangeoverCostsSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WithoutChangeoverCostsSolution</span><span class="p">(</span><span class="n">ChangeoverCostsSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solution mixin for problems without changeover costs.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="WithoutChangeoverCostsSolution.compute_total_changeover_cost">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsSolution.compute_total_changeover_cost">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_total_changeover_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;No changeover cost.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mf">0.0</span></div>
+
+
+<div class="viewcode-block" id="WithoutChangeoverCostsSolution.get_changeover_count">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsSolution.get_changeover_count">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_changeover_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Changeovers don&#39;t matter without costs.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

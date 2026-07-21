@@ -1,0 +1,37 @@
+discrete\_optimization.fjsp package
+===================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.fjsp.solvers
+
+Submodules
+----------
+
+discrete\_optimization.fjsp.parser module
+-----------------------------------------
+
+.. automodule:: discrete_optimization.fjsp.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.fjsp.problem module
+------------------------------------------
+
+.. automodule:: discrete_optimization.fjsp.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.fjsp
+   :members:
+   :show-inheritance:
+   :undoc-members:

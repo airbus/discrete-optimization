@@ -1,0 +1,927 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.generic_scheduling &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.generic_scheduling</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.generic_scheduling</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">wrapt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">UnaryResource</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">MinOrMax</span><span class="p">,</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.generic_scheduling_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Objective</span><span class="p">,</span>
+    <span class="n">Penalty</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.no_overlap</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NoOverlapProblem</span><span class="p">,</span>
+    <span class="n">NoOverlapSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.non_renewable_resource</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NonRenewableResource</span><span class="p">,</span>
+    <span class="n">NonRenewableResourceProblem</span><span class="p">,</span>
+    <span class="n">NonRenewableResourceSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.precedence_scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PrecedenceSchedulingProblem</span><span class="p">,</span>
+    <span class="n">PrecedenceSchedulingSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.skill</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NonSkillCumulativeResource</span><span class="p">,</span>
+    <span class="n">Skill</span><span class="p">,</span>
+    <span class="n">SkillProblem</span><span class="p">,</span>
+    <span class="n">SkillSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cpm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cpm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.timelag</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TimelagProblem</span><span class="p">,</span>
+    <span class="n">TimelagSolution</span><span class="p">,</span>
+    <span class="n">consolidate_min_time_lags</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.timewindow</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TimewindowProblem</span><span class="p">,</span>
+    <span class="n">TimewindowSolution</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">CumulativeResource</span> <span class="o">=</span> <span class="n">Skill</span> <span class="o">|</span> <span class="n">NonSkillCumulativeResource</span>
+<span class="n">Resource</span> <span class="o">=</span> <span class="n">CumulativeResource</span> <span class="o">|</span> <span class="n">UnaryResource</span>
+<span class="n">AnyResource</span> <span class="o">=</span> <span class="n">NonRenewableResource</span> <span class="o">|</span> <span class="n">Resource</span>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenericSchedulingProblem</span><span class="p">(</span>
+    <span class="n">SkillProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">Skill</span><span class="p">,</span> <span class="n">NonSkillCumulativeResource</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">],</span>
+    <span class="n">NonRenewableResourceProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">NonRenewableResource</span><span class="p">],</span>
+    <span class="n">PrecedenceSchedulingProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">TimelagProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">TimewindowProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">NoOverlapProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">Generic</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">Skill</span><span class="p">,</span> <span class="n">NonSkillCumulativeResource</span><span class="p">,</span> <span class="n">NonRenewableResource</span>
+    <span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scheduling problem with all optional features</span>
+
+<span class="sd">    This class derives from other mixins to provide utilities that require that mix:</span>
+<span class="sd">    - scheduling: tasks need to be scheduled</span>
+<span class="sd">    - calendar: the renewable resources have their own calendar that will be used for constraining allocations and schedule</span>
+<span class="sd">    - multimode: the tasks have several mode on which the duration depends</span>
+<span class="sd">    - cumulative: the tasks consume cumulative resources according to the chosen mode</span>
+<span class="sd">    - allocation: the tasks can have unary resources allocated to them</span>
+<span class="sd">    - skill: some cumulative resource are skills that are brought to tasks by allocated unary resources</span>
+<span class="sd">    - non-renewable: the tasks consume non-renewable resources according to the chosen mode</span>
+<span class="sd">    - precedence: precedence constraints between tasks</span>
+<span class="sd">    - cost: the choice of a mode or of an allocation has a given cost</span>
+
+<span class="sd">    Even though this class is generic but encompasses also more specific cases:</span>
+<span class="sd">    - singlemode: actually only one mode per task</span>
+<span class="sd">    - no skills: if skills_list is empty</span>
+<span class="sd">    - no allocation: unary_resources is empty</span>
+<span class="sd">    - no cumulative ressources: if resources_list list only unary resources</span>
+<span class="sd">    - no calendar: resource capacity can be given as a constant on [0, horizon)</span>
+<span class="sd">    - no non-renewable ressources: if non_renewable_resources_list empty</span>
+<span class="sd">    - no precedence constraints: precedence constraints empty</span>
+<span class="sd">    - no cost: cost = 0</span>
+
+<span class="sd">    We suppose that all renewable resources are</span>
+<span class="sd">    - either cumulative ones</span>
+<span class="sd">    - or unary resources</span>
+
+<span class="sd">    This generic class is to be used to construct generic automatic solvers (e.g. ).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calendar_resources_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Resource</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources_list</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_resources_list</span>
+
+<div class="viewcode-block" id="GenericSchedulingProblem.check_calendar_resources_list">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.check_calendar_resources_list">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_calendar_resources_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check calendar resources list.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AssertionError: if duplicates appear in the list</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">calendar_resources_list</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources_list</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulative_resources_list</span>
+        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">calendar_resources_list</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">calendar_resources_list</span><span class="p">)),</span> <span class="p">(</span>
+            <span class="s2">&quot;There are duplicates in calendar resources list, &quot;</span>
+            <span class="s2">&quot;potentially because unary and cumulative resources intersect.&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.update_resource_availabilities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.update_resource_availabilities">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_resource_availabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_resource_availabilities</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_calendar_resources_list</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.is_unary_resource">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.is_unary_resource">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_unary_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if given resource is a unary resource.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources_list</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.get_task_start_or_end_tighter_lower_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.get_task_start_or_end_tighter_lower_bound">[docs]</a>
+    <span class="nd">@wrapt</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_start_or_end_tighter_lower_bound</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span>
+        <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span><span class="p">,</span>
+        <span class="n">use_cpm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a tighter lower bound on task start or end using possible durations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            use_cpm: whether to use CPM propagating bounds through precedence graph</span>
+<span class="sd">            horizon: new horizon to take into account when computing tighter bounds,</span>
+<span class="sd">                default to problem horizon.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">horizon</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">horizon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_upper_bound</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">use_cpm</span><span class="p">:</span>
+            <span class="n">tasks_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_tighter_task_bounds</span><span class="p">(</span>
+                <span class="n">use_cpm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span>
+            <span class="p">)</span>
+            <span class="n">start_lower_bound</span><span class="p">,</span> <span class="n">end_lower_bound</span><span class="p">,</span> <span class="n">start_upper_bound</span><span class="p">,</span> <span class="n">end_upper_bound</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">tasks_bounds</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">match</span> <span class="n">start_or_end</span><span class="p">:</span>
+                <span class="k">case</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">start_lower_bound</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">end_lower_bound</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>  <span class="c1"># best bound between:</span>
+                    <span class="c1"># default bound</span>
+                    <span class="mi">0</span><span class="p">,</span>
+                    <span class="c1"># initial pb bound</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                    <span class="p">),</span>
+                    <span class="c1"># bound deduced from initial end lower bound and max duration</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                    <span class="p">)</span>
+                    <span class="o">-</span> <span class="nb">max</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">get_task_mode_duration</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_modes</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>  <span class="c1"># best bound between:</span>
+                    <span class="c1"># default bound</span>
+                    <span class="mi">0</span><span class="p">,</span>
+                    <span class="c1"># initial pb bound</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                    <span class="p">),</span>
+                    <span class="c1"># bound deduced from initial start lower bound and min duration</span>
+                    <span class="nb">max</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                            <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                        <span class="p">),</span>
+                        <span class="mi">0</span><span class="p">,</span>  <span class="c1"># clip at 0</span>
+                    <span class="p">)</span>
+                    <span class="o">+</span> <span class="nb">min</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">get_task_mode_duration</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_modes</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="p">),</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.get_task_start_or_end_tighter_upper_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.get_task_start_or_end_tighter_upper_bound">[docs]</a>
+    <span class="nd">@wrapt</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_start_or_end_tighter_upper_bound</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span>
+        <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span><span class="p">,</span>
+        <span class="n">use_cpm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a tighter upper bound on task start or end using possible durations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            use_cpm: whether to use CPM propagating bounds through precedence graph</span>
+<span class="sd">            horizon: new horizon to take into account when computing tighter bounds,</span>
+<span class="sd">                default to problem horizon.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">horizon</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">horizon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_upper_bound</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">use_cpm</span><span class="p">:</span>
+            <span class="n">tasks_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_tighter_task_bounds</span><span class="p">(</span>
+                <span class="n">use_cpm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span>
+            <span class="p">)</span>
+            <span class="n">start_lower_bound</span><span class="p">,</span> <span class="n">end_lower_bound</span><span class="p">,</span> <span class="n">start_upper_bound</span><span class="p">,</span> <span class="n">end_upper_bound</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">tasks_bounds</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">match</span> <span class="n">start_or_end</span><span class="p">:</span>
+                <span class="k">case</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">start_upper_bound</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">end_upper_bound</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># no propagation, only using problem bounds + possible durations + new horizon</span>
+            <span class="k">if</span> <span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">min</span><span class="p">(</span>  <span class="c1"># best bound between:</span>
+                    <span class="c1"># initial pb bound</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                    <span class="p">),</span>
+                    <span class="c1"># bound deduced from initial end upper bound (clipped at new horizon) and min duration</span>
+                    <span class="nb">min</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                            <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                        <span class="p">),</span>
+                        <span class="n">horizon</span><span class="p">,</span>  <span class="c1"># new horizon</span>
+                    <span class="p">)</span>
+                    <span class="o">-</span> <span class="nb">min</span><span class="p">(</span>  <span class="c1"># min duration</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">get_task_mode_duration</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_modes</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">min</span><span class="p">(</span>  <span class="c1"># best bound between:</span>
+                    <span class="c1"># default bound: new horizon</span>
+                    <span class="n">horizon</span><span class="p">,</span>
+                    <span class="c1"># initial pb bound</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                    <span class="p">),</span>
+                    <span class="c1"># bound deduced from initial start upper bound and max duration</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                    <span class="p">)</span>
+                    <span class="o">+</span> <span class="nb">max</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">get_task_mode_duration</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_modes</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="p">),</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.update_task_bounds">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.update_task_bounds">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_task_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to be called when problem time windows are updated.</span>
+
+<span class="sd">        It clears necessary cache on computed tighter bounds.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_tighter_upper_bound</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_tighter_lower_bound</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_tighter_task_bounds</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.compute_tighter_task_bounds">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.compute_tighter_task_bounds">[docs]</a>
+    <span class="nd">@wrapt</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_tighter_task_bounds</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">use_cpm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">horizon</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute tighter task bounds from problem time windows and min-max tak durations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            use_cpm: whether to use CPM propagating bounds through precedence graph</span>
+<span class="sd">            horizon: new horizon to take into account when computing tighter bounds,</span>
+<span class="sd">                default to problem horizon.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            {task: (start_lower_bound, end_lower_bound, start_upper_bound, end_upper_bound)}</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">horizon</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">horizon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_upper_bound</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">use_cpm</span><span class="p">:</span>
+            <span class="n">cpm</span> <span class="o">=</span> <span class="n">Cpm</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="n">cpm</span><span class="o">.</span><span class="n">compute_task_bounds</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">cpm</span><span class="o">.</span><span class="n">get_task_bounds</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="n">task</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_tighter_lower_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span>
+                        <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">,</span>
+                        <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+                        <span class="n">use_cpm</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_tighter_lower_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span>
+                        <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">,</span>
+                        <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+                        <span class="n">use_cpm</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_tighter_upper_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span>
+                        <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">,</span>
+                        <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+                        <span class="n">use_cpm</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_tighter_upper_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span>
+                        <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">,</span>
+                        <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+                        <span class="n">use_cpm</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span>
+            <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.get_consolidated_time_lags">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.get_consolidated_time_lags">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_consolidated_time_lags</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">task1_start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span><span class="p">,</span>
+        <span class="n">task2_start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span><span class="p">,</span>
+        <span class="n">min_or_max</span><span class="p">:</span> <span class="n">MinOrMax</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get consolidated time lags.</span>
+
+<span class="sd">        Same normalization as in `TimelagProblem` parent class.</span>
+<span class="sd">        Also taking into account precedence constraints to enrich end to start min time lags.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task1_start_or_end:</span>
+<span class="sd">            task2_start_or_end:</span>
+<span class="sd">            min_or_max:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">timelags</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_consolidated_time_lags</span><span class="p">(</span>
+            <span class="n">task1_start_or_end</span><span class="o">=</span><span class="n">task1_start_or_end</span><span class="p">,</span>
+            <span class="n">task2_start_or_end</span><span class="o">=</span><span class="n">task2_start_or_end</span><span class="p">,</span>
+            <span class="n">min_or_max</span><span class="o">=</span><span class="n">min_or_max</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">task1_start_or_end</span><span class="p">,</span> <span class="n">task2_start_or_end</span><span class="p">,</span> <span class="n">min_or_max</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span>
+            <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">,</span>
+            <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">,</span>
+            <span class="n">MinOrMax</span><span class="o">.</span><span class="n">MIN</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="c1"># end to start min time lags: we add precedence constraints and keep only max(resulting offsets)</span>
+            <span class="n">timelags</span> <span class="o">=</span> <span class="n">consolidate_min_time_lags</span><span class="p">(</span>
+                <span class="n">timelags</span>
+                <span class="o">+</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">task1</span><span class="p">,</span> <span class="n">next_tasks</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_precedence_constraints</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">task2</span> <span class="ow">in</span> <span class="n">next_tasks</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">timelags</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.get_makespan_lower_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.get_makespan_lower_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_makespan_lower_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a lower bound on global makespan.</span>
+
+<span class="sd">        Computed tighter lower bounds on last tasks can be used to get a better makespan lower bound.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_tighter_lower_bound</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_last_tasks</span><span class="p">()</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.get_makespan_tighter_lower_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.get_makespan_tighter_lower_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_makespan_tighter_lower_bound</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">use_cpm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">horizon</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a tighter lower bound on global makespan.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            use_cpm: whether to use CPM bound propagation through precedence graph to improve tightness</span>
+<span class="sd">            horizon: new horizon to take into account when computing tighter bounds,</span>
+<span class="sd">                default to problem horizon.</span>
+<span class="sd">                NB: The choice of horizon should not affect the result for the lower bound, but it could avoid</span>
+<span class="sd">                CPM complete recomputation thanks to caching if it was already launched with same horizon.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">horizon</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">horizon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_tighter_upper_bound</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_tighter_lower_bound</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">,</span> <span class="n">use_cpm</span><span class="o">=</span><span class="n">use_cpm</span><span class="p">,</span> <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_last_tasks</span><span class="p">()</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.get_makespan_tighter_upper_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.get_makespan_tighter_upper_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_makespan_tighter_upper_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute a tighter upper bound on makespan.</span>
+
+<span class="sd">        The original makespan upper bound is used when computing tighter bounds for tasks starts and ends,</span>
+<span class="sd">        via `self.compute_tighter_task_bounds()` or `self.get_task_start_or_end_tighter_upper_bound()`.</span>
+<span class="sd">        From that tighter bounds, we can derive a new makespan upper bound.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="c1"># do not use CPM (not necessary as last tasks horizon are just computed from horizon + time windows even in CPM)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_tighter_upper_bound</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">,</span> <span class="n">use_cpm</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_last_tasks</span><span class="p">()</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.get_consolidated_precedence_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.get_consolidated_precedence_constraints">[docs]</a>
+    <span class="nd">@wrapt</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_consolidated_precedence_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="n">Task</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Consolidate precedence constraints defined by problem.</span>
+
+<span class="sd">        It takes into account time lags constraints.</span>
+<span class="sd">        - end to start min constraint with non-negative offsets =&gt; precedence constraint</span>
+<span class="sd">        - start synchronization =&gt; corresponding tasks should appear together in successors</span>
+<span class="sd">        - end synchornization =&gt; corresponding tasks should share their successors</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">successors</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+
+        <span class="c1"># end to task min timelag with offset &gt;=0  =&gt; precedence constraint</span>
+        <span class="c1"># (original ones already included in consolidated time lags)</span>
+        <span class="k">for</span> <span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">,</span> <span class="n">offset</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_consolidated_time_lags</span><span class="p">(</span>
+            <span class="n">task1_start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">,</span>
+            <span class="n">task2_start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">,</span>
+            <span class="n">min_or_max</span><span class="o">=</span><span class="n">MinOrMax</span><span class="o">.</span><span class="n">MIN</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">offset</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">successors</span><span class="p">[</span><span class="n">task1</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task2</span><span class="p">)</span>
+
+        <span class="c1"># end together =&gt; same successors</span>
+        <span class="n">min_end_to_end_timelags_0_offset</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">offset</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_consolidated_time_lags</span><span class="p">(</span>
+                <span class="n">task1_start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">,</span>
+                <span class="n">task2_start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">,</span>
+                <span class="n">min_or_max</span><span class="o">=</span><span class="n">MinOrMax</span><span class="o">.</span><span class="n">MIN</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">offset</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">]</span>
+        <span class="n">max_end_to_end_timelags_0_offset</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">)</span> <span class="k">for</span> <span class="n">t2</span><span class="p">,</span> <span class="n">t1</span> <span class="ow">in</span> <span class="n">min_end_to_end_timelags_0_offset</span>
+        <span class="p">]</span>
+        <span class="n">end_together</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">min_end_to_end_timelags_0_offset</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+            <span class="n">max_end_to_end_timelags_0_offset</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">task1</span><span class="p">,</span> <span class="n">task2</span> <span class="ow">in</span> <span class="n">end_together</span><span class="p">:</span>
+            <span class="n">successors</span><span class="p">[</span><span class="n">task1</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">successors</span><span class="p">[</span><span class="n">task2</span><span class="p">])</span>
+            <span class="c1"># the reverse will be done during the loop as (task2, task1) should also be in end_together</span>
+
+        <span class="c1"># start together =&gt; same predecessors</span>
+        <span class="n">min_start_to_start_timelags_0_offset</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">offset</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_consolidated_time_lags</span><span class="p">(</span>
+                <span class="n">task1_start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">,</span>
+                <span class="n">task2_start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">,</span>
+                <span class="n">min_or_max</span><span class="o">=</span><span class="n">MinOrMax</span><span class="o">.</span><span class="n">MIN</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">offset</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="p">]</span>
+        <span class="n">max_start_to_start_timelags_0_offset</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">)</span> <span class="k">for</span> <span class="n">t2</span><span class="p">,</span> <span class="n">t1</span> <span class="ow">in</span> <span class="n">min_start_to_start_timelags_0_offset</span>
+        <span class="p">]</span>
+        <span class="n">start_together</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">min_start_to_start_timelags_0_offset</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+            <span class="n">max_start_to_start_timelags_0_offset</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">next_tasks</span> <span class="ow">in</span> <span class="n">successors</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">task1</span><span class="p">,</span> <span class="n">task2</span> <span class="ow">in</span> <span class="n">start_together</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">task1</span> <span class="ow">in</span> <span class="n">next_tasks</span><span class="p">:</span>
+                    <span class="n">next_tasks</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">successors</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.update_time_lags">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.update_time_lags">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_time_lags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to call when time lags have been updated.</span>
+
+<span class="sd">        Clear cache from consolidated precedence constraints and time lags.</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_consolidated_time_lags</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span>  <span class="c1"># beware: parent class method also using cache !</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_consolidated_precedence_constraints</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.update_precedence_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.update_precedence_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_precedence_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to call when precedence constraints have been updated.</span>
+
+<span class="sd">        Clear cache from consolidated precedence constraints and time lags.</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_time_lags</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.compute_subobjective">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.compute_subobjective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_subobjective</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">variable</span><span class="p">:</span> <span class="n">GenericSchedulingSolution</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
+        <span class="n">resource_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">AnyResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute subobjective from given solution.&quot;&quot;&quot;</span>
+        <span class="k">match</span> <span class="n">objective</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">Objective</span><span class="o">.</span><span class="n">MAKESPAN</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">variable</span><span class="o">.</span><span class="n">get_max_end_time</span><span class="p">()</span>
+            <span class="k">case</span> <span class="n">Objective</span><span class="o">.</span><span class="n">NB_TASKS_DONE</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_nb_tasks_done</span><span class="p">()</span>
+            <span class="k">case</span> <span class="n">Objective</span><span class="o">.</span><span class="n">NB_UNARY_RESOURCES_USED</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_nb_unary_resources_used</span><span class="p">()</span>
+            <span class="k">case</span> <span class="n">Objective</span><span class="o">.</span><span class="n">NB_RESOURCES_USED</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_nb_calendar_resources_used</span><span class="p">(</span>
+                    <span class="n">weights</span><span class="o">=</span><span class="n">resource_weights</span>
+                <span class="p">)</span> <span class="o">+</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_nb_non_renewable_resources_used</span><span class="p">(</span>
+                    <span class="n">weights</span><span class="o">=</span><span class="n">resource_weights</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="n">Objective</span><span class="o">.</span><span class="n">RESOURCES_LEVELS</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_aggregated_calendar_resources_levels</span><span class="p">(</span>
+                    <span class="n">weights</span><span class="o">=</span><span class="n">resource_weights</span>
+                <span class="p">)</span> <span class="o">+</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_aggregated_non_renewable_resources_consumptions</span><span class="p">(</span>
+                    <span class="n">weights</span><span class="o">=</span><span class="n">resource_weights</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="n">Objective</span><span class="o">.</span><span class="n">COST</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_cost</span><span class="p">()</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.compute_penalty">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.compute_penalty">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_penalty</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">GenericSchedulingSolution</span><span class="p">,</span> <span class="n">penalty</span><span class="p">:</span> <span class="n">Penalty</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute penalty from given solution.&quot;&quot;&quot;</span>
+        <span class="k">match</span> <span class="n">penalty</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">Penalty</span><span class="o">.</span><span class="n">TIME</span><span class="p">:</span>
+                <span class="n">penalty</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="c1"># time windows</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+                    <span class="n">start</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="n">end</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="n">start_lb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                    <span class="p">)</span>
+                    <span class="n">end_lb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                    <span class="p">)</span>
+                    <span class="n">start_ub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                    <span class="p">)</span>
+                    <span class="n">end_ub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                    <span class="p">)</span>
+                    <span class="n">penalty</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start_lb</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+                    <span class="n">penalty</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">end_lb</span> <span class="o">-</span> <span class="n">end</span><span class="p">)</span>
+                    <span class="n">penalty</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">start</span> <span class="o">-</span> <span class="n">start_ub</span><span class="p">)</span>
+                    <span class="n">penalty</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span> <span class="o">-</span> <span class="n">end_ub</span><span class="p">)</span>
+                <span class="c1"># time lags</span>
+                <span class="k">for</span> <span class="n">task1_start_or_end</span> <span class="ow">in</span> <span class="n">StartOrEnd</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">task2_start_or_end</span> <span class="ow">in</span> <span class="n">StartOrEnd</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">min_or_max</span> <span class="ow">in</span> <span class="n">MinOrMax</span><span class="p">:</span>
+                            <span class="k">for</span> <span class="n">task1</span><span class="p">,</span> <span class="n">task2</span><span class="p">,</span> <span class="n">offset</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_original_time_lags</span><span class="p">(</span>
+                                <span class="n">task1_start_or_end</span><span class="o">=</span><span class="n">task1_start_or_end</span><span class="p">,</span>
+                                <span class="n">task2_start_or_end</span><span class="o">=</span><span class="n">task2_start_or_end</span><span class="p">,</span>
+                                <span class="n">min_or_max</span><span class="o">=</span><span class="n">min_or_max</span><span class="p">,</span>
+                            <span class="p">):</span>
+                                <span class="n">t1</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">get_start_or_end_time</span><span class="p">(</span>
+                                    <span class="n">task</span><span class="o">=</span><span class="n">task1</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">task1_start_or_end</span>
+                                <span class="p">)</span>
+                                <span class="n">t2</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">get_start_or_end_time</span><span class="p">(</span>
+                                    <span class="n">task</span><span class="o">=</span><span class="n">task2</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">task2_start_or_end</span>
+                                <span class="p">)</span>
+                                <span class="k">if</span> <span class="n">min_or_max</span> <span class="o">==</span> <span class="n">MinOrMax</span><span class="o">.</span><span class="n">MIN</span><span class="p">:</span>
+                                    <span class="n">penalty</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">t1</span> <span class="o">+</span> <span class="n">offset</span> <span class="o">-</span> <span class="n">t2</span><span class="p">)</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="n">penalty</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">t2</span> <span class="o">-</span> <span class="p">(</span><span class="n">t1</span> <span class="o">+</span> <span class="n">offset</span><span class="p">))</span>
+
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">penalty</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.get_mode_cost">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.get_mode_cost">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_mode_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get cost of choosing given mode.</span>
+
+<span class="sd">        Default to no cost. To be overridden in child classes with actual costs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task:</span>
+<span class="sd">            mode:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.get_unary_resource_cost">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.get_unary_resource_cost">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_unary_resource_cost</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get cost of allocating given unary resource.</span>
+
+<span class="sd">        Default to no cost. To be overridden in child classes with actual costs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task:</span>
+<span class="sd">            mode:</span>
+<span class="sd">            unary_resource:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.satisfy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="s2">&quot;GenericSchedulingSolution&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">satisfy_partial</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">variable</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingProblem.satisfy_partial">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingProblem.satisfy_partial">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy_partial</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">variable</span><span class="p">:</span> <span class="s2">&quot;GenericSchedulingSolution&quot;</span><span class="p">,</span>
+        <span class="n">duration</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">calendar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">non_renewable_capacity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">precedence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">skill</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">allocation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">time_lags</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">time_windows</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">no_overlap</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">forbidden_intervals</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Partial checks on solution.</span>
+
+<span class="sd">        One can switch off some checks by setting the corresponding parameter to False.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            variable:</span>
+<span class="sd">            duration:</span>
+<span class="sd">            calendar:</span>
+<span class="sd">            non_renewable_capacity:</span>
+<span class="sd">            precedence:</span>
+<span class="sd">            skill:</span>
+<span class="sd">            allocation:</span>
+<span class="sd">            time_lags:</span>
+<span class="sd">            time_windows:</span>
+<span class="sd">            no_overlap:</span>
+<span class="sd">            forbidden_intervals:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="c1"># duration consistency</span>
+            <span class="p">(</span><span class="ow">not</span> <span class="n">duration</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_duration_constraints</span><span class="p">())</span>
+            <span class="c1"># calendar resources capacity violations (unary resources + skills + cumulative resources)</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">calendar</span>
+                <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_all_calendar_resource_capacity_constraints</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="c1"># non-renewable resource violation</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">non_renewable_capacity</span>
+                <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_all_non_renewable_resource_capacity_constraints</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="c1"># precedence relations</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">precedence</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_precedence_constraints</span><span class="p">())</span>
+            <span class="c1"># skill constraints</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">skill</span>
+                <span class="ow">or</span> <span class="p">(</span>
+                    <span class="n">variable</span><span class="o">.</span><span class="n">check_skill_constraints</span><span class="p">()</span>
+                    <span class="ow">and</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_only_one_skill_per_task_and_unary_resource</span><span class="p">()</span>
+                    <span class="c1"># Check consistency between compatibility/allocation/skill usage</span>
+                    <span class="ow">and</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_skill_usage_and_allocation_consistency</span><span class="p">()</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">allocation</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_allocation_consistency</span><span class="p">())</span>
+            <span class="c1"># time lags</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">time_lags</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_time_lags</span><span class="p">())</span>
+            <span class="c1"># time window</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">time_windows</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_time_windows</span><span class="p">())</span>
+            <span class="c1"># no overlap</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">no_overlap</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_no_overlap</span><span class="p">())</span>
+            <span class="c1"># forbidden intervals</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">forbidden_intervals</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_forbidden_intervals</span><span class="p">())</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="GenericSchedulingSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenericSchedulingSolution</span><span class="p">(</span>
+    <span class="n">SkillSolution</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">Skill</span><span class="p">,</span> <span class="n">NonSkillCumulativeResource</span><span class="p">,</span> <span class="n">UnaryResource</span>
+    <span class="p">],</span>
+    <span class="n">NonRenewableResourceSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">NonRenewableResource</span><span class="p">],</span>
+    <span class="n">PrecedenceSchedulingSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">TimelagSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">TimewindowSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">NoOverlapSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">Generic</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">Skill</span><span class="p">,</span> <span class="n">NonSkillCumulativeResource</span><span class="p">,</span> <span class="n">NonRenewableResource</span>
+    <span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solution type associated to GenericSchedulingProblem.&quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">GenericSchedulingProblem</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">Skill</span><span class="p">,</span> <span class="n">NonSkillCumulativeResource</span><span class="p">,</span> <span class="n">NonRenewableResource</span>
+    <span class="p">]</span>
+
+<div class="viewcode-block" id="GenericSchedulingSolution.get_calendar_resource_consumption">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingSolution.get_calendar_resource_consumption">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_calendar_resource_consumption</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_unary_resource</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">):</span>
+            <span class="c1"># unary resources: 0 (not allocated) or 1 (allocated)</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_allocated</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">resource</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># cumulative resources</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_calendar_resource_consumption</span><span class="p">(</span>
+                <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">task</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingSolution.compute_cost">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling.GenericSchedulingSolution.compute_cost">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_mode_cost</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="p">(</span><span class="n">mode</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">))</span>
+                <span class="p">)</span>
+                <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_unary_resource_cost</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">unary_resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_allocation</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

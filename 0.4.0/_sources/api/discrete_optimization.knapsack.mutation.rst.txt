@@ -1,0 +1,21 @@
+discrete\_optimization.knapsack.mutation package
+================================================
+
+Submodules
+----------
+
+discrete\_optimization.knapsack.mutation.mutation\_knapsack module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.mutation.mutation_knapsack
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.knapsack.mutation
+   :members:
+   :undoc-members:
+   :show-inheritance:

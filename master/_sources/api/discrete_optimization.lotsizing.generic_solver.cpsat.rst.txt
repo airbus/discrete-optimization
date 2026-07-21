@@ -1,0 +1,77 @@
+discrete\_optimization.lotsizing.generic\_solver.cpsat package
+==============================================================
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.generic\_solver.cpsat.backlog module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.cpsat.backlog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.cpsat.changeover module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.cpsat.changeover
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.cpsat.generic\_lotsizing\_cpsat module
+---------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.cpsat.generic\_lotsizing\_cpsat\_scheduling module
+---------------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.cpsat.inventory module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.cpsat.inventory
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.cpsat.lotsizing\_solver\_cpsat module
+--------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.cpsat.lotsizing_solver_cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.cpsat.parallel\_production module
+----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.cpsat.parallel_production
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.cpsat.production module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.cpsat.production
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:

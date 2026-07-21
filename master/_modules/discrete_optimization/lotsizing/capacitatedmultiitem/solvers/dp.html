@@ -1,0 +1,832 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;Dynamic programming solvers for capacitated multi-item lot sizing problem.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">didppy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">WarmstartMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.dyn_prog_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">DpSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+    <span class="n">IntegerHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.capacitatedmultiitem.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CapacitatedMultiItemLSP</span><span class="p">,</span>
+    <span class="n">CapacitatedMultiItemSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.production_solution</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProductionDecision</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DpCapacitatedLotSizingSolver">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.solvers.html#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DpCapacitatedLotSizingSolver</span><span class="p">(</span><span class="n">DpSolver</span><span class="p">,</span> <span class="n">WarmstartMixin</span><span class="p">):</span>
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;relax_delays&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_lookahead_constraints&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;lookahead_window&quot;</span><span class="p">,</span>
+            <span class="n">low</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">high</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;use_lookahead_constraints&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_flexibility_delays&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;flexibility_delta&quot;</span><span class="p">,</span>
+            <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">high</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;use_flexibility_delays&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">CapacitatedMultiItemLSP</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="nb">dict</span>  <span class="c1"># Maps transition name -&gt; (action_type, item, quantity)</span>
+    <span class="n">transition_objects</span><span class="p">:</span> <span class="nb">dict</span>  <span class="c1"># Maps transition name -&gt; dp.Transition object</span>
+    <span class="n">variables</span><span class="p">:</span> <span class="nb">dict</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">CapacitatedMultiItemLSP</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="c1"># To implement the lexico :)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="DpCapacitatedLotSizingSolver.init_model">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.solvers.html#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># relax_delays = kwargs[&quot;relax_delays&quot;]</span>
+        <span class="n">use_lookahead</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;use_lookahead_constraints&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transition_objects</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Model</span><span class="p">()</span>
+        <span class="n">time_object</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span><span class="n">number</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+        <span class="n">item_type_object_with_dummy</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span>
+            <span class="n">number</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="c1"># Track cumulative production for each item</span>
+        <span class="n">cumulative_production</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">current_time_element</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_element_var</span><span class="p">(</span><span class="n">object_type</span><span class="o">=</span><span class="n">time_object</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">current_time</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">current_item</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_element_var</span><span class="p">(</span>
+            <span class="n">object_type</span><span class="o">=</span><span class="n">item_type_object_with_dummy</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Build cumulative demands for each item</span>
+        <span class="n">cumulative_demands</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">):</span>
+            <span class="n">demands_list</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_demand</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">cumsum_demands</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">demands_list</span><span class="p">)]</span>
+            <span class="n">cumulative_demands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">cumsum_demands</span><span class="p">))</span>
+
+        <span class="c1"># Build changeover cost matrix</span>
+        <span class="n">change_over_cost</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">from_item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">):</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">to_item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">):</span>
+                <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_changeover_cost</span><span class="p">(</span><span class="n">from_item</span><span class="p">,</span> <span class="n">to_item</span><span class="p">)))</span>
+            <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># changeover to dummy (idle) has 0 cost</span>
+            <span class="n">change_over_cost</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+        <span class="c1"># Add dummy row (from idle to any item has 0 cost)</span>
+        <span class="n">change_over_cost</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)])</span>
+
+        <span class="n">transitions_cost</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">change_over_cost</span><span class="p">)</span>
+        <span class="n">produced_current_step</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Get total demands per item</span>
+        <span class="n">total_demands_per_item</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_total_demand</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Production transitions - only produce, no separate delivery</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">quantity</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span>
+                <span class="mi">1</span><span class="p">,</span>
+                <span class="nb">min</span><span class="p">(</span>
+                    <span class="n">total_demands_per_item</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">capacity_machine</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">):</span>
+                <span class="n">add_cost</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="s2">&quot;changeover_cost&quot;</span>
+                    <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">objectives</span>
+                <span class="p">):</span>
+                    <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">objectives</span><span class="o">.</span><span class="n">index</span><span class="p">(</span>
+                        <span class="s2">&quot;changeover_cost&quot;</span>
+                    <span class="p">)</span>
+                    <span class="n">add_cost</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+                        <span class="o">*</span> <span class="n">transitions_cost</span><span class="p">[</span><span class="n">current_item</span><span class="p">,</span> <span class="n">item</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="n">tr</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;produce_</span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">quantity</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">cost</span><span class="o">=</span><span class="n">add_cost</span> <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+                    <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                        <span class="p">(</span>
+                            <span class="n">cumulative_production</span><span class="p">[</span><span class="n">item</span><span class="p">],</span>
+                            <span class="n">cumulative_production</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">+</span> <span class="n">quantity</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="p">(</span><span class="n">current_item</span><span class="p">,</span> <span class="n">item</span><span class="p">),</span>
+                        <span class="p">(</span><span class="n">produced_current_step</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                    <span class="p">],</span>
+                    <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">produced_current_step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
+                        <span class="n">cumulative_production</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">+</span> <span class="n">quantity</span>
+                        <span class="o">&lt;=</span> <span class="n">total_demands_per_item</span><span class="p">[</span><span class="n">item</span><span class="p">],</span>
+                    <span class="p">],</span>
+                <span class="p">)</span>
+                <span class="n">trans_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;produce_</span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">quantity</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">trans_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;prod&quot;</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">quantity</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transition_objects</span><span class="p">[</span><span class="n">trans_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span>
+        <span class="n">objectives</span><span class="p">,</span> <span class="n">weights</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">objectives</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">weights</span>
+        <span class="n">cost_expr</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="s2">&quot;backlog_cost&quot;</span> <span class="ow">in</span> <span class="n">objectives</span> <span class="ow">or</span> <span class="s2">&quot;inventory_cost&quot;</span> <span class="ow">in</span> <span class="n">objectives</span><span class="p">:</span>
+            <span class="n">cost_expr</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">index_delays</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">index_stock</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="s2">&quot;backlog_cost&quot;</span> <span class="ow">in</span> <span class="n">objectives</span><span class="p">:</span>
+                <span class="n">index_delays</span> <span class="o">=</span> <span class="n">objectives</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;backlog_cost&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;inventory_cost&quot;</span> <span class="ow">in</span> <span class="n">objectives</span><span class="p">:</span>
+                <span class="n">index_stock</span> <span class="o">=</span> <span class="n">objectives</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;inventory_cost&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">):</span>
+                <span class="c1"># Inventory = max(0, cumulative_production - cumulative_demand)</span>
+                <span class="c1"># Backlog = max(0, cumulative_demand - cumulative_production)</span>
+                <span class="k">if</span> <span class="n">index_stock</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">inventory</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span>
+                        <span class="mi">0</span><span class="p">,</span>
+                        <span class="n">cumulative_production</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+                        <span class="o">-</span> <span class="n">cumulative_demands</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">current_time_element</span><span class="p">],</span>
+                    <span class="p">)</span>
+                    <span class="n">cost_expr</span> <span class="o">+=</span> <span class="p">(</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">index_stock</span><span class="p">])</span>
+                        <span class="o">*</span> <span class="n">inventory</span>
+                        <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_inventory_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="n">index_delays</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">backlog</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span>
+                        <span class="mi">0</span><span class="p">,</span>
+                        <span class="n">cumulative_demands</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">current_time_element</span><span class="p">]</span>
+                        <span class="o">-</span> <span class="n">cumulative_production</span><span class="p">[</span><span class="n">item</span><span class="p">],</span>
+                    <span class="p">)</span>
+                    <span class="n">cost_expr</span> <span class="o">+=</span> <span class="p">(</span>
+                        <span class="nb">int</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">index_delays</span><span class="p">])</span>
+                        <span class="o">*</span> <span class="n">backlog</span>
+                        <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_backlog_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                    <span class="p">)</span>
+
+        <span class="n">precondition_advance_time</span> <span class="o">=</span> <span class="p">[</span><span class="n">current_time_element</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">advance_in_time</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;advance_in_time&quot;</span><span class="p">,</span>
+            <span class="n">cost</span><span class="o">=</span><span class="n">cost_expr</span> <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+            <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">current_time_element</span><span class="p">,</span> <span class="n">current_time_element</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">produced_current_step</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="p">],</span>
+            <span class="n">preconditions</span><span class="o">=</span><span class="n">precondition_advance_time</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transition_objects</span><span class="p">[</span><span class="s2">&quot;advance_in_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">advance_in_time</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">advance_in_time</span><span class="p">)</span>
+
+        <span class="n">finish</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;finish&quot;</span><span class="p">,</span>
+            <span class="n">cost</span><span class="o">=</span><span class="n">cost_expr</span> <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+            <span class="n">effects</span><span class="o">=</span><span class="p">[(</span><span class="n">current_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)],</span>
+            <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span><span class="n">current_time_element</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="o">+</span> <span class="n">precondition_advance_time</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transition_objects</span><span class="p">[</span><span class="s2">&quot;finish&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">finish</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">finish</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">add_base_case</span><span class="p">([</span><span class="n">current_time</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">])</span>
+
+        <span class="c1"># Add lookahead-based state constraints to prune infeasible states</span>
+        <span class="c1"># These check if from current state, we can still satisfy remaining demands</span>
+        <span class="k">if</span> <span class="n">use_lookahead</span><span class="p">:</span>
+            <span class="n">lookahead_window</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lookahead_window&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Adding lookahead state constraints (window=</span><span class="si">{</span><span class="n">lookahead_window</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+            <span class="n">fun_</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="c1"># For each lookahead distance i, compute total production needed across ALL items</span>
+            <span class="c1"># within the next i timesteps, and constrain it to be &lt;= i (max capacity)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">lookahead_window</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)):</span>
+                <span class="n">needed_production</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">):</span>
+                    <span class="n">fun_</span><span class="p">[(</span><span class="n">item</span><span class="p">,</span> <span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_state_fun</span><span class="p">(</span>
+                        <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span>
+                            <span class="mi">0</span><span class="p">,</span>
+                            <span class="n">cumulative_demands</span><span class="p">[</span><span class="n">item</span><span class="p">][</span>
+                                <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+                                    <span class="n">current_time_element</span> <span class="o">+</span> <span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="mi">1</span>
+                                <span class="p">)</span>
+                            <span class="p">]</span>
+                            <span class="o">-</span> <span class="n">cumulative_production</span><span class="p">[</span><span class="n">item</span><span class="p">],</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">needed_production</span> <span class="o">+=</span> <span class="n">fun_</span><span class="p">[(</span><span class="n">item</span><span class="p">,</span> <span class="n">i</span><span class="p">)]</span>
+
+                <span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span>
+                    <span class="nb">sum</span><span class="p">(</span>
+                        <span class="p">[</span>
+                            <span class="p">(</span>
+                                <span class="n">fun_</span><span class="p">[(</span><span class="n">item</span><span class="p">,</span> <span class="n">i</span><span class="p">)]</span>
+                                <span class="o">-</span> <span class="p">(</span>
+                                    <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">current_time</span> <span class="o">+</span> <span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                                    <span class="o">-</span> <span class="n">current_time</span>
+                                <span class="p">)</span>
+                                <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">capacity_machine</span>
+                            <span class="p">)</span>
+                            <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_backlog_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)</span>
+                        <span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;current_time&quot;</span><span class="p">:</span> <span class="n">current_time_element</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="DpCapacitatedLotSizingSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.solvers.html#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sol</span><span class="p">:</span> <span class="n">dp</span><span class="o">.</span><span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="n">productions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">current_time</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sol</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+            <span class="n">t</span><span class="p">:</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;advance_in_time&quot;</span><span class="p">:</span>
+                <span class="n">current_time</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+                <span class="n">key</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">quantity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;prod&quot;</span><span class="p">:</span>
+                    <span class="n">prod_decision</span> <span class="o">=</span> <span class="n">ProductionDecision</span><span class="p">(</span>
+                        <span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">current_time</span><span class="p">,</span> <span class="n">quantity</span><span class="o">=</span><span class="n">quantity</span>
+                    <span class="p">)</span>
+                    <span class="n">productions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prod_decision</span><span class="p">)</span>
+
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">CapacitatedMultiItemSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">productions</span><span class="o">=</span><span class="n">productions</span>
+        <span class="p">)</span>
+
+        <span class="n">known_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">infos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;known_bound&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">known_bound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">known_bound</span><span class="si">}</span><span class="s2"> relative perf&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">solution</span></div>
+
+
+<div class="viewcode-block" id="DpCapacitatedLotSizingSolver.set_warm_start">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.solvers.html#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">CapacitatedMultiItemSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a CapacitatedMultiItemSolution to a sequence of DP transitions for warmstart.</span>
+
+<span class="sd">        The DP model expects transitions in a specific order:</span>
+<span class="sd">        - For each timestep: production(s), delivery(ies), advance_in_time</span>
+<span class="sd">        - Final timestep: production(s), delivery(ies), finish</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">()</span>
+
+        <span class="c1"># Sort productions by time</span>
+        <span class="n">sorted_productions</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">productions</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">period</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">item</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Compute deliveries from productions (ProductionBasedSolution already does this)</span>
+        <span class="c1"># For DP we need to reconstruct delivery transitions</span>
+        <span class="c1"># This is tricky - we need to match the delivery pattern expected by DP</span>
+        <span class="c1"># For now, skip warm start support - user said DP needs significant work</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Warmstart not yet implemented for DpLotSizingSolver with new API&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span> <span class="o">=</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DpSchedCapacitatedLotSizingSolver">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.solvers.html#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DpSchedCapacitatedLotSizingSolver</span><span class="p">(</span><span class="n">DpSolver</span><span class="p">,</span> <span class="n">WarmstartMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scheduling-based DP solver for capacitated multi-item lot sizing.</span>
+
+<span class="sd">    This solver models the problem as scheduling demand occurrences,</span>
+<span class="sd">    where each demand is a task with a deadline.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;relax_delays&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_lookahead_constraints&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;lookahead_window&quot;</span><span class="p">,</span>
+            <span class="n">low</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">high</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;use_lookahead_constraints&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;use_flexibility_delays&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="n">IntegerHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;flexibility_delta&quot;</span><span class="p">,</span>
+            <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">high</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;use_flexibility_delays&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">CapacitatedMultiItemLSP</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="nb">dict</span>  <span class="c1"># Maps transition name -&gt; (action_type, item, quantity)</span>
+    <span class="n">transition_objects</span><span class="p">:</span> <span class="nb">dict</span>  <span class="c1"># Maps transition name -&gt; dp.Transition object</span>
+    <span class="n">variables</span><span class="p">:</span> <span class="nb">dict</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">CapacitatedMultiItemLSP</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">ParamsObjectiveFunction</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span> <span class="o">=</span> <span class="n">problem</span>
+        <span class="c1"># To implement the lexico :)</span>
+        <span class="k">if</span> <span class="n">params_objective_function</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params_objective_function</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span> <span class="o">=</span> <span class="n">params_objective_function</span>
+
+<div class="viewcode-block" id="DpSchedCapacitatedLotSizingSolver.init_model">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.solvers.html#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deadlines</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Build deadlines: for each demand occurrence, record its due date</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">):</span>
+            <span class="n">nb</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">period</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">):</span>
+                <span class="n">demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_demand</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># We assume demand is 1 here (binary problem)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">deadlines</span><span class="p">[(</span><span class="n">item</span><span class="p">,</span> <span class="n">nb</span><span class="p">)]</span> <span class="o">=</span> <span class="n">period</span>
+                    <span class="n">nb</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">all_items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deadlines</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deadlines</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+        <span class="n">item_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">all_items</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">))}</span>
+        <span class="n">predecessor</span> <span class="o">=</span> <span class="p">[</span><span class="nb">set</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">))]</span>
+
+        <span class="k">for</span> <span class="n">item</span><span class="p">,</span> <span class="n">nb</span> <span class="ow">in</span> <span class="n">all_items</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">item_to_index</span><span class="p">[(</span><span class="n">item</span><span class="p">,</span> <span class="n">nb</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">nb</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">index_pred</span> <span class="o">=</span> <span class="n">item_to_index</span><span class="p">[(</span><span class="n">item</span><span class="p">,</span> <span class="n">nb</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+                <span class="n">predecessor</span><span class="p">[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">index_pred</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transition_objects</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Model</span><span class="p">()</span>
+        <span class="n">all_items_object</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span><span class="n">number</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">))</span>
+        <span class="n">item_type_object_with_dummy</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span>
+            <span class="n">number</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="n">deadlines_table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span>
+            <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">deadlines</span><span class="p">[</span><span class="n">all_items</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">))]</span>
+        <span class="p">)</span>
+        <span class="n">current_time</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">current_item</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_element_var</span><span class="p">(</span>
+            <span class="n">object_type</span><span class="o">=</span><span class="n">item_type_object_with_dummy</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Build changeover cost matrix</span>
+        <span class="n">change_over_cost</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">from_item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">):</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">to_item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">):</span>
+                <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_changeover_cost</span><span class="p">(</span><span class="n">from_item</span><span class="p">,</span> <span class="n">to_item</span><span class="p">)))</span>
+            <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># changeover to dummy (idle) has 0 cost</span>
+            <span class="n">change_over_cost</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+        <span class="c1"># Add dummy row (from idle to any item has 0 cost)</span>
+        <span class="n">change_over_cost</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)])</span>
+
+        <span class="n">transitions_cost</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">change_over_cost</span><span class="p">)</span>
+        <span class="n">scheduled</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_set_var</span><span class="p">(</span><span class="n">object_type</span><span class="o">=</span><span class="n">all_items_object</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="nb">set</span><span class="p">())</span>
+        <span class="n">nb_skip_allowed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">)</span>
+        <span class="n">nb_skip</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># State constraint to prune infeasible states</span>
+        <span class="c1"># Allow some slack for backlog-allowed problems, but be strict otherwise</span>
+        <span class="n">slack</span> <span class="o">=</span> <span class="mi">10</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">allow_backlog</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">)):</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_state_constr</span><span class="p">(</span>
+                <span class="n">scheduled</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="o">|</span> <span class="p">(</span><span class="n">current_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deadlines</span><span class="p">[</span><span class="n">all_items</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">+</span> <span class="n">slack</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">)):</span>
+            <span class="n">item</span><span class="p">,</span> <span class="n">nb</span> <span class="o">=</span> <span class="n">all_items</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">add_cost</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="s2">&quot;changeover_cost&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">objectives</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">objectives</span><span class="o">.</span><span class="n">index</span><span class="p">(</span>
+                    <span class="s2">&quot;changeover_cost&quot;</span>
+                <span class="p">)</span>
+                <span class="n">add_cost</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+                    <span class="o">*</span> <span class="n">transitions_cost</span><span class="p">[</span><span class="n">current_item</span><span class="p">,</span> <span class="n">item</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="c1"># Calculate delay (periods late) and advance (periods early)</span>
+            <span class="n">delay_periods</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">current_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">deadlines</span><span class="p">[</span><span class="n">all_items</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">advance_periods</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deadlines</span><span class="p">[</span><span class="n">all_items</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">-</span> <span class="n">current_time</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+            <span class="c1"># Compute costs: weight * periods * per_unit_per_period_cost</span>
+            <span class="n">delay_cost</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="s2">&quot;backlog_cost&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">objectives</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">objectives</span><span class="o">.</span><span class="n">index</span><span class="p">(</span>
+                    <span class="s2">&quot;backlog_cost&quot;</span>
+                <span class="p">)</span>
+                <span class="n">delay_cost</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+                    <span class="o">*</span> <span class="n">delay_periods</span>
+                    <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_backlog_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                <span class="p">)</span>
+
+            <span class="n">advance_cost</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="s2">&quot;inventory_cost&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">objectives</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">objectives</span><span class="o">.</span><span class="n">index</span><span class="p">(</span>
+                    <span class="s2">&quot;inventory_cost&quot;</span>
+                <span class="p">)</span>
+                <span class="n">advance_cost</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+                    <span class="o">*</span> <span class="n">advance_periods</span>
+                    <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_inventory_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                <span class="p">)</span>
+
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">item</span><span class="p">,</span> <span class="n">nb</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">precond</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">nb</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">precond</span> <span class="o">=</span> <span class="p">[</span><span class="n">scheduled</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">item_to_index</span><span class="p">[</span><span class="n">pred</span><span class="p">])]</span>
+            <span class="n">tr</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;produce_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">cost</span><span class="o">=</span><span class="n">add_cost</span> <span class="o">+</span> <span class="n">delay_cost</span> <span class="o">+</span> <span class="n">advance_cost</span> <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+                <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                    <span class="p">(</span><span class="n">scheduled</span><span class="p">,</span> <span class="n">scheduled</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">i</span><span class="p">)),</span>
+                    <span class="p">(</span><span class="n">current_time</span><span class="p">,</span> <span class="n">current_time</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">current_item</span><span class="p">,</span> <span class="n">item</span><span class="p">),</span>
+                <span class="p">],</span>
+                <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">current_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span>
+                    <span class="o">~</span><span class="n">scheduled</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">i</span><span class="p">),</span>
+                <span class="p">]</span>
+                <span class="o">+</span> <span class="n">precond</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">trans_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;produce_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">trans_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;prod&quot;</span><span class="p">,</span>
+                <span class="n">item</span><span class="p">,</span>
+                <span class="n">nb</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">deadlines</span><span class="p">[(</span><span class="n">item</span><span class="p">,</span> <span class="n">nb</span><span class="p">)],</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transition_objects</span><span class="p">[</span><span class="n">trans_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">tr</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+
+        <span class="n">model</span><span class="o">.</span><span class="n">add_state_constr</span><span class="p">(</span><span class="n">current_time</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+        <span class="n">advance_in_time</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;advance_in_time&quot;</span><span class="p">,</span>
+            <span class="n">cost</span><span class="o">=</span><span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+            <span class="n">effects</span><span class="o">=</span><span class="p">[(</span><span class="n">current_time</span><span class="p">,</span> <span class="n">current_time</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="n">nb_skip</span><span class="p">,</span> <span class="n">nb_skip</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)],</span>
+            <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span><span class="n">nb_skip</span> <span class="o">&lt;</span> <span class="n">nb_skip_allowed</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transition_objects</span><span class="p">[</span><span class="s2">&quot;advance_in_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">advance_in_time</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">advance_in_time</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">add_base_case</span><span class="p">([</span><span class="n">scheduled</span><span class="o">.</span><span class="n">len</span><span class="p">()</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">)])</span>
+
+        <span class="c1"># Dual Bound 1: Delay-based lower bound</span>
+        <span class="c1"># For unscheduled items where current_time &gt; deadline, we will incur delay costs</span>
+        <span class="n">delay_bound</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">)):</span>
+            <span class="n">item</span><span class="p">,</span> <span class="n">nb</span> <span class="o">=</span> <span class="n">all_items</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="c1"># Calculate delay if we produce this item now</span>
+            <span class="n">delay</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">current_time</span> <span class="o">-</span> <span class="n">deadlines_table</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">item_delay_cost</span> <span class="o">=</span> <span class="n">delay</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_backlog_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="c1"># Only count if item is not yet scheduled</span>
+            <span class="n">delay_bound</span> <span class="o">+=</span> <span class="p">(</span><span class="n">scheduled</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">i</span><span class="p">))</span><span class="o">.</span><span class="n">if_then_else</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">item_delay_cost</span><span class="p">)</span>
+
+        <span class="c1"># Dual Bound 2: Minimum changeover cost</span>
+        <span class="c1"># If we have k different item types remaining, we need at least (k-1) changeovers</span>
+        <span class="n">unscheduled_item_types_count</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item_type</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">):</span>
+            <span class="c1"># Check if this item type has any unscheduled items</span>
+            <span class="n">has_unscheduled</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">all_items</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">item_type</span><span class="p">:</span>
+                    <span class="c1"># Add 1 if this specific item is not scheduled</span>
+                    <span class="n">has_unscheduled</span> <span class="o">+=</span> <span class="p">(</span><span class="n">scheduled</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">i</span><span class="p">))</span><span class="o">.</span><span class="n">if_then_else</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># If has_unscheduled &gt; 0, this type needs scheduling</span>
+            <span class="n">unscheduled_item_types_count</span> <span class="o">+=</span> <span class="p">(</span><span class="n">has_unscheduled</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">if_then_else</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Find minimum changeover cost</span>
+        <span class="n">min_changeover_cost</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">min_changeover_cost</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_changeover_cost</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">j</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="n">changeover_bound</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">min_changeover_cost</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="ow">and</span> <span class="s2">&quot;changeover_cost&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">objectives</span>
+        <span class="p">):</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">objectives</span><span class="o">.</span><span class="n">index</span><span class="p">(</span>
+                <span class="s2">&quot;changeover_cost&quot;</span>
+            <span class="p">)</span>
+            <span class="n">weight</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modified_params_objective_function</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+            <span class="c1"># We need at least (k-1) changeovers for k different types</span>
+            <span class="n">num_changeovers_needed</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">unscheduled_item_types_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">changeover_bound</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">weight</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">min_changeover_cost</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_changeovers_needed</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Add combined dual bound</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">delay_bound</span> <span class="o">+</span> <span class="n">changeover_bound</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="DpSchedCapacitatedLotSizingSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.solvers.html#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sol</span><span class="p">:</span> <span class="n">dp</span><span class="o">.</span><span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="n">productions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">current_time</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sol</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+            <span class="n">t</span><span class="p">:</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;advance_in_time&quot;</span><span class="p">:</span>
+                <span class="n">current_time</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+                <span class="n">key</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">nb</span><span class="p">,</span> <span class="n">deadline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                <span class="n">prod_decision</span> <span class="o">=</span> <span class="n">ProductionDecision</span><span class="p">(</span>
+                    <span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">current_time</span><span class="p">,</span> <span class="n">quantity</span><span class="o">=</span><span class="mi">1</span>
+                <span class="p">)</span>
+                <span class="n">productions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prod_decision</span><span class="p">)</span>
+                <span class="n">current_time</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">CapacitatedMultiItemSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">productions</span><span class="o">=</span><span class="n">productions</span>
+        <span class="p">)</span>
+
+        <span class="n">known_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">infos</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;known_bound&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">known_bound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">known_bound</span><span class="si">}</span><span class="s2"> relative perf&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">solution</span></div>
+
+
+<div class="viewcode-block" id="DpSchedCapacitatedLotSizingSolver.set_warm_start">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.solvers.html#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">CapacitatedMultiItemSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a CapacitatedMultiItemSolution to a sequence of DP transitions for warmstart.</span>
+
+<span class="sd">        DpSchedLotSizingSolver uses a scheduling-based DP model where:</span>
+<span class="sd">        - Each demand occurrence is a task with a deadline</span>
+<span class="sd">        - Transitions are produce_{i} where i is the index into all_items list</span>
+<span class="sd">        - advance_in_time is used for idle periods</span>
+<span class="sd">        - No deliver or finish transitions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">()</span>
+
+        <span class="c1"># Rebuild the same all_items structure as in init_model</span>
+        <span class="c1"># This maps each demand occurrence to (item_type, occurrence_index)</span>
+        <span class="n">all_items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deadlines</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">deadlines</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+        <span class="n">item_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">all_items</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">))}</span>
+
+        <span class="c1"># Sort productions by time</span>
+        <span class="n">sorted_productions</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">productions</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">period</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">item</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Map productions to all_items indices</span>
+        <span class="c1"># We need to track how many of each item type we&#39;ve seen</span>
+        <span class="n">item_occurrence_counter</span> <span class="o">=</span> <span class="p">{</span><span class="n">item</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)}</span>
+
+        <span class="n">production_schedule</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># List of (time, item_index)</span>
+
+        <span class="k">for</span> <span class="n">prod</span> <span class="ow">in</span> <span class="n">sorted_productions</span><span class="p">:</span>
+            <span class="n">item_type</span> <span class="o">=</span> <span class="n">prod</span><span class="o">.</span><span class="n">item</span>
+            <span class="n">occurrence</span> <span class="o">=</span> <span class="n">item_occurrence_counter</span><span class="p">[</span><span class="n">item_type</span><span class="p">]</span>
+
+            <span class="c1"># Find the index in all_items</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">item_type</span><span class="p">,</span> <span class="n">occurrence</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">item_to_index</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Warmstart: production for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not found in all_items&quot;</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">return</span>
+
+            <span class="n">item_index</span> <span class="o">=</span> <span class="n">item_to_index</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="n">production_schedule</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">prod</span><span class="o">.</span><span class="n">period</span><span class="p">,</span> <span class="n">item_index</span><span class="p">))</span>
+            <span class="n">item_occurrence_counter</span><span class="p">[</span><span class="n">item_type</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Check if we have all items</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">production_schedule</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Warmstart: solution has </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">production_schedule</span><span class="p">)</span><span class="si">}</span><span class="s2"> productions but model expects </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_items</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Build transition sequence respecting the production schedule</span>
+        <span class="c1"># Sort by production time</span>
+        <span class="n">production_schedule</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">transition_names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">current_time</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">prod_time</span><span class="p">,</span> <span class="n">item_index</span> <span class="ow">in</span> <span class="n">production_schedule</span><span class="p">:</span>
+            <span class="c1"># Add idle periods (advance_in_time) if needed</span>
+            <span class="k">while</span> <span class="n">current_time</span> <span class="o">&lt;</span> <span class="n">prod_time</span><span class="p">:</span>
+                <span class="n">transition_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;advance_in_time&quot;</span><span class="p">)</span>
+                <span class="n">current_time</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># Add production</span>
+            <span class="n">transition_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;produce_</span><span class="si">{</span><span class="n">item_index</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">current_time</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Convert transition names to actual transition objects</span>
+        <span class="n">transitions_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">transition_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_objects</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Warmstart: transition &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; not found in transition_objects&quot;</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">return</span>
+            <span class="n">transitions_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transition_objects</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_solution</span> <span class="o">=</span> <span class="n">transitions_list</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warmstart set with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">transitions_list</span><span class="p">)</span><span class="si">}</span><span class="s2"> transitions&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

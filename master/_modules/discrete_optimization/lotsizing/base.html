@@ -1,0 +1,311 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.base &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.base</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.lotsizing.base</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;Base classes for lot sizing problems.</span>
+
+<span class="sd">This module provides minimal base classes following the generic_tasks_tools pattern.</span>
+<span class="sd">Each problem variant is composed of mixins that add specific features.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Problem</span><span class="p">,</span> <span class="n">Solution</span>
+
+<span class="c1"># Generic type for items/products</span>
+<span class="c1"># Usually int, but could be string, enum, or any hashable type</span>
+<span class="n">Item</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Item&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Hashable</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="LotSizingProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.base.LotSizingProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LotSizingProblem</span><span class="p">(</span><span class="n">Problem</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Minimal base class for all lot sizing problems.</span>
+
+<span class="sd">    This class only defines the essential structure common to ALL lot sizing variants:</span>
+<span class="sd">    - Time horizon (number of periods)</span>
+<span class="sd">    - Items/products to produce</span>
+
+<span class="sd">    All other features (demands, costs, capacity, etc.) are added via mixins.</span>
+
+<span class="sd">    Similar to TasksProblem in generic_tasks_tools.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_map_item_to_index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Item</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">horizon</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of time periods T.</span>
+
+<span class="sd">        Periods are indexed from 0 to horizon-1.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">items_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Item</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;List of all items (product types) to schedule production for.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of unique item identifiers</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">nb_items</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of different items/products.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items_list</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LotSizingProblem.get_index_from_item">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.base.LotSizingProblem.get_index_from_item">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_index_from_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get index of item in items_list.</span>
+
+<span class="sd">        This is cached for efficiency when items_list doesn&#39;t change.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Index in items_list (0 to nb_items-1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_item_to_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_map_item_to_index</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">item</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items_list</span><span class="p">)</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_item_to_index</span><span class="p">[</span><span class="n">item</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="LotSizingProblem.get_item_from_index">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.base.LotSizingProblem.get_item_from_index">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_item_from_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Item</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get item from index.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            i: Index in items_list</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Item identifier</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">items_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="LotSizingProblem.update_items_list">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.base.LotSizingProblem.update_items_list">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_items_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Call when items_list is updated to reset cache.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_map_item_to_index</span> <span class="o">=</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LotSizingSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.base.LotSizingSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LotSizingSolution</span><span class="p">(</span><span class="n">Solution</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Minimal base class for lot sizing solutions.</span>
+
+<span class="sd">    This is the base for all solution types. Specific solution representations</span>
+<span class="sd">    are added by mixins and concrete implementations.</span>
+
+<span class="sd">    Similar to TasksSolution in generic_tasks_tools.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">LotSizingProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">]</span>
+
+<div class="viewcode-block" id="LotSizingSolution.get_inventory_level">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.base.LotSizingSolution.get_inventory_level">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_inventory_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get inventory level at end of period.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+<span class="sd">            period: Time period</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Inventory level I_it (non-negative integer)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="LotSizingSolution.get_delivery_quantity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.base.LotSizingSolution.get_delivery_quantity">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_delivery_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get quantity of item delivered to satisfy demand in period.</span>
+
+<span class="sd">        This may differ from production quantity due to inventory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+<span class="sd">            period: Time period</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Delivery quantity (amount used to satisfy demand in this period)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="LotSizingSolution.get_total_production_quantity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.base.LotSizingSolution.get_total_production_quantity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_total_production_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_production_quantity</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LotSizingSolution.get_total_delivery_quantity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.base.LotSizingSolution.get_total_delivery_quantity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_total_delivery_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_delivery_quantity</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LotSizingSolution.get_production_quantity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.base.LotSizingSolution.get_production_quantity">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_production_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get production quantity X_it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: Item identifier</span>
+<span class="sd">            period: Time period</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Production quantity (non-negative integer)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

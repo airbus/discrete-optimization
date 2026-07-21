@@ -1,0 +1,759 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.alb.base.problem &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.alb.base.problem</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.alb.base.problem</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Base class for Assembly Line Balancing Problems.</span>
+
+<span class="sd">Provides common functionality using standard mixins:</span>
+<span class="sd">- PrecedenceProblem: handles precedence constraints and graph</span>
+<span class="sd">- AllocationProblem: handles task-to-station assignment</span>
+<span class="sd">- SchedulingProblem: handles timing and makespan</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AllocationProblem</span><span class="p">,</span>
+    <span class="n">AllocationSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.precedence</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrecedenceProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SchedulingProblem</span><span class="p">,</span>
+    <span class="n">SchedulingSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solution</span>
+
+<span class="c1"># Type variables for generic ALB problems</span>
+<span class="n">Task</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Task&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Hashable</span><span class="p">)</span>
+<span class="n">Station</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Station&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Hashable</span><span class="p">)</span>  <span class="c1"># Stations are unary resources</span>
+
+
+<div class="viewcode-block" id="TaskData">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.TaskData">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TaskData</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for task data in ALB problems.</span>
+
+<span class="sd">    This class is designed to be subclassed to add domain-specific attributes</span>
+<span class="sd">    like resource requirements, zone constraints, etc.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        task_id: Unique identifier for the task</span>
+<span class="sd">        processing_time: Duration to execute the task (in base conditions)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">processing_time</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize task data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task_id: Unique identifier for the task</span>
+<span class="sd">            processing_time: Duration to execute the task</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span> <span class="o">=</span> <span class="n">task_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processing_time</span> <span class="o">=</span> <span class="n">processing_time</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">TaskData</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">task_id</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(id=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="si">}</span><span class="s2">, time=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">processing_time</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ResourceTaskData">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.ResourceTaskData">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResourceTaskData</span><span class="p">(</span><span class="n">TaskData</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Task data with resource requirements for resource-constrained ALB problems.</span>
+
+<span class="sd">    Extends TaskData with resource consumption information.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        task_id: Unique identifier for the task</span>
+<span class="sd">        processing_time: Duration to execute the task</span>
+<span class="sd">        resource_consumption: Dict mapping resource_name -&gt; consumption amount</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">task_id</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">,</span>
+        <span class="n">processing_time</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">resource_consumption</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize resource task data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task_id: Unique identifier for the task</span>
+<span class="sd">            processing_time: Duration to execute the task</span>
+<span class="sd">            resource_consumption: Dict mapping resource_name -&gt; consumption (default: {})</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">task_id</span><span class="p">,</span> <span class="n">processing_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resource_consumption</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">resource_consumption</span> <span class="k">if</span> <span class="n">resource_consumption</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ResourceTaskData.get_resource_consumption">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.ResourceTaskData.get_resource_consumption">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_consumption</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get resource consumption for a given resource.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource: Resource identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Consumption amount (0 if not specified)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_consumption</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(id=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;time=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">processing_time</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;resources=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">resource_consumption</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="BaseALBSolution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseALBSolution</span><span class="p">(</span>
+    <span class="n">SchedulingSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">AllocationSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Station</span><span class="p">],</span>
+    <span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Station</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base solution class for Assembly Line Balancing problems.</span>
+
+<span class="sd">    Provides time-related helper methods that work for all ALB variants:</span>
+<span class="sd">    - get_start_time_in_cycle(task): Start time within the cycle</span>
+<span class="sd">    - get_absolute_start_time(task): &quot;Unfolded&quot; absolute time</span>
+<span class="sd">    - get_station_index(task): Index of assigned station</span>
+
+<span class="sd">    Subclasses must implement:</span>
+<span class="sd">    - task_assignment: Dict[Task, Station] mapping</span>
+<span class="sd">    - Either task_schedule OR compute schedule on demand</span>
+<span class="sd">    - cycle_time attribute</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="s2">&quot;BaseALBProblem[Task, Station]&quot;</span>
+
+<div class="viewcode-block" id="BaseALBSolution.get_station_index">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBSolution.get_station_index">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_station_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the index of the station where task is assigned.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Station index (0-based)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Subclass must implement get_station_index()&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseALBSolution.get_start_time_in_cycle">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBSolution.get_start_time_in_cycle">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time_in_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the start time of a task within its cycle.</span>
+
+<span class="sd">        For problems with explicit scheduling (RC-ALBP), this returns task_schedule[task].</span>
+<span class="sd">        For problems without scheduling (SALBP), this computes it using greedy scheduling.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Start time within the cycle [0, cycle_time)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Subclass must implement get_start_time_in_cycle()&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseALBSolution.get_absolute_start_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBSolution.get_absolute_start_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the &quot;unfolded&quot; absolute start time of a task.</span>
+
+<span class="sd">        This is useful for precedence checking and visualization.</span>
+<span class="sd">        Formula: station_index * cycle_time + start_time_in_cycle</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Absolute start time in unfolded timeline</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">station_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_station_index</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">start_in_cycle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_start_time_in_cycle</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">cycle_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cycle_time</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">station_idx</span> <span class="o">*</span> <span class="n">cycle_time</span> <span class="o">+</span> <span class="n">start_in_cycle</span></div>
+
+
+<div class="viewcode-block" id="BaseALBSolution.get_end_time_in_cycle">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBSolution.get_end_time_in_cycle">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_time_in_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the end time of a task within its cycle.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            End time within the cycle</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start_in_cycle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_start_time_in_cycle</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">start_in_cycle</span> <span class="o">+</span> <span class="n">duration</span></div>
+
+
+<div class="viewcode-block" id="BaseALBSolution.get_absolute_end_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBSolution.get_absolute_end_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_absolute_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the &quot;unfolded&quot; absolute end time of a task.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Absolute end time in unfolded timeline</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">abs_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_absolute_start_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">abs_start</span> <span class="o">+</span> <span class="n">duration</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_cycle_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the cycle time.</span>
+
+<span class="sd">        Priority:</span>
+<span class="sd">        1. Explicit cycle_time attribute on solution (if set)</span>
+<span class="sd">        2. Compute from schedule: max end_time_in_cycle across all tasks</span>
+<span class="sd">        3. Problem&#39;s cycle_time (for problems with fixed cycle time like SALBP)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Cycle time value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># 1. Explicit cycle_time on solution</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;cycle_time&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_time</span>
+
+        <span class="c1"># 2. Compute from schedule (for problems where cycle_time is decision variable)</span>
+        <span class="n">max_end_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_end_time_in_cycle</span><span class="p">(</span><span class="n">task</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_end_time</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">max_end_time</span>
+
+        <span class="c1"># 3. Fall back to problem&#39;s cycle_time</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="s2">&quot;cycle_time&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">cycle_time</span>
+
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cycle time not available&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_greedy_schedule</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">tasks_per_station</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="n">Station</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute greedy schedule from task assignments.</span>
+
+<span class="sd">        This is a template method that should be overridden by subclasses</span>
+<span class="sd">        to implement problem-specific scheduling logic:</span>
+<span class="sd">        - SALBP: Sequential execution (no resources)</span>
+<span class="sd">        - RC-ALBP: Resource-constrained serial generation scheme</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tasks_per_station: Optional pre-computed station grouping</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict mapping task -&gt; start_time_in_cycle</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            NotImplementedError: Subclasses must implement this</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;Subclass must implement _compute_greedy_schedule() with &quot;</span>
+            <span class="s2">&quot;problem-specific scheduling logic&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_task_station</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Station</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get station assignment for a task (must be implemented by subclass).&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Subclass must implement _get_task_station()&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="BaseALBProblem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseALBProblem</span><span class="p">(</span>
+    <span class="n">PrecedenceProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">AllocationProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Station</span><span class="p">],</span>
+    <span class="n">SchedulingProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Station</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for all Assembly Line Balancing Problems.</span>
+
+<span class="sd">    Combines three standard mixins:</span>
+<span class="sd">    - PrecedenceProblem: handles precedence constraints and graph</span>
+<span class="sd">    - AllocationProblem: handles task-to-station assignment</span>
+<span class="sd">    - SchedulingProblem: handles timing and makespan</span>
+
+<span class="sd">    All ALB variants extend this base with additional constraints</span>
+<span class="sd">    (cycle time, resources, learning effects, etc.).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        tasks_data: List of TaskData objects (or subclass) for each task</span>
+<span class="sd">        task_times: Dict mapping task_id -&gt; processing_time (for convenience)</span>
+<span class="sd">        precedences: List of (predecessor, successor) pairs</span>
+<span class="sd">        tasks: Sorted list of task identifiers</span>
+<span class="sd">        stations: List of workstation identifiers</span>
+<span class="sd">        nb_tasks: Number of tasks</span>
+<span class="sd">        nb_stations: Number of stations</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tasks_data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TaskData</span><span class="p">],</span>
+        <span class="n">precedences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">]],</span>
+        <span class="n">stations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Station</span><span class="p">],</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize base ALB problem.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tasks_data: List of TaskData objects (or subclass) containing task info</span>
+<span class="sd">            precedences: List of (predecessor_id, successor_id) pairs</span>
+<span class="sd">            stations: List of workstation identifiers</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Store task data objects</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tasks_data</span><span class="p">)</span>
+
+        <span class="c1"># Build convenience dictionary for quick lookup</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_times</span> <span class="o">=</span> <span class="p">{</span><span class="n">td</span><span class="o">.</span><span class="n">task_id</span><span class="p">:</span> <span class="n">td</span><span class="o">.</span><span class="n">processing_time</span> <span class="k">for</span> <span class="n">td</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_data_by_id</span> <span class="o">=</span> <span class="p">{</span><span class="n">td</span><span class="o">.</span><span class="n">task_id</span><span class="p">:</span> <span class="n">td</span> <span class="k">for</span> <span class="n">td</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">}</span>
+
+        <span class="c1"># Precedences and stations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">precedences</span> <span class="o">=</span> <span class="n">precedences</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">stations</span><span class="p">)</span>
+
+        <span class="c1"># Task list (sorted for determinism)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">td</span><span class="o">.</span><span class="n">task_id</span> <span class="k">for</span> <span class="n">td</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+
+        <span class="c1"># Derived attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_tasks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_stations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stations</span><span class="p">)</span>
+
+        <span class="c1"># Build precedence structures for PrecedenceProblem mixin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_precedence_structures</span><span class="p">()</span>
+
+<div class="viewcode-block" id="BaseALBProblem.get_task_data">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.get_task_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TaskData</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get TaskData object for a given task.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task_id: Task identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            TaskData object (or subclass) for this task</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_data_by_id</span><span class="p">[</span><span class="n">task_id</span><span class="p">]</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_precedence_structures</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build successors and predecessors dicts.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_successors_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_predecessors_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">precedences</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pred</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_successors_dict</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_successors_dict</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">succ</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">succ</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predecessors_dict</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_predecessors_dict</span><span class="p">[</span><span class="n">succ</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+
+    <span class="c1"># === PrecedenceProblem interface ===</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tasks_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the list of all tasks.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span>
+
+<div class="viewcode-block" id="BaseALBProblem.get_precedence_constraints">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.get_precedence_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_precedence_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Map each task to its successors.</span>
+
+<span class="sd">        Required by PrecedenceProblem mixin.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary mapping task -&gt; list of successor tasks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_successors_dict</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_topological_sort_station_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Topological sort of tasks respecting precedence constraints.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tasks: List of tasks to sort</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Topologically sorted list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_precedence_graph</span><span class="p">()</span>
+        <span class="n">nx_graph</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">to_networkx</span><span class="p">()</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">nx</span><span class="o">.</span><span class="n">topological_sort</span><span class="p">(</span><span class="n">nx_graph</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">order</span>
+
+    <span class="c1"># === AllocationProblem interface ===</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unary_resources_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Station</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the list of all stations (unary resources).</span>
+
+<span class="sd">        In ALB problems, stations are the unary resources for allocation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stations</span>
+
+    <span class="c1"># === SchedulingProblem interface ===</span>
+
+<div class="viewcode-block" id="BaseALBProblem.get_makespan_upper_bound">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.get_makespan_upper_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_makespan_upper_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return an upper bound on the makespan.</span>
+
+<span class="sd">        Worst case: all tasks executed sequentially.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Sum of all task processing times</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_times</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
+
+
+    <span class="c1"># === ALB-specific helper methods ===</span>
+
+<div class="viewcode-block" id="BaseALBProblem.get_predecessors">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.get_predecessors">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_predecessors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get predecessor mapping (inverse of successors).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary mapping task -&gt; list of predecessor tasks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predecessors_dict</span></div>
+
+
+<div class="viewcode-block" id="BaseALBProblem.get_successors">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.get_successors">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_successors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get successor mapping.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary mapping task -&gt; list of successor tasks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_successors_dict</span></div>
+
+
+<div class="viewcode-block" id="BaseALBProblem.get_last_tasks">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.get_last_tasks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_last_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get tasks with no successors (sink nodes).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of tasks that are not predecessors to any other task</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_successors_dict</span><span class="p">[</span><span class="n">t</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="BaseALBProblem.get_first_tasks">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.get_first_tasks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_first_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get tasks with no predecessors (source nodes).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of tasks that have no predecessor constraints</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_predecessors_dict</span><span class="p">[</span><span class="n">t</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="BaseALBProblem.check_precedence_violation_stations">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.check_precedence_violation_stations">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_precedence_violation_stations</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">pred_station</span><span class="p">:</span> <span class="n">Station</span><span class="p">,</span> <span class="n">succ_station</span><span class="p">:</span> <span class="n">Station</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if assigning predecessor to pred_station and successor to</span>
+<span class="sd">        succ_station violates precedence at the station level.</span>
+
+<span class="sd">        In ALB, precedence means predecessor must be assigned to an earlier</span>
+<span class="sd">        or equal station (by index in stations list).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pred_station: Station assigned to predecessor task</span>
+<span class="sd">            succ_station: Station assigned to successor task</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if this assignment violates precedence, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pred_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stations</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">pred_station</span><span class="p">)</span>
+            <span class="n">succ_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stations</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">succ_station</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">pred_idx</span> <span class="o">&gt;</span> <span class="n">succ_idx</span>  <span class="c1"># Violation if pred comes after succ</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># Station not in list - consider it a violation</span>
+            <span class="k">return</span> <span class="kc">True</span></div>
+
+
+    <span class="c1"># === Evaluation and Satisfaction (Base Implementation) ===</span>
+
+<div class="viewcode-block" id="BaseALBProblem.evaluate_base_constraints">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.evaluate_base_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_base_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="s2">&quot;BaseALBSolution[Task, Station]&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate base constraints common to all ALB problems.</span>
+
+<span class="sd">        Uses the new solution time helper methods for clean precedence checking.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with:</span>
+<span class="sd">            - penalty_precedence: Number of precedence violations</span>
+<span class="sd">            - penalty_unscheduled: Number of tasks without assignment or schedule</span>
+
+<span class="sd">        Subclasses should call this and add their specific penalties.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">penalty_precedence</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="c1"># 1. Check if all tasks are assigned</span>
+        <span class="n">assigned_tasks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Access station assignment</span>
+                <span class="n">station</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">_get_task_station</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">station</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">assigned_tasks</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+                <span class="k">pass</span>
+
+        <span class="n">penalty_unscheduled</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_tasks</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">assigned_tasks</span><span class="p">))</span>
+
+        <span class="c1"># 2. Check precedence constraints using absolute times</span>
+        <span class="c1"># This is much cleaner than the old approach!</span>
+        <span class="k">for</span> <span class="n">pred</span><span class="p">,</span> <span class="n">succ</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">precedences</span><span class="p">:</span>
+            <span class="c1"># Skip if tasks aren&#39;t assigned</span>
+            <span class="k">if</span> <span class="n">pred</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">assigned_tasks</span> <span class="ow">or</span> <span class="n">succ</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">assigned_tasks</span><span class="p">:</span>
+                <span class="n">penalty_precedence</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Use absolute times for global precedence check</span>
+                <span class="n">pred_end</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_absolute_end_time</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+                <span class="n">succ_start</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_absolute_start_time</span><span class="p">(</span><span class="n">succ</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">pred_end</span> <span class="o">&gt;</span> <span class="n">succ_start</span><span class="p">:</span>
+                    <span class="n">penalty_precedence</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">NotImplementedError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+                <span class="c1"># If we can&#39;t get times, assume violation</span>
+                <span class="n">penalty_precedence</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;penalty_precedence&quot;</span><span class="p">:</span> <span class="n">penalty_precedence</span><span class="p">,</span>
+            <span class="s2">&quot;penalty_unscheduled&quot;</span><span class="p">:</span> <span class="n">penalty_unscheduled</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="BaseALBProblem.evaluate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Default evaluate implementation using base constraints.</span>
+
+<span class="sd">        Subclasses should override this to add problem-specific objectives</span>
+<span class="sd">        and constraints. They can call super().evaluate() or use</span>
+<span class="sd">        evaluate_base_constraints() to get common penalties.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with evaluation metrics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_base_constraints</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseALBProblem.satisfy">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Base satisfaction check: all penalties must be zero.</span>
+
+<span class="sd">        Subclasses should override evaluate() to add specific constraints.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: Solution to check</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if solution satisfies all constraints</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eval_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+
+        <span class="c1"># Check all penalty fields (any key starting with &#39;penalty_&#39;)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">eval_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;penalty_&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BaseALBProblem.correct_allocation_to_station_precedence">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.base.html#discrete_optimization.alb.BaseALBProblem.correct_allocation_to_station_precedence">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">correct_allocation_to_station_precedence</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">allocation_to_station</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">topological</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_topological_sort_station_tasks</span><span class="p">()</span>
+        <span class="n">index_to_id</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">task_id</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">)}</span>
+        <span class="n">id_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">index_to_id</span><span class="p">[</span><span class="n">x</span><span class="p">]:</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">index_to_id</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">topological</span><span class="p">:</span>
+            <span class="n">index_task</span> <span class="o">=</span> <span class="n">id_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">pred</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_predecessors</span><span class="p">()[</span><span class="n">task</span><span class="p">]:</span>
+                <span class="n">index_pred</span> <span class="o">=</span> <span class="n">id_to_index</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span>
+                <span class="n">allocation_to_station</span><span class="p">[</span><span class="n">index_task</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                    <span class="n">allocation_to_station</span><span class="p">[</span><span class="n">index_pred</span><span class="p">],</span> <span class="n">allocation_to_station</span><span class="p">[</span><span class="n">index_task</span><span class="p">]</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">allocation_to_station</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

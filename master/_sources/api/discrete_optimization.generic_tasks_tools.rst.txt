@@ -1,0 +1,174 @@
+discrete\_optimization.generic\_tasks\_tools package
+====================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.generic_tasks_tools.solvers
+   discrete_optimization.generic_tasks_tools.transformations
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tasks\_tools.allocation module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.allocation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.base module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.calendar\_resource module
+----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.calendar_resource
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.cumulative\_resource module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.cumulative_resource
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.enums module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.enums
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.generic\_scheduling module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.generic_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.generic\_scheduling\_impl module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.generic_scheduling_impl
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.generic\_scheduling\_utils module
+------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.generic_scheduling_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.multimode module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.multimode
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.multimode\_scheduling module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.multimode_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.no\_overlap module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.no_overlap
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.non\_renewable\_resource module
+----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.non_renewable_resource
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.precedence module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.precedence
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.precedence\_scheduling module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.precedence_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.scheduling module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.skill module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.skill
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers\_map module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers_map
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.timelag module
+-----------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.timelag
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.timewindow module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.timewindow
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools
+   :members:
+   :show-inheritance:
+   :undoc-members:

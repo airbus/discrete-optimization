@@ -1,0 +1,813 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">didppy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">WarmstartMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.dyn_prog_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">DpSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.generic_lotsizing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GenericLotSizingProblem</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.production_solution</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProductionBasedSolution</span><span class="p">,</span>
+    <span class="n">ProductionDecision</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="GenericLotSizingDp">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenericLotSizingDp</span><span class="p">(</span><span class="n">DpSolver</span><span class="p">,</span> <span class="n">WarmstartMixin</span><span class="p">):</span>
+    <span class="n">allow_backorder</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">max_backorder</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">force_unmet_zero</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">add_transition_dominance</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">penalty_advance_time</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500000</span>
+    <span class="n">lookahead_demand</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">add_additional_dual_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">GenericLotSizingProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">GenericLotSizingProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GenericLotSizingDp.init_model">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Model</span><span class="p">()</span>
+        <span class="n">cumul_demands</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">item</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_cumulative_demands</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">}</span>
+        <span class="n">demands_with_lookahead</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">item</span><span class="p">:</span> <span class="p">[</span>
+                <span class="n">cumul_demands</span><span class="p">[</span><span class="n">item</span><span class="p">][</span>
+                    <span class="nb">min</span><span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookahead_demand</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="o">-</span> <span class="n">cumul_demands</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">t</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">}</span>
+
+        <span class="n">item_with_dummy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span><span class="n">number</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">setup_times</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_setup_time</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">t</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">]</span>
+        <span class="n">setup_costs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_setup_cost</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">t</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">]</span>
+        <span class="n">usage</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_production_time_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">]</span>
+        <span class="n">production_cost</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_production_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">]</span>
+        <span class="n">dummy_capa</span> <span class="o">=</span> <span class="mi">1000</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">has_capacity_limits</span><span class="p">():</span>
+            <span class="n">dummy_capa</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_available_production_time</span><span class="p">(</span><span class="n">period</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">current_capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">dummy_capa</span><span class="p">)</span>
+        <span class="n">time_object</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span><span class="n">number</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">current_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">current_time_element</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_element_var</span><span class="p">(</span>
+            <span class="n">object_type</span><span class="o">=</span><span class="n">time_object</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="n">stock</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">]</span>
+        <span class="n">cumul_prod</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">]</span>
+        <span class="n">demands</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_demand</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">production_cost</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">production_cost</span><span class="p">[</span><span class="n">item</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">production_cost</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">cumul_demands</span><span class="p">[</span><span class="n">item</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">production_cost</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands_look</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">demands_with_lookahead</span><span class="p">[</span><span class="n">item</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">production_cost</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_deliveries</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_state_fun</span><span class="p">(</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">-</span> <span class="n">stock</span><span class="p">[</span><span class="n">item</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_costs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_times</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">setup_times</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">usage_time</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">usage</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">has_capacity_limits</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">capacity_calendar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_available_production_time</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">capacity_calendar</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span> <span class="o">=</span> <span class="n">cumul_prod</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demands</span> <span class="o">=</span> <span class="n">demands</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_element_var</span><span class="p">(</span>
+            <span class="n">object_type</span><span class="o">=</span><span class="n">item_with_dummy</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">changeover_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_changeover_cost</span><span class="p">(</span><span class="n">from_item</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">to_item</span><span class="o">=</span><span class="n">j</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">))</span>
+            <span class="p">]</span>
+            <span class="o">+</span> <span class="p">[[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">=</span> <span class="n">current_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span> <span class="o">=</span> <span class="n">current_time_element</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stock</span> <span class="o">=</span> <span class="n">stock</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">future_demand</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_state_fun</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands_look</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">future_prod_to_do</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_state_fun</span><span class="p">(</span>
+                <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands_look</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                    <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+                    <span class="mi">0</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">):</span>
+            <span class="n">future</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">future_demand</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">allows_parallel_production</span><span class="p">():</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_index_from_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="n">max_prod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_production_quantity</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_prod</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_state_constr</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">future_prod_to_do</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">max_prod</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookahead_demand</span>
+                <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_state_constr</span><span class="p">(</span>
+                <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">future_prod_to_do</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">m</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookahead_demand</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_capacity</span> <span class="o">=</span> <span class="n">current_capacity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_schedule</span><span class="p">()</span>
+
+        <span class="c1"># Add multiple informative dual bounds for better guidance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_additional_dual_bounds</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_dual_bounds</span><span class="p">()</span>
+        <span class="c1"># for item in self.problem.items_list:</span>
+        <span class="c1">#    self.model.add_state_constr(self.cumul_prod[item]&lt;=int(self.problem.get_total_demand(item)))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">force_unmet_zero</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_base_case</span><span class="p">(</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_base_case</span><span class="p">(</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">]</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingDp.add_dual_bounds">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.add_dual_bounds">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_dual_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add multiple dual bounds to guide the search.</span>
+
+<span class="sd">        Each bound provides a different perspective on the remaining cost,</span>
+<span class="sd">        giving the solver more information for pruning.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Precompute minimum costs</span>
+        <span class="n">min_setup_costs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">min_inventory_costs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">min_changeover_costs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">avg_inventory_costs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="n">min_setup</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_setup_cost</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">min_setup_costs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">min_setup</span><span class="p">)</span>
+
+            <span class="n">min_inv</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_inventory_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">min_inventory_costs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">min_inv</span><span class="p">)</span>
+
+            <span class="n">avg_inv</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">sum</span><span class="p">(</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_inventory_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span>
+            <span class="p">)</span>
+            <span class="n">avg_inventory_costs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">avg_inv</span><span class="p">)</span>
+
+            <span class="n">min_co</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_changeover_cost</span><span class="p">(</span><span class="n">from_item</span><span class="o">=</span><span class="n">from_item</span><span class="p">,</span> <span class="n">to_item</span><span class="o">=</span><span class="n">item</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">from_item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+            <span class="p">)</span>
+            <span class="n">min_changeover_costs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">min_co</span><span class="p">)</span>
+
+        <span class="n">total_demands</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_total_demand</span><span class="p">(</span><span class="n">item</span><span class="p">))</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Bound 1: Setup costs only (very optimistic)</span>
+        <span class="n">bound1</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">):</span>
+            <span class="n">remaining_demand</span> <span class="o">=</span> <span class="n">total_demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">has_remaining</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining_demand</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">bound1</span> <span class="o">+=</span> <span class="n">has_remaining</span> <span class="o">*</span> <span class="n">min_setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">bound1</span><span class="p">)</span>
+
+        <span class="c1"># Bound 2: Setup + one minimal changeover (assumes single switch)</span>
+        <span class="n">bound2</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">num_items_remaining</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">):</span>
+            <span class="n">remaining_demand</span> <span class="o">=</span> <span class="n">total_demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">has_remaining</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining_demand</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">num_items_remaining</span> <span class="o">+=</span> <span class="n">has_remaining</span>
+            <span class="n">bound2</span> <span class="o">+=</span> <span class="n">has_remaining</span> <span class="o">*</span> <span class="n">min_setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">min_co_overall</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">min_changeover_costs</span><span class="p">)</span> <span class="k">if</span> <span class="n">min_changeover_costs</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">has_multiple</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">num_items_remaining</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">bound2</span> <span class="o">+=</span> <span class="n">has_multiple</span> <span class="o">*</span> <span class="n">min_co_overall</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">bound2</span><span class="p">)</span>
+
+        <span class="c1"># Bound 3: Setup + full changeover per item (no inventory)</span>
+        <span class="n">bound3</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">):</span>
+            <span class="n">remaining_demand</span> <span class="o">=</span> <span class="n">total_demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">has_remaining</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining_demand</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">bound3</span> <span class="o">+=</span> <span class="n">has_remaining</span> <span class="o">*</span> <span class="p">(</span><span class="n">min_setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">min_changeover_costs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">bound3</span><span class="p">)</span>
+
+        <span class="c1"># Bound 4: Setup + changeover + minimal inventory</span>
+        <span class="n">bound4</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">):</span>
+            <span class="n">remaining_demand</span> <span class="o">=</span> <span class="n">total_demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">has_remaining</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining_demand</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">bound4</span> <span class="o">+=</span> <span class="n">has_remaining</span> <span class="o">*</span> <span class="p">(</span><span class="n">min_setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">min_changeover_costs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+            <span class="c1"># Current stock holding cost (at least 1 period)</span>
+            <span class="n">remaining_periods</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">)</span>
+            <span class="n">periods_to_hold</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining_periods</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">bound4</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">min_inventory_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">periods_to_hold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">bound4</span><span class="p">)</span>
+
+        <span class="c1"># Bound 5: Aggressive inventory bound (assumes stock must be held longer)</span>
+        <span class="n">bound5</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">):</span>
+            <span class="n">remaining_demand</span> <span class="o">=</span> <span class="n">total_demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">has_remaining</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining_demand</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">bound5</span> <span class="o">+=</span> <span class="n">has_remaining</span> <span class="o">*</span> <span class="n">min_setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="c1"># Assume stock is held for multiple periods (more aggressive)</span>
+            <span class="n">remaining_periods</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">)</span>
+            <span class="n">periods_to_hold</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+                <span class="n">remaining_periods</span><span class="p">,</span> <span class="mi">2</span>
+            <span class="p">)</span>  <span class="c1"># At least 2 periods if possible</span>
+            <span class="n">bound5</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">min_inventory_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">periods_to_hold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">bound5</span><span class="p">)</span>
+
+        <span class="c1"># Bound 6: Average inventory cost bound (between min and max)</span>
+        <span class="n">bound6</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">):</span>
+            <span class="n">remaining_demand</span> <span class="o">=</span> <span class="n">total_demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">has_remaining</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining_demand</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">bound6</span> <span class="o">+=</span> <span class="n">has_remaining</span> <span class="o">*</span> <span class="n">min_setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">bound6</span> <span class="o">+=</span> <span class="n">has_remaining</span> <span class="o">*</span> <span class="n">min_changeover_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="n">remaining_periods</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">)</span>
+            <span class="n">periods_to_hold</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining_periods</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">bound6</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">avg_inventory_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">periods_to_hold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">bound6</span><span class="p">)</span>
+
+        <span class="c1"># Bound 7: Heuristic bound based on remaining demand volume</span>
+        <span class="c1"># Items with more remaining demand likely need more setups (optimistic estimate)</span>
+        <span class="n">bound7</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">):</span>
+            <span class="n">remaining_demand</span> <span class="o">=</span> <span class="n">total_demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="c1"># Assume we need at least ceil(remaining/max_batch) setups</span>
+            <span class="c1"># Approximated as: if remaining &gt; 0, at least min_setup_cost</span>
+            <span class="n">has_remaining</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining_demand</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">bound7</span> <span class="o">+=</span> <span class="n">has_remaining</span> <span class="o">*</span> <span class="n">min_setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="c1"># Add changeover from current item specifically (more realistic)</span>
+            <span class="c1"># This is slightly optimistic but guides towards the current item context</span>
+            <span class="n">bound7</span> <span class="o">+=</span> <span class="n">has_remaining</span> <span class="o">*</span> <span class="n">min_changeover_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">bound7</span><span class="p">)</span>
+
+        <span class="c1"># Bound 8: Pessimistic changeover (heuristic using avg of min/max)</span>
+        <span class="n">max_co_costs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">max</span><span class="p">(</span>
+                <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_changeover_cost</span><span class="p">(</span><span class="n">from_item</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">to_item</span><span class="o">=</span><span class="n">item</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">]</span>
+        <span class="n">bound8</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">):</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">total_demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">has_rem</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">heur_co</span> <span class="o">=</span> <span class="p">(</span><span class="n">min_changeover_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">max_co_costs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">//</span> <span class="mi">3</span>
+            <span class="n">bound8</span> <span class="o">+=</span> <span class="n">has_rem</span> <span class="o">*</span> <span class="p">(</span><span class="n">min_setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">heur_co</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">bound8</span><span class="p">)</span>
+
+        <span class="c1"># Bound 9: Stock penalty (penalizes holding stock)</span>
+        <span class="n">bound9</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">total_stock</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">)):</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">total_demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">has_rem</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">bound9</span> <span class="o">+=</span> <span class="n">has_rem</span> <span class="o">*</span> <span class="n">min_setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">bound9</span> <span class="o">+=</span> <span class="n">total_stock</span> <span class="o">*</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">min_inventory_costs</span><span class="p">)</span> <span class="k">if</span> <span class="n">min_inventory_costs</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">bound9</span><span class="p">)</span>
+
+        <span class="c1"># Bound 10: Average changeover heuristic</span>
+        <span class="n">avg_co</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">min_changeover_costs</span><span class="p">)</span> <span class="o">//</span> <span class="nb">len</span><span class="p">(</span><span class="n">min_changeover_costs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">min_changeover_costs</span>
+            <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="n">bound10</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">)):</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">total_demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">has_rem</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">bound10</span> <span class="o">+=</span> <span class="n">has_rem</span> <span class="o">*</span> <span class="p">(</span><span class="n">min_setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">avg_co</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">bound10</span><span class="p">)</span>
+
+        <span class="c1"># Bound 11: Stock holding with time pressure</span>
+        <span class="n">bound11</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">)):</span>
+            <span class="n">remaining</span> <span class="o">=</span> <span class="n">total_demands</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">has_rem</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">remaining</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">bound11</span> <span class="o">+=</span> <span class="n">has_rem</span> <span class="o">*</span> <span class="n">min_setup_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">bound11</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">min_inventory_costs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_dual_bound</span><span class="p">(</span><span class="n">bound11</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingDp.transition_schedule">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.transition_schedule">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transition_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">transitions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="n">max_produce</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">):</span>
+                <span class="n">max_produce</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_production_quantity</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="n">max_produce</span>
+                <span class="p">)</span>
+            <span class="n">max_produce</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_produce</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_total_demand</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">prod</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_produce</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">effects</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">preconditions</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">preconditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">+</span> <span class="n">prod</span>
+                    <span class="o">&lt;=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_total_demand</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+                <span class="p">)</span>
+                <span class="n">cost</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">allows_parallel_production</span><span class="p">():</span>
+                    <span class="n">preconditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="mi">1</span>
+                    <span class="p">)</span>
+                    <span class="n">cost</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">changeover_matrix</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_item</span><span class="p">,</span> <span class="n">item</span><span class="p">]</span>
+                    <span class="n">cost</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">production_cost</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span> <span class="o">*</span> <span class="n">prod</span>
+                    <span class="c1"># we advance in time by scheduling</span>
+                    <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+                    <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">current_item</span><span class="p">,</span> <span class="n">item</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">item_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+                        <span class="n">stock_virtual</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span>
+                        <span class="n">prod_virtual</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">item_</span> <span class="o">==</span> <span class="n">item</span><span class="p">:</span>
+                            <span class="n">stock_virtual</span> <span class="o">+=</span> <span class="n">prod</span>
+                            <span class="n">prod_virtual</span> <span class="o">+=</span> <span class="n">prod</span>
+                        <span class="n">deliver</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+                            <span class="n">stock_virtual</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item_</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_deliveries</span><span class="p">[</span><span class="n">item_</span><span class="p">],</span>
+                        <span class="p">)</span>
+                        <span class="n">backlog</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item_</span><span class="p">][</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span>
+                        <span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cumulated_deliveries</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span> <span class="o">+</span> <span class="n">deliver</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_backorder</span><span class="p">:</span>
+                            <span class="n">preconditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="n">prod_virtual</span>
+                                <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item_</span><span class="p">][</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span>
+                                <span class="p">]</span>
+                            <span class="p">)</span>
+                        <span class="n">stock</span> <span class="o">=</span> <span class="n">stock_virtual</span> <span class="o">-</span> <span class="n">deliver</span>
+                        <span class="n">cost</span> <span class="o">+=</span> <span class="n">backlog</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_backlog_cost_per_unit</span><span class="p">(</span><span class="n">item_</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                        <span class="p">)</span>
+                        <span class="n">cost</span> <span class="o">+=</span> <span class="n">stock</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_inventory_cost_per_unit</span><span class="p">(</span><span class="n">item_</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                        <span class="p">)</span>
+
+                        <span class="k">if</span> <span class="n">item_</span> <span class="o">==</span> <span class="n">item</span><span class="p">:</span>
+                            <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item_</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span> <span class="o">+</span> <span class="n">prod</span><span class="p">)</span>
+                            <span class="p">)</span>
+                            <span class="n">cost</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_backorder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">preconditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="n">prod_virtual</span>
+                                <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item_</span><span class="p">][</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span>
+                                <span class="p">]</span>
+                                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_backorder</span>
+                            <span class="p">)</span>
+
+                        <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">item_</span><span class="p">],</span> <span class="n">stock_virtual</span> <span class="o">-</span> <span class="n">deliver</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">capacity_calendar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">current_capacity</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">capacity_calendar</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">current_item</span><span class="p">,</span> <span class="n">item</span><span class="p">))</span>
+                    <span class="n">cost</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">production_cost</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span> <span class="o">*</span> <span class="n">prod</span>
+                    <span class="k">for</span> <span class="n">item_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">item_</span> <span class="o">==</span> <span class="n">item</span><span class="p">:</span>
+                            <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item_</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span> <span class="o">+</span> <span class="n">prod</span><span class="p">)</span>
+                            <span class="p">)</span>
+                            <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">item_</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span> <span class="o">+</span> <span class="n">prod</span><span class="p">)</span>
+                            <span class="p">)</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">has_capacity_limits</span><span class="p">():</span>
+                                <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                    <span class="p">(</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">current_capacity</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">current_capacity</span>
+                                        <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_times</span><span class="p">[</span><span class="n">item_</span><span class="p">][</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span>
+                                        <span class="p">]</span>
+                                        <span class="o">-</span> <span class="n">prod</span>
+                                        <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">usage_time</span><span class="p">[</span><span class="n">item_</span><span class="p">][</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span>
+                                        <span class="p">],</span>
+                                    <span class="p">)</span>
+                                <span class="p">)</span>
+                            <span class="n">cost</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_costs</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_backorder</span><span class="p">:</span>
+                                <span class="n">preconditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span> <span class="o">+</span> <span class="n">prod</span>
+                                    <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item_</span><span class="p">][</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span>
+                                    <span class="p">]</span>
+                                <span class="p">)</span>
+                    <span class="n">cost</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">changeover_matrix</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_item</span><span class="p">,</span> <span class="n">item</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">has_capacity_limits</span><span class="p">():</span>
+                    <span class="n">preconditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">current_capacity</span>
+                        <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_times</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                        <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">usage_time</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span> <span class="o">*</span> <span class="n">prod</span>
+                    <span class="p">)</span>
+                <span class="n">preconditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="p">)</span>
+                <span class="n">tr</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;prod_</span><span class="si">{</span><span class="n">prod</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">cost</span><span class="o">=</span><span class="n">cost</span> <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+                    <span class="n">effects</span><span class="o">=</span><span class="n">effects</span><span class="p">,</span>
+                    <span class="n">preconditions</span><span class="o">=</span><span class="n">preconditions</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="nb">id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+                <span class="n">transitions</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;prod_</span><span class="si">{</span><span class="n">prod</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;tr&quot;</span><span class="p">:</span> <span class="n">tr</span><span class="p">,</span>
+                    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span>
+                    <span class="s2">&quot;meaning&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;prod&quot;</span><span class="p">,</span> <span class="n">prod</span><span class="p">,</span> <span class="n">item</span><span class="p">),</span>
+                <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_transition_dominance</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">item1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">item2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">item1</span> <span class="o">==</span> <span class="n">item2</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">id1</span> <span class="o">=</span> <span class="n">transitions</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;prod_</span><span class="si">{</span><span class="mi">1</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">item1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+                    <span class="n">id2</span> <span class="o">=</span> <span class="n">transitions</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;prod_</span><span class="si">{</span><span class="mi">1</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">item2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_transition_dominance</span><span class="p">(</span>
+                        <span class="n">id1</span><span class="p">,</span>
+                        <span class="n">id2</span><span class="p">,</span>
+                        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item1</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item1</span><span class="p">]</span>
+                            <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item1</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item1</span><span class="p">]</span>
+                            <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item2</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item2</span><span class="p">],</span>
+                        <span class="p">],</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_transition_dominance</span><span class="p">(</span>
+                        <span class="n">id1</span><span class="p">,</span>
+                        <span class="n">id2</span><span class="p">,</span>
+                        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">item1</span><span class="p">]</span>
+                            <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">demands</span><span class="p">[</span><span class="n">item1</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">],</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">item2</span><span class="p">]</span>
+                            <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">demands</span><span class="p">[</span><span class="n">item2</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">],</span>
+                        <span class="p">],</span>
+                    <span class="p">)</span>
+                    <span class="c1"># self.model.add_transition_dominance(id1, id2,</span>
+                    <span class="c1">#                                    conditions=[self.stock[item2]&gt;=self.stock[item1],</span>
+                    <span class="c1">#                                                self.changeover_matrix[self.current_item, item1]&lt;</span>
+                    <span class="c1">#                                                self.changeover_matrix[self.current_item, item2]])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_transition_dominance</span><span class="p">(</span>
+                        <span class="n">id1</span><span class="p">,</span>
+                        <span class="n">id2</span><span class="p">,</span>
+                        <span class="n">conditions</span><span class="o">=</span><span class="p">[</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item1</span><span class="p">]</span>
+                            <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item1</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">],</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item2</span><span class="p">]</span>
+                            <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item2</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">],</span>
+                        <span class="p">],</span>
+                    <span class="p">)</span>
+        <span class="c1"># Advance time :</span>
+        <span class="n">effects</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_time</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="c1"># effects.append((self.count_idle, self.count_idle+1))</span>
+        <span class="n">cost</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">preconditions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># preconditions = [self.count_idle&lt;=</span>
+        <span class="c1">#                 self.problem.horizon-total_demand]</span>
+        <span class="k">for</span> <span class="n">item_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="n">stock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span>
+            <span class="c1"># prod = self.cumul_prod[item_]</span>
+            <span class="n">deliver</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span>
+                <span class="n">stock</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item_</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_deliveries</span><span class="p">[</span><span class="n">item_</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">backlog</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_deliveries</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span>
+                <span class="o">+</span> <span class="n">deliver</span>
+                <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item_</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_backlog_allowed</span><span class="p">():</span>
+                <span class="n">preconditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span>
+                    <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item_</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_backorder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">preconditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span>
+                    <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item_</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+                    <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_backorder</span>
+                <span class="p">)</span>
+            <span class="n">cost</span> <span class="o">+=</span> <span class="n">backlog</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_backlog_cost_per_unit</span><span class="p">(</span><span class="n">item_</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">cost</span> <span class="o">+=</span> <span class="p">(</span><span class="n">stock</span> <span class="o">-</span> <span class="n">deliver</span><span class="p">)</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_inventory_cost_per_unit</span><span class="p">(</span><span class="n">item_</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_backlog_cost_per_unit</span><span class="p">(</span><span class="n">item_</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">cost</span> <span class="o">+=</span> <span class="n">backlog</span> <span class="o">*</span> <span class="mi">10000</span>
+            <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">item_</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock</span><span class="p">[</span><span class="n">item_</span><span class="p">]</span> <span class="o">-</span> <span class="n">deliver</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">capacity_calendar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">effects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">current_capacity</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">capacity_calendar</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">preconditions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">advance_time</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;advance_time&quot;</span><span class="p">,</span>
+            <span class="n">cost</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">penalty_advance_time</span> <span class="o">+</span> <span class="n">cost</span> <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+            <span class="n">effects</span><span class="o">=</span><span class="n">effects</span><span class="p">,</span>
+            <span class="n">preconditions</span><span class="o">=</span><span class="n">preconditions</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">id2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">advance_time</span><span class="p">)</span>
+        <span class="n">transitions</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;advance_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;tr&quot;</span><span class="p">:</span> <span class="n">advance_time</span><span class="p">,</span>
+            <span class="s2">&quot;id2&quot;</span><span class="p">:</span> <span class="n">id2</span><span class="p">,</span>
+            <span class="s2">&quot;meaning&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;advance_time&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="n">id1</span> <span class="o">=</span> <span class="n">transitions</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;prod_</span><span class="si">{</span><span class="mi">1</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_transition_dominance</span><span class="p">(</span>
+                <span class="n">id1</span><span class="p">,</span>
+                <span class="n">id2</span><span class="p">,</span>
+                <span class="n">conditions</span><span class="o">=</span><span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cumul_prod</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+                    <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">cumulated_demands</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">],</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="c1"># Advance ti</span>
+
+        <span class="k">return</span> <span class="n">transitions</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingDp.retrieve_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sol</span><span class="p">:</span> <span class="n">dp</span><span class="o">.</span><span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProductionBasedSolution</span><span class="p">:</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">target_state</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">productions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">sol</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+            <span class="c1"># print(&quot;cost of transition&quot;, t.name,</span>
+            <span class="c1">#      t.eval_cost(0, state, self.model))</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">meaning</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="s2">&quot;meaning&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">meaning</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;prod&quot;</span><span class="p">:</span>
+                <span class="n">prod</span><span class="p">,</span> <span class="n">item</span> <span class="o">=</span> <span class="n">meaning</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">meaning</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">productions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ProductionDecision</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">quantity</span><span class="o">=</span><span class="n">prod</span><span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="n">time</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">current_time_element</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">ProductionBasedSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">productions</span><span class="o">=</span><span class="n">productions</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingDp.set_warm_start">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.set_warm_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_warm_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">ProductionBasedSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

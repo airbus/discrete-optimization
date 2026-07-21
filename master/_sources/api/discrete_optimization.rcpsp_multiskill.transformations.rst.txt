@@ -1,0 +1,21 @@
+discrete\_optimization.rcpsp\_multiskill.transformations package
+================================================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_multiskill.transformations.generic\_scheduling\_impl module
+-----------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.transformations.generic_scheduling_impl
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

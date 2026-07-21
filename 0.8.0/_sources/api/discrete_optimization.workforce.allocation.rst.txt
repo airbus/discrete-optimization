@@ -1,0 +1,45 @@
+discrete\_optimization.workforce.allocation package
+===================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.workforce.allocation.solvers
+
+Submodules
+----------
+
+discrete\_optimization.workforce.allocation.parser module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.allocation.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.allocation.problem module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.allocation.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.allocation.utils module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.allocation.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.workforce.allocation
+   :members:
+   :show-inheritance:
+   :undoc-members:

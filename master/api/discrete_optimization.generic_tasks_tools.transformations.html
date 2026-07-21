@@ -1,0 +1,311 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.transformations package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.generic_tools package" href="discrete_optimization.generic_tools.html" />
+    <link rel="prev" title="discrete_optimization.generic_tasks_tools.solvers.optalcp package" href="discrete_optimization.generic_tasks_tools.solvers.optalcp.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.alb.html">discrete_optimization.alb package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.flex_scheduling.html">discrete_optimization.flex_scheduling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.html">discrete_optimization.lotsizing package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.shop.html">discrete_optimization.shop package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.transformations package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-generic-tasks-tools-transformations-package">
+<h1>discrete_optimization.generic_tasks_tools.transformations package<a class="headerlink" href="#discrete-optimization-generic-tasks-tools-transformations-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl">
+<span id="discrete-optimization-generic-tasks-tools-transformations-generic-scheduling-impl-module"></span><h2>discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl module<a class="headerlink" href="#module-discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.FromGenericSchedulingImpl">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.</span></span><span class="sig-name descname"><span class="pre">FromGenericSchedulingImpl</span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/transformations/generic_scheduling_impl.html#FromGenericSchedulingImpl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.FromGenericSchedulingImpl" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericSchedulingImplProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericSchedulingImplSolution</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpecificSchedulingProblem</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpecificSchedulingSolution</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">SpecificSchedulingProblem</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpecificSchedulingSolution</span></code>]</p>
+<p>Transform the generic implementation of a scheduling problem into a specific one.</p>
+<p>This is still an abstract class, as the <cite>transform_problem()</cite> remains to implement.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.FromGenericSchedulingImpl.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SpecificSchedulingSolution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem"><span class="pre">GenericSchedulingImplProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution"><span class="pre">GenericSchedulingImplSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/transformations/generic_scheduling_impl.html#FromGenericSchedulingImpl.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.FromGenericSchedulingImpl.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Convert solution from target problem back to source problem.</p>
+<p>This is REQUIRED for all transformations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – Solution in target problem space</p></li>
+<li><p><strong>source_problem</strong> – Original problem (to associate with back-transformed solution)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Corresponding solution in source problem space</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.</span></span><span class="sig-name descname"><span class="pre">ToGenericSchedulingImpl</span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/transformations/generic_scheduling_impl.html#ToGenericSchedulingImpl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">SpecificSchedulingProblem</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpecificSchedulingSolution</span></code>, <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericSchedulingImplProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericSchedulingImplSolution</span></code></a>], <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">SpecificSchedulingProblem</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpecificSchedulingSolution</span></code>]</p>
+<p>Transform a specific scheduling problem into the generic implementation.</p>
+<p>This is still an abstract class, as <cite>convert_solution_from_raw_generic_to_specific()</cite> remains to implement.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution"><span class="pre">GenericSchedulingImplSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SpecificSchedulingProblem</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">SpecificSchedulingSolution</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/transformations/generic_scheduling_impl.html#ToGenericSchedulingImpl.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Convert solution from target problem back to source problem.</p>
+<p>This is REQUIRED for all transformations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – Solution in target problem space</p></li>
+<li><p><strong>source_problem</strong> – Original problem (to associate with back-transformed solution)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Corresponding solution in source problem space</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SpecificSchedulingSolution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem"><span class="pre">GenericSchedulingImplProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution"><span class="pre">GenericSchedulingImplSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/transformations/generic_scheduling_impl.html#ToGenericSchedulingImpl.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Convert solution from source problem to target problem.</p>
+<p>This is OPTIONAL - only needed for warmstart support.
+Return None if transformation not supported/meaningful.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – Solution in source problem space</p></li>
+<li><p><strong>target_problem</strong> – Transformed problem (to associate with forward-transformed solution)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Corresponding solution in target problem space, or None if not supported</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.is_bidirectional">
+<span class="sig-name descname"><span class="pre">is_bidirectional</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SpecificSchedulingProblem</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/transformations/generic_scheduling_impl.html#ToGenericSchedulingImpl.is_bidirectional"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.is_bidirectional" title="Link to this definition"></a></dt>
+<dd><p>Check if transformation supports both directions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – Problem to check bidirectionality for</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if forward_transform_solution is implemented</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.transform_objective">
+<span class="sig-name descname"><span class="pre">transform_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SpecificSchedulingProblem</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_utils.Objective" title="discrete_optimization.generic_tasks_tools.generic_scheduling_utils.Objective"><span class="pre">Objective</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_utils.Objective" title="discrete_optimization.generic_tasks_tools.generic_scheduling_utils.Objective"><span class="pre">Objective</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution"><span class="pre">GenericSchedulingImplSolution</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/transformations/generic_scheduling_impl.html#ToGenericSchedulingImpl.transform_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.transform_objective" title="Link to this definition"></a></dt>
+<dd><p>Transform scheduling problem objective for the generic implementation.</p>
+<p>This default implementation returns default values of <cite>GenericSchedulingImplProblem</cite>.
+To be overriden in child classes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the corresponding arguments
+<cite>of GenericSchedulingImplProblem.__init__()</cite>, resulting to computing makespan + time penalty.
+See its documentation for more details.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.auto.GenericSchedulingAutoCpSatSolver.objective" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.auto.GenericSchedulingAutoCpSatSolver.objective">objective</a>, custom_evaluate_fn, <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.auto.GenericSchedulingAutoCpSatSolver.objective_resource_weights" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.auto.GenericSchedulingAutoCpSatSolver.objective_resource_weights">objective_resource_weights</a>, compute_time_penalty</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SpecificSchedulingProblem</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem"><span class="pre">GenericSchedulingImplProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/transformations/generic_scheduling_impl.html#ToGenericSchedulingImpl.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform source problem to target problem.</p>
+<p>This method should be deterministic: same source → same target.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – The original problem to transform</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Transformed problem instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.transform_solution_from_raw_generic_to_specific">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">transform_solution_from_raw_generic_to_specific</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_utils.RawSolution" title="discrete_optimization.generic_tasks_tools.generic_scheduling_utils.RawSolution"><span class="pre">RawSolution</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SpecificSchedulingProblem</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">SpecificSchedulingSolution</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/transformations/generic_scheduling_impl.html#ToGenericSchedulingImpl.transform_solution_from_raw_generic_to_specific"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.ToGenericSchedulingImpl.transform_solution_from_raw_generic_to_specific" title="Link to this definition"></a></dt>
+<dd><p>Convert a raw solution (from generic problem) into a specific solution to the source problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong></p>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.convert_solution_from_specific_to_generic">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.</span></span><span class="sig-name descname"><span class="pre">convert_solution_from_specific_to_generic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SpecificSchedulingSolution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generic_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem"><span class="pre">GenericSchedulingImplProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution" title="discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution"><span class="pre">GenericSchedulingImplSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tasks_tools/transformations/generic_scheduling_impl.html#convert_solution_from_specific_to_generic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl.convert_solution_from_specific_to_generic" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-discrete_optimization.generic_tasks_tools.transformations">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.generic_tasks_tools.transformations" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.generic_tasks_tools.solvers.optalcp.html" class="btn btn-neutral float-left" title="discrete_optimization.generic_tasks_tools.solvers.optalcp package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.generic_tools.html" class="btn btn-neutral float-right" title="discrete_optimization.generic_tools package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

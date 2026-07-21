@@ -1,0 +1,760 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;Generic CP-SAT scheduling solver for lot sizing problems.</span>
+
+<span class="sd">This solver uses a scheduling-based formulation where each demand is modeled</span>
+<span class="sd">as an event (interval variable) to be scheduled. This is fundamentally different</span>
+<span class="sd">from the quantity-based formulation in generic_lotsizing_cpsat.py.</span>
+
+<span class="sd">Key features:</span>
+<span class="sd">- Interval variables for each demand occurrence</span>
+<span class="sd">- NoOverlap constraints for capacity</span>
+<span class="sd">- Circuit constraints for changeover sequencing</span>
+<span class="sd">- Natural representation of inventory cost as (deadline - production_time)</span>
+<span class="sd">- Efficient for problems with sparse demands or unit demands</span>
+
+<span class="sd">The scheduling approach is particularly effective when:</span>
+<span class="sd">- Demands are small relative to horizon (many idle periods)</span>
+<span class="sd">- Strong changeover costs make sequencing important</span>
+<span class="sd">- Backlog is allowed (flexible timing)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">CpSolverSolutionCallback</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.generic_lotsizing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GenericLotSizingProblem</span><span class="p">,</span>
+    <span class="n">Item</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.generic_solver.cpsat.lotsizing_solver_cpsat</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LotSizingCpSatSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.production_solution</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProductionBasedSolution</span><span class="p">,</span>
+    <span class="n">ProductionDecision</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="GenericLotSizingCpsatScheduling">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenericLotSizingCpsatScheduling</span><span class="p">(</span><span class="n">LotSizingCpSatSolver</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic CP-SAT scheduling solver for lot sizing.</span>
+
+<span class="sd">    This solver models lot sizing as a scheduling problem where each demand</span>
+<span class="sd">    is an event to be scheduled. This contrasts with the quantity-based</span>
+<span class="sd">    formulation in GenericLotSizingCpsat.</span>
+
+<span class="sd">    Model structure:</span>
+<span class="sd">    - For each demand occurrence (item, period, quantity), create demand events</span>
+<span class="sd">    - Each event has a start time variable (when to produce)</span>
+<span class="sd">    - Interval variables ensure no conflicts</span>
+<span class="sd">    - Circuit constraint sequences productions for changeover costs</span>
+<span class="sd">    - Inventory cost = (deadline - start) * holding_cost</span>
+
+<span class="sd">    This formulation is most efficient for:</span>
+<span class="sd">    - Unit demands or small demands</span>
+<span class="sd">    - Sparse demand patterns (many idle periods)</span>
+<span class="sd">    - Strong changeover cost structure</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unit_demand_aggregation&quot;</span><span class="p">,</span>
+            <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span>
+            <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">GenericLotSizingProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">]</span>
+    <span class="n">variables</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="n">demand_events</span><span class="p">:</span> <span class="nb">list</span>  <span class="c1"># List of (item, period, quantity, event_id)</span>
+    <span class="n">event_deadlines</span><span class="p">:</span> <span class="nb">dict</span>  <span class="c1"># event_id -&gt; deadline period</span>
+
+<div class="viewcode-block" id="GenericLotSizingCpsatScheduling.init_model">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the CP-SAT scheduling model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            **kwargs: Hyperparameters including unit_demand_aggregation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">demand_events</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event_deadlines</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Create demand events and interval variables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_demand_events</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;unit_demand_aggregation&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_interval_variables</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_capacity_constraints</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_objective</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_demand_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit_demand_aggregation</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create demand events from problem demands.</span>
+
+<span class="sd">        Each demand can create one or more events depending on aggregation:</span>
+<span class="sd">        - If unit_demand_aggregation=True: aggregate all units into one event</span>
+<span class="sd">        - If unit_demand_aggregation=False: create one event per unit</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            unit_demand_aggregation: Whether to aggregate demand units</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">event_id</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">):</span>
+                <span class="n">demand</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_demand</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+
+                <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">unit_demand_aggregation</span><span class="p">:</span>
+                        <span class="c1"># One event for entire demand</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">demand_events</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">demand</span><span class="p">,</span> <span class="n">event_id</span><span class="p">))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">event_deadlines</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span>
+                        <span class="n">event_id</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># One event per unit of demand</span>
+                        <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">demand</span><span class="p">):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">demand_events</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">event_id</span><span class="p">))</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">event_deadlines</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span>
+                            <span class="n">event_id</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand_events</span><span class="p">)</span><span class="si">}</span><span class="s2"> demand events for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">)</span><span class="si">}</span><span class="s2"> items&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_interval_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create interval variables for each demand event.</span>
+
+<span class="sd">        For each event, create:</span>
+<span class="sd">        - start: when to produce this demand</span>
+<span class="sd">        - interval: fixed-size interval (size=1 for one period production)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">starts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">intervals</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Track events by item for ordering constraints</span>
+        <span class="n">events_by_item</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="n">events_by_item</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">item</span><span class="p">,</span> <span class="n">deadline</span><span class="p">,</span> <span class="n">quantity</span><span class="p">,</span> <span class="n">event_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand_events</span><span class="p">:</span>
+            <span class="c1"># Bounds on start time</span>
+            <span class="c1"># Can&#39;t produce too early (based on item&#39;s previous demands)</span>
+            <span class="c1"># Can&#39;t produce too late (deadline, or later if backlog allowed)</span>
+            <span class="n">lb</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># TODO: could be tighter based on previous demands</span>
+            <span class="n">ub</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">deadline</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_backlog_allowed</span><span class="p">()</span>
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Start variable</span>
+            <span class="n">starts</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="n">lb</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;start_</span><span class="si">{</span><span class="n">event_id</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Interval variable (fixed size = 1 period)</span>
+            <span class="n">intervals</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewFixedSizeIntervalVar</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="n">starts</span><span class="p">[</span><span class="n">event_id</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;interval_</span><span class="si">{</span><span class="n">event_id</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+            <span class="n">events_by_item</span><span class="p">[</span><span class="n">item</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event_id</span><span class="p">)</span>
+
+        <span class="c1"># Ordering constraints within same item</span>
+        <span class="c1"># Earlier demands must be produced before or at same time as later demands</span>
+        <span class="c1"># The capacity constraint (NoOverlap or cumulative) will handle actual conflicts</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="n">events</span> <span class="o">=</span> <span class="n">events_by_item</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">starts</span><span class="p">[</span><span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">&lt;=</span> <span class="n">starts</span><span class="p">[</span><span class="n">events</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">starts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;intervals&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">intervals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;events_by_item&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">events_by_item</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_capacity_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create capacity constraints.</span>
+
+<span class="sd">        We always create explicit capacity constraints to properly account for:</span>
+<span class="sd">        - Production time per event</span>
+<span class="sd">        - Setup time when an item is produced in a period</span>
+<span class="sd">        - Total capacity limit per period</span>
+
+<span class="sd">        When parallel production is NOT allowed, we also add constraints to ensure</span>
+<span class="sd">        at most one item TYPE is produced per period.</span>
+
+<span class="sd">        Note: We do NOT use NoOverlap because:</span>
+<span class="sd">        - Multiple events of the SAME item can be in the same period</span>
+<span class="sd">        - NoOverlap would prevent this incorrectly</span>
+<span class="sd">        - The explicit capacity and parallel production constraints handle everything correctly</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Always create explicit capacity constraints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_explicit_capacity_constraints</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_explicit_capacity_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create explicit capacity constraints accounting for setup times.</span>
+
+<span class="sd">        For each period t, create capacity constraint:</span>
+<span class="sd">        sum(production_time + setup_time) &lt;= capacity</span>
+
+<span class="sd">        Setup times are charged conservatively: whenever an item is produced in a period,</span>
+<span class="sd">        we charge the setup time. This is correct but may be conservative (overestimates</span>
+<span class="sd">        setup costs when the same item is produced consecutively).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Creating explicit capacity constraints for setup times&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Track which items are produced in each period (for parallel production constraint)</span>
+        <span class="n">item_produced_in_period</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># item_produced_in_period[item][t] = BoolVar</span>
+
+        <span class="c1"># Capacity constraints per period</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">):</span>
+            <span class="n">capacity_terms</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+                <span class="c1"># Production time for events of this item scheduled at time t</span>
+                <span class="n">events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;events_by_item&quot;</span><span class="p">][</span><span class="n">item</span><span class="p">]</span>
+
+                <span class="c1"># Collect all events of this item at time t</span>
+                <span class="n">events_at_t_for_item</span> <span class="o">=</span> <span class="p">[]</span>
+
+                <span class="k">for</span> <span class="n">event_id</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+                    <span class="c1"># Get event data</span>
+                    <span class="n">event_data</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="n">dl</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">eid</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">it</span><span class="p">,</span> <span class="n">dl</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">eid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand_events</span>
+                        <span class="k">if</span> <span class="n">eid</span> <span class="o">==</span> <span class="n">event_id</span>
+                    <span class="p">)</span>
+                    <span class="n">item_ev</span><span class="p">,</span> <span class="n">deadline</span><span class="p">,</span> <span class="n">quantity</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">event_data</span>
+
+                    <span class="c1"># Binary: is this event scheduled at time t?</span>
+                    <span class="n">is_at_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;event_</span><span class="si">{</span><span class="n">event_id</span><span class="si">}</span><span class="s2">_at_</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">][</span><span class="n">event_id</span><span class="p">]</span> <span class="o">==</span> <span class="n">t</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">is_at_t</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">][</span><span class="n">event_id</span><span class="p">]</span> <span class="o">!=</span> <span class="n">t</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">is_at_t</span><span class="o">.</span><span class="n">Not</span><span class="p">())</span>
+
+                    <span class="n">events_at_t_for_item</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">is_at_t</span><span class="p">)</span>
+
+                    <span class="c1"># Production time contribution</span>
+                    <span class="n">prod_time_per_unit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_production_time_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">prod_time_per_unit</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">capacity_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">quantity</span> <span class="o">*</span> <span class="n">prod_time_per_unit</span> <span class="o">*</span> <span class="n">is_at_t</span><span class="p">)</span>
+
+                <span class="c1"># Setup time: charged if ANY event of this item is at time t</span>
+                <span class="k">if</span> <span class="n">events_at_t_for_item</span><span class="p">:</span>
+                    <span class="c1"># item_at_t = 1 if any event of item is at time t</span>
+                    <span class="n">item_at_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;item_</span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">_at_</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span><span class="n">item_at_t</span><span class="p">,</span> <span class="n">events_at_t_for_item</span><span class="p">)</span>
+
+                    <span class="c1"># Track for parallel production constraint</span>
+                    <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">item_produced_in_period</span><span class="p">:</span>
+                        <span class="n">item_produced_in_period</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                    <span class="n">item_produced_in_period</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">item_at_t</span>
+
+                    <span class="c1"># Add setup time if item produced in period t</span>
+                    <span class="n">setup_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_setup_time</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="n">setup_time</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">capacity_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">setup_time</span> <span class="o">*</span> <span class="n">item_at_t</span><span class="p">)</span>
+
+            <span class="c1"># Add capacity constraint for period t</span>
+            <span class="k">if</span> <span class="n">capacity_terms</span><span class="p">:</span>
+                <span class="n">available</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_available_production_time</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">capacity_terms</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">available</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Period </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">capacity_terms</span><span class="p">)</span><span class="si">}</span><span class="s2"> capacity terms, limit=</span><span class="si">{</span><span class="n">available</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Explicit capacity constraints created&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Parallel production constraint: at most one item TYPE per period</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">allows_parallel_production</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">):</span>
+                <span class="c1"># At most one item can be produced in period t</span>
+                <span class="n">items_at_t</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">item</span> <span class="ow">in</span> <span class="n">item_produced_in_period</span>
+                        <span class="ow">and</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">item_produced_in_period</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+                    <span class="p">):</span>
+                        <span class="n">items_at_t</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item_produced_in_period</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="n">t</span><span class="p">])</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">items_at_t</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="c1"># At most 1 item type produced</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">items_at_t</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Parallel production constraints added (at most one item type per period)&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_changeover_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create changeover cost model using circuit constraint.</span>
+
+<span class="sd">        Models the production sequence as a Hamiltonian path through events:</span>
+<span class="sd">        - Dummy start node connects to first event</span>
+<span class="sd">        - Each event connects to next event</span>
+<span class="sd">        - Last event connects to dummy end node</span>
+<span class="sd">        - Arc costs represent changeover costs between items</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Linear expression for total changeover cost</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">allows_parallel_production</span><span class="p">():</span>
+            <span class="c1"># Circuit doesn&#39;t make sense with parallel production</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+        <span class="c1"># Build nodes: dummy + all events</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;dummy&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)]</span>  <span class="c1"># Dummy node</span>
+        <span class="n">event_to_node</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">deadline</span><span class="p">,</span> <span class="n">quantity</span><span class="p">,</span> <span class="n">event_id</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">demand_events</span><span class="p">):</span>
+            <span class="n">node_id</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># +1 because dummy is 0</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">item</span><span class="p">,</span> <span class="n">event_id</span><span class="p">))</span>
+            <span class="n">event_to_node</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_id</span>
+
+        <span class="n">n_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+
+        <span class="c1"># Create arc variables for circuit</span>
+        <span class="n">arcs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">arc_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Maximum gap between consecutive productions</span>
+        <span class="n">total_demands</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_total_demand</span><span class="p">(</span><span class="n">item</span><span class="p">))</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+        <span class="p">)</span>
+        <span class="n">max_gap</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="n">total_demands</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_nodes</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_nodes</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">j</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Create arc variable</span>
+                <span class="n">arc_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;arc_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">arcs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">arc_var</span><span class="p">))</span>
+                <span class="n">arc_vars</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">=</span> <span class="n">arc_var</span>
+
+                <span class="c1"># Ordering constraints</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">j</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Not dummy nodes</span>
+                    <span class="n">item_i</span><span class="p">,</span> <span class="n">event_i</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">item_j</span><span class="p">,</span> <span class="n">event_j</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+                    <span class="c1"># If arc is used, enforce start_j &gt;= start_i</span>
+                    <span class="c1"># Capacity constraints ensure no actual conflicts</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">][</span><span class="n">event_j</span><span class="p">]</span>
+                        <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">][</span><span class="n">event_i</span><span class="p">]</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">arc_var</span><span class="p">)</span>
+
+                    <span class="c1"># Limit gap</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">][</span><span class="n">event_j</span><span class="p">]</span>
+                        <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">][</span><span class="n">event_i</span><span class="p">]</span> <span class="o">+</span> <span class="n">max_gap</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span><span class="n">arc_var</span><span class="p">)</span>
+
+                    <span class="c1"># Same item ordering: enforce sequential demand order</span>
+                    <span class="k">if</span> <span class="n">item_i</span> <span class="o">==</span> <span class="n">item_j</span><span class="p">:</span>
+                        <span class="c1"># Check if these are sequential demands for the same item</span>
+                        <span class="n">events_i</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="n">ev_id</span>
+                            <span class="k">for</span> <span class="n">it</span><span class="p">,</span> <span class="n">dl</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">ev_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand_events</span>
+                            <span class="k">if</span> <span class="n">it</span> <span class="o">==</span> <span class="n">item_i</span>
+                        <span class="p">]</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">idx_i</span> <span class="o">=</span> <span class="n">events_i</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">event_i</span><span class="p">)</span>
+                            <span class="n">idx_j</span> <span class="o">=</span> <span class="n">events_i</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">event_j</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">idx_j</span> <span class="o">!=</span> <span class="n">idx_i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+                                <span class="c1"># Not sequential -&gt; disallow arc</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">arc_var</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                            <span class="k">pass</span>
+
+        <span class="c1"># Add circuit constraint</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddCircuit</span><span class="p">(</span><span class="n">arcs</span><span class="p">)</span>
+
+        <span class="c1"># Changeover cost: sum over arcs between real productions</span>
+        <span class="n">changeover_cost_terms</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span> <span class="n">arc_var</span> <span class="ow">in</span> <span class="n">arc_vars</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">j</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Skip arcs involving dummy</span>
+                <span class="n">item_i</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">item_j</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">cost</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_changeover_cost</span><span class="p">(</span><span class="n">item_i</span><span class="p">,</span> <span class="n">item_j</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">cost</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">changeover_cost_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cost</span> <span class="o">*</span> <span class="n">arc_var</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;circuit_arcs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">arc_vars</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">nodes</span>
+
+        <span class="k">if</span> <span class="n">changeover_cost_terms</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">changeover_cost_terms</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create objective function.</span>
+
+<span class="sd">        Objective components:</span>
+<span class="sd">        1. Inventory cost: sum over events of (deadline - start) * holding_cost</span>
+<span class="sd">        2. Backlog cost: sum over events of max(0, start - deadline) * backlog_cost</span>
+<span class="sd">        3. Changeover cost: from circuit constraint</span>
+<span class="sd">        4. Setup cost: not naturally modeled in scheduling (use penalty if needed)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">objective_terms</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Inventory holding cost</span>
+        <span class="c1"># For each event, holding time = max(0, deadline - production_time)</span>
+        <span class="c1"># Only charge inventory if we produce BEFORE the deadline</span>
+        <span class="n">inventory_cost_terms</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">inventory_time_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">item</span><span class="p">,</span> <span class="n">deadline</span><span class="p">,</span> <span class="n">quantity</span><span class="p">,</span> <span class="n">event_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand_events</span><span class="p">:</span>
+            <span class="n">holding_cost</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_inventory_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">deadline</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">holding_cost</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Inventory time = max(0, deadline - start)</span>
+                <span class="n">inv_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                    <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                    <span class="n">ub</span><span class="o">=</span><span class="n">deadline</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;inv_time_</span><span class="si">{</span><span class="n">event_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">inventory_time_vars</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">inv_time</span>
+
+                <span class="c1"># inv_time = max(0, deadline - start)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span>
+                    <span class="n">inv_time</span><span class="p">,</span>
+                    <span class="p">[</span><span class="n">deadline</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">][</span><span class="n">event_id</span><span class="p">],</span> <span class="mi">0</span><span class="p">],</span>
+                <span class="p">)</span>
+
+                <span class="n">inventory_cost_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">quantity</span> <span class="o">*</span> <span class="n">holding_cost</span> <span class="o">*</span> <span class="n">inv_time</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">inventory_cost_terms</span><span class="p">:</span>
+            <span class="n">inventory_cost_expr</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">inventory_cost_terms</span><span class="p">)</span>
+            <span class="n">objective_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inventory_cost_expr</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;inventory_cost_expr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inventory_cost_expr</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;inventory_time_vars&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inventory_time_vars</span>
+
+        <span class="c1"># Backlog cost (if allowed)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_backlog_allowed</span><span class="p">():</span>
+            <span class="n">backlog_cost_terms</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">delay_vars</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">for</span> <span class="n">item</span><span class="p">,</span> <span class="n">deadline</span><span class="p">,</span> <span class="n">quantity</span><span class="p">,</span> <span class="n">event_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand_events</span><span class="p">:</span>
+                <span class="n">backlog_cost</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_backlog_cost_per_unit</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">deadline</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">backlog_cost</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># Delay = max(0, start - deadline)</span>
+                    <span class="n">delay_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                        <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">ub</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span> <span class="o">-</span> <span class="n">deadline</span><span class="p">,</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;delay_</span><span class="si">{</span><span class="n">event_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">delay_vars</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">delay_var</span>
+
+                    <span class="c1"># delay = max(0, start - deadline)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span>
+                        <span class="n">delay_var</span><span class="p">,</span>
+                        <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">][</span><span class="n">event_id</span><span class="p">]</span> <span class="o">-</span> <span class="n">deadline</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                    <span class="p">)</span>
+
+                    <span class="n">backlog_cost_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">quantity</span> <span class="o">*</span> <span class="n">backlog_cost</span> <span class="o">*</span> <span class="n">delay_var</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">backlog_cost_terms</span><span class="p">:</span>
+                <span class="n">backlog_cost_expr</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">backlog_cost_terms</span><span class="p">)</span>
+                <span class="n">objective_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">backlog_cost_expr</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;backlog_cost_expr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">backlog_cost_expr</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;delay_vars&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">delay_vars</span>
+
+        <span class="c1"># Changeover cost</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">allows_parallel_production</span><span class="p">():</span>
+            <span class="n">changeover_cost_expr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_changeover_model</span><span class="p">()</span>
+            <span class="c1"># Check if we got a non-zero expression (list of terms) or just 0</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">changeover_cost_expr</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">changeover_cost_expr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># No changeover costs</span>
+                <span class="k">pass</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">objective_terms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">changeover_cost_expr</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;changeover_cost_expr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">changeover_cost_expr</span>
+
+        <span class="c1"># Setup cost - not naturally modeled in scheduling</span>
+        <span class="c1"># Could add as penalty for number of distinct production periods</span>
+        <span class="c1"># For now, skip (typically zero in test problems or included in changeover)</span>
+
+        <span class="c1"># Minimize total cost</span>
+        <span class="k">if</span> <span class="n">objective_terms</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Minimize</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">objective_terms</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Objective created with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">objective_terms</span><span class="p">)</span><span class="si">}</span><span class="s2"> components&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GenericLotSizingCpsatScheduling.retrieve_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cpsolvercb</span><span class="p">:</span> <span class="n">CpSolverSolutionCallback</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProductionBasedSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract solution from CP-SAT solver.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cpsolvercb: CP-SAT solution callback</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ProductionBasedSolution with productions and deliveries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract production times for each event</span>
+        <span class="n">production_times</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">start_var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;starts&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">production_times</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="n">start_var</span><span class="p">)</span>
+
+        <span class="c1"># Group by (item, period) to aggregate production quantities</span>
+        <span class="n">prod_by_item_period</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">item</span><span class="p">,</span> <span class="n">deadline</span><span class="p">,</span> <span class="n">quantity</span><span class="p">,</span> <span class="n">event_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">demand_events</span><span class="p">:</span>
+            <span class="n">prod_time</span> <span class="o">=</span> <span class="n">production_times</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">prod_time</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prod_by_item_period</span><span class="p">:</span>
+                <span class="n">prod_by_item_period</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">prod_by_item_period</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="n">quantity</span>
+
+        <span class="c1"># Create production decisions</span>
+        <span class="n">productions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="p">),</span> <span class="n">quantity</span> <span class="ow">in</span> <span class="n">prod_by_item_period</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">productions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">ProductionDecision</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">period</span><span class="p">,</span> <span class="n">quantity</span><span class="o">=</span><span class="n">quantity</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Let ProductionBasedSolution compute deliveries automatically</span>
+        <span class="c1"># It will satisfy demands from production + inventory in the correct order</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">ProductionBasedSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">productions</span><span class="o">=</span><span class="n">productions</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Log objective components</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_objective_comparison</span><span class="p">(</span><span class="n">cpsolvercb</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">solution</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_objective_comparison</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cpsolvercb</span><span class="p">:</span> <span class="n">CpSolverSolutionCallback</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">ProductionBasedSolution</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Log comparison between CP-SAT objective and actual evaluation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cpsolvercb: CP-SAT solution callback</span>
+<span class="sd">            solution: Extracted solution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># CP-SAT objective components</span>
+        <span class="n">cpsat_inventory</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;inventory_cost_expr&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s2">&quot;inventory_cost_expr&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span>
+            <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="n">cpsat_backlog</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;backlog_cost_expr&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s2">&quot;backlog_cost_expr&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span>
+            <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="n">cpsat_changeover</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">cpsolvercb</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;changeover_cost_expr&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s2">&quot;changeover_cost_expr&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span>
+            <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="n">cpsat_total</span> <span class="o">=</span> <span class="n">cpsat_inventory</span> <span class="o">+</span> <span class="n">cpsat_backlog</span> <span class="o">+</span> <span class="n">cpsat_changeover</span>
+
+        <span class="c1"># Actual evaluation</span>
+        <span class="n">eval_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+        <span class="n">actual_total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">eval_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;CP-SAT Objective (scheduling formulation):&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Inventory cost:  </span><span class="si">{</span><span class="n">cpsat_inventory</span><span class="si">:</span><span class="s2">10.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Backlog cost:    </span><span class="si">{</span><span class="n">cpsat_backlog</span><span class="si">:</span><span class="s2">10.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Changeover cost: </span><span class="si">{</span><span class="n">cpsat_changeover</span><span class="si">:</span><span class="s2">10.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Total:           </span><span class="si">{</span><span class="n">cpsat_total</span><span class="si">:</span><span class="s2">10.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Actual Evaluation:&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Inventory cost:  </span><span class="si">{</span><span class="n">eval_dict</span><span class="p">[</span><span class="s1">&#39;inventory_cost&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">10.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Backlog cost:    </span><span class="si">{</span><span class="n">eval_dict</span><span class="p">[</span><span class="s1">&#39;backlog_cost&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">10.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Changeover cost: </span><span class="si">{</span><span class="n">eval_dict</span><span class="p">[</span><span class="s1">&#39;changeover_cost&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">10.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Total:           </span><span class="si">{</span><span class="n">actual_total</span><span class="si">:</span><span class="s2">10.1f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)</span>
+
+        <span class="c1"># Check for discrepancies</span>
+        <span class="n">discrepancy</span> <span class="o">=</span> <span class="n">actual_total</span> <span class="o">-</span> <span class="n">cpsat_total</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">discrepancy</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DISCREPANCY: </span><span class="si">{</span><span class="n">discrepancy</span><span class="si">:</span><span class="s2">+.1f</span><span class="si">}</span><span class="s2"> (actual - cpsat)&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GenericLotSizingCpsatScheduling.get_production_quantity_var">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.get_production_quantity_var">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_production_quantity_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not applicable for scheduling formulation.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;Scheduling formulation does not use quantity variables per period&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingCpsatScheduling.get_production_binary_var">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.get_production_binary_var">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_production_binary_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not applicable for scheduling formulation.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;Scheduling formulation does not use binary variables per period&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingCpsatScheduling.get_inventory_var">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.get_inventory_var">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_inventory_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not applicable for scheduling formulation.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;Scheduling formulation does not have explicit inventory variables&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingCpsatScheduling.get_backlog_var">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.get_backlog_var">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_backlog_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not applicable for scheduling formulation.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;Scheduling formulation uses event-based delay variables&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingCpsatScheduling.get_delivery_var">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.get_delivery_var">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_delivery_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Not applicable for scheduling formulation.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Scheduling formulation uses event-based deliveries&quot;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

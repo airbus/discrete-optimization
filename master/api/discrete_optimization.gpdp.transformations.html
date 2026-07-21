@@ -1,0 +1,560 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.gpdp.transformations package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.knapsack package" href="discrete_optimization.knapsack.html" />
+    <link rel="prev" title="discrete_optimization.gpdp.solvers package" href="discrete_optimization.gpdp.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.alb.html">discrete_optimization.alb package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.flex_scheduling.html">discrete_optimization.flex_scheduling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.html">discrete_optimization.lotsizing package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.shop.html">discrete_optimization.shop package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.gpdp.transformations package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-gpdp-transformations-package">
+<h1>discrete_optimization.gpdp.transformations package<a class="headerlink" href="#discrete-optimization-gpdp-transformations-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.gpdp.transformations.from_tsp">
+<span id="discrete-optimization-gpdp-transformations-from-tsp-module"></span><h2>discrete_optimization.gpdp.transformations.from_tsp module<a class="headerlink" href="#module-discrete_optimization.gpdp.transformations.from_tsp" title="Link to this heading"></a></h2>
+<p>Transformation from TSP to GPDP (General Pickup and Delivery Problem).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_tsp.TspToGpdpTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.transformations.from_tsp.</span></span><span class="sig-name descname"><span class="pre">TspToGpdpTransformation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_tsp.html#TspToGpdpTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_tsp.TspToGpdpTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.Point2DTspProblem" title="discrete_optimization.tsp.problem.Point2DTspProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point2DTspProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.TspSolution" title="discrete_optimization.tsp.problem.TspSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TspSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpSolution</span></code></a>]</p>
+<p>Transform TSP to GPDP.</p>
+<p>TSP is a special case of GPDP with a single vehicle and no capacity constraints.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_tsp.TspToGpdpTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.Point2DTspProblem" title="discrete_optimization.tsp.problem.Point2DTspProblem"><span class="pre">Point2DTspProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.TspSolution" title="discrete_optimization.tsp.problem.TspSolution"><span class="pre">TspSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_tsp.html#TspToGpdpTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_tsp.TspToGpdpTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform GPDP solution back to TSP solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_tsp.TspToGpdpTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.TspSolution" title="discrete_optimization.tsp.problem.TspSolution"><span class="pre">TspSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_tsp.html#TspToGpdpTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_tsp.TspToGpdpTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform TSP solution to GPDP solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_tsp.TspToGpdpTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_tsp.html#TspToGpdpTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_tsp.TspToGpdpTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Get metadata for problem transformation (P1 → P2).</p>
+<p>Documents what information is lost when transforming the PROBLEM.</p>
+<p>Override this method to provide detailed information about:
+- Constraints that cannot be represented in target problem
+- Objectives that are ignored or approximated
+- Assumptions made during transformation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TransformationMetadata documenting losses in problem transformation</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Default:</dt><dd><p>Returns exact_transformation() (no losses documented)</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Solutions from the target problem always map back MECHANICALLY via
+back_transform_solution(), but may not satisfy all constraints from
+the original source problem if this transformation is lossy.</p>
+<dl class="simple">
+<dt>Example: BinPack → SALBP loses incompatibility constraints.</dt><dd><p>Solutions from SALBP solvers map back to BinPack allocations,
+but may violate incompatibility if that constraint was present.</p>
+</dd>
+</dl>
+<p>Always verify solutions in the original problem after solving via transformation!</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_tsp.TspToGpdpTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.Point2DTspProblem" title="discrete_optimization.tsp.problem.Point2DTspProblem"><span class="pre">Point2DTspProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_tsp.html#TspToGpdpTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_tsp.TspToGpdpTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform TSP to GPDP using the existing ProxyClass implementation.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.gpdp.transformations.from_vrp">
+<span id="discrete-optimization-gpdp-transformations-from-vrp-module"></span><h2>discrete_optimization.gpdp.transformations.from_vrp module<a class="headerlink" href="#module-discrete_optimization.gpdp.transformations.from_vrp" title="Link to this heading"></a></h2>
+<p>Transformation from VRP to GPDP (General Pickup and Delivery Problem).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_vrp.VrpToGpdpTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.transformations.from_vrp.</span></span><span class="sig-name descname"><span class="pre">VrpToGpdpTransformation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrp.html#VrpToGpdpTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_vrp.VrpToGpdpTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Customer2DVrpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">VrpSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpSolution</span></code></a>]</p>
+<p>Transform VRP to GPDP.</p>
+<p>Mapping:
+- VRP vehicles → GPDP vehicles
+- VRP customers → GPDP transportation nodes
+- VRP start/end depots → GPDP origin/target nodes (virtual)
+- VRP capacity → GPDP resource flow (demand)
+- VRP distances → GPDP distance matrix</p>
+<p>VRP is a special case of GPDP where:
+- No pickup-delivery pairs
+- Single resource (demand/capacity)
+- No time windows (use VRPTW → GPDP for time windows)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_vrp.VrpToGpdpTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><span class="pre">Customer2DVrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><span class="pre">VrpSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrp.html#VrpToGpdpTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_vrp.VrpToGpdpTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform GPDP solution back to VRP solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – GPDP solution</p></li>
+<li><p><strong>source_problem</strong> – Original VRP problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent VRP solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_vrp.VrpToGpdpTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><span class="pre">VrpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrp.html#VrpToGpdpTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_vrp.VrpToGpdpTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform VRP solution to GPDP solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – VRP solution</p></li>
+<li><p><strong>target_problem</strong> – Target GPDP problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent GPDP solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_vrp.VrpToGpdpTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrp.html#VrpToGpdpTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_vrp.VrpToGpdpTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward transformation (VRP → GPDP).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_vrp.VrpToGpdpTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><span class="pre">Customer2DVrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrp.html#VrpToGpdpTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_vrp.VrpToGpdpTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform VRP to GPDP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – VRP problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent GPDP problem</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.gpdp.transformations.from_vrptw">
+<span id="discrete-optimization-gpdp-transformations-from-vrptw-module"></span><h2>discrete_optimization.gpdp.transformations.from_vrptw module<a class="headerlink" href="#module-discrete_optimization.gpdp.transformations.from_vrptw" title="Link to this heading"></a></h2>
+<p>Transformation from VRPTW to GPDP (General Pickup and Delivery Problem).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_vrptw.VrptwToGpdpTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.transformations.from_vrptw.</span></span><span class="sig-name descname"><span class="pre">VrptwToGpdpTransformation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrptw.html#VrptwToGpdpTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_vrptw.VrptwToGpdpTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">VRPTWProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">VRPTWSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpSolution</span></code></a>]</p>
+<p>Transform VRPTW to GPDP.</p>
+<p>VRPTW is a special case of GPDP with time windows and demand constraints.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_vrptw.VrptwToGpdpTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><span class="pre">VRPTWProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><span class="pre">VRPTWSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrptw.html#VrptwToGpdpTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_vrptw.VrptwToGpdpTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform GPDP solution back to VRPTW solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_vrptw.VrptwToGpdpTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><span class="pre">VRPTWSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrptw.html#VrptwToGpdpTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_vrptw.VrptwToGpdpTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform VRPTW solution to GPDP solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_vrptw.VrptwToGpdpTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrptw.html#VrptwToGpdpTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_vrptw.VrptwToGpdpTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Get metadata for problem transformation (P1 → P2).</p>
+<p>Documents what information is lost when transforming the PROBLEM.</p>
+<p>Override this method to provide detailed information about:
+- Constraints that cannot be represented in target problem
+- Objectives that are ignored or approximated
+- Assumptions made during transformation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TransformationMetadata documenting losses in problem transformation</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Default:</dt><dd><p>Returns exact_transformation() (no losses documented)</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Solutions from the target problem always map back MECHANICALLY via
+back_transform_solution(), but may not satisfy all constraints from
+the original source problem if this transformation is lossy.</p>
+<dl class="simple">
+<dt>Example: BinPack → SALBP loses incompatibility constraints.</dt><dd><p>Solutions from SALBP solvers map back to BinPack allocations,
+but may violate incompatibility if that constraint was present.</p>
+</dd>
+</dl>
+<p>Always verify solutions in the original problem after solving via transformation!</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.from_vrptw.VrptwToGpdpTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><span class="pre">VRPTWProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrptw.html#VrptwToGpdpTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.from_vrptw.VrptwToGpdpTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform VRPTW to GPDP using the existing ProxyClass implementation.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.gpdp.transformations">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.gpdp.transformations" title="Link to this heading"></a></h2>
+<p>Transformations from routing problems to GPDP (General Pickup and Delivery Problem).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.TspToGpdpTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.transformations.</span></span><span class="sig-name descname"><span class="pre">TspToGpdpTransformation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_tsp.html#TspToGpdpTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.TspToGpdpTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.Point2DTspProblem" title="discrete_optimization.tsp.problem.Point2DTspProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point2DTspProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.TspSolution" title="discrete_optimization.tsp.problem.TspSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">TspSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpSolution</span></code></a>]</p>
+<p>Transform TSP to GPDP.</p>
+<p>TSP is a special case of GPDP with a single vehicle and no capacity constraints.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.TspToGpdpTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.Point2DTspProblem" title="discrete_optimization.tsp.problem.Point2DTspProblem"><span class="pre">Point2DTspProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.TspSolution" title="discrete_optimization.tsp.problem.TspSolution"><span class="pre">TspSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_tsp.html#TspToGpdpTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.TspToGpdpTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform GPDP solution back to TSP solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.TspToGpdpTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.TspSolution" title="discrete_optimization.tsp.problem.TspSolution"><span class="pre">TspSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_tsp.html#TspToGpdpTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.TspToGpdpTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform TSP solution to GPDP solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.TspToGpdpTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_tsp.html#TspToGpdpTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.TspToGpdpTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Get metadata for problem transformation (P1 → P2).</p>
+<p>Documents what information is lost when transforming the PROBLEM.</p>
+<p>Override this method to provide detailed information about:
+- Constraints that cannot be represented in target problem
+- Objectives that are ignored or approximated
+- Assumptions made during transformation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TransformationMetadata documenting losses in problem transformation</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Default:</dt><dd><p>Returns exact_transformation() (no losses documented)</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Solutions from the target problem always map back MECHANICALLY via
+back_transform_solution(), but may not satisfy all constraints from
+the original source problem if this transformation is lossy.</p>
+<dl class="simple">
+<dt>Example: BinPack → SALBP loses incompatibility constraints.</dt><dd><p>Solutions from SALBP solvers map back to BinPack allocations,
+but may violate incompatibility if that constraint was present.</p>
+</dd>
+</dl>
+<p>Always verify solutions in the original problem after solving via transformation!</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.TspToGpdpTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.tsp.html#discrete_optimization.tsp.problem.Point2DTspProblem" title="discrete_optimization.tsp.problem.Point2DTspProblem"><span class="pre">Point2DTspProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_tsp.html#TspToGpdpTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.TspToGpdpTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform TSP to GPDP using the existing ProxyClass implementation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.VrpToGpdpTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.transformations.</span></span><span class="sig-name descname"><span class="pre">VrpToGpdpTransformation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrp.html#VrpToGpdpTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.VrpToGpdpTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Customer2DVrpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">VrpSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpSolution</span></code></a>]</p>
+<p>Transform VRP to GPDP.</p>
+<p>Mapping:
+- VRP vehicles → GPDP vehicles
+- VRP customers → GPDP transportation nodes
+- VRP start/end depots → GPDP origin/target nodes (virtual)
+- VRP capacity → GPDP resource flow (demand)
+- VRP distances → GPDP distance matrix</p>
+<p>VRP is a special case of GPDP where:
+- No pickup-delivery pairs
+- Single resource (demand/capacity)
+- No time windows (use VRPTW → GPDP for time windows)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.VrpToGpdpTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><span class="pre">Customer2DVrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><span class="pre">VrpSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrp.html#VrpToGpdpTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.VrpToGpdpTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform GPDP solution back to VRP solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – GPDP solution</p></li>
+<li><p><strong>source_problem</strong> – Original VRP problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent VRP solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.VrpToGpdpTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><span class="pre">VrpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrp.html#VrpToGpdpTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.VrpToGpdpTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform VRP solution to GPDP solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – VRP solution</p></li>
+<li><p><strong>target_problem</strong> – Target GPDP problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent GPDP solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.VrpToGpdpTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrp.html#VrpToGpdpTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.VrpToGpdpTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward transformation (VRP → GPDP).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.VrpToGpdpTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><span class="pre">Customer2DVrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrp.html#VrpToGpdpTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.VrpToGpdpTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform VRP to GPDP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – VRP problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent GPDP problem</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.VrptwToGpdpTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.gpdp.transformations.</span></span><span class="sig-name descname"><span class="pre">VrptwToGpdpTransformation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compute_graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrptw.html#VrptwToGpdpTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.VrptwToGpdpTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">VRPTWProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">VRPTWSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">GpdpSolution</span></code></a>]</p>
+<p>Transform VRPTW to GPDP.</p>
+<p>VRPTW is a special case of GPDP with time windows and demand constraints.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.VrptwToGpdpTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><span class="pre">VRPTWProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><span class="pre">VRPTWSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrptw.html#VrptwToGpdpTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.VrptwToGpdpTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform GPDP solution back to VRPTW solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.VrptwToGpdpTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><span class="pre">VRPTWSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpSolution" title="discrete_optimization.gpdp.problem.GpdpSolution"><span class="pre">GpdpSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrptw.html#VrptwToGpdpTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.VrptwToGpdpTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform VRPTW solution to GPDP solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.VrptwToGpdpTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrptw.html#VrptwToGpdpTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.VrptwToGpdpTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Get metadata for problem transformation (P1 → P2).</p>
+<p>Documents what information is lost when transforming the PROBLEM.</p>
+<p>Override this method to provide detailed information about:
+- Constraints that cannot be represented in target problem
+- Objectives that are ignored or approximated
+- Assumptions made during transformation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>TransformationMetadata documenting losses in problem transformation</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Default:</dt><dd><p>Returns exact_transformation() (no losses documented)</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Solutions from the target problem always map back MECHANICALLY via
+back_transform_solution(), but may not satisfy all constraints from
+the original source problem if this transformation is lossy.</p>
+<dl class="simple">
+<dt>Example: BinPack → SALBP loses incompatibility constraints.</dt><dd><p>Solutions from SALBP solvers map back to BinPack allocations,
+but may violate incompatibility if that constraint was present.</p>
+</dd>
+</dl>
+<p>Always verify solutions in the original problem after solving via transformation!</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.gpdp.transformations.VrptwToGpdpTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><span class="pre">VRPTWProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.gpdp.html#discrete_optimization.gpdp.problem.GpdpProblem" title="discrete_optimization.gpdp.problem.GpdpProblem"><span class="pre">GpdpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/gpdp/transformations/from_vrptw.html#VrptwToGpdpTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.gpdp.transformations.VrptwToGpdpTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform VRPTW to GPDP using the existing ProxyClass implementation.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.gpdp.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.gpdp.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.knapsack.html" class="btn btn-neutral float-right" title="discrete_optimization.knapsack package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

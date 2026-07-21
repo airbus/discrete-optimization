@@ -1,0 +1,388 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.demands &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.demands</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.lotsizing.demands</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;Demands mixin for lot sizing problems.</span>
+
+<span class="sd">This module provides the core demands component that nearly all lot sizing problems use.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Item</span><span class="p">,</span>
+    <span class="n">LotSizingProblem</span><span class="p">,</span>
+    <span class="n">LotSizingSolution</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DemandsProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DemandsProblem</span><span class="p">(</span><span class="n">LotSizingProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin for problems with demand requirements.</span>
+
+<span class="sd">    This is a core component - nearly all lot sizing problems have demands to satisfy.</span>
+
+<span class="sd">    The demand d_it represents the quantity of item i required in period t.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DemandsProblem.get_demand">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsProblem.get_demand">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_demand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get demand for given item in given period.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            item: The product/item type</span>
+<span class="sd">            period: Time period (0 to horizon-1)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Demand quantity d_it (non-negative integer)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="DemandsProblem.get_total_demand">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsProblem.get_total_demand">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_total_demand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get total demand for an item across all periods.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Sum of all demands for this item</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_demand</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">horizon</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="DemandsProblem.is_binary_demand_item">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsProblem.is_binary_demand_item">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_binary_demand_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_demand</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">t</span><span class="p">))</span> <span class="ow">in</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">}</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DemandsProblem.is_binary_demand">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsProblem.is_binary_demand">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_binary_demand</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">is_binary_demand_item</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items_list</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DemandsProblem.get_cumulative_demands">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsProblem.get_cumulative_demands">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_cumulative_demands</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get cumulative demand for item over time.</span>
+
+<span class="sd">        Useful for inventory and delivery computations.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Array of cumulative demands [d_i0, d_i0+d_i1, d_i0+d_i1+d_i2, ...]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">demands</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_demand</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">horizon</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">demands</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DemandsProblem.get_max_demand_per_period">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsProblem.get_max_demand_per_period">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_max_demand_per_period</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get maximum demand across all items and periods.</span>
+
+<span class="sd">        Useful for setting upper bounds in solvers.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            max_i,t d_it</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_demand</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items_list</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DemandsProblem.allows_lost_demand">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsProblem.allows_lost_demand">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allows_lost_demand</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DemandsSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DemandsSolution</span><span class="p">(</span><span class="n">LotSizingSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solution mixin for demand-based problems.</span>
+
+<span class="sd">    Provides methods to check demand satisfaction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">DemandsProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">]</span>
+
+<div class="viewcode-block" id="DemandsSolution.check_demand_satisfaction">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsSolution.check_demand_satisfaction">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_demand_satisfaction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">allow_delays</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check whether all demands are eventually satisfied.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            allow_delays: If False, demands must be satisfied on time (no backlog).</span>
+<span class="sd">                          If True, backlog is allowed but total satisfaction required.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if demands are satisfied according to policy, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">allows_lost_demand</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+                <span class="n">total_delivery</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_total_delivery_quantity</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">total_delivery</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_total_demand</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Some demands not satisfied: </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">, &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">total_delivery</span><span class="si">}</span><span class="s2"> vs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_total_demand</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="n">cumul_delivery</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">cumul_demand</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">):</span>
+                <span class="n">cumul_delivery</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_delivery_quantity</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+                <span class="n">cumul_demand</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_demand</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">allow_delays</span> <span class="ow">and</span> <span class="n">cumul_delivery</span> <span class="o">&lt;</span> <span class="n">cumul_demand</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Demand not satisfied on time for item </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2"> at period </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">: &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;cumulative delivered </span><span class="si">{</span><span class="n">cumul_delivery</span><span class="si">}</span><span class="s2"> &lt; cumulative demand </span><span class="si">{</span><span class="n">cumul_demand</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="c1"># Check total satisfaction at end of horizon</span>
+            <span class="k">if</span> <span class="n">cumul_delivery</span> <span class="o">&lt;</span> <span class="n">cumul_demand</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Total demand not satisfied for item </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">: &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;total delivered </span><span class="si">{</span><span class="n">cumul_delivery</span><span class="si">}</span><span class="s2"> &lt; total demand </span><span class="si">{</span><span class="n">cumul_demand</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="DemandsSolution.get_total_unmet_demand">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsSolution.get_total_unmet_demand">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_total_unmet_demand</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute total unmet demand across all items and periods.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Total quantity of demand not satisfied</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">total_unmet</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="n">cumul_delivery</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_delivery_quantity</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">cumul_demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_total_demand</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="n">total_unmet</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cumul_demand</span> <span class="o">-</span> <span class="n">cumul_delivery</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">total_unmet</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DemandsArrayProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsArrayProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DemandsArrayProblem</span><span class="p">(</span><span class="n">DemandsProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Concrete implementation of DemandsProblem using numpy arrays for storage.</span>
+
+<span class="sd">    This is a helper mixin for concrete problem classes that want to store</span>
+<span class="sd">    demands as a 2D array.</span>
+
+<span class="sd">    Can be used as:</span>
+<span class="sd">        class MyProblem(DemandsArrayProblem[int], OtherMixins...):</span>
+<span class="sd">            def __init__(self, demands, ...):</span>
+<span class="sd">                DemandsArrayProblem.__init__(self, demands)</span>
+<span class="sd">                ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">demands</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize with demands array.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            demands: 2D array of shape (nb_items, horizon) or list of lists</span>
+<span class="sd">                    demands[i][t] = demand for item i in period t</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">demands</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">demands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">demands</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_demands</span> <span class="o">=</span> <span class="n">demands</span>
+
+<div class="viewcode-block" id="DemandsArrayProblem.get_demand">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.DemandsArrayProblem.get_demand">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_demand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get demand from array storage.&quot;&quot;&quot;</span>
+        <span class="n">item_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_index_from_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_demands</span><span class="p">[</span><span class="n">item_idx</span><span class="p">,</span> <span class="n">period</span><span class="p">])</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SingleItemDemandsArrayProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.SingleItemDemandsArrayProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SingleItemDemandsArrayProblem</span><span class="p">(</span><span class="n">DemandsProblem</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Concrete implementation for single-item problems with array storage.</span>
+
+<span class="sd">    This is a convenience class for single-item problems where demands</span>
+<span class="sd">    can be stored as a 1D array.</span>
+
+<span class="sd">    The items_list is fixed to [0].</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">demands</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize with 1D demands array.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            demands: 1D array of demands[t] for each period t</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">demands</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">demands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">demands</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_demands</span> <span class="o">=</span> <span class="n">demands</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">items_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Single item with index 0.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">horizon</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Horizon is length of demands array.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_demands</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SingleItemDemandsArrayProblem.get_demand">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.demands.SingleItemDemandsArrayProblem.get_demand">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_demand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get demand from 1D array.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Single item problem only has item 0, got </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_demands</span><span class="p">[</span><span class="n">period</span><span class="p">])</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

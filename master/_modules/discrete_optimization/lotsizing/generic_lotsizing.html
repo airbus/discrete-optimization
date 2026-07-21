@@ -1,0 +1,491 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.generic_lotsizing &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.generic_lotsizing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.lotsizing.generic_lotsizing</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;Generic lot sizing problem composing all mixins.</span>
+
+<span class="sd">This module provides GenericLotSizingProblem and GenericLotSizingSolution that</span>
+<span class="sd">combine all feature mixins, similar to GenericSchedulingProblem in generic_tasks_tools.</span>
+
+<span class="sd">This generic class encompasses all lot sizing variants by composing mixins.</span>
+<span class="sd">Specific variants can disable features using &quot;Without&quot; mixins.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="c1"># Generic type for items/products</span>
+<span class="c1"># Usually int, but could be string, enum, or any hashable type</span>
+<span class="n">Item</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;Item&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Hashable</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">TypeObjective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.backlog</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BacklogProblem</span><span class="p">,</span>
+    <span class="n">BacklogSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Item</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.changeover</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ChangeoverCostsProblem</span><span class="p">,</span>
+    <span class="n">ChangeoverCostsSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.costs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InventoryCostsProblem</span><span class="p">,</span>
+    <span class="n">InventoryCostsSolution</span><span class="p">,</span>
+    <span class="n">ProductionCostsProblem</span><span class="p">,</span>
+    <span class="n">ProductionCostsSolution</span><span class="p">,</span>
+    <span class="n">SetupCostsProblem</span><span class="p">,</span>
+    <span class="n">SetupCostsSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.parallel_production</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParallelProductionProblem</span><span class="p">,</span>
+    <span class="n">ParallelProductionSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.setup_times</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SetupTimesProblem</span><span class="p">,</span>
+    <span class="n">SetupTimesSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.stock_limits</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">StockLimitsProblem</span><span class="p">,</span>
+    <span class="n">StockLimitsSolution</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="GenericLotSizingProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenericLotSizingProblem</span><span class="p">(</span>
+    <span class="c1"># Costs</span>
+    <span class="n">SetupCostsProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">ProductionCostsProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">InventoryCostsProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">BacklogProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">ChangeoverCostsProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">StockLimitsProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">ParallelProductionProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="c1"># Capacity (extends DemandsProblem which extends LotSizingProblem)</span>
+    <span class="c1"># SetupTimesProblem already extends CapacityProblem, so we get it transitively</span>
+    <span class="n">SetupTimesProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic lot sizing problem with ALL optional features.</span>
+
+<span class="sd">    Similar to GenericSchedulingProblem in generic_tasks_tools, this class</span>
+<span class="sd">    encompasses all lot sizing variants by composing mixins:</span>
+
+<span class="sd">    - **Single-item or multi-item**: Controlled by items_list</span>
+<span class="sd">    - **Uncapacitated or capacitated**: Use WithoutCapacityProblem for uncapacitated</span>
+<span class="sd">    - **With or without backlog**: Use WithoutBacklogProblem if backlog not allowed</span>
+<span class="sd">    - **With or without setup times**: Use WithoutSetupTimesProblem if setup times don&#39;t consume capacity</span>
+<span class="sd">    - **With or without changeover costs**: Use WithoutChangeoverCostsProblem for sequence-independent problems</span>
+<span class="sd">    - **With or without stock limits**: Use WithoutStockLimitsProblem if no inventory limits</span>
+<span class="sd">    - **With or without parallel production**: Use WithoutParallelProductionProblem if only one item per period</span>
+
+<span class="sd">    Each feature can be disabled using the corresponding &quot;Without&quot; mixin.</span>
+
+<span class="sd">    Example variants:</span>
+<span class="sd">    - ULSP (Uncapacitated Lot-Sizing Problem): Use WithoutCapacityProblem</span>
+<span class="sd">    - CLSP (Capacitated Lot-Sizing Problem): Use CapacityProblem</span>
+<span class="sd">    - CLSP with setup times: Use SetupTimesProblem</span>
+<span class="sd">    - CLSP with backlog: Use BacklogProblem with is_backlog_allowed() = True</span>
+<span class="sd">    - CLSP with stock limits: Use StockLimitsProblem (or WithoutStockLimitsProblem to disable)</span>
+<span class="sd">    - CLSP with exclusive production: Use WithoutParallelProductionProblem</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GenericLotSizingProblem.get_objective_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem.get_objective_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Define objectives for lot sizing problems.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Objective register with setup, production, inventory, backlog, and changeover costs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MINIMIZATION</span><span class="p">,</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;setup_cost&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;production_cost&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;inventory_cost&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;backlog_cost&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;changeover_cost&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1.0</span>
+                <span class="p">),</span>
+                <span class="c1"># Penalty for unmet demand (useful when backlog not allowed)</span>
+                <span class="s2">&quot;unmet_demand&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1000.0</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingProblem.evaluate">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="s2">&quot;GenericLotSizingSolution&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate solution and compute all objective components.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            variable: Solution to evaluate</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with objective values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;setup_cost&quot;</span><span class="p">:</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_total_setup_cost</span><span class="p">(),</span>
+            <span class="s2">&quot;production_cost&quot;</span><span class="p">:</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_total_production_cost</span><span class="p">(),</span>
+            <span class="s2">&quot;inventory_cost&quot;</span><span class="p">:</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_total_inventory_cost</span><span class="p">(),</span>
+            <span class="s2">&quot;backlog_cost&quot;</span><span class="p">:</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_total_backlog_cost</span><span class="p">(),</span>
+            <span class="s2">&quot;changeover_cost&quot;</span><span class="p">:</span> <span class="n">variable</span><span class="o">.</span><span class="n">compute_total_changeover_cost</span><span class="p">(),</span>
+            <span class="s2">&quot;unmet_demand&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">variable</span><span class="o">.</span><span class="n">get_total_unmet_demand</span><span class="p">()),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingProblem.satisfy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="s2">&quot;GenericLotSizingSolution&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check all constraints.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            variable: Solution to check</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if all constraints satisfied, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">satisfy_partial</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingProblem.satisfy_partial">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem.satisfy_partial">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy_partial</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">variable</span><span class="p">:</span> <span class="s2">&quot;GenericLotSizingSolution&quot;</span><span class="p">,</span>
+        <span class="n">demands</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">capacity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">backlog</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">stock_limits</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">parallel_production</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Partial constraint checking.</span>
+
+<span class="sd">        One can switch off some checks by setting the corresponding parameter to False.</span>
+<span class="sd">        Useful for debugging or progressive solution construction.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            variable: Solution to check</span>
+<span class="sd">            demands: Check demand satisfaction</span>
+<span class="sd">            capacity: Check capacity constraints</span>
+<span class="sd">            backlog: Check backlog constraints</span>
+<span class="sd">            stock_limits: Check stock limit constraints</span>
+<span class="sd">            parallel_production: Check parallel production constraints</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if selected constraints satisfied, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="c1"># Demand satisfaction</span>
+            <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">demands</span>
+                <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_demand_satisfaction</span><span class="p">(</span>
+                    <span class="n">allow_delays</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_backlog_allowed</span><span class="p">()</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="c1"># Capacity constraints</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">capacity</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_capacity_constraints</span><span class="p">())</span>
+            <span class="c1"># Backlog constraints</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">backlog</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_backlog_constraints</span><span class="p">())</span>
+            <span class="c1"># Stock limit constraints</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">stock_limits</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_stock_limit_constraints</span><span class="p">())</span>
+            <span class="c1"># Parallel production constraints</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">parallel_production</span>
+                <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_parallel_production_constraints</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="GenericLotSizingSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenericLotSizingSolution</span><span class="p">(</span>
+    <span class="c1"># All solution mixins</span>
+    <span class="n">SetupCostsSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">ProductionCostsSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">InventoryCostsSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">BacklogSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">SetupTimesSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">ChangeoverCostsSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">StockLimitsSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="n">ParallelProductionSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+    <span class="c1"># SetupTimesSolution extends CapacitySolution</span>
+    <span class="c1"># CapacitySolution extends DemandsSolution</span>
+    <span class="c1"># DemandsSolution extends LotSizingSolution</span>
+    <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic lot sizing solution corresponding to GenericLotSizingProblem.</span>
+
+<span class="sd">    This solution class combines all mixin solution classes, providing:</span>
+<span class="sd">    - Production and setup tracking</span>
+<span class="sd">    - Inventory and delivery computation</span>
+<span class="sd">    - Backlog tracking</span>
+<span class="sd">    - Cost computation for all components</span>
+<span class="sd">    - Constraint checking (capacity, stock limits, parallel production, etc.)</span>
+
+<span class="sd">    Concrete implementations should inherit from this and provide:</span>
+<span class="sd">    - get_production_quantity()</span>
+<span class="sd">    - has_setup()</span>
+<span class="sd">    - get_delivery_quantity()</span>
+<span class="sd">    - get_inventory_level()</span>
+<span class="sd">    - get_backlog_quantity()</span>
+<span class="sd">    - get_production_sequence()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">GenericLotSizingProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">]</span>
+
+<div class="viewcode-block" id="GenericLotSizingSolution.compute_total_cost">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingSolution.compute_total_cost">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_total_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute total cost of all components.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Sum of all cost components</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute_total_setup_cost</span><span class="p">()</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_total_production_cost</span><span class="p">()</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_total_inventory_cost</span><span class="p">()</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_total_backlog_cost</span><span class="p">()</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_total_changeover_cost</span><span class="p">()</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericLotSizingSolution.get_cost_evolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingSolution.get_cost_evolution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_cost_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get cumulative cost evolution over time for all components.</span>
+
+<span class="sd">        Returns a dictionary with cumulative costs for each period:</span>
+<span class="sd">        - &#39;inventory&#39;: Cumulative inventory holding costs</span>
+<span class="sd">        - &#39;backlog&#39;: Cumulative backlog/delay costs</span>
+<span class="sd">        - &#39;setup&#39;: Cumulative setup costs</span>
+<span class="sd">        - &#39;production&#39;: Cumulative production costs</span>
+<span class="sd">        - &#39;changeover&#39;: Cumulative changeover costs</span>
+<span class="sd">        - &#39;total&#39;: Cumulative total cost</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary mapping cost component names to lists of cumulative costs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">horizon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span>
+
+        <span class="c1"># Initialize cumulative totals</span>
+        <span class="n">costs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;inventory&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;backlog&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;setup&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;production&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;changeover&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="p">}</span>
+
+        <span class="n">total_inv</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">total_backlog</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">total_setup</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">total_production</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">total_changeover</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Track previous item for changeover detection</span>
+        <span class="n">prev_item_produced</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">horizon</span><span class="p">):</span>
+            <span class="c1"># Accumulate costs for this period</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+                <span class="c1"># Inventory cost</span>
+                <span class="n">inv_level</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inventory_level</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+                <span class="n">total_inv</span> <span class="o">+=</span> <span class="n">inv_level</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_inventory_cost_per_unit</span><span class="p">(</span>
+                    <span class="n">item</span><span class="p">,</span> <span class="n">t</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Backlog cost</span>
+                <span class="n">backlog</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_backlog_quantity</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+                <span class="n">total_backlog</span> <span class="o">+=</span> <span class="n">backlog</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_backlog_cost_per_unit</span><span class="p">(</span>
+                    <span class="n">item</span><span class="p">,</span> <span class="n">t</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Setup cost</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_setup</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+                    <span class="n">total_setup</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_setup_cost</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+                <span class="c1"># Production cost</span>
+                <span class="n">qty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_production_quantity</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+                <span class="n">total_production</span> <span class="o">+=</span> <span class="n">qty</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_production_cost_per_unit</span><span class="p">(</span>
+                    <span class="n">item</span><span class="p">,</span> <span class="n">t</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Changeover cost - detect item transitions</span>
+            <span class="n">curr_item_produced</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_production_quantity</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">curr_item_produced</span> <span class="o">=</span> <span class="n">item</span>
+                    <span class="k">break</span>
+
+            <span class="k">if</span> <span class="n">prev_item_produced</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">curr_item_produced</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">prev_item_produced</span> <span class="o">!=</span> <span class="n">curr_item_produced</span><span class="p">:</span>
+                    <span class="n">total_changeover</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_changeover_cost</span><span class="p">(</span>
+                        <span class="n">prev_item_produced</span><span class="p">,</span> <span class="n">curr_item_produced</span>
+                    <span class="p">)</span>
+
+            <span class="n">prev_item_produced</span> <span class="o">=</span> <span class="n">curr_item_produced</span>
+
+            <span class="c1"># Store cumulative costs for this period</span>
+            <span class="n">costs</span><span class="p">[</span><span class="s2">&quot;inventory&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total_inv</span><span class="p">)</span>
+            <span class="n">costs</span><span class="p">[</span><span class="s2">&quot;backlog&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total_backlog</span><span class="p">)</span>
+            <span class="n">costs</span><span class="p">[</span><span class="s2">&quot;setup&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total_setup</span><span class="p">)</span>
+            <span class="n">costs</span><span class="p">[</span><span class="s2">&quot;production&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total_production</span><span class="p">)</span>
+            <span class="n">costs</span><span class="p">[</span><span class="s2">&quot;changeover&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">total_changeover</span><span class="p">)</span>
+            <span class="n">costs</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">total_inv</span>
+                <span class="o">+</span> <span class="n">total_backlog</span>
+                <span class="o">+</span> <span class="n">total_setup</span>
+                <span class="o">+</span> <span class="n">total_production</span>
+                <span class="o">+</span> <span class="n">total_changeover</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">costs</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

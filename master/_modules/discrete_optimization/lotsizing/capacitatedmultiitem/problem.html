@@ -1,0 +1,582 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.capacitatedmultiitem.problem &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.capacitatedmultiitem.problem</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.lotsizing.capacitatedmultiitem.problem</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;Capacitated multi-item lot sizing problem with changeover costs.</span>
+
+<span class="sd">This problem considers:</span>
+<span class="sd">- Multiple item types</span>
+<span class="sd">- Production capacity constraints</span>
+<span class="sd">- Changeover costs when switching between items</span>
+<span class="sd">- Inventory holding costs</span>
+<span class="sd">- No backlog allowed (hard constraint)</span>
+<span class="sd">- No setup costs, production costs, or setup times</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EncodingRegister</span><span class="p">,</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TypeObjective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.encoding_register</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListInteger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GenericLotSizingProblem</span><span class="p">,</span>
+    <span class="n">Item</span><span class="p">,</span>
+    <span class="n">ProductionBasedSolution</span><span class="p">,</span>
+    <span class="n">ProductionDecision</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.costs</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">WithoutProductionCostsProblem</span><span class="p">,</span>
+    <span class="n">WithoutProductionCostsSolution</span><span class="p">,</span>
+    <span class="n">WithoutSetupCostsProblem</span><span class="p">,</span>
+    <span class="n">WithoutSetupCostsSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.parallel_production</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">WithoutParallelProductionProblem</span><span class="p">,</span>
+    <span class="n">WithoutParallelProductionSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.setup_times</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">WithoutSetupTimesProblem</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="CapacitatedMultiItemSolution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CapacitatedMultiItemSolution</span><span class="p">(</span>
+    <span class="c1"># Override features we DON&#39;T have (these must come before ProductionBasedSolution to override methods)</span>
+    <span class="n">WithoutSetupCostsSolution</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">WithoutProductionCostsSolution</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="c1"># Production logic (automatically provides inventory/delivery computation + all GenericLotSizingSolution methods)</span>
+    <span class="n">ProductionBasedSolution</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">WithoutParallelProductionSolution</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solution for capacitated multi-item lot sizing problem.</span>
+
+<span class="sd">    Inherits from:</span>
+<span class="sd">    - ProductionBasedSolution: Automatically computes inventory, deliveries, backlog from productions</span>
+<span class="sd">      (which itself inherits from GenericLotSizingSolution, providing all mixin methods)</span>
+<span class="sd">    - WithoutSetupCostsSolution: No setup costs in this problem variant</span>
+<span class="sd">    - WithoutProductionCostsSolution: No per-unit production costs in this problem variant</span>
+
+<span class="sd">    Features:</span>
+<span class="sd">    - Backlog/delays: May be allowed or not (controlled by problem.allow_delays)</span>
+<span class="sd">    - Changeover costs: Always present</span>
+<span class="sd">    - Inventory costs: Always present</span>
+<span class="sd">    - Capacity constraints: Always present</span>
+
+<span class="sd">    Adds:</span>
+<span class="sd">    - list_item_per_time: Alternative representation for binary problems</span>
+<span class="sd">      (for each period, which item type to produce, or nb_items for idle)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">CapacitatedMultiItemLSP</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">CapacitatedMultiItemLSP</span><span class="p">,</span>
+        <span class="n">productions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProductionDecision</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">list_item_per_time</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            problem: The problem instance</span>
+<span class="sd">            productions: List of production decisions (item, period, quantity)</span>
+<span class="sd">            list_item_per_time: Alternative representation - for each period, which item to produce</span>
+<span class="sd">                               (value &gt;= nb_items or None means idle)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># If list_item_per_time is provided, convert to productions</span>
+        <span class="k">if</span> <span class="n">productions</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">list_item_per_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">productions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_list_to_productions</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">list_item_per_time</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">productions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">productions</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Initialize base class with productions</span>
+        <span class="c1"># ProductionBasedSolution will automatically compute inventory, deliveries, backlog</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">problem</span><span class="p">,</span> <span class="n">productions</span><span class="o">=</span><span class="n">productions</span><span class="p">)</span>
+
+        <span class="c1"># Store the list representation</span>
+        <span class="k">if</span> <span class="n">list_item_per_time</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">productions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Reconstruct list_item_per_time from productions</span>
+            <span class="n">list_item_per_time</span> <span class="o">=</span> <span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">prod</span> <span class="ow">in</span> <span class="n">productions</span><span class="p">:</span>
+                <span class="n">list_item_per_time</span><span class="p">[</span><span class="n">prod</span><span class="o">.</span><span class="n">period</span><span class="p">]</span> <span class="o">=</span> <span class="n">prod</span><span class="o">.</span><span class="n">item</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">list_item_per_time</span> <span class="o">=</span> <span class="n">list_item_per_time</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_convert_list_to_productions</span><span class="p">(</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">CapacitatedMultiItemLSP</span><span class="p">,</span> <span class="n">list_item_per_time</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProductionDecision</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert list_item_per_time representation to productions list.&quot;&quot;&quot;</span>
+        <span class="n">productions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">period</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">list_item_per_time</span><span class="p">):</span>
+            <span class="c1"># Check if it&#39;s a valid item (not idle)</span>
+            <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">item</span> <span class="o">&lt;</span> <span class="n">problem</span><span class="o">.</span><span class="n">nb_items</span><span class="p">:</span>
+                <span class="c1"># Use the available capacity as quantity</span>
+                <span class="n">quantity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">get_available_production_time</span><span class="p">(</span><span class="n">period</span><span class="p">))</span>
+                <span class="n">productions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">ProductionDecision</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">period</span><span class="p">,</span> <span class="n">quantity</span><span class="o">=</span><span class="n">quantity</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">productions</span>
+
+<div class="viewcode-block" id="CapacitatedMultiItemSolution.copy">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a deep copy of the solution.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">CapacitatedMultiItemSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">productions</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">ProductionDecision</span><span class="p">(</span><span class="n">item</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">period</span><span class="p">,</span> <span class="n">quantity</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">quantity</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">productions</span>
+            <span class="p">],</span>
+            <span class="n">list_item_per_time</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_item_per_time</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_item_per_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CapacitatedMultiItemLSP">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CapacitatedMultiItemLSP</span><span class="p">(</span>
+    <span class="n">WithoutSetupCostsProblem</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">WithoutProductionCostsProblem</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">WithoutSetupTimesProblem</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">WithoutParallelProductionProblem</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">GenericLotSizingProblem</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Capacitated multi-item lot sizing problem with changeover costs.</span>
+
+<span class="sd">    This is the classic lot sizing problem from CSPLib Problem 058:</span>
+<span class="sd">    https://www.csplib.org/Problems/prob058/</span>
+
+<span class="sd">    Features:</span>
+<span class="sd">    - Multiple item types (Item = int, item indices)</span>
+<span class="sd">    - Production capacity per period (often 1 for binary problems)</span>
+<span class="sd">    - Changeover costs when switching between items</span>
+<span class="sd">    - Inventory holding costs</span>
+<span class="sd">    - Optional backlog/delays (configurable)</span>
+<span class="sd">    - No setup costs (no cost to start production)</span>
+<span class="sd">    - No production costs (only capacity limits, not per-unit costs)</span>
+<span class="sd">    - No setup times (changeovers are instantaneous)</span>
+
+<span class="sd">    This class composes GenericLotSizingProblem with specific feature mixins.</span>
+<span class="sd">    Note: We DON&#39;T inherit from SetupCostsProblem or ProductionCostsProblem</span>
+<span class="sd">    because this problem variant doesn&#39;t have those costs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.allows_lost_demand">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.allows_lost_demand">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allows_lost_demand</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_overall_stock_limit">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_overall_stock_limit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_overall_stock_limit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock_capacity</span></div>
+
+
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_stock_limit_for_item">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_stock_limit_for_item">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_stock_limit_for_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stock_capacity</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">nb_items</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">demands</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+        <span class="n">capacity_machine</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">changeover_costs</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+        <span class="n">stock_cost_per_type</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">stock_capacity</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">allow_delays</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">delay_cost_per_type</span><span class="p">:</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize capacitated multi-item lot sizing problem.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nb_items: Number of item types</span>
+<span class="sd">            horizon: Number of time periods</span>
+<span class="sd">            demands: Demand for each item in each period (nb_items × horizon matrix)</span>
+<span class="sd">            capacity_machine: Production capacity per period (often 1 for binary problems)</span>
+<span class="sd">            changeover_costs: Cost matrix for switching between items (nb_items × nb_items)</span>
+<span class="sd">            stock_cost_per_type: Inventory holding cost per unit per period for each item type</span>
+<span class="sd">            stock_capacity: Maximum total inventory (default: sum of all demands)</span>
+<span class="sd">            allow_delays: Whether backlog/delays are allowed as hard constraint (default: False)</span>
+<span class="sd">                         Note: Even if False, backlog costs are used as penalties in the objective</span>
+<span class="sd">            delay_cost_per_type: Penalty cost per unit delay per period for each item</span>
+<span class="sd">                                Default: [100000] * nb_items (high penalty to discourage delays)</span>
+<span class="sd">            **kwargs: Additional parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert to numpy arrays if needed</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">demands</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">demands</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">demands</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">changeover_costs</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">changeover_costs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">changeover_costs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stock_cost_per_type</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">stock_cost_per_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">stock_cost_per_type</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+        <span class="c1"># Validate dimensions</span>
+        <span class="k">if</span> <span class="n">demands</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">nb_items</span><span class="p">,</span> <span class="n">horizon</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;demands must have shape (</span><span class="si">{</span><span class="n">nb_items</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">horizon</span><span class="si">}</span><span class="s2">), got </span><span class="si">{</span><span class="n">demands</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">changeover_costs</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">nb_items</span><span class="p">,</span> <span class="n">nb_items</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;changeover_costs must have shape (</span><span class="si">{</span><span class="n">nb_items</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">nb_items</span><span class="si">}</span><span class="s2">), &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">changeover_costs</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Default stock capacity: enough for all demands</span>
+        <span class="k">if</span> <span class="n">stock_capacity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stock_capacity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">demands</span><span class="p">))</span>
+
+        <span class="c1"># Store basic attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_horizon</span> <span class="o">=</span> <span class="n">horizon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_items_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nb_items</span><span class="p">))</span>
+        <span class="c1"># nb_items is a computed property from len(items_list)</span>
+
+        <span class="c1"># Check if problem is binary (all demands are 0 or 1)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_binary</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">((</span><span class="n">demands</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">demands</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)))</span>
+
+        <span class="c1"># Store for compatibility with old code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">items_range</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_items</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">items_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items_list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stock_capacity</span> <span class="o">=</span> <span class="n">stock_capacity</span>
+
+        <span class="c1"># Store data for mixin methods</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_demands</span> <span class="o">=</span> <span class="n">demands</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_changeover_costs</span> <span class="o">=</span> <span class="n">changeover_costs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stock_cost_per_type</span> <span class="o">=</span> <span class="n">stock_cost_per_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_capacity_machine</span> <span class="o">=</span> <span class="n">capacity_machine</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_allow_delays</span> <span class="o">=</span> <span class="n">allow_delays</span>
+
+        <span class="c1"># Always store backlog costs (used as penalties in objective even when delays not allowed)</span>
+        <span class="k">if</span> <span class="n">delay_cost_per_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Default to high penalty (same as old implementation)</span>
+            <span class="n">delay_cost_per_type</span> <span class="o">=</span> <span class="p">[</span><span class="mf">100000.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_items</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">delay_cost_per_type</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">delay_cost_per_type</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">delay_cost_per_type</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delay_cost_per_type</span> <span class="o">=</span> <span class="n">delay_cost_per_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">infos</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="c1"># Initialize &quot;Without&quot; mixins (no need to call GenericLotSizingProblem.__init__)</span>
+        <span class="n">WithoutSetupCostsProblem</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">WithoutProductionCostsProblem</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">WithoutSetupTimesProblem</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">horizon</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of time periods.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_horizon</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">items_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;List of item indices.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items_list</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">capacity_machine</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Production capacity per period.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_capacity_machine</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allow_backlog</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Whether backlog/delays are allowed.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_delays</span>
+
+    <span class="c1"># DemandsProblem abstract methods</span>
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_demand">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_demand">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_demand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get demand for item in period.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_demands</span><span class="p">[</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="p">])</span></div>
+
+
+    <span class="c1"># ChangeoverCostsProblem abstract methods</span>
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_changeover_cost">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_changeover_cost">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_changeover_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">from_item</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">to_item</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get sequence-dependent changeover cost.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_changeover_costs</span><span class="p">[</span><span class="n">from_item</span><span class="p">,</span> <span class="n">to_item</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_changeover_array">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_changeover_array">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_changeover_array</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get changeover costs as a 2D list.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_changeover_costs</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span></div>
+
+
+    <span class="c1"># InventoryCostsProblem abstract methods</span>
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_inventory_cost_per_unit">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_inventory_cost_per_unit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_inventory_cost_per_unit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get inventory holding cost per unit.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stock_cost_per_type</span><span class="p">[</span><span class="n">item</span><span class="p">])</span></div>
+
+
+    <span class="c1"># CapacityProblem abstract methods</span>
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_production_time_per_unit">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_production_time_per_unit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_production_time_per_unit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get production time per unit (always 1 for this problem).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mf">1.0</span></div>
+
+
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_available_production_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_available_production_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_available_production_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get available production time in period.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_capacity_machine</span><span class="p">)</span></div>
+
+
+    <span class="c1"># BacklogProblem abstract methods</span>
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.is_backlog_allowed">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.is_backlog_allowed">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_backlog_allowed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if backlog/delays are allowed as hard constraint.</span>
+
+<span class="sd">        Returns False means backlog is not allowed (constraint violation).</span>
+<span class="sd">        However, backlog costs are still used in the objective as penalties.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_delays</span></div>
+
+
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_backlog_cost_per_unit">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_backlog_cost_per_unit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_backlog_cost_per_unit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get backlog penalty cost per unit.</span>
+
+<span class="sd">        This cost is always present in the objective (acts as penalty).</span>
+<span class="sd">        Whether backlog is allowed as hard constraint is controlled by is_backlog_allowed().</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_delay_cost_per_type</span><span class="p">[</span><span class="n">item</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.satisfy">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">CapacitatedMultiItemSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if solution satisfies all constraints.</span>
+
+<span class="sd">        Uses the satisfy_partial method from GenericLotSizingProblem to check:</span>
+<span class="sd">        - Demand satisfaction</span>
+<span class="sd">        - Capacity constraints</span>
+<span class="sd">        - Stock capacity</span>
+<span class="sd">        - Unique production times (at most one item per period)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: Solution to check</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if all constraints are satisfied</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check using parent class method (checks demands, capacity, backlog)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="n">solution</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># # Check stock capacity (total inventory across all items)</span>
+        <span class="c1"># total_stock = np.zeros(self.horizon, dtype=np.int64)</span>
+        <span class="c1"># for item in self.items_list:</span>
+        <span class="c1">#     inventory = solution.get_inventory_level_array(item)</span>
+        <span class="c1">#     total_stock += inventory</span>
+        <span class="c1">#</span>
+        <span class="c1"># if np.max(total_stock) &gt; self.stock_capacity:</span>
+        <span class="c1">#     logger.debug(</span>
+        <span class="c1">#         f&quot;Stock capacity exceeded: max={np.max(total_stock)}, &quot;</span>
+        <span class="c1">#         f&quot;capacity={self.stock_capacity}&quot;</span>
+        <span class="c1">#     )</span>
+        <span class="c1">#     return False</span>
+        <span class="c1">#</span>
+        <span class="c1"># # Check that production times are unique (at most one item per period)</span>
+        <span class="c1"># production_times = [p.period for p in solution.productions]</span>
+        <span class="c1"># if len(production_times) != len(set(production_times)):</span>
+        <span class="c1">#     logger.debug(&quot;Multiple items produced in same period&quot;)</span>
+        <span class="c1">#     return False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_solution_type">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_solution_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the solution class for this problem.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">CapacitatedMultiItemSolution</span></div>
+
+
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_attribute_register">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_attribute_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return encoding register for metaheuristic solvers.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">EncodingRegister</span><span class="p">(</span>
+            <span class="n">dict_attribute_to_type</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;list_item_per_time&quot;</span><span class="p">:</span> <span class="n">ListInteger</span><span class="p">(</span>
+                    <span class="n">length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span> <span class="n">lows</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_items</span>
+                <span class="p">)</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CapacitatedMultiItemLSP.get_objective_register">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP.get_objective_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return objective register.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MINIMIZATION</span><span class="p">,</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;inventory_cost&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;changeover_cost&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;backlog_cost&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1000.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;unmet_demand&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">100000.0</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

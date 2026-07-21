@@ -1,0 +1,473 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.transformation.transformation_metadata &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.transformation.transformation_metadata</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.transformation.transformation_metadata</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;Metadata for documenting transformation characteristics and losses.</span>
+
+<span class="sd">This module provides classes to explicitly document:</span>
+<span class="sd">- Whether transformations are exact or lossy</span>
+<span class="sd">- What information is lost (constraints, objectives)</span>
+<span class="sd">- Why the loss occurs</span>
+<span class="sd">- Impact on solution quality</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+
+<div class="viewcode-block" id="TransformationCompleteness">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationCompleteness">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransformationCompleteness</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Classification of transformation completeness.</span>
+
+<span class="sd">    EXACT: Perfect bidirectional mapping, no information loss</span>
+<span class="sd">    LOSSY_CONSTRAINTS: Some constraints cannot be represented in target</span>
+<span class="sd">    LOSSY_OBJECTIVES: Some objectives cannot be represented in target</span>
+<span class="sd">    LOSSY_BOTH: Both constraints and objectives are lost</span>
+<span class="sd">    SUBSET: Source is a strict subset of target (generalization)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">EXACT</span> <span class="o">=</span> <span class="s2">&quot;exact&quot;</span>
+    <span class="n">LOSSY_CONSTRAINTS</span> <span class="o">=</span> <span class="s2">&quot;lossy_constraints&quot;</span>
+    <span class="n">LOSSY_OBJECTIVES</span> <span class="o">=</span> <span class="s2">&quot;lossy_objectives&quot;</span>
+    <span class="n">LOSSY_BOTH</span> <span class="o">=</span> <span class="s2">&quot;lossy_both&quot;</span>
+    <span class="n">SUBSET</span> <span class="o">=</span> <span class="s2">&quot;subset&quot;</span>  <span class="c1"># Source ⊂ Target (e.g., JSP ⊂ FJSP)</span></div>
+
+
+
+<div class="viewcode-block" id="LossType">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.LossType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LossType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Type of information that can be lost in transformation.&quot;&quot;&quot;</span>
+
+    <span class="n">CONSTRAINT</span> <span class="o">=</span> <span class="s2">&quot;constraint&quot;</span>
+    <span class="n">OBJECTIVE</span> <span class="o">=</span> <span class="s2">&quot;objective&quot;</span>
+    <span class="n">PARAMETER</span> <span class="o">=</span> <span class="s2">&quot;parameter&quot;</span>
+    <span class="n">STRUCTURE</span> <span class="o">=</span> <span class="s2">&quot;structure&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="LossImpact">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.LossImpact">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LossImpact</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Impact of information loss on solution quality.</span>
+
+<span class="sd">    NONE: No loss, exact transformation</span>
+<span class="sd">    MINOR: Loss unlikely to affect practical solutions</span>
+<span class="sd">    MODERATE: May affect solution quality, case-dependent</span>
+<span class="sd">    MAJOR: Significant impact, solutions may be infeasible in original problem</span>
+<span class="sd">    CRITICAL: Transformation not recommended without manual verification</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">NONE</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span>
+    <span class="n">MINOR</span> <span class="o">=</span> <span class="s2">&quot;minor&quot;</span>
+    <span class="n">MODERATE</span> <span class="o">=</span> <span class="s2">&quot;moderate&quot;</span>
+    <span class="n">MAJOR</span> <span class="o">=</span> <span class="s2">&quot;major&quot;</span>
+    <span class="n">CRITICAL</span> <span class="o">=</span> <span class="s2">&quot;critical&quot;</span>
+
+<div class="viewcode-block" id="LossImpact.severity">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.LossImpact.severity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">severity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get numeric severity level (0=NONE, 4=CRITICAL).&quot;&quot;&quot;</span>
+        <span class="n">severity_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">LossImpact</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="n">LossImpact</span><span class="o">.</span><span class="n">MINOR</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">LossImpact</span><span class="o">.</span><span class="n">MODERATE</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="n">LossImpact</span><span class="o">.</span><span class="n">MAJOR</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="n">LossImpact</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">severity_map</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare by severity.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">LossImpact</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">severity</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">severity</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare by severity.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">LossImpact</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">severity</span><span class="p">()</span> <span class="o">&lt;=</span> <span class="n">other</span><span class="o">.</span><span class="n">severity</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare by severity.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">LossImpact</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">severity</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">other</span><span class="o">.</span><span class="n">severity</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare by severity.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">LossImpact</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">severity</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">other</span><span class="o">.</span><span class="n">severity</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="InformationLoss">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.InformationLoss">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InformationLoss</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Documents a specific piece of information lost in transformation.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name: Name of the lost element (e.g., &quot;incompatibility_constraints&quot;)</span>
+<span class="sd">        loss_type: Type of loss (constraint, objective, parameter)</span>
+<span class="sd">        description: Human-readable description of what&#39;s lost</span>
+<span class="sd">        reason: Why this information cannot be represented in target</span>
+<span class="sd">        workaround: Optional suggestion for handling the loss</span>
+<span class="sd">        impact: Impact on solution quality</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        # &gt;&gt;&gt; loss = InformationLoss(</span>
+<span class="sd">        # ...     name=&quot;incompatibility_constraints&quot;,</span>
+<span class="sd">        # ...     loss_type=LossType.CONSTRAINT,</span>
+<span class="sd">        # ...     description=&quot;Item incompatibility constraints (items that cannot be in same bin)&quot;,</span>
+<span class="sd">        # ...     reason=&quot;SALBP has no concept of task incompatibility&quot;,</span>
+<span class="sd">        # ...     impact=LossImpact.MAJOR,</span>
+<span class="sd">        # ...     workaround=&quot;Pre-filter incompatible items or use BinPack→RCPSP with virtual resources&quot;</span>
+<span class="sd">        # ... )</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">loss_type</span><span class="p">:</span> <span class="n">LossType</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">impact</span><span class="p">:</span> <span class="n">LossImpact</span>
+    <span class="n">workaround</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Human-readable representation.&quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;  ⚠ </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">, impact: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">impact</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;     Description: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;     Reason: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">workaround</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;     Workaround: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">workaround</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="TransformationMetadata">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransformationMetadata</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete metadata for a problem transformation.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        completeness: Overall classification of transformation completeness</span>
+<span class="sd">        losses: List of specific information losses</span>
+<span class="sd">        gains: Information added by target (may be ignored)</span>
+<span class="sd">        assumptions: Assumptions made during transformation</span>
+<span class="sd">        use_cases: Recommended use cases for this transformation</span>
+<span class="sd">        warnings: Important warnings for users</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        # &gt;&gt;&gt; metadata = TransformationMetadata(</span>
+<span class="sd">        # ...     completeness=TransformationCompleteness.LOSSY_CONSTRAINTS,</span>
+<span class="sd">        # ...     losses=[</span>
+<span class="sd">        # ...         InformationLoss(</span>
+<span class="sd">        # ...             name=&quot;incompatibility_constraints&quot;,</span>
+<span class="sd">        # ...             loss_type=LossType.CONSTRAINT,</span>
+<span class="sd">        # ...             description=&quot;Item incompatibility constraints&quot;,</span>
+<span class="sd">        # ...             reason=&quot;SALBP has no incompatibility concept&quot;,</span>
+<span class="sd">        # ...             impact=LossImpact.MAJOR</span>
+<span class="sd">        # ...         )</span>
+<span class="sd">        # ...     ],</span>
+<span class="sd">        # ...     assumptions=[&quot;No item incompatibility constraints&quot;],</span>
+<span class="sd">        # ...     use_cases=[&quot;Pure bin packing without incompatibility&quot;],</span>
+<span class="sd">        # ...     warnings=[&quot;Solutions may violate incompatibility if present&quot;]</span>
+<span class="sd">        # ... )</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">completeness</span><span class="p">:</span> <span class="n">TransformationCompleteness</span>
+    <span class="n">losses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InformationLoss</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">gains</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">assumptions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">use_cases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">warnings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TransformationMetadata.is_exact">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata.is_exact">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_exact</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if transformation is exact (no losses).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">completeness</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">EXACT</span><span class="p">,</span>
+            <span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">SUBSET</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransformationMetadata.has_constraint_loss">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata.has_constraint_loss">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_constraint_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if any constraints are lost.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">completeness</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">LOSSY_CONSTRAINTS</span><span class="p">,</span>
+            <span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">LOSSY_BOTH</span><span class="p">,</span>
+        <span class="p">)</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">loss_type</span> <span class="o">==</span> <span class="n">LossType</span><span class="o">.</span><span class="n">CONSTRAINT</span> <span class="k">for</span> <span class="n">loss</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransformationMetadata.has_objective_loss">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata.has_objective_loss">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_objective_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if any objectives are lost.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">completeness</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">LOSSY_OBJECTIVES</span><span class="p">,</span>
+            <span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">LOSSY_BOTH</span><span class="p">,</span>
+        <span class="p">)</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">loss_type</span> <span class="o">==</span> <span class="n">LossType</span><span class="o">.</span><span class="n">OBJECTIVE</span> <span class="k">for</span> <span class="n">loss</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransformationMetadata.get_max_impact">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata.get_max_impact">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_max_impact</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LossImpact</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the maximum impact level among all losses.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">LossImpact</span><span class="o">.</span><span class="n">NONE</span>
+
+        <span class="n">impact_order</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">LossImpact</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span>
+            <span class="n">LossImpact</span><span class="o">.</span><span class="n">MINOR</span><span class="p">,</span>
+            <span class="n">LossImpact</span><span class="o">.</span><span class="n">MODERATE</span><span class="p">,</span>
+            <span class="n">LossImpact</span><span class="o">.</span><span class="n">MAJOR</span><span class="p">,</span>
+            <span class="n">LossImpact</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="n">max_impact</span> <span class="o">=</span> <span class="n">LossImpact</span><span class="o">.</span><span class="n">NONE</span>
+        <span class="k">for</span> <span class="n">loss</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">impact_order</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">impact</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">impact_order</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">max_impact</span><span class="p">):</span>
+                <span class="n">max_impact</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">impact</span>
+
+        <span class="k">return</span> <span class="n">max_impact</span></div>
+
+
+<div class="viewcode-block" id="TransformationMetadata.get_losses_by_type">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata.get_losses_by_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_losses_by_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss_type</span><span class="p">:</span> <span class="n">LossType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InformationLoss</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all losses of a specific type.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">loss</span> <span class="k">for</span> <span class="n">loss</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses</span> <span class="k">if</span> <span class="n">loss</span><span class="o">.</span><span class="n">loss_type</span> <span class="o">==</span> <span class="n">loss_type</span><span class="p">]</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Human-readable representation.&quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Transformation Completeness: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">completeness</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_exact</span><span class="p">():</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;  ✓ Exact transformation (no information loss)&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">max_impact</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_max_impact</span><span class="p">()</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ⚠ Lossy transformation (max impact: </span><span class="si">{</span><span class="n">max_impact</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Losses (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">losses</span><span class="p">)</span><span class="si">}</span><span class="s2">):&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">loss</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">losses</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">loss</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gains</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Gains (available but may be ignored):&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">gain</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gains</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  + </span><span class="si">{</span><span class="n">gain</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Assumptions:&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">assumption</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">assumptions</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  • </span><span class="si">{</span><span class="n">assumption</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_cases</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Recommended use cases:&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">use_case</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_cases</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ✓ </span><span class="si">{</span><span class="n">use_case</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">warnings</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Warnings:&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">warning</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">warnings</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ⚠ </span><span class="si">{</span><span class="n">warning</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># Convenience constructors for common patterns</span>
+<div class="viewcode-block" id="exact_transformation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.exact_transformation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">exact_transformation</span><span class="p">(</span>
+    <span class="n">use_cases</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformationMetadata</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create metadata for an exact transformation.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TransformationMetadata</span><span class="p">(</span>
+        <span class="n">completeness</span><span class="o">=</span><span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">EXACT</span><span class="p">,</span>
+        <span class="n">use_cases</span><span class="o">=</span><span class="n">use_cases</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">&quot;Exact problem equivalence&quot;</span><span class="p">],</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="subset_transformation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.subset_transformation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">subset_transformation</span><span class="p">(</span>
+    <span class="n">use_cases</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">assumptions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformationMetadata</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create metadata for a subset transformation (source ⊂ target).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TransformationMetadata</span><span class="p">(</span>
+        <span class="n">completeness</span><span class="o">=</span><span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">SUBSET</span><span class="p">,</span>
+        <span class="n">use_cases</span><span class="o">=</span><span class="n">use_cases</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">&quot;Generalization of source problem&quot;</span><span class="p">],</span>
+        <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span> <span class="ow">or</span> <span class="p">[],</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="lossy_transformation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.lossy_transformation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lossy_transformation</span><span class="p">(</span>
+    <span class="n">losses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InformationLoss</span><span class="p">],</span>
+    <span class="n">assumptions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">use_cases</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">warnings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformationMetadata</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create metadata for a lossy transformation.&quot;&quot;&quot;</span>
+    <span class="c1"># Determine completeness from losses</span>
+    <span class="n">has_constraints</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">loss_type</span> <span class="o">==</span> <span class="n">LossType</span><span class="o">.</span><span class="n">CONSTRAINT</span> <span class="k">for</span> <span class="n">loss</span> <span class="ow">in</span> <span class="n">losses</span><span class="p">)</span>
+    <span class="n">has_objectives</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">loss_type</span> <span class="o">==</span> <span class="n">LossType</span><span class="o">.</span><span class="n">OBJECTIVE</span> <span class="k">for</span> <span class="n">loss</span> <span class="ow">in</span> <span class="n">losses</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">has_constraints</span> <span class="ow">and</span> <span class="n">has_objectives</span><span class="p">:</span>
+        <span class="n">completeness</span> <span class="o">=</span> <span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">LOSSY_BOTH</span>
+    <span class="k">elif</span> <span class="n">has_constraints</span><span class="p">:</span>
+        <span class="n">completeness</span> <span class="o">=</span> <span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">LOSSY_CONSTRAINTS</span>
+    <span class="k">elif</span> <span class="n">has_objectives</span><span class="p">:</span>
+        <span class="n">completeness</span> <span class="o">=</span> <span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">LOSSY_OBJECTIVES</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">completeness</span> <span class="o">=</span> <span class="n">TransformationCompleteness</span><span class="o">.</span><span class="n">EXACT</span>
+
+    <span class="k">return</span> <span class="n">TransformationMetadata</span><span class="p">(</span>
+        <span class="n">completeness</span><span class="o">=</span><span class="n">completeness</span><span class="p">,</span>
+        <span class="n">losses</span><span class="o">=</span><span class="n">losses</span><span class="p">,</span>
+        <span class="n">assumptions</span><span class="o">=</span><span class="n">assumptions</span> <span class="ow">or</span> <span class="p">[],</span>
+        <span class="n">use_cases</span><span class="o">=</span><span class="n">use_cases</span> <span class="ow">or</span> <span class="p">[],</span>
+        <span class="n">warnings</span><span class="o">=</span><span class="n">warnings</span> <span class="ow">or</span> <span class="p">[],</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

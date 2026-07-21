@@ -1,0 +1,373 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.binpack.transformations.to_rcpsp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.binpack.transformations.to_rcpsp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.binpack.transformations.to_rcpsp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;Transformation from BinPacking to RCPSP.</span>
+
+<span class="sd">Clever mapping:</span>
+<span class="sd">- Each item → task with duration=1</span>
+<span class="sd">- Bin capacity → cumulative resource</span>
+<span class="sd">- Item weight → resource requirement</span>
+<span class="sd">- Incompatible items → virtual unary resources (capacity 1)</span>
+
+<span class="sd">This allows using powerful RCPSP solvers for bin packing!</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.binpack.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">BinPackProblem</span><span class="p">,</span> <span class="n">BinPackSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.problem_transformation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.transformation_metadata</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TransformationMetadata</span><span class="p">,</span>
+    <span class="n">exact_transformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solution</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspSolution</span>
+
+
+<div class="viewcode-block" id="BinpackToRcpspTransformation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.binpack.transformations.html#discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BinpackToRcpspTransformation</span><span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">[</span><span class="n">BinPackProblem</span><span class="p">,</span> <span class="n">BinPackSolution</span><span class="p">,</span> <span class="n">RcpspProblem</span><span class="p">,</span> <span class="n">RcpspSolution</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform BinPacking to RCPSP.</span>
+
+<span class="sd">    Mapping strategy:</span>
+<span class="sd">    - Each item → task with duration=1</span>
+<span class="sd">    - Bin capacity → cumulative resource &quot;BinCapacity&quot;</span>
+<span class="sd">    - Item weight → resource requirement for that task</span>
+<span class="sd">    - Time slot t → bin t (items at same time = same bin)</span>
+<span class="sd">    - Incompatible items → virtual resources of capacity 1</span>
+
+<span class="sd">    Key insight: Tasks scheduled at the same time (time slot t) go in bin t.</span>
+<span class="sd">    Cumulative resource constraint ensures bin capacity is respected.</span>
+<span class="sd">    Virtual resources ensure incompatible items can&#39;t be in same bin (same time).</span>
+
+<span class="sd">    This transformation is EXACT in both directions:</span>
+<span class="sd">    - Forward (problem): All constraints can be represented (incompatibility via virtual resources)</span>
+<span class="sd">    - Backward (solution): Time slots map directly to bin assignments</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        # &gt;&gt;&gt; # Bin packing: 3 items, capacity 10</span>
+<span class="sd">        # &gt;&gt;&gt; # Item 0: weight 5, Item 1: weight 3, Item 2: weight 6</span>
+<span class="sd">        # &gt;&gt;&gt; # Items 0 and 2 are incompatible</span>
+<span class="sd">        # &gt;&gt;&gt; problem = BinPackProblem(</span>
+<span class="sd">        # ...     list_items=[ItemBinPack(0, 5), ItemBinPack(1, 3), ItemBinPack(2, 6)],</span>
+<span class="sd">        # ...     capacity_bin=10,</span>
+<span class="sd">        # ...     incompatible_items={(0, 2)}</span>
+<span class="sd">        # ... )</span>
+<span class="sd">        # &gt;&gt;&gt;</span>
+<span class="sd">        # &gt;&gt;&gt; # RCPSP transformation:</span>
+<span class="sd">        # &gt;&gt;&gt; # - 3 tasks with duration=1</span>
+<span class="sd">        # &gt;&gt;&gt; # - Resource &quot;BinCapacity&quot; with capacity=10</span>
+<span class="sd">        # &gt;&gt;&gt; # - Task 0 needs 5, Task 1 needs 3, Task 2 needs 6</span>
+<span class="sd">        # &gt;&gt;&gt; # - Resource &quot;Incompatible_0_2&quot; with capacity=1 (both tasks consume it)</span>
+<span class="sd">        # &gt;&gt;&gt; # - Tasks at time 0 → bin 0, tasks at time 1 → bin 1, etc.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BinpackToRcpspTransformation.get_forward_metadata">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.binpack.transformations.html#discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.get_forward_metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_forward_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformationMetadata</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Metadata for forward problem transformation (BinPack → RCPSP).</span>
+
+<span class="sd">        This direction is EXACT: all constraints can be represented in RCPSP.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">exact_transformation</span><span class="p">(</span>
+            <span class="n">use_cases</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;Exact encoding of bin packing as scheduling problem&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Incompatibility modeled via virtual unary resources&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Time slot t = bin t (tasks at same time go in same bin)&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;All BinPack constraints preserved in RCPSP formulation&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BinpackToRcpspTransformation.transform_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.binpack.transformations.html#discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.transform_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">BinPackProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspProblem</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform BinPacking to RCPSP.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_problem: BinPacking problem instance</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent RCPSP problem</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">bp</span> <span class="o">=</span> <span class="n">source_problem</span>
+
+        <span class="c1"># Create resources</span>
+        <span class="n">resources</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;BinCapacity&quot;</span><span class="p">:</span> <span class="n">bp</span><span class="o">.</span><span class="n">capacity_bin</span><span class="p">,</span>  <span class="c1"># Cumulative resource for bin capacity</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Add virtual resources for incompatible items</span>
+        <span class="n">incompatibility_map</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># (item_i, item_j) -&gt; resource_name</span>
+        <span class="k">if</span> <span class="n">bp</span><span class="o">.</span><span class="n">has_constraint</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">bp</span><span class="o">.</span><span class="n">incompatible_items</span><span class="p">:</span>
+                <span class="c1"># Create unique resource name (sorted to avoid duplicates)</span>
+                <span class="n">resource_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Incompatible_</span><span class="si">{</span><span class="nb">min</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">)</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="nb">max</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="n">resources</span><span class="p">[</span><span class="n">resource_name</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Capacity 1 (unary resource)</span>
+                <span class="n">incompatibility_map</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)]</span> <span class="o">=</span> <span class="n">resource_name</span>
+                <span class="n">incompatibility_map</span><span class="p">[(</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">resource_name</span>  <span class="c1"># Symmetric</span>
+
+        <span class="c1"># Build mode_details: all tasks have single mode</span>
+        <span class="n">mode_details</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Source and sink dummy tasks</span>
+        <span class="n">source_task</span> <span class="o">=</span> <span class="s2">&quot;source&quot;</span>
+        <span class="n">sink_task</span> <span class="o">=</span> <span class="s2">&quot;sink&quot;</span>
+
+        <span class="n">mode_details</span><span class="p">[</span><span class="n">source_task</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;duration&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;BinCapacity&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}}</span>
+        <span class="n">mode_details</span><span class="p">[</span><span class="n">sink_task</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;duration&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;BinCapacity&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}}</span>
+
+        <span class="c1"># Initialize incompatibility resources to 0 for dummy tasks</span>
+        <span class="k">for</span> <span class="n">resource_name</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">resource_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Incompatible&quot;</span><span class="p">):</span>
+                <span class="n">mode_details</span><span class="p">[</span><span class="n">source_task</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">resource_name</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">mode_details</span><span class="p">[</span><span class="n">sink_task</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">resource_name</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Create task for each item</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">bp</span><span class="o">.</span><span class="n">list_items</span><span class="p">:</span>
+            <span class="n">task_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;item_</span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="n">mode</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;duration&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># Unit duration</span>
+                <span class="s2">&quot;BinCapacity&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">weight</span><span class="p">),</span>  <span class="c1"># Resource requirement</span>
+            <span class="p">}</span>
+
+            <span class="c1"># Initialize all incompatibility resources to 0</span>
+            <span class="k">for</span> <span class="n">resource_name</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">resource_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Incompatible&quot;</span><span class="p">):</span>
+                    <span class="n">mode</span><span class="p">[</span><span class="n">resource_name</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="c1"># Set incompatibility resource consumption</span>
+            <span class="k">if</span> <span class="n">bp</span><span class="o">.</span><span class="n">has_constraint</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">other_item</span> <span class="ow">in</span> <span class="n">bp</span><span class="o">.</span><span class="n">list_items</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">other_item</span><span class="o">.</span><span class="n">index</span> <span class="o">!=</span> <span class="n">item</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+                        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">other_item</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">incompatibility_map</span><span class="p">:</span>
+                            <span class="n">resource_name</span> <span class="o">=</span> <span class="n">incompatibility_map</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                            <span class="n">mode</span><span class="p">[</span><span class="n">resource_name</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Consume the virtual resource</span>
+
+            <span class="n">mode_details</span><span class="p">[</span><span class="n">task_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="n">mode</span><span class="p">}</span>
+
+        <span class="c1"># Build successors: no precedence, but all tasks must follow source</span>
+        <span class="n">successors</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">successors</span><span class="p">[</span><span class="n">source_task</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;item_</span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">bp</span><span class="o">.</span><span class="n">list_items</span><span class="p">]</span>
+        <span class="n">successors</span><span class="p">[</span><span class="n">sink_task</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">bp</span><span class="o">.</span><span class="n">list_items</span><span class="p">:</span>
+            <span class="n">task_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;item_</span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">successors</span><span class="p">[</span><span class="n">task_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">sink_task</span><span class="p">]</span>
+
+        <span class="c1"># Horizon: worst case is one bin per item</span>
+        <span class="n">horizon</span> <span class="o">=</span> <span class="n">bp</span><span class="o">.</span><span class="n">nb_items</span>
+
+        <span class="k">return</span> <span class="n">RcpspProblem</span><span class="p">(</span>
+            <span class="n">resources</span><span class="o">=</span><span class="n">resources</span><span class="p">,</span>
+            <span class="n">non_renewable_resources</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">mode_details</span><span class="o">=</span><span class="n">mode_details</span><span class="p">,</span>
+            <span class="n">successors</span><span class="o">=</span><span class="n">successors</span><span class="p">,</span>
+            <span class="n">horizon</span><span class="o">=</span><span class="n">horizon</span><span class="p">,</span>
+            <span class="n">source_task</span><span class="o">=</span><span class="n">source_task</span><span class="p">,</span>
+            <span class="n">sink_task</span><span class="o">=</span><span class="n">sink_task</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BinpackToRcpspTransformation.back_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.binpack.transformations.html#discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.back_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">back_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">BinPackProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BinPackSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform RCPSP solution back to BinPacking solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: RCPSP solution</span>
+<span class="sd">            source_problem: Original BinPacking problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent BinPacking solution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract bin assignment from start times</span>
+        <span class="c1"># Tasks scheduled at time t are assigned to bin t</span>
+        <span class="n">allocation</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">nb_items</span>
+
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">list_items</span><span class="p">:</span>
+            <span class="n">task_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;item_</span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="n">task_name</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">:</span>
+                <span class="n">start_time</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">task_name</span><span class="p">][</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span>
+                <span class="n">allocation</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_time</span>  <span class="c1"># Bin = time slot</span>
+
+        <span class="k">return</span> <span class="n">BinPackSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="n">source_problem</span><span class="p">,</span> <span class="n">allocation</span><span class="o">=</span><span class="n">allocation</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BinpackToRcpspTransformation.forward_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.binpack.transformations.html#discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.forward_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">BinPackSolution</span><span class="p">,</span> <span class="n">target_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RcpspSolution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform BinPacking solution to RCPSP solution (for warmstart).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: BinPacking solution</span>
+<span class="sd">            target_problem: Target RCPSP problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent RCPSP solution for warmstart</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Build RCPSP schedule from bin allocation</span>
+        <span class="n">rcpsp_schedule</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;end_time&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Each item assigned to bin b is scheduled at time b</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_items</span><span class="p">:</span>
+            <span class="n">task_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;item_</span><span class="si">{</span><span class="n">item</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">bin_id</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+
+            <span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">task_name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="n">bin_id</span><span class="p">,</span>
+                <span class="s2">&quot;end_time&quot;</span><span class="p">:</span> <span class="n">bin_id</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># Duration=1</span>
+            <span class="p">}</span>
+
+        <span class="c1"># Sink starts after all tasks</span>
+        <span class="n">max_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">allocation</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">rcpsp_schedule</span><span class="p">[</span><span class="s2">&quot;sink&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="n">max_time</span><span class="p">,</span> <span class="s2">&quot;end_time&quot;</span><span class="p">:</span> <span class="n">max_time</span><span class="p">}</span>
+
+        <span class="c1"># All tasks use mode 1 (single mode)</span>
+        <span class="n">rcpsp_modes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">list_items</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">RcpspSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">target_problem</span><span class="p">,</span>
+            <span class="n">rcpsp_schedule</span><span class="o">=</span><span class="n">rcpsp_schedule</span><span class="p">,</span>
+            <span class="n">rcpsp_modes</span><span class="o">=</span><span class="n">rcpsp_modes</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,319 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.tsptw.transformations.to_gpdp &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.tsptw.transformations.to_gpdp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.tsptw.transformations.to_gpdp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;Transformation from TSPTW to GPDP (General Pickup and Delivery Problem).</span>
+
+<span class="sd">TSPTW can be modeled as a GPDP with:</span>
+<span class="sd">- Single vehicle</span>
+<span class="sd">- No pickup/delivery pairs</span>
+<span class="sd">- Time windows for all nodes</span>
+<span class="sd">- No capacity constraints</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.problem_transformation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.transformation_metadata</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TransformationMetadata</span><span class="p">,</span>
+    <span class="n">exact_transformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.gpdp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">GpdpProblem</span><span class="p">,</span> <span class="n">GpdpSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.tsptw.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">TSPTWProblem</span><span class="p">,</span> <span class="n">TSPTWSolution</span>
+
+
+<div class="viewcode-block" id="TsptwToGpdpTransformation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.transformations.html#discrete_optimization.tsptw.transformations.to_gpdp.TsptwToGpdpTransformation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TsptwToGpdpTransformation</span><span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">[</span><span class="n">TSPTWProblem</span><span class="p">,</span> <span class="n">TSPTWSolution</span><span class="p">,</span> <span class="n">GpdpProblem</span><span class="p">,</span> <span class="n">GpdpSolution</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform TSPTW to GPDP.</span>
+
+<span class="sd">    TSPTW is a special case of GPDP with:</span>
+<span class="sd">    - Single vehicle</span>
+<span class="sd">    - Time windows for each node</span>
+<span class="sd">    - No pickup/delivery pairs</span>
+<span class="sd">    - No capacity constraints</span>
+<span class="sd">    - All nodes must be visited</span>
+
+<span class="sd">    This transformation is EXACT:</span>
+<span class="sd">    - All TSPTW constraints are preserved in GPDP</span>
+<span class="sd">    - Time windows are directly mapped</span>
+<span class="sd">    - Solution quality is preserved in both directions</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compute_graph</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize transformation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            compute_graph: Whether to compute the GPDP graph structure (default: False).</span>
+<span class="sd">                          Set to True if using graph-based GPDP solvers.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_graph</span> <span class="o">=</span> <span class="n">compute_graph</span>
+
+<div class="viewcode-block" id="TsptwToGpdpTransformation.get_forward_metadata">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.transformations.html#discrete_optimization.tsptw.transformations.to_gpdp.TsptwToGpdpTransformation.get_forward_metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_forward_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformationMetadata</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Metadata for forward problem transformation (TSPTW → GPDP).</span>
+
+<span class="sd">        This direction is EXACT: TSPTW is a special case of GPDP.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">exact_transformation</span><span class="p">(</span>
+            <span class="n">use_cases</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;Use GPDP solvers to solve TSPTW problems&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;TSPTW is exactly GPDP with 1 vehicle and time windows&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;All TSPTW constraints preserved in GPDP formulation&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Time windows constrain node visit times&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TsptwToGpdpTransformation.transform_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.transformations.html#discrete_optimization.tsptw.transformations.to_gpdp.TsptwToGpdpTransformation.transform_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">TSPTWProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GpdpProblem</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform TSPTW to GPDP using the existing ProxyClass implementation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_problem: TSPTW problem instance</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent GPDP problem with 1 vehicle and time windows</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.gpdp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProxyClass</span>
+
+        <span class="k">return</span> <span class="n">ProxyClass</span><span class="o">.</span><span class="n">from_tsptw_to_gpdp</span><span class="p">(</span>
+            <span class="n">source_problem</span><span class="p">,</span> <span class="n">compute_graph</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">compute_graph</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TsptwToGpdpTransformation.back_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.transformations.html#discrete_optimization.tsptw.transformations.to_gpdp.TsptwToGpdpTransformation.back_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">back_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">GpdpSolution</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">TSPTWProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TSPTWSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform GPDP solution back to TSPTW solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: GPDP solution (should have 1 vehicle)</span>
+<span class="sd">            source_problem: Original TSPTW problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent TSPTW solution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract the single vehicle trajectory (vehicle 0)</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">trajectories</span><span class="p">:</span>
+            <span class="c1"># Empty solution - use customer order</span>
+            <span class="n">permutation</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">source_problem</span><span class="o">.</span><span class="n">customers</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">trajectory</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">trajectories</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># The trajectory includes: [origin_node, customer1, customer2, ..., target_node]</span>
+            <span class="c1"># We need to extract only the customer nodes and map them back</span>
+            <span class="c1"># In the ProxyClass.from_tsptw_to_gpdp transformation:</span>
+            <span class="c1"># - GPDP customers are indexed 0..nb_customers-1</span>
+            <span class="c1"># - These correspond to TSPTW customers (which are source_problem.customers)</span>
+            <span class="c1"># - Origin node = nb_customers</span>
+            <span class="c1"># - Target node = nb_customers + 1</span>
+            <span class="c1">#</span>
+            <span class="c1"># Simply skip first and last nodes (origin/target) and map the rest</span>
+            <span class="n">permutation</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">trajectory</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>  <span class="c1"># Skip origin and target</span>
+                <span class="c1"># Map GPDP customer index to TSPTW customer index</span>
+                <span class="n">permutation</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">source_problem</span><span class="o">.</span><span class="n">customers</span><span class="p">[</span><span class="n">node</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">TSPTWSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">source_problem</span><span class="p">,</span>
+            <span class="n">permutation</span><span class="o">=</span><span class="n">permutation</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TsptwToGpdpTransformation.forward_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.tsptw.transformations.html#discrete_optimization.tsptw.transformations.to_gpdp.TsptwToGpdpTransformation.forward_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">TSPTWSolution</span><span class="p">,</span> <span class="n">target_problem</span><span class="p">:</span> <span class="n">GpdpProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">GpdpSolution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform TSPTW solution to GPDP solution (for warmstart).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: TSPTW solution</span>
+<span class="sd">            target_problem: Target GPDP problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent GPDP solution with single vehicle trajectory</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Build trajectory for vehicle 0</span>
+        <span class="c1"># GPDP uses virtual nodes: customers are 0..nb_customers-1,</span>
+        <span class="c1"># origin is nb_customers, target is nb_customers+1</span>
+        <span class="n">nb_customers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span><span class="p">)</span>
+
+        <span class="c1"># Map TSPTW customer indices to GPDP customer indices</span>
+        <span class="c1"># TSPTW permutation contains original customer indices</span>
+        <span class="c1"># GPDP uses sequential indices 0..nb_customers-1</span>
+        <span class="n">gpdp_customer_indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">tsptw_customer</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">permutation</span><span class="p">:</span>
+            <span class="c1"># Find the position of this customer in the customers list</span>
+            <span class="n">gpdp_index</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">tsptw_customer</span><span class="p">)</span>
+            <span class="n">gpdp_customer_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gpdp_index</span><span class="p">)</span>
+
+        <span class="c1"># Build complete trajectory: origin -&gt; customers -&gt; target</span>
+        <span class="n">origin_node</span> <span class="o">=</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">origin_vehicle</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">target_node</span> <span class="o">=</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">target_vehicle</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">trajectory</span> <span class="o">=</span> <span class="p">[</span><span class="n">origin_node</span><span class="p">]</span> <span class="o">+</span> <span class="n">gpdp_customer_indices</span> <span class="o">+</span> <span class="p">[</span><span class="n">target_node</span><span class="p">]</span>
+        <span class="n">trajectories</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="n">trajectory</span><span class="p">}</span>
+
+        <span class="c1"># Compute times along the trajectory</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">current_time</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">trajectory</span><span class="p">):</span>
+            <span class="n">times</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_time</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">trajectory</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">next_node</span> <span class="o">=</span> <span class="n">trajectory</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="c1"># Add travel time to next node</span>
+                <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">time_delta</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">next_node</span> <span class="ow">in</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">time_delta</span><span class="p">[</span><span class="n">node</span><span class="p">]:</span>
+                        <span class="n">current_time</span> <span class="o">+=</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">time_delta</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="n">next_node</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># No direct edge - this shouldn&#39;t happen in valid solutions</span>
+                        <span class="n">current_time</span> <span class="o">+=</span> <span class="mf">0.0</span>
+                <span class="c1"># Add service time at current node</span>
+                <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">:</span>
+                    <span class="n">current_time</span> <span class="o">+=</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">time_delta_node</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">GpdpSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">target_problem</span><span class="p">,</span>
+            <span class="n">trajectories</span><span class="o">=</span><span class="n">trajectories</span><span class="p">,</span>
+            <span class="n">times</span><span class="o">=</span><span class="n">times</span><span class="p">,</span>
+            <span class="n">resource_evolution</span><span class="o">=</span><span class="p">{},</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,367 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.parallel_production &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.parallel_production</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.lotsizing.parallel_production</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;Parallel production constraint mixin for lot sizing problems.</span>
+
+<span class="sd">This module provides mixins for problems where production of multiple items</span>
+<span class="sd">in the same time period may or may not be allowed.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Generic</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Item</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.lotsizing.demands</span><span class="w"> </span><span class="kn">import</span> <span class="n">DemandsProblem</span><span class="p">,</span> <span class="n">DemandsSolution</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="c1"># Only import for type checking to avoid circular dependencies</span>
+    <span class="c1"># and MRO conflicts</span>
+    <span class="k">pass</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ParallelProductionProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.ParallelProductionProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParallelProductionProblem</span><span class="p">(</span><span class="n">DemandsProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin for problems with constraints on parallel production.</span>
+
+<span class="sd">    Determines whether multiple items can be produced simultaneously in the same period.</span>
+
+<span class="sd">    When parallel production is NOT allowed, the constraint is:</span>
+<span class="sd">        sum_i Y_it &lt;= 1  for all t</span>
+
+<span class="sd">    Where Y_it is the binary setup variable indicating if item i is produced in period t.</span>
+
+<span class="sd">    This models situations where:</span>
+<span class="sd">    - Production line can only handle one product type at a time</span>
+<span class="sd">    - Switching between items consumes the entire period</span>
+<span class="sd">    - Production resources are exclusive (no multi-tasking)</span>
+
+<span class="sd">    When parallel production IS allowed, multiple items can be produced in the same period.</span>
+
+<span class="sd">    Relevant for multi-item problems. For single-item problems, this constraint</span>
+<span class="sd">    is automatically satisfied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ParallelProductionProblem.allows_parallel_production">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.ParallelProductionProblem.allows_parallel_production">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allows_parallel_production</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if multiple items can be produced in the same period.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if parallel production is allowed, False if only one item per period</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ParallelProductionSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.ParallelProductionSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParallelProductionSolution</span><span class="p">(</span><span class="n">DemandsSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solution mixin for parallel production constraint checking.</span>
+
+<span class="sd">    Note: This mixin requires get_production_quantity(item, period) method to be available.</span>
+<span class="sd">    In practice, this is provided by CapacitySolution or ProductionBasedSolution.</span>
+<span class="sd">    Type checkers may warn about this - this is expected due to mixin composition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">ParallelProductionProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+        <span class="c1"># Declare the method signature for type checking without enforcing inheritance</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">get_production_quantity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Item</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Get production quantity (provided by CapacitySolution).&quot;&quot;&quot;</span>
+            <span class="o">...</span>
+
+<div class="viewcode-block" id="ParallelProductionSolution.get_items_produced_in_period">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.ParallelProductionSolution.get_items_produced_in_period">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_items_produced_in_period</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">period</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Item</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get list of items produced in a given period.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            period: Time period</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of items with positive production in this period</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">items_produced</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">items_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_production_quantity</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">items_produced</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">items_produced</span></div>
+
+
+<div class="viewcode-block" id="ParallelProductionSolution.check_parallel_production_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.ParallelProductionSolution.check_parallel_production_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_parallel_production_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if parallel production constraints are satisfied.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if constraint satisfied, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">allows_parallel_production</span><span class="p">():</span>
+            <span class="c1"># Constraint is not active - parallel production allowed</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># Check that at most one item is produced per period</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">):</span>
+            <span class="n">items_produced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_items_produced_in_period</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">items_produced</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Parallel production constraint violated in period </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">: &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">items_produced</span><span class="p">)</span><span class="si">}</span><span class="s2"> items produced </span><span class="si">{</span><span class="n">items_produced</span><span class="si">}</span><span class="s2">. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Only one item allowed per period.&quot;</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="ParallelProductionSolution.get_periods_with_parallel_production">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.ParallelProductionSolution.get_periods_with_parallel_production">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_periods_with_parallel_production</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Item</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get list of periods where multiple items are produced.</span>
+
+<span class="sd">        Useful for identifying violations when parallel production is not allowed,</span>
+<span class="sd">        or for analysis when it is allowed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of (period, items_produced) tuples where len(items_produced) &gt; 1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">periods_with_parallel</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">):</span>
+            <span class="n">items_produced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_items_produced_in_period</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">items_produced</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">periods_with_parallel</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">t</span><span class="p">,</span> <span class="n">items_produced</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">periods_with_parallel</span></div>
+
+
+<div class="viewcode-block" id="ParallelProductionSolution.count_item_switches">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.ParallelProductionSolution.count_item_switches">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count_item_switches</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Count the number of periods where production switches to a different item.</span>
+
+<span class="sd">        Useful for measuring setup frequency and production stability.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Number of periods with item changes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">switches</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">prev_item</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">):</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_items_produced_in_period</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="n">curr_item</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">prev_item</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">curr_item</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">prev_item</span> <span class="o">!=</span> <span class="n">curr_item</span><span class="p">:</span>
+                    <span class="n">switches</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">curr_item</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">prev_item</span> <span class="o">=</span> <span class="n">curr_item</span>
+
+        <span class="k">return</span> <span class="n">switches</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WithParallelProductionProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.WithParallelProductionProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WithParallelProductionProblem</span><span class="p">(</span><span class="n">ParallelProductionProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Utility mixin for problems allowing parallel production.</span>
+
+<span class="sd">    Multiple items can be produced simultaneously in the same period.</span>
+
+<span class="sd">    This is the &quot;With&quot; variant for problems where parallel production</span>
+<span class="sd">    of different items in the same period is allowed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="WithParallelProductionProblem.allows_parallel_production">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.WithParallelProductionProblem.allows_parallel_production">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allows_parallel_production</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parallel production is allowed.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WithParallelProductionSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.WithParallelProductionSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WithParallelProductionSolution</span><span class="p">(</span><span class="n">ParallelProductionSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solution mixin for problems allowing parallel production.</span>
+
+<span class="sd">    The parallel production constraint is always satisfied (not active).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="WithParallelProductionSolution.check_parallel_production_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.WithParallelProductionSolution.check_parallel_production_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_parallel_production_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Always satisfied when parallel production allowed.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WithoutParallelProductionProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.WithoutParallelProductionProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WithoutParallelProductionProblem</span><span class="p">(</span><span class="n">ParallelProductionProblem</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Utility mixin for problems NOT allowing parallel production.</span>
+
+<span class="sd">    Only one item can be produced per period (exclusive production).</span>
+
+<span class="sd">    This is the &quot;Without&quot; variant following the generic_tasks_tools pattern.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="WithoutParallelProductionProblem.allows_parallel_production">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.WithoutParallelProductionProblem.allows_parallel_production">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">allows_parallel_production</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parallel production is NOT allowed - only one item per period.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WithoutParallelProductionSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.WithoutParallelProductionSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WithoutParallelProductionSolution</span><span class="p">(</span>
+    <span class="n">ParallelProductionSolution</span><span class="p">[</span><span class="n">Item</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Item</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Solution mixin for problems NOT allowing parallel production.</span>
+
+<span class="sd">    Provides full constraint checking for the single-item-per-period restriction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Inherits all checking methods from ParallelProductionSolution</span>
+    <span class="c1"># check_parallel_production_constraints will enforce the constraint</span>
+    <span class="k">pass</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
