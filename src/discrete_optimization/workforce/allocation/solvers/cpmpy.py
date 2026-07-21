@@ -947,7 +947,7 @@ def adding_same_allocation_constraint_integer(
         CPMpyTeamAllocationSolver, CPMpyTeamAllocationSolverStoreConstraintInfo
     ],
     same_allocation: list[set[Hashable]],
-    variables: cpmpy.model.NDVarArray,
+    variables: NDVarArray,
     problem: TeamAllocationProblem,
 ) -> list[cpmpy.model.Expression]:
     constraints = []
