@@ -109,7 +109,7 @@ OVENSCHED_REPO_URL = "https://github.com/iolab-uniud/osp-ls"
 OVENSCHED_REPO_URL_SHA1 = "d29ec2dfc29f357ce7b1158edca0745b812bd493"
 
 MULTIBATCHING_REPO_URL = "https://github.com/g-poveda/do-data"
-MULTIBATCHING_REPO_URL_SHA1 = "dc3b46e0b6040d7fca3b9a179ac6019b7c18b69f"
+MULTIBATCHING_REPO_URL_SHA1 = "251d9fe627f91d48023a948e2e1fb85a437f3f41"
 MULTIBATCHING_DATASET_RELATIVE_PATHS = [
     "multibatching/anonymized_parametric.json",
     "multibatching/cp_experiments.json",
@@ -118,11 +118,11 @@ MULTIBATCHING_DATASET_RELATIVE_PATHS = [
 FJSP_DATASET_PREFIX = "jfsp_openhsu"
 MIS_DATASET_PREFIX = "mis"
 VRPTW_DATASET_PREFIX = "vrptw/homberger_200_customer_instances"
-
 LOT_SIZING_URLS = [
     "https://www.csplib.org/Problems/prob058/data/pspInstances.zip",
     "https://www.csplib.org/Problems/prob058/data/UniUD-LotSizingLargeInstances.zip",
 ]
+FLEX_DATASET_PREFIX = "flex_scheduling/datasets"
 
 ERROR_MSG_MISSING_DATASETS = (
     "\nYou probably have not downloaded the needed dataset.\n"
@@ -534,13 +534,14 @@ def fetch_datasets_from_repo(
 ) -> None:
     """Fetch all datasets stored in g-poveda repo."""
     url_repo = "https://github.com/g-poveda/do-data"
-    sha_url_repo = "f078cf0ee5440aeae72af9b6c5c83c14acbb2888"
+    sha_url_repo = "251d9fe627f91d48023a948e2e1fb85a437f3f41"
     url = f"{url_repo}/archive/{sha_url_repo}.zip"
     if dataset_prefixes is None:
         dataset_prefixes = [
             FJSP_DATASET_PREFIX,
             MIS_DATASET_PREFIX,
             VRPTW_DATASET_PREFIX,
+            FLEX_DATASET_PREFIX,
         ]
     try:
         local_file_path, headers = urlretrieve(url)
