@@ -383,17 +383,21 @@ def fetch_data_from_mslib(data_home: Optional[str] = None):
         # remove temporary files
         urlcleanup()
 
-    # move up everything and eliminate intermediate folde MSLIB_v2_2
+    # move up everything and eliminate intermediate folder MSLIB_v2_2
     for file in glob.glob(f"{rcpsp_multiskill_dir}/{MSLIB_DATA_DIR}/*"):
-        shutil.move(file, rcpsp_multiskill_dir)
-    os.rmdir(f"{rcpsp_multiskill_dir}/{MSLIB_DATA_DIR}")
-
+        try:
+            shutil.move(file, rcpsp_multiskill_dir)
+        except shutil.Error:
+            pass
+    try:
+        os.rmdir(f"{rcpsp_multiskill_dir}/{MSLIB_DATA_DIR}")
+    except OSError:
+        pass
     # unzip subfolders
     for file in glob.glob(f"{rcpsp_multiskill_dir}/*.zip"):
         with zipfile.ZipFile(file) as zipf:
             zipf.extractall(path=rcpsp_multiskill_dir)
         os.remove(file)
-
     # remove unwanted files
     for folder in glob.glob(f"{rcpsp_multiskill_dir}/__MACOSX"):
         shutil.rmtree(folder)
