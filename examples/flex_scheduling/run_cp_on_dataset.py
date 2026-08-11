@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 from copy import deepcopy
-from enum import StrEnum
+from enum import Enum
 
 from discrete_optimization.flex_scheduling.parser import (
     get_data_available,
@@ -28,7 +28,7 @@ from discrete_optimization.flex_scheduling.solvers.sequential_solver import (
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 
 
-class CpSolverBackend(StrEnum):
+class CpSolverBackend(Enum):
     CPSAT = "cpsat"
     OPTAL = "optal"
 
