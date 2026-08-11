@@ -16,6 +16,7 @@ import logging
 import numpy as np
 
 from discrete_optimization.flex_scheduling.fsp_utils import (
+    SolutionDetails,
     compute_duration_function_time_cluster,
     get_lb_ub_start_end_date,
     get_lb_ub_start_end_date_group_of_task,
@@ -200,6 +201,16 @@ class OptalFlexProblemSolver(OptalCpSolver):
         and registers it as a warm start for the solver.
         """
         sol_cp = cp.Solution()
+        # This is mainly to retrieve the resource consumption.
+        # TODO : might be more efficiently cached when evaluating a solution.
+        sd = SolutionDetails(
+            problem=self.problem,
+            solution=solution,
+            durations_data=self.problem.durations_data,
+            res_arrays_data=self.problem.res_arrays_data,
+        )
+        resource_consumption = sd.resource_usage
+        sd.compute_details()
         evaluation = self.problem.evaluate(solution)
 
         # 1. Set Main Intervals
@@ -289,16 +300,8 @@ class OptalFlexProblemSolver(OptalCpSolver):
 
         # 5. Set Resource Capacities
         if "resource_capacity_variables" in self.variables_dict:
-            res_consumptions = evaluation.get("resource_consumption", {})
             for r_id, var in self.variables_dict["resource_capacity_variables"].items():
-                sol_cp.set_value(
-                    var,
-                    int(
-                        np.max(
-                            res_consumptions[self.problem.resource_id_to_index[r_id], :]
-                        )
-                    ),
-                )
+                sol_cp.set_value(var, int(max(resource_consumption[r_id])))
 
         # 6. Objectives
         if "obj_data" in self.variables_dict:
@@ -318,7 +321,10 @@ class OptalFlexProblemSolver(OptalCpSolver):
             sol_cp.set_value(
                 self.variables_dict["artificial_var"], cp.IntervalMin, cp.IntervalMax
             )
-        sol_cp.set_objective(int(evaluation[self.current_objective]))
+        if self.current_objective is not None:
+            sol_cp.set_objective(int(evaluation[self.current_objective]))
+        else:
+            sol_cp.set_objective(int(self.aggreg_from_dict(evaluation)))
         self.warm_start_solution = sol_cp
         self.use_warm_start = True
 
@@ -382,6 +388,7 @@ class OptalFlexProblemSolver(OptalCpSolver):
             self.constraint_group_non_release_resource()
         if params.include_cumulative_constraint:
             self.constraint_cumulative(params=params)
+        self.constraint_generalized_time_constraint()
         self.create_objectives(params)
         # self.cp_model.minimize(self.cp_model.max([self.cp_model.end(self.variables_dict["main_interval"][i])
         #                                           for i in self.variables_dict["main_interval"]]))
@@ -949,6 +956,64 @@ class OptalFlexProblemSolver(OptalCpSolver):
                     self.variables_dict["main_interval"][succ_index],
                 )
 
+    def constraint_generalized_time_constraint(self):
+        if self.problem.constraints.start_at_start is not None:
+            for t1, t2 in self.problem.constraints.start_at_start:
+                i1 = self.problem.task_id_to_index[t1]
+                i2 = self.problem.task_id_to_index[t2]
+                self.cp_model.start_at_start(
+                    self.variables_dict["main_interval"][i1],
+                    self.variables_dict["main_interval"][i2],
+                )
+        if self.problem.constraints.start_at_end is not None:
+            for t1, t2 in self.problem.constraints.start_at_end:
+                i1 = self.problem.task_id_to_index[t1]
+                i2 = self.problem.task_id_to_index[t2]
+                self.cp_model.start_at_end(
+                    self.variables_dict["main_interval"][i1],
+                    self.variables_dict["main_interval"][i2],
+                )
+        if self.problem.constraints.start_at_end_plus_offset is not None:
+            for t1, t2, offset in self.problem.constraints.start_at_end_plus_offset:
+                i1 = self.problem.task_id_to_index[t1]
+                i2 = self.problem.task_id_to_index[t2]
+                self.cp_model.start_at_end(
+                    self.variables_dict["main_interval"][i1],
+                    self.variables_dict["main_interval"][i2],
+                    offset,
+                )
+        if self.problem.constraints.start_after_end_plus_offset is not None:
+            for t1, t2, offset in self.problem.constraints.start_after_end_plus_offset:
+                i1 = self.problem.task_id_to_index[t1]
+                i2 = self.problem.task_id_to_index[t2]
+                self.cp_model.end_before_start(
+                    self.variables_dict["main_interval"][i2],
+                    self.variables_dict["main_interval"][i1],
+                    offset,
+                )
+        if self.problem.constraints.start_at_start_plus_offset is not None:
+            for t1, t2, offset in self.problem.constraints.start_at_start_plus_offset:
+                i1 = self.problem.task_id_to_index[t1]
+                i2 = self.problem.task_id_to_index[t2]
+                self.cp_model.start_at_start(
+                    self.variables_dict["main_interval"][i1],
+                    self.variables_dict["main_interval"][i2],
+                    offset,
+                )
+        if self.problem.constraints.start_after_start_plus_offset is not None:
+            for (
+                t1,
+                t2,
+                offset,
+            ) in self.problem.constraints.start_after_start_plus_offset:
+                i1 = self.problem.task_id_to_index[t1]
+                i2 = self.problem.task_id_to_index[t2]
+                self.cp_model.start_before_start(
+                    self.variables_dict["main_interval"][i2],
+                    self.variables_dict["main_interval"][i1],
+                    offset,
+                )
+
     def constraint_precedence_on_groups(self):
         """
         Basic precedence constraint between group of tasks
@@ -1210,8 +1275,9 @@ class OptalFlexProblemSolver(OptalCpSolver):
         for id_task in obj_earliness.weight_per_task:
             if obj_earliness.weight_per_task[id_task] > 0:
                 index = self.problem.task_id_to_index[id_task]
-                deadline = int(self.problem.task_id_dict[id_task].max_ending_date)
+                deadline = self.problem.task_id_dict[id_task].max_ending_date
                 if deadline is not None:
+                    deadline = int(deadline)
                     end = self.cp_model.end(self.variables_dict["main_interval"][index])
                     earliness = self.cp_model.max2(0, deadline - end)
                     # cost_expr = penalty * lateness + earliness

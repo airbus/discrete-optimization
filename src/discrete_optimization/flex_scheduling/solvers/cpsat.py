@@ -1456,11 +1456,13 @@ class CpSatFlexSolver(
                 index = self.problem.task_id_to_index[id_task]
                 deadline = self.problem.task_id_dict[id_task].max_ending_date
                 if deadline is not None:
+                    deadline = int(deadline)
                     end = self.variables["ends"][index]
                     # Create lateness/earliness variables
                     earliness = self.cp_model.NewIntVar(
                         lb=0, ub=self.problem.horizon, name=f"earliness_task_{id_task}"
                     )
+                    # self.cp_model.AddMaxEquality(earliness, [0, deadline-end])
                     self.cp_model.Add(earliness >= deadline - end)
                     # cost_expr = penalty * lateness + earliness
                     cost_expr = earliness

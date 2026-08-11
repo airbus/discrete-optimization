@@ -12,6 +12,8 @@ from discrete_optimization.flex_scheduling.problem import (
     TASK_KEY,
     ConstraintsTask,
     FlexProblem,
+    ObjectiveParams,
+    ObjectivesEnum,
     ScheduleSolution,
 )
 from discrete_optimization.flex_scheduling.solvers.cpsat import CpSatFlexSolver
@@ -82,12 +84,15 @@ class SequentialFlexSolver(SolverDO):
             solver.set_lexico_objective("makespan")
 
             params_cp = ParametersCp.default_cpsat()
-            params_cp.nb_process = kwargs.get("nb_process", 16)
+            params_cp.nb_process = kwargs.get("nb_process", 8)
 
             res = solver.solve(
                 time_limit=time_limit_per_batch,
                 parameters_cp=params_cp,
-                ortools_cpsat_solver_kwargs={"log_search_progress": True},
+                ortools_cpsat_solver_kwargs={
+                    "log_search_progress": True,
+                    "merge_no_overlap_work_limit": 0,
+                },
             )
             if (
                 solver.status_solver == StatusSolver.UNKNOWN
@@ -306,7 +311,7 @@ class SequentialFlexSolver(SolverDO):
             )
         return nc
 
-    def _filter_objectives(self, params, tasks, groups):
+    def _filter_objectives(self, params, tasks, groups) -> ObjectiveParams:
         new_p = deepcopy(params)
         for obj in new_p.params_obj.values():
             if hasattr(obj, "weight_per_task"):
@@ -321,6 +326,8 @@ class SequentialFlexSolver(SolverDO):
                 obj.weight_per_groups = {
                     g: w for g, w in obj.weight_per_groups.items() if g in groups
                 }
+        if ObjectivesEnum.EARLINESS in new_p.params_obj:
+            new_p.params_obj.pop(ObjectivesEnum.EARLINESS)
         return new_p
 
     def _create_task_batches(self, nb_batches: int) -> List[List[TASK_KEY]]:
