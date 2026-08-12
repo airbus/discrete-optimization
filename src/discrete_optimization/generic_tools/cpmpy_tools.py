@@ -693,8 +693,8 @@ class _OrtoolsCpSatCallbackViaCpmpy(CpSolverSolutionCallback):
         retrieve_stats: bool = False,
     ):
         super().__init__()
-        self._varmap = solver_obj._varmap
         self._cpm_vars = solver_obj.user_vars
+        self.solver_obj = solver_obj
         self.do_solver = do_solver
         self.callback = callback
         self.retrieve_stats = retrieve_stats
@@ -730,11 +730,14 @@ class _OrtoolsCpSatCallbackViaCpmpy(CpSolverSolutionCallback):
                 # it might be an NDVarArray
                 if hasattr(cpm_var, "flat"):
                     for cpm_subvar in cpm_var.flat:
-                        cpm_subvar._value = self.Value(self._varmap[cpm_subvar])
+                        slv_var = self.solver_obj.solver_var(cpm_subvar)
+                        cpm_subvar._value = self.Value(slv_var)
                 elif isinstance(cpm_var, _BoolVarImpl):
-                    cpm_var._value = bool(self.Value(self._varmap[cpm_var]))
+                    slv_var = self.solver_obj.solver_var(cpm_var)
+                    cpm_var._value = bool(self.Value(slv_var))
                 else:
-                    cpm_var._value = self.Value(self._varmap[cpm_var])
+                    slv_var = self.solver_obj.solver_var(cpm_var)
+                    cpm_var._value = self.Value(slv_var)
         sol = self.do_solver.retrieve_current_solution()
         fit = self.do_solver.aggreg_from_sol(sol)
         self.res.append((sol, fit))
