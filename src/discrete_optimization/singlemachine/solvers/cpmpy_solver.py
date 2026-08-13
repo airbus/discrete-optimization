@@ -108,7 +108,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
 
     def _init_cp_model(self) -> None:
         """Initializes the Constraint Programming (CP) model."""
-        self.model = cpmpy.Model(minimize=True)
+        self.model = cpmpy.Model()
 
         num_jobs = self.problem.num_jobs
         p = self.problem.processing_times
@@ -167,7 +167,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
 
     def _init_lp_model(self) -> None:
         """Initializes the Mixed-Integer Linear Programming (LP) model."""
-        self.model = cpmpy.Model(minimize=True)
+        self.model = cpmpy.Model()
         num_jobs = self.problem.num_jobs
         p = self.problem.processing_times
         d = self.problem.due_dates
