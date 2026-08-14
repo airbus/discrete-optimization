@@ -560,8 +560,8 @@ class RcpspProblem(
             (
                 n,
                 {
-                    str(mode): self.mode_details[n][mode]["duration"]
-                    for mode in self.mode_details[n]
+                    str(mode): self.get_task_mode_duration(n, mode)
+                    for mode in self.get_task_modes(n)
                 },
             )
             for n in self.tasks_list
@@ -846,19 +846,19 @@ def create_np_data_and_jit_functions(
     ressource_renewable = np.ones((len(rcpsp_problem.resources_list)), dtype=bool)
     minimum_starting_time_array = np.zeros(rcpsp_problem.n_jobs, dtype=np.int_)
 
-    for i in range(len(rcpsp_problem.tasks_list)):
+    for i in range(rcpsp_problem.n_jobs):
         task = rcpsp_problem.tasks_list[i]
         index_mode = 0
-        for mode in sorted(
-            rcpsp_problem.mode_details[rcpsp_problem.tasks_list[i]].keys()
-        ):
+        for mode in sorted(rcpsp_problem.get_task_modes(rcpsp_problem.tasks_list[i])):
             for k in range(len(rcpsp_problem.resources_list)):
-                consumption_array[i, index_mode, k] = rcpsp_problem.mode_details[task][
-                    mode
-                ].get(rcpsp_problem.resources_list[k], 0)
-            duration_array[i, index_mode] = rcpsp_problem.mode_details[task][mode][
-                "duration"
-            ]
+                consumption_array[i, index_mode, k] = (
+                    rcpsp_problem.get_cumulative_resource_consumption(
+                        rcpsp_problem.resources_list[k], task, mode
+                    )
+                )
+            duration_array[i, index_mode] = rcpsp_problem.get_task_mode_duration(
+                task, mode
+            )
             index_mode += 1
 
     task_index = {rcpsp_problem.tasks_list[i]: i for i in range(rcpsp_problem.n_jobs)}
@@ -876,7 +876,7 @@ def create_np_data_and_jit_functions(
         if rcpsp_problem.resources_list[k] in rcpsp_problem.non_renewable_resources:
             ressource_renewable[k] = False
 
-    for i in range(len(rcpsp_problem.tasks_list)):
+    for i in range(rcpsp_problem.n_jobs):
         task = rcpsp_problem.tasks_list[i]
         for s in rcpsp_problem.successors[task]:
             index_s = task_index[s]

@@ -51,8 +51,8 @@ def compute_resource_consumption(
     consumptions = np.zeros((len(list_resources), makespan + 1), dtype=np.int_)
     for act_id in rcpsp_sol.rcpsp_schedule:
         for ir in range(len(list_resources)):
-            use_ir = rcpsp_problem.mode_details[act_id][modes_dict[act_id]].get(
-                list_resources[ir], 0
+            use_ir = rcpsp_problem.get_cumulative_resource_consumption(
+                list_resources[ir], act_id, modes_dict[act_id]
             )
             if future_view:
                 consumptions[
@@ -127,7 +127,9 @@ def plot_ressource_view(
         time_start = rcpsp_sol.rcpsp_schedule[j]["start_time"]
         time_end = rcpsp_sol.rcpsp_schedule[j]["end_time"]
         for i in range(len(list_resource)):
-            cons = rcpsp_problem.mode_details[j][modes_dict[j]].get(list_resource[i], 0)
+            cons = rcpsp_problem.get_cumulative_resource_consumption(
+                list_resource[i], j, modes_dict[j]
+            )
             if cons == 0:
                 continue
             bound: int = int(rcpsp_problem.get_max_resource_capacity(list_resource[i]))
