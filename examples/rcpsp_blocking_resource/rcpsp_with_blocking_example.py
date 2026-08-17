@@ -11,12 +11,12 @@ We create three scenarios:
 This shows how blocking constraints affect optimal schedules.
 """
 
-from discrete_optimization.rcpsp.blocking_generator import (
-    generate_setup_time_blocking,
-)
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.cpsat_auto import (
     CpSatAutoRcpspSolver,
+)
+from discrete_optimization.rcpsp_blocking_resource.blocking_generator import (
+    generate_setup_time_blocking,
 )
 
 
