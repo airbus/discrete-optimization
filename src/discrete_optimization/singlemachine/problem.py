@@ -112,6 +112,9 @@ class WeightedTardinessProblem(SchedulingProblem[Task]):
     def tasks_list(self) -> list[Task]:
         return list(range(self.num_jobs))
 
+    def is_optional(self, task: Task) -> bool:
+        return False
+
     def __repr__(self):
         return (
             f"WeightedTardinessProblem(num_jobs={self.num_jobs}, "
