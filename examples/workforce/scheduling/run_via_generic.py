@@ -24,8 +24,8 @@ from discrete_optimization.workforce.scheduling.parser import (
     get_data_available,
     parse_json_to_problem,
 )
-from discrete_optimization.workforce.scheduling.transformations.to_generic import (
-    WorkforceSchedulingToGenericTransformation,
+from discrete_optimization.workforce.scheduling.transformations.generic_scheduling_impl import (
+    WfSchedulingToGenericSchedulingTransformation,
 )
 from discrete_optimization.workforce.scheduling.utils import (
     plotly_schedule_comparison,
@@ -41,9 +41,9 @@ def run_cpsat():
     problem = parse_json_to_problem(instance)
     # problem.same_allocation = []
     p = ParametersCp.default_cpsat()
-    p.nb_process = 32
+    p.nb_process = 12
     solver = TransformationSolver(
-        transformation=WorkforceSchedulingToGenericTransformation(
+        transformation=WfSchedulingToGenericSchedulingTransformation(
             objective=[
                 (Objective.NB_UNARY_RESOURCES_USED, -1000),
                 (Objective.DISPERSION_WORKLOAD, -1),
