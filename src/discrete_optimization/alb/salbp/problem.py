@@ -10,9 +10,11 @@ from discrete_optimization.alb.base.problem import (
     BaseALBSolution,
     TaskData,
 )
+from discrete_optimization.generic_tasks_tools import AbsentValue
 from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
 )
+from discrete_optimization.generic_tasks_tools.base import NoOptionalTasksProblem
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -46,6 +48,9 @@ class SalbpSolution(BaseALBSolution[Task, Resource]):
         self.allocation_to_station = allocation_to_station
         self._nb_stations = len(set(self.allocation_to_station))
         self._cached_schedule = None  # Cache for greedy schedule
+
+    def is_present(self, task: Task) -> bool:
+        return self.allocation_to_station[task] not in {None, AbsentValue.ABSENT}
 
     # BaseALBSolution interface implementation
     def get_station_index(self, task: Task) -> int:
@@ -138,7 +143,7 @@ class SalbpSolution(BaseALBSolution[Task, Resource]):
         return self.allocation_to_station == other.allocation_to_station
 
 
-class SalbpProblem(BaseALBProblem[int, int]):
+class SalbpProblem(BaseALBProblem[int, int], NoOptionalTasksProblem[Task]):
     """
     Simple Assembly Line Balancing Problem.
 
