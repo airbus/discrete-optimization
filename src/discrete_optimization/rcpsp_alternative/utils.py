@@ -2,6 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import random
+from copy import deepcopy
 
 from discrete_optimization.rcpsp.problem import RcpspProblem, Task
 from discrete_optimization.rcpsp_alternative.problem import (
@@ -15,6 +16,7 @@ def create_problem_rcpsp(
     nb_alternative_paths: int = 3,
     range_nb_subpath: tuple = (1, 4),
     range_len_subpath: tuple = (1, 5),
+    factor_makespan: float = 3.0,
 ) -> RcpspWithAlternativePath:
     graph = problem.graph
     descendants = graph.descendants_map()
@@ -55,9 +57,12 @@ def create_problem_rcpsp(
                     1: {"duration": random.randint(min_duration, max_duration)}
                 }
                 for r in problem.resources_list:
-                    alternative_tasks_data[task_key][1][r] = random.randint(
-                        0, problem.get_max_resource_capacity(r) // 2
-                    )
+                    if r in problem.non_renewable_resources_list:
+                        alternative_tasks_data[task_key][1][r] = 0
+                    else:
+                        alternative_tasks_data[task_key][1][r] = random.randint(
+                            0, problem.get_max_resource_capacity(r) // 2
+                        )
                 alternative_tasks.append(task_key)
                 path.append(task_key)
             list_paths.append(path)
@@ -70,20 +75,20 @@ def create_problem_rcpsp(
                 nb_path_to_do=1,
             )
         )
+    mode_details = deepcopy(problem.mode_details)
+    mode_details.update(alternative_tasks_data)
     return RcpspWithAlternativePath(
         resources=problem.resources,
         non_renewable_resources=problem.non_renewable_resources,
-        mode_details=problem.mode_details,
+        mode_details=mode_details,
         successors=problem.successors,
-        horizon=problem.horizon * 2,
-        tasks_list=problem.tasks_list,
+        horizon=int(problem.horizon * factor_makespan),
+        tasks_list=problem.tasks_list + alternative_tasks,
         source_task=problem.source_task,
         sink_task=problem.sink_task,
         name_task=problem.name_task,
         calendar_details=problem.calendar_details,
         special_constraints=problem.special_constraints,
         alternative_tasks=alternative_tasks,
-        alternative_tasks_data=alternative_tasks_data,
-        alternative_successors=alternative_successors,
         list_alternative_subproblem=list_alternative_subproblem,
     )

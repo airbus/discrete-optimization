@@ -2,6 +2,8 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
+import logging
+
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.utils import plot_ressource_view, plot_task_gantt, plt
@@ -9,7 +11,13 @@ from discrete_optimization.rcpsp_alternative.problem import get_optional_tasks_d
 from discrete_optimization.rcpsp_alternative.solvers.cpsat import (
     CpsatRcpspWithAlternativePathSolver,
 )
+from discrete_optimization.rcpsp_alternative.solvers.cpsat_auto import (
+    CpsatAutoRcpspWithAlternativePathSolver,
+)
 from discrete_optimization.rcpsp_alternative.utils import create_problem_rcpsp
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def run_cpsat():
@@ -31,5 +39,30 @@ def run_cpsat():
     plt.show()
 
 
+def run_cpsat_auto():
+    problem = parse_file([f for f in get_data_available() if "j601_1.sm" in f][0])
+    # problem = parse_file([f for f in get_data_available() if "j1010_1.mm" in f][0])
+
+    problem = create_problem_rcpsp(
+        problem,
+        nb_alternative_paths=5,
+        range_nb_subpath=(1, 4),
+        range_len_subpath=(3, 5),
+    )
+    solver = CpsatAutoRcpspWithAlternativePathSolver(problem)
+    solver.init_model(use_cpm_for_task_bounds=False, use_energy_constraints=False)
+    res = solver.solve(
+        parameters_cp=ParametersCp.default_cpsat(),
+        time_limit=30,
+        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+    )
+    sol = res[-1][0]
+    print(problem.evaluate(sol), problem.satisfy(sol))
+    print("Optional tasks done : ", get_optional_tasks_done(sol, problem))
+    plot_task_gantt(problem, sol)
+    plot_ressource_view(problem, sol)
+    plt.show()
+
+
 if __name__ == "__main__":
-    run_cpsat()
+    run_cpsat_auto()

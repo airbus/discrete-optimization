@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Generic
 
+from discrete_optimization.generic_tasks_tools import AbsentValue
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
@@ -19,9 +20,9 @@ from discrete_optimization.generic_tasks_tools.skill import Skill
 class TaskVariable(Generic[UnaryResource, Skill]):
     """Task characteristics found in a generic scheduling solution."""
 
-    start: int  # start time of the task
-    end: int  # end time of the task
-    mode: int  # chosen mode for the task
+    start: int | AbsentValue  # start time of the task
+    end: int | AbsentValue  # end time of the task
+    mode: int | AbsentValue  # chosen mode for the task
     allocated: dict[UnaryResource, set[Skill]] = field(
         default_factory=dict
     )  # resources allocated to the task
@@ -29,7 +30,7 @@ class TaskVariable(Generic[UnaryResource, Skill]):
         default_factory=dict
     )  # additional information if needed
 
-    def get_start_or_end(self, start_or_end: StartOrEnd) -> int:
+    def get_start_or_end(self, start_or_end: StartOrEnd) -> int | AbsentValue:
         if start_or_end == StartOrEnd.START:
             return self.start
         else:

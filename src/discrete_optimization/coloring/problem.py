@@ -19,6 +19,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -276,6 +277,9 @@ class ColoringProblem(AllocationProblem[Node, Color]):
         self.use_subset = len(self.subset_nodes) < len(self.nodes_name)
         self.constraints_coloring = constraints_coloring
         self.has_constraints_coloring = constraints_coloring is not None
+
+    def is_optional(self, task: Task) -> bool:
+        return False
 
     @property
     def tasks_list(self) -> list[Node]:

@@ -217,6 +217,10 @@ class TeamAllocationSolution(AllocationSolution[Task, UnaryResource]):
             problem=self.problem, allocation=self.allocation, **self.kpis
         )
 
+    def is_present(self, task: Task) -> bool:
+        i_task = self.problem.index_activities_name[task]
+        return self.allocation[i_task] is not None
+
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
         i_task = self.problem.index_activities_name[task]
         i_team = self.problem.index_teams_name[unary_resource]

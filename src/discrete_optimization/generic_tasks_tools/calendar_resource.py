@@ -218,6 +218,8 @@ class CalendarResourceSolution(SchedulingSolution[Task], Generic[Task, Resource]
             resource: np.zeros(makespan, dtype=int) for resource in resources
         }
         for task in self.problem.tasks_list:
+            if not self.is_present(task):
+                continue
             start = self.get_start_time(task)
             end = self.get_end_time(task)
             for resource in resources:

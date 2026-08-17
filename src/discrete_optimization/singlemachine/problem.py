@@ -42,6 +42,9 @@ class WTSolution(SchedulingSolution[Task]):
         self.permutation = permutation
         self.compute_schedule_from_permutation()
 
+    def is_present(self, task: Task) -> bool:
+        return self.schedule[task][0] is not None
+
     def compute_schedule_from_permutation(self):
         if self.schedule is None:
             assert self.permutation is not None

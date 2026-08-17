@@ -51,6 +51,9 @@ class VRPTWSolution(SchedulingSolution[Task], AllocationSolution[Task, UnaryReso
         capacity_violation (float): Total violation of vehicle capacities.
     """
 
+    def is_present(self, task: Task) -> bool:
+        return self.get_start_time(task) is not None
+
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
         return task in self.routes[unary_resource]
 

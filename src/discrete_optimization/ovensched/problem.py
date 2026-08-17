@@ -11,6 +11,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.base import NoOptionalTasksProblem
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
@@ -53,6 +54,9 @@ class OvenSchedulingSolution(
     """
     Represents a solution to the Oven Scheduling Problem.
     """
+
+    def is_present(self, task: Task) -> bool:
+        return task in self.schedule_per_task
 
     problem: OvenSchedulingProblem
 
@@ -191,7 +195,9 @@ class MachineData:
 
 
 class OvenSchedulingProblem(
-    SchedulingProblem[Task], AllocationProblem[Task, UnaryResource]
+    SchedulingProblem[Task],
+    AllocationProblem[Task, UnaryResource],
+    NoOptionalTasksProblem[Task],
 ):
     """Defines an instance of the Oven Scheduling Problem (OSP) and its evaluation logic."""
 

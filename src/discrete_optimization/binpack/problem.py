@@ -13,6 +13,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
@@ -48,6 +49,9 @@ class BinPackSolution(AllocationSolution[Item, BinPack], SchedulingSolution[Item
         return BinPackSolution(
             problem=self.problem, allocation=deepcopy(self.allocation)
         )
+
+    def is_present(self, task: Task) -> bool:
+        return self.allocation[task] is not None
 
     def get_end_time(self, task: Item) -> int:
         return self.allocation[task] + 1

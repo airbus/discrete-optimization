@@ -49,7 +49,7 @@ def compute_resource_consumption(
     if list_resources is None:
         list_resources = rcpsp_problem.resources_list
     consumptions = np.zeros((len(list_resources), makespan + 1), dtype=np.int_)
-    for act_id in rcpsp_sol.rcpsp_schedule:
+    for act_id in rcpsp_sol.get_present_tasks():
         for ir in range(len(list_resources)):
             use_ir = rcpsp_problem.get_cumulative_resource_consumption(
                 list_resources[ir], act_id, modes_dict[act_id]
@@ -120,7 +120,7 @@ def plot_ressource_view(
     polygons_ax: dict[int, list[Polygon]] = {i: [] for i in range(len(list_resource))}
     labels_ax: dict[int, list[Hashable]] = {i: [] for i in range(len(list_resource))}
     sorted_activities = sorted(
-        rcpsp_sol.rcpsp_schedule,
+        rcpsp_sol.get_present_tasks(),
         key=lambda x: rcpsp_sol.rcpsp_schedule[x]["start_time"],
     )
     for j in sorted_activities:
@@ -208,29 +208,29 @@ def plot_task_gantt(
         ax.set_title("Gantt Task")
     else:
         ax.set_title(title)
-    tasks = rcpsp_problem.tasks_list
-    nb_task = len(tasks)
+    tasks_of_interest = rcpsp_sol.get_present_tasks()
+    nb_task = len(tasks_of_interest)
     sorted_task_by_start = sorted(
-        rcpsp_sol.rcpsp_schedule,
+        tasks_of_interest,
         key=lambda x: 100000 * rcpsp_sol.get_start_time(x)
         + rcpsp_problem.index_task[x],
     )
     sorted_task_by_end = sorted(
-        rcpsp_sol.rcpsp_schedule,
+        tasks_of_interest,
         key=lambda x: 100000 * rcpsp_sol.get_end_time(x) + rcpsp_problem.index_task[x],
     )
     max_time = rcpsp_sol.get_end_time(sorted_task_by_end[-1])
     min_time = rcpsp_sol.get_start_time(sorted_task_by_start[0])
     patches = []
     for j in range(nb_task):
-        nb_colors = len(tasks) // 2
+        nb_colors = len(tasks_of_interest) // 2
         colors = get_cmap_with_nb_colors("hsv", nb_colors)
         box = [
-            (j - 0.25, rcpsp_sol.rcpsp_schedule[tasks[j]]["start_time"]),
-            (j - 0.25, rcpsp_sol.rcpsp_schedule[tasks[j]]["end_time"]),
-            (j + 0.25, rcpsp_sol.rcpsp_schedule[tasks[j]]["end_time"]),
-            (j + 0.25, rcpsp_sol.rcpsp_schedule[tasks[j]]["start_time"]),
-            (j - 0.25, rcpsp_sol.rcpsp_schedule[tasks[j]]["start_time"]),
+            (j - 0.25, rcpsp_sol.get_start_time(tasks_of_interest[j])),
+            (j - 0.25, rcpsp_sol.get_end_time(tasks_of_interest[j])),
+            (j + 0.25, rcpsp_sol.get_end_time(tasks_of_interest[j])),
+            (j + 0.25, rcpsp_sol.get_start_time(tasks_of_interest[j])),
+            (j - 0.25, rcpsp_sol.get_start_time(tasks_of_interest[j])),
         ]
         polygon = Polygon([(b[1], b[0]) for b in box])
         x, y = polygon.exterior.xy
@@ -252,7 +252,7 @@ def plot_task_gantt(
     ax.set_ylim((-0.5, nb_task))
     ax.set_yticks(range(nb_task))
     ax.set_yticklabels(
-        tuple([str(tasks[j]) for j in range(nb_task)]), fontdict={"size": 5}
+        tuple([str(tasks_of_interest[j]) for j in range(nb_task)]), fontdict={"size": 5}
     )
     ax.set_ylabel("Task number")
     ax.set_xlabel("Timestep")

@@ -272,6 +272,9 @@ class RcpspProblem(
 
         self.update_problem()
 
+    def is_optional(self, task: Task) -> bool:
+        return False
+
     def update_problem(self) -> None:
         """Method to call when some attributes have been modified.
 
@@ -851,11 +854,22 @@ def create_np_data_and_jit_functions(
         index_mode = 0
         for mode in sorted(rcpsp_problem.get_task_modes(rcpsp_problem.tasks_list[i])):
             for k in range(len(rcpsp_problem.resources_list)):
-                consumption_array[i, index_mode, k] = (
-                    rcpsp_problem.get_cumulative_resource_consumption(
-                        rcpsp_problem.resources_list[k], task, mode
+                if (
+                    rcpsp_problem.resources_list[k]
+                    in rcpsp_problem.cumulative_resources_list
+                ):
+                    consumption_array[i, index_mode, k] = (
+                        rcpsp_problem.get_cumulative_resource_consumption(
+                            rcpsp_problem.resources_list[k], task, mode
+                        )
                     )
-                )
+                else:
+                    consumption_array[i, index_mode, k] = (
+                        rcpsp_problem.get_non_renewable_resource_consumption(
+                            rcpsp_problem.resources_list[k], task, mode
+                        )
+                    )
+
             duration_array[i, index_mode] = rcpsp_problem.get_task_mode_duration(
                 task, mode
             )
@@ -878,10 +892,11 @@ def create_np_data_and_jit_functions(
 
     for i in range(rcpsp_problem.n_jobs):
         task = rcpsp_problem.tasks_list[i]
-        for s in rcpsp_problem.successors[task]:
-            index_s = task_index[s]
-            predecessors[index_s, i] = 1
-            successors[i, index_s] = 1
+        if task in rcpsp_problem.successors:
+            for s in rcpsp_problem.successors[task]:
+                index_s = task_index[s]
+                predecessors[index_s, i] = 1
+                successors[i, index_s] = 1
 
     if "special_constraints" in rcpsp_problem.__dict__.keys():
         for t in rcpsp_problem.special_constraints.start_times_window:

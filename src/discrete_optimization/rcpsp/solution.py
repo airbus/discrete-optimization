@@ -276,7 +276,8 @@ class RcpspSolution(
         sorted_task = [
             self.problem.index_task_non_dummy[i]
             for i in sorted(
-                self.rcpsp_schedule, key=lambda x: self.rcpsp_schedule[x]["start_time"]
+                [t for t in self.problem.tasks_list if self.is_present(t)],
+                key=lambda x: self.rcpsp_schedule[x]["start_time"],
             )
             if i in self.problem.index_task_non_dummy
         ]

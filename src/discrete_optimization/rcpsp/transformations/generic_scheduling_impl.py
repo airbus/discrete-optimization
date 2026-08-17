@@ -9,6 +9,7 @@ from __future__ import annotations
 import itertools
 from collections.abc import Hashable
 
+from discrete_optimization.generic_tasks_tools import AbsentValue
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     GenericSchedulingImplProblem,
@@ -43,7 +44,7 @@ def transform_solution_from_raw_generic_to_rcpsp(
     """Convert generic solution to RCPSP solution.
 
     Args:
-        solution:
+        raw_sol:
         problem:
 
     Returns:
@@ -60,7 +61,9 @@ def transform_solution_from_raw_generic_to_rcpsp(
     return RcpspSolution(
         problem=problem,
         rcpsp_schedule=schedule,
-        rcpsp_modes=[modes_dict[t] for t in problem.tasks_list_non_dummy],
+        rcpsp_modes=[
+            modes_dict.get(t, AbsentValue.ABSENT) for t in problem.tasks_list_non_dummy
+        ],
     )
 
 
