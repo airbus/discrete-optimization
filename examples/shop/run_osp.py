@@ -6,8 +6,10 @@ from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
 from discrete_optimization.shop.osp.problem import OpenShopProblem
 from discrete_optimization.shop.osp.solvers.cpsat import CpSatOspSolver
 from discrete_optimization.shop.osp.solvers.dp import DpOspSolver, dp
+from discrete_optimization.shop.solvers.cpmpy import CpmpyShopSolver
+from discrete_optimization.shop.utils import plot_shop_solution, plt
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 def run_osp():
@@ -47,6 +49,30 @@ def run_osp():
             threads=6,
             retrieve_intermediate_solutions=True,
         )
+    print(osp.evaluate(res[-1][0]), osp.satisfy(res[-1][0]))
+
+
+def run_cpmpy_osp():
+    problem = parse_file(get_data_available()[10])
+    osp = OpenShopProblem(
+        list_jobs=problem.list_jobs,
+        n_jobs=problem.n_jobs,
+        n_machines=problem.n_machines,
+        horizon=problem.horizon,
+    )
+    solver_cpsat = CpmpyShopSolver(osp)
+    solver_cpsat.init_model()
+    res = solver_cpsat.solve(
+        parameters_cp=ParametersCp.default_cpsat(),
+        time_limit=20,
+        callbacks=[
+            ProblemEvaluateLogger(
+                step_verbosity_level=logging.INFO, end_verbosity_level=logging.INFO
+            )
+        ],
+    )
+    plot_shop_solution(res[-1][0])
+    plt.show()
     print(osp.evaluate(res[-1][0]), osp.satisfy(res[-1][0]))
 
 

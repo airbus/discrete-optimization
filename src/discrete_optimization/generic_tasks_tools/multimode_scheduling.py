@@ -40,6 +40,15 @@ class MultimodeSchedulingProblem(
         """
         ...
 
+    def get_max_duration_of_tasks(self):
+        return max(
+            [
+                self.get_task_mode_duration(task=task, mode=mode)
+                for task in self.tasks_list
+                for mode in self.get_task_modes(task)
+            ]
+        )
+
 
 class SinglemodeSchedulingProblem(
     SinglemodeProblem[Task],
