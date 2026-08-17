@@ -16,6 +16,7 @@ import numpy as np
 from networkx import bipartite
 
 from discrete_optimization.coloring.problem import ColoringConstraints, ColoringProblem
+from discrete_optimization.generic_tasks_tools import AbsentValue
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
@@ -219,7 +220,10 @@ class TeamAllocationSolution(AllocationSolution[Task, UnaryResource]):
 
     def is_present(self, task: Task) -> bool:
         i_task = self.problem.index_activities_name[task]
-        return self.allocation[i_task] is not None
+        return (
+            self.allocation[i_task] is not None
+            and self.allocation[i_task] != AbsentValue.ABSENT
+        )
 
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
         i_task = self.problem.index_activities_name[task]
@@ -398,6 +402,9 @@ class TeamAllocationProblem(AllocationProblem[Task, UnaryResource]):
             i: self.teams_name[i] for i in range(self.number_of_teams)
         }
         self.compatibility_task_team = self.compute_compatibility_for_all_tasks()
+
+    def is_optional(self, task: Task) -> bool:
+        return False
 
     @property
     def tasks_list(self) -> list[Task]:

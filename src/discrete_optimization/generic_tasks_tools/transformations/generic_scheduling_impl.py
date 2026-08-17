@@ -300,6 +300,8 @@ class ToGenericSchedulingImpl(
             objective=objective,
             custom_evaluate_fn=custom_evaluate_fn,
             objective_resource_weights=objective_resource_weights,
+            optional_tasks=set(source_problem.optional_tasks_list),
+            alternative_subproblems=source_problem.get_alternative_scheduling_subproblem(),
             compute_time_penalty=compute_time_penalty,
         )
 
