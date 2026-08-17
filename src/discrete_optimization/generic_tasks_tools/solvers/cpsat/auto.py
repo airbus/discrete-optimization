@@ -1017,7 +1017,12 @@ class GenericSchedulingAutoCpSatSolver(
         if self.needs_task_interval:
             return self.task_interval_variables[task]
         else:
-            return super().get_task_interval(task=task)
+            return self.cp_model.new_interval_var(
+                start=self.start_or_end_variables[task, StartOrEnd.START],
+                size=self.duration_variables[task],
+                end=self.start_or_end_variables[task, StartOrEnd.END],
+                name=f"interval_{task}",
+            )
 
     def get_cumulative_resource_demand_variable(
         self, task: Task, resource: CumulativeResource

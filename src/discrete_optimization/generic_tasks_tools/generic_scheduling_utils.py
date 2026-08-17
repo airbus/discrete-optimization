@@ -114,6 +114,7 @@ OBJECTIVE_DEFAULT_WEIGHTS: dict[Objective, int] = {
     Objective.NB_UNARY_RESOURCES_USED: -1,
     Objective.NB_RESOURCES_USED: -1,
     Objective.RESOURCES_LEVELS: -1,
+    Objective.DISPERSION_WORKLOAD: -1,
     Objective.COST: -1,
     Objective.CUSTOM: 1,
 }

@@ -757,4 +757,6 @@ class GenericSchedulingSolution(
             for ur in urs:
                 workload[self.problem.get_index_from_unary_resource(ur)] += duration
         nz = [w for w in workload if w > 0]
-        return max(nz) - min(nz)
+        if nz:
+            return max(nz) - min(nz)
+        return 0
