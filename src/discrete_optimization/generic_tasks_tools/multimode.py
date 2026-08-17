@@ -88,7 +88,6 @@ class MultimodeProblem(TasksProblem[Task]):
     def max_number_of_mode(self) -> int:
         return max(len(self.get_task_modes(task)) for task in self.tasks_list)
 
-    @abstractmethod
     def get_mode_constraints(
         self,
     ) -> list[tuple[ModeConstraintType, list[tuple[Task, int]]]]:
@@ -106,11 +105,13 @@ class MultimodeProblem(TasksProblem[Task]):
             So if mode(T2)==2 then the other mode are also forced!
         :return:
         """
-        ...
+        return []
 
 
 class WithoutModeConstraintMultimodeProblem(MultimodeProblem[Task]):
-    def get_mode_constraints(self) -> list[list[tuple[Task, int]]]:
+    def get_mode_constraints(
+        self,
+    ) -> list[tuple[ModeConstraintType, list[tuple[Task, int]]]]:
         return []
 
 
