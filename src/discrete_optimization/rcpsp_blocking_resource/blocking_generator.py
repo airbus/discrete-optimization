@@ -22,7 +22,9 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     SpanBlockingConstraint,
 )
 from discrete_optimization.rcpsp.problem import RcpspProblem
-from discrete_optimization.rcpsp.problem_with_blocking import RcpspWithResourceBlocking
+from discrete_optimization.rcpsp_blocking_resource.problem_with_blocking import (
+    RcpspWithResourceBlocking,
+)
 
 
 def generate_setup_time_blocking(

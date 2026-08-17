@@ -11,14 +11,16 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
     BlockingMode,
 )
-from discrete_optimization.rcpsp.blocking_generator import (
+from discrete_optimization.rcpsp.parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.solvers.cpsat_auto import CpSatAutoRcpspSolver
+from discrete_optimization.rcpsp_blocking_resource.blocking_generator import (
     generate_batch_blocking,
     generate_combined_blocking,
     generate_setup_time_blocking,
 )
-from discrete_optimization.rcpsp.parser import get_data_available, parse_file
-from discrete_optimization.rcpsp.problem_with_blocking import RcpspWithResourceBlocking
-from discrete_optimization.rcpsp.solvers.cpsat_auto import CpSatAutoRcpspSolver
+from discrete_optimization.rcpsp_blocking_resource.problem_with_blocking import (
+    RcpspWithResourceBlocking,
+)
 
 
 def test_rcpsp_with_blocking_creation():
