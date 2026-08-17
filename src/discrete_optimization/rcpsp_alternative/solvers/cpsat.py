@@ -65,7 +65,9 @@ class CpsatRcpspWithAlternativePathSolver(CpSatRcpspSolver):
             model=model,
             is_present_var=is_present_var,
             interval_per_tasks={
-                t: interval_per_tasks[t] for t in self.problem._tasks_list
+                t: interval_per_tasks[t]
+                for t in self.problem.tasks_list
+                if not self.problem.is_optional(t)
             },
         )
         is_done = self.create_is_done_variable()
@@ -76,7 +78,6 @@ class CpsatRcpspWithAlternativePathSolver(CpSatRcpspSolver):
             interval_per_tasks={t: interval_per_tasks[t] for t in is_done},
         )
         self.create_precedence_constraints()
-        self.create_precedence_constraints_alternative()
         resources = self.problem.resources_list
         for resource in resources:
             self.create_cumulative_constraint(
@@ -103,25 +104,6 @@ class CpsatRcpspWithAlternativePathSolver(CpSatRcpspSolver):
             )
         objective = self.get_global_makespan_variable()
         self.minimize_variable(objective)
-
-    def create_precedence_constraints_alternative(self):
-        for t in self.problem.alternative_successors:
-            for tt in self.problem.alternative_successors[t]:
-                if tt in self.problem._tasks_list:
-                    (
-                        self.cp_model.add(
-                            self.variables["end"][t] <= self.variables["start"][tt]
-                        ).only_enforce_if(self.additional_variables["is_done"][t])
-                    )
-                if tt in self.problem.alternative_tasks:
-                    (
-                        self.cp_model.add(
-                            self.variables["end"][t] <= self.variables["start"][tt]
-                        ).only_enforce_if(
-                            self.additional_variables["is_done"][t],
-                            self.additional_variables["is_done"][tt],
-                        )
-                    )
 
     def create_alternative_path_constraint(
         self,

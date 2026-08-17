@@ -75,6 +75,9 @@ class MyNonRenewableResourceSolution(
         super().__init__(problem)
         self.modes = modes
 
+    def is_present(self, task: Task) -> bool:
+        return True
+
     def get_mode(self, task: Task) -> int:
         return self.modes[task]
 

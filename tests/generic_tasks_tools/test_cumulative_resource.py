@@ -132,6 +132,9 @@ class MyCumulativeResourceSolution(
         self.modes = modes
         self.starts = starts
 
+    def is_present(self, task: Task) -> bool:
+        return True
+
     def get_mode(self, task: Task) -> int:
         return self.modes[task]
 
