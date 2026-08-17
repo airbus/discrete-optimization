@@ -51,9 +51,14 @@ def compute_resource_consumption(
     consumptions = np.zeros((len(list_resources), makespan + 1), dtype=np.int_)
     for act_id in rcpsp_sol.get_present_tasks():
         for ir in range(len(list_resources)):
-            use_ir = rcpsp_problem.get_cumulative_resource_consumption(
-                list_resources[ir], act_id, modes_dict[act_id]
-            )
+            if list_resources[ir] in rcpsp_problem.cumulative_resources_list:
+                use_ir = rcpsp_problem.get_cumulative_resource_consumption(
+                    list_resources[ir], act_id, modes_dict[act_id]
+                )
+            else:
+                use_ir = rcpsp_problem.get_non_renewable_resource_consumption(
+                    list_resources[ir], act_id, modes_dict[act_id]
+                )
             if future_view:
                 consumptions[
                     ir,
@@ -127,9 +132,14 @@ def plot_ressource_view(
         time_start = rcpsp_sol.rcpsp_schedule[j]["start_time"]
         time_end = rcpsp_sol.rcpsp_schedule[j]["end_time"]
         for i in range(len(list_resource)):
-            cons = rcpsp_problem.get_cumulative_resource_consumption(
-                list_resource[i], j, modes_dict[j]
-            )
+            if list_resource[i] in rcpsp_problem.cumulative_resources_list:
+                cons = rcpsp_problem.get_cumulative_resource_consumption(
+                    list_resource[i], j, modes_dict[j]
+                )
+            else:
+                cons = rcpsp_problem.get_non_renewable_resource_consumption(
+                    list_resource[i], j, modes_dict[j]
+                )
             if cons == 0:
                 continue
             bound: int = int(rcpsp_problem.get_max_resource_capacity(list_resource[i]))

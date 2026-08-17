@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Optional
 import numpy as np
 from numpy import typing as npt
 
+from discrete_optimization.generic_tasks_tools import AbsentValue
 from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
     WithoutAllocationSolution,
@@ -450,11 +451,15 @@ class RcpspSolution(
     def get_max_end_time(self) -> int:
         return self.rcpsp_schedule[self.problem.sink_task]["end_time"]
 
-    def get_start_time(self, task: Hashable) -> int:
-        return self.rcpsp_schedule[task]["start_time"]
+    def get_start_time(self, task: Hashable) -> int | AbsentValue:
+        if task in self.rcpsp_schedule:
+            return self.rcpsp_schedule[task]["start_time"]
+        return AbsentValue.ABSENT
 
-    def get_end_time(self, task: Hashable) -> int:
-        return self.rcpsp_schedule[task]["end_time"]
+    def get_end_time(self, task: Hashable) -> int | AbsentValue:
+        if task in self.rcpsp_schedule:
+            return self.rcpsp_schedule[task]["end_time"]
+        return AbsentValue.ABSENT
 
     def get_start_times_list(self, task: Hashable) -> list[int]:
         return [self.get_start_time(task)]
