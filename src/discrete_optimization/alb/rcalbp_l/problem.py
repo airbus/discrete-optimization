@@ -16,6 +16,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationSolution,
     UnaryResource,
 )
+from discrete_optimization.generic_tasks_tools.base import NoOptionalTasksProblem
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
@@ -147,7 +148,11 @@ class RCALBPLVectorSolution(RCALBPLSolution):
         self.raw = sol.raw
 
 
-class RCALBPLProblem(SchedulingProblem[Task], AllocationProblem[Task, WorkStation]):
+class RCALBPLProblem(
+    SchedulingProblem[Task],
+    AllocationProblem[Task, WorkStation],
+    NoOptionalTasksProblem[Task],
+):
     """
     Problem definition for Resource-Constrained Assembly Line Balancing
     with Learning Effect (RC-ALBP/L).
