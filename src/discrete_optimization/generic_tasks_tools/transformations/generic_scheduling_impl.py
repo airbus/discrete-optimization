@@ -57,6 +57,20 @@ class ToGenericSchedulingImpl(
 
     """
 
+    def __init__(
+        self,
+        objective: Objective | Iterable[tuple[Objective, int]] = Objective.MAKESPAN,
+        custom_evaluate_fn: Optional[
+            Callable[[GenericSchedulingImplSolution], int]
+        ] = None,
+        objective_resource_weights: Optional[dict[AnyResource, int]] = None,
+        compute_time_penalty: bool = True,
+    ):
+        self.objective = objective
+        self.custom_evaluate_fn = custom_evaluate_fn
+        self.objective_resource_weights = objective_resource_weights
+        self.compute_time_penalty = compute_time_penalty
+
     @abstractmethod
     def transform_solution_from_raw_generic_to_specific(
         self,
@@ -103,10 +117,14 @@ class ToGenericSchedulingImpl(
 
 
         """
-        objective = Objective.MAKESPAN
-        custom_evaluate_fn = None  # No custom objective
-        objective_resource_weights = None  # All resources have same weights
-        compute_time_penalty = True  # Time penalty will be computed during `evaluate()`
+        objective = self.objective
+        custom_evaluate_fn = self.custom_evaluate_fn  # No custom objective
+        objective_resource_weights = (
+            self.objective_resource_weights
+        )  # All resources have same weights
+        compute_time_penalty = (
+            self.compute_time_penalty
+        )  # Time penalty will be computed during `evaluate()`
         return (
             objective,
             custom_evaluate_fn,
@@ -297,6 +315,10 @@ class ToGenericSchedulingImpl(
             forbidden_intervals=forbidden_intervals,
             mode_costs=mode_costs,
             unary_resource_costs=unary_resource_costs,
+            flexible_gap_blocking_constraints=source_problem.get_flexible_gap_blocking_constraints(),
+            span_blocking_constraints=source_problem.get_span_blocking_constraints(),
+            mode_constraints=source_problem.get_mode_constraints(),
+            same_unary_allocation=source_problem.get_same_unary_allocation(),
             objective=objective,
             custom_evaluate_fn=custom_evaluate_fn,
             objective_resource_weights=objective_resource_weights,
