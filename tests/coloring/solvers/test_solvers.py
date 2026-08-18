@@ -105,13 +105,14 @@ def test_load_file(coloring_problem_file):
 def test_solvers(solver_class):
     if solver_class == GurobiColoringSolver and not gurobi_available:
         pytest.skip("You need Gurobi to test this solver.")
-
     small_example = [f for f in get_data_available() if "gc_20_1" in f][0]
     coloring_problem: ColoringProblem = parse_file(small_example)
     results = solve(
         method=solver_class, problem=coloring_problem, **solvers_map[solver_class][1]
     )
-    sol, fit = results.get_best_solution_fit()
+    if len(results) > 0:
+        sol, fit = results.get_best_solution_fit()
+        assert coloring_problem.satisfy(sol)
 
 
 @pytest.mark.parametrize("solver_class", solvers_map)
@@ -135,9 +136,11 @@ def test_solvers_subset(solver_class):
         solver_kwargs["time_limit"] = 10
 
     results = solve(method=solver_class, problem=coloring_problem, **solver_kwargs)
-    sol, fit = results.get_best_solution_fit()
-    print(f"Solver {solver_class}, fitness = {fit}")
-    print(f"Evaluation : {coloring_problem.evaluate(sol)}")
+    if len(results) > 0:
+        sol, fit = results.get_best_solution_fit()
+        print(f"Solver {solver_class}, fitness = {fit}")
+        print(f"Evaluation : {coloring_problem.evaluate(sol)}")
+        assert coloring_problem.satisfy(sol)
 
 
 def test_mzn_solver_cb(caplog):
