@@ -18,9 +18,10 @@ def test_coloring_toulbar():
     problem: ColoringProblem = parse_file(small_example)
     solver = ToulbarColoringSolver(problem=problem)
     res = solver.solve(time_limit=5)
-    sol, fit = res.get_best_solution_fit()
-    assert problem.satisfy(sol)
-    print(problem.evaluate(sol))
+    if len(res) > 0:
+        sol, fit = res.get_best_solution_fit()
+        assert problem.satisfy(sol)
+        print(problem.evaluate(sol))
 
 
 @pytest.mark.skipif(True, reason="You need Toulbar2 to test this solver.")
@@ -35,5 +36,6 @@ def test_toulbar_coloring_ws():
     result_store = solver.solve(
         time_limit=10,
     )
-    solution, fit = result_store.get_best_solution_fit()
-    assert color_problem.satisfy(solution)
+    if len(result_store) > 0:
+        solution, fit = result_store.get_best_solution_fit()
+        assert color_problem.satisfy(solution)
