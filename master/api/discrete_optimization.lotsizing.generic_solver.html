@@ -1,0 +1,420 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.generic_solver package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.lotsizing.generic_solver.cpsat package" href="discrete_optimization.lotsizing.generic_solver.cpsat.html" />
+    <link rel="prev" title="discrete_optimization.lotsizing.capacitatedsetuptimes.solvers package" href="discrete_optimization.lotsizing.capacitatedsetuptimes.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.alb.html">discrete_optimization.alb package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.flex_scheduling.html">discrete_optimization.flex_scheduling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.lotsizing.html">discrete_optimization.lotsizing package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.shop.html">discrete_optimization.shop package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.lotsizing.html">discrete_optimization.lotsizing package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.generic_solver package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-lotsizing-generic-solver-package">
+<h1>discrete_optimization.lotsizing.generic_solver package<a class="headerlink" href="#discrete-optimization-lotsizing-generic-solver-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html">discrete_optimization.lotsizing.generic_solver.cpsat package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#module-discrete_optimization.lotsizing.generic_solver.cpsat.backlog">discrete_optimization.lotsizing.generic_solver.cpsat.backlog module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.backlog.BacklogConstraintCpsat"><code class="docutils literal notranslate"><span class="pre">BacklogConstraintCpsat</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.backlog.BacklogConstraintCpsat.create_backlog_cost"><code class="docutils literal notranslate"><span class="pre">BacklogConstraintCpsat.create_backlog_cost()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.backlog.BacklogConstraintCpsat.create_constraint_backlog"><code class="docutils literal notranslate"><span class="pre">BacklogConstraintCpsat.create_constraint_backlog()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#module-discrete_optimization.lotsizing.generic_solver.cpsat.changeover">discrete_optimization.lotsizing.generic_solver.cpsat.changeover module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.changeover.ChangeOverConstraintCpsat"><code class="docutils literal notranslate"><span class="pre">ChangeOverConstraintCpsat</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.changeover.ChangeOverConstraintCpsat.changeover_vars"><code class="docutils literal notranslate"><span class="pre">ChangeOverConstraintCpsat.changeover_vars</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.changeover.ChangeOverConstraintCpsat.create_changeover_constraint_and_cost"><code class="docutils literal notranslate"><span class="pre">ChangeOverConstraintCpsat.create_changeover_constraint_and_cost()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.changeover.ChangeoverModel"><code class="docutils literal notranslate"><span class="pre">ChangeoverModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.changeover.ChangeoverModel.SHORTEST_PATH_BASED"><code class="docutils literal notranslate"><span class="pre">ChangeoverModel.SHORTEST_PATH_BASED</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.changeover.ChangeoverModel.STATE_BASED"><code class="docutils literal notranslate"><span class="pre">ChangeoverModel.STATE_BASED</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#module-discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat">discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.add_lexico_constraint"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.add_lexico_constraint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.backlog"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.backlog</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.create_backlog_vars"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_backlog_vars()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.create_delivery_expr"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_delivery_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.create_delivery_vars"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_delivery_vars()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.create_inventory_vars"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_inventory_vars()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.create_objectives"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_objectives()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.create_production_vars"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_production_vars()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.delivery"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.delivery</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.get_backlog_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_backlog_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.get_delivery_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_delivery_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.get_inventory_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_inventory_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.get_lexico_objective_value"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_lexico_objective_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.get_lexico_objectives_available"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_lexico_objectives_available()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.get_production_binary_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_production_binary_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.get_production_quantity_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_production_quantity_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.get_unmet_demand"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_unmet_demand()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.hyperparameters"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.implements_lexico_api"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.implements_lexico_api()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.init_model"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.init_vars_placeholder"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.init_vars_placeholder()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.inventory"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.inventory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.objectives"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.objectives</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.problem"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.production"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.production</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.production_binary"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.production_binary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.set_warm_start"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat.GenericLotSizingCpsat.variables"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.variables</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#module-discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling">discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.demand_events"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.demand_events</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.event_deadlines"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.event_deadlines</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.get_backlog_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.get_backlog_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.get_delivery_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.get_delivery_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.get_inventory_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.get_inventory_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.get_production_binary_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.get_production_binary_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.get_production_quantity_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.get_production_quantity_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.hyperparameters"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.init_model"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.problem"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling.GenericLotSizingCpsatScheduling.variables"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.variables</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#module-discrete_optimization.lotsizing.generic_solver.cpsat.inventory">discrete_optimization.lotsizing.generic_solver.cpsat.inventory module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.inventory.InventoryConstraintCpsat"><code class="docutils literal notranslate"><span class="pre">InventoryConstraintCpsat</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.inventory.InventoryConstraintCpsat.create_constraint_inventory"><code class="docutils literal notranslate"><span class="pre">InventoryConstraintCpsat.create_constraint_inventory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.inventory.InventoryConstraintCpsat.create_inventory_cost"><code class="docutils literal notranslate"><span class="pre">InventoryConstraintCpsat.create_inventory_cost()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#module-discrete_optimization.lotsizing.generic_solver.cpsat.lotsizing_solver_cpsat">discrete_optimization.lotsizing.generic_solver.cpsat.lotsizing_solver_cpsat module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.lotsizing_solver_cpsat.LotSizingCpSatSolver"><code class="docutils literal notranslate"><span class="pre">LotSizingCpSatSolver</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#module-discrete_optimization.lotsizing.generic_solver.cpsat.parallel_production">discrete_optimization.lotsizing.generic_solver.cpsat.parallel_production module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.parallel_production.ParallelProductionConstraintCpsat"><code class="docutils literal notranslate"><span class="pre">ParallelProductionConstraintCpsat</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.parallel_production.ParallelProductionConstraintCpsat.create_constraint_parallel_production"><code class="docutils literal notranslate"><span class="pre">ParallelProductionConstraintCpsat.create_constraint_parallel_production()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#module-discrete_optimization.lotsizing.generic_solver.cpsat.production">discrete_optimization.lotsizing.generic_solver.cpsat.production module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.production.ProductionConstraintCpsat"><code class="docutils literal notranslate"><span class="pre">ProductionConstraintCpsat</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.production.ProductionConstraintCpsat.create_constraint_production"><code class="docutils literal notranslate"><span class="pre">ProductionConstraintCpsat.create_constraint_production()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.production.ProductionConstraintCpsat.create_production_cost"><code class="docutils literal notranslate"><span class="pre">ProductionConstraintCpsat.create_production_cost()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.production.ProductionConstraintCpsat.create_setup_cost"><code class="docutils literal notranslate"><span class="pre">ProductionConstraintCpsat.create_setup_cost()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#module-discrete_optimization.lotsizing.generic_solver.cpsat">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.add_lexico_constraint"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.add_lexico_constraint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.backlog"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.backlog</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.create_backlog_vars"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_backlog_vars()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.create_delivery_expr"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_delivery_expr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.create_delivery_vars"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_delivery_vars()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.create_inventory_vars"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_inventory_vars()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.create_objectives"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_objectives()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.create_production_vars"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.create_production_vars()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.delivery"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.delivery</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.get_backlog_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_backlog_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.get_delivery_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_delivery_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.get_inventory_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_inventory_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.get_lexico_objective_value"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_lexico_objective_value()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.get_lexico_objectives_available"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_lexico_objectives_available()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.get_production_binary_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_production_binary_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.get_production_quantity_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_production_quantity_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.get_unmet_demand"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.get_unmet_demand()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.hyperparameters"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.implements_lexico_api"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.implements_lexico_api()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.init_model"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.init_vars_placeholder"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.init_vars_placeholder()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.inventory"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.inventory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.objectives"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.objectives</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.problem"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.production"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.production</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.production_binary"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.production_binary</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.set_warm_start"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsat.variables"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsat.variables</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.demand_events"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.demand_events</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.event_deadlines"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.event_deadlines</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.get_backlog_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.get_backlog_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.get_delivery_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.get_delivery_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.get_inventory_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.get_inventory_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.get_production_binary_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.get_production_binary_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.get_production_quantity_var"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.get_production_quantity_var()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.hyperparameters"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.hyperparameters</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.init_model"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.problem"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.cpsat.html#discrete_optimization.lotsizing.generic_solver.cpsat.GenericLotSizingCpsatScheduling.variables"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingCpsatScheduling.variables</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html">discrete_optimization.lotsizing.generic_solver.dp package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#module-discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver">discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.add_additional_dual_bounds"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.add_additional_dual_bounds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.add_dual_bounds"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.add_dual_bounds()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.add_transition_dominance"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.add_transition_dominance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.allow_backorder"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.allow_backorder</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.force_unmet_zero"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.force_unmet_zero</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.init_model"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.lookahead_demand"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.lookahead_demand</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.max_backorder"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.max_backorder</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.penalty_advance_time"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.penalty_advance_time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.problem"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.set_warm_start"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver.GenericLotSizingDp.transition_schedule"><code class="docutils literal notranslate"><span class="pre">GenericLotSizingDp.transition_schedule()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.dp.html#module-discrete_optimization.lotsizing.generic_solver.dp">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.milp.html">discrete_optimization.lotsizing.generic_solver.milp package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.milp.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.milp.html#discrete-optimization-lotsizing-generic-solver-milp-backlog-module">discrete_optimization.lotsizing.generic_solver.milp.backlog module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.milp.html#discrete-optimization-lotsizing-generic-solver-milp-changeover-module">discrete_optimization.lotsizing.generic_solver.milp.changeover module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.milp.html#discrete-optimization-lotsizing-generic-solver-milp-generic-lotsizing-milp-module">discrete_optimization.lotsizing.generic_solver.milp.generic_lotsizing_milp module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.milp.html#discrete-optimization-lotsizing-generic-solver-milp-inventory-module">discrete_optimization.lotsizing.generic_solver.milp.inventory module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.milp.html#discrete-optimization-lotsizing-generic-solver-milp-lotsizing-solver-milp-module">discrete_optimization.lotsizing.generic_solver.milp.lotsizing_solver_milp module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.milp.html#discrete-optimization-lotsizing-generic-solver-milp-parallel-production-module">discrete_optimization.lotsizing.generic_solver.milp.parallel_production module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.milp.html#discrete-optimization-lotsizing-generic-solver-milp-production-module">discrete_optimization.lotsizing.generic_solver.milp.production module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.milp.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.toulbar.html">discrete_optimization.lotsizing.generic_solver.toulbar package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.toulbar.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.toulbar.html#module-discrete_optimization.lotsizing.generic_solver.toulbar.lotsizing_solver_toulbar">discrete_optimization.lotsizing.generic_solver.toulbar.lotsizing_solver_toulbar module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.toulbar.html#discrete_optimization.lotsizing.generic_solver.toulbar.lotsizing_solver_toulbar.LotSizingToulbarSolver"><code class="docutils literal notranslate"><span class="pre">LotSizingToulbarSolver</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.generic_solver.toulbar.html#module-discrete_optimization.lotsizing.generic_solver.toulbar">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.lotsizing.generic_solver.lotsizing_solver">
+<span id="discrete-optimization-lotsizing-generic-solver-lotsizing-solver-module"></span><h2>discrete_optimization.lotsizing.generic_solver.lotsizing_solver module<a class="headerlink" href="#module-discrete_optimization.lotsizing.generic_solver.lotsizing_solver" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.generic_solver.lotsizing_solver.</span></span><span class="sig-name descname"><span class="pre">LotSizingGenericSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/generic_solver/lotsizing_solver.html#LotSizingGenericSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">Item</span></code>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.get_backlog_var">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_backlog_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/generic_solver/lotsizing_solver.html#LotSizingGenericSolver.get_backlog_var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.get_backlog_var" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.get_delivery_var">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_delivery_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/generic_solver/lotsizing_solver.html#LotSizingGenericSolver.get_delivery_var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.get_delivery_var" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.get_inventory_var">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_inventory_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/generic_solver/lotsizing_solver.html#LotSizingGenericSolver.get_inventory_var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.get_inventory_var" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.get_production_binary_var">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_production_binary_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/generic_solver/lotsizing_solver.html#LotSizingGenericSolver.get_production_binary_var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.get_production_binary_var" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.get_production_quantity_var">
+<span class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">get_production_quantity_var</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/generic_solver/lotsizing_solver.html#LotSizingGenericSolver.get_production_quantity_var"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.get_production_quantity_var" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem" title="discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem"><span class="pre">GenericLotSizingProblem</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Item</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.lotsizing.generic_solver.lotsizing_solver.LotSizingGenericSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.lotsizing.generic_solver">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.lotsizing.generic_solver" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.lotsizing.capacitatedsetuptimes.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.lotsizing.capacitatedsetuptimes.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.lotsizing.generic_solver.cpsat.html" class="btn btn-neutral float-right" title="discrete_optimization.lotsizing.generic_solver.cpsat package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

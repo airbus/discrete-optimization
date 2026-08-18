@@ -1,0 +1,41 @@
+discrete\_optimization.shop package
+===================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.shop.fjsp
+   discrete_optimization.shop.jsp
+   discrete_optimization.shop.osp
+   discrete_optimization.shop.solvers
+   discrete_optimization.shop.transformations
+
+Submodules
+----------
+
+discrete\_optimization.shop.base module
+---------------------------------------
+
+.. automodule:: discrete_optimization.shop.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.shop.utils module
+----------------------------------------
+
+.. automodule:: discrete_optimization.shop.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.shop
+   :members:
+   :show-inheritance:
+   :undoc-members:

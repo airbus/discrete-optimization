@@ -1,0 +1,672 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.binpack.transformations package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.coloring package" href="discrete_optimization.coloring.html" />
+    <link rel="prev" title="discrete_optimization.binpack.solvers package" href="discrete_optimization.binpack.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.alb.html">discrete_optimization.alb package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.flex_scheduling.html">discrete_optimization.flex_scheduling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.html">discrete_optimization.lotsizing package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.shop.html">discrete_optimization.shop package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.binpack.transformations package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-binpack-transformations-package">
+<h1>discrete_optimization.binpack.transformations package<a class="headerlink" href="#discrete-optimization-binpack-transformations-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.binpack.transformations.to_facility">
+<span id="discrete-optimization-binpack-transformations-to-facility-module"></span><h2>discrete_optimization.binpack.transformations.to_facility module<a class="headerlink" href="#module-discrete_optimization.binpack.transformations.to_facility" title="Link to this heading"></a></h2>
+<p>Transformation from BinPack to Facility Location.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_facility.BinpackToFacilityTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.binpack.transformations.to_facility.</span></span><span class="sig-name descname"><span class="pre">BinpackToFacilityTransformation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">setup_cost_per_bin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_facility.html#BinpackToFacilityTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_facility.BinpackToFacilityTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">FacilityProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">FacilitySolution</span></code></a>]</p>
+<p>Transform BinPack problem to Facility Location problem.</p>
+<p>Mapping:
+- Items (with weights) → Customers (with demands)
+- Bins (with capacity) → Facilities (with capacity)
+- Opening a bin → Setup cost for facility (cost = 1)
+- Minimize bins → Minimize setup costs
+- No spatial component (all locations at origin)
+- No assignment costs (distance-based cost = 0)</p>
+<p>This transformation is ASYMMETRIC:
+- Forward (problem): LOSSY - incompatibility constraints lost
+- Backward (solution): EXACT - facility assignments map to bins</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_facility.BinpackToFacilityTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><span class="pre">FacilitySolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_facility.html#BinpackToFacilityTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_facility.BinpackToFacilityTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform Facility solution back to BinPack solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – Facility Location solution</p></li>
+<li><p><strong>source_problem</strong> – Original BinPack problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent BinPack solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_facility.BinpackToFacilityTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><span class="pre">FacilityProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><span class="pre">FacilitySolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_facility.html#BinpackToFacilityTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_facility.BinpackToFacilityTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPack solution to Facility solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – BinPack solution</p></li>
+<li><p><strong>target_problem</strong> – Target Facility problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent Facility solution for warmstart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_facility.BinpackToFacilityTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_facility.html#BinpackToFacilityTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_facility.BinpackToFacilityTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward problem transformation (BinPack → Facility).</p>
+<p>This direction is LOSSY: incompatibility constraints cannot be represented.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_facility.BinpackToFacilityTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><span class="pre">FacilityProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_facility.html#BinpackToFacilityTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_facility.BinpackToFacilityTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPack to Facility Location.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – BinPack problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent Facility Location problem</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.binpack.transformations.to_rcpsp">
+<span id="discrete-optimization-binpack-transformations-to-rcpsp-module"></span><h2>discrete_optimization.binpack.transformations.to_rcpsp module<a class="headerlink" href="#module-discrete_optimization.binpack.transformations.to_rcpsp" title="Link to this heading"></a></h2>
+<p>Transformation from BinPacking to RCPSP.</p>
+<p>Clever mapping:
+- Each item → task with duration=1
+- Bin capacity → cumulative resource
+- Item weight → resource requirement
+- Incompatible items → virtual unary resources (capacity 1)</p>
+<p>This allows using powerful RCPSP solvers for bin packing!</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.binpack.transformations.to_rcpsp.</span></span><span class="sig-name descname"><span class="pre">BinpackToRcpspTransformation</span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_rcpsp.html#BinpackToRcpspTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">RcpspProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.solution.RcpspSolution" title="discrete_optimization.rcpsp.solution.RcpspSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">RcpspSolution</span></code></a>]</p>
+<p>Transform BinPacking to RCPSP.</p>
+<p>Mapping strategy:
+- Each item → task with duration=1
+- Bin capacity → cumulative resource “BinCapacity”
+- Item weight → resource requirement for that task
+- Time slot t → bin t (items at same time = same bin)
+- Incompatible items → virtual resources of capacity 1</p>
+<p>Key insight: Tasks scheduled at the same time (time slot t) go in bin t.
+Cumulative resource constraint ensures bin capacity is respected.
+Virtual resources ensure incompatible items can’t be in same bin (same time).</p>
+<p>This transformation is EXACT in both directions:
+- Forward (problem): All constraints can be represented (incompatibility via virtual resources)
+- Backward (solution): Time slots map directly to bin assignments</p>
+<p class="rubric">Example</p>
+<p># &gt;&gt;&gt; # Bin packing: 3 items, capacity 10
+# &gt;&gt;&gt; # Item 0: weight 5, Item 1: weight 3, Item 2: weight 6
+# &gt;&gt;&gt; # Items 0 and 2 are incompatible
+# &gt;&gt;&gt; problem = BinPackProblem(
+# …     list_items=[ItemBinPack(0, 5), ItemBinPack(1, 3), ItemBinPack(2, 6)],
+# …     capacity_bin=10,
+# …     incompatible_items={(0, 2)}
+# … )
+# &gt;&gt;&gt;
+# &gt;&gt;&gt; # RCPSP transformation:
+# &gt;&gt;&gt; # - 3 tasks with duration=1
+# &gt;&gt;&gt; # - Resource “BinCapacity” with capacity=10
+# &gt;&gt;&gt; # - Task 0 needs 5, Task 1 needs 3, Task 2 needs 6
+# &gt;&gt;&gt; # - Resource “Incompatible_0_2” with capacity=1 (both tasks consume it)
+# &gt;&gt;&gt; # - Tasks at time 0 → bin 0, tasks at time 1 → bin 1, etc.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.solution.RcpspSolution" title="discrete_optimization.rcpsp.solution.RcpspSolution"><span class="pre">RcpspSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_rcpsp.html#BinpackToRcpspTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform RCPSP solution back to BinPacking solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – RCPSP solution</p></li>
+<li><p><strong>source_problem</strong> – Original BinPacking problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent BinPacking solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><span class="pre">RcpspProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.solution.RcpspSolution" title="discrete_optimization.rcpsp.solution.RcpspSolution"><span class="pre">RcpspSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_rcpsp.html#BinpackToRcpspTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPacking solution to RCPSP solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – BinPacking solution</p></li>
+<li><p><strong>target_problem</strong> – Target RCPSP problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent RCPSP solution for warmstart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_rcpsp.html#BinpackToRcpspTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward problem transformation (BinPack → RCPSP).</p>
+<p>This direction is EXACT: all constraints can be represented in RCPSP.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><span class="pre">RcpspProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_rcpsp.html#BinpackToRcpspTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_rcpsp.BinpackToRcpspTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPacking to RCPSP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – BinPacking problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent RCPSP problem</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.binpack.transformations.to_salbp">
+<span id="discrete-optimization-binpack-transformations-to-salbp-module"></span><h2>discrete_optimization.binpack.transformations.to_salbp module<a class="headerlink" href="#module-discrete_optimization.binpack.transformations.to_salbp" title="Link to this heading"></a></h2>
+<p>Transformation from BinPack to SALBP (Assembly Line Balancing).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_salbp.BinpackToSalbpTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.binpack.transformations.to_salbp.</span></span><span class="sig-name descname"><span class="pre">BinpackToSalbpTransformation</span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_salbp.html#BinpackToSalbpTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_salbp.BinpackToSalbpTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem" title="discrete_optimization.alb.salbp.problem.SalbpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">SalbpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution" title="discrete_optimization.alb.salbp.problem.SalbpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">SalbpSolution</span></code></a>]</p>
+<p>Transform BinPack problem to SALBP (Assembly Line Balancing) problem.</p>
+<p>Mapping:
+- Items (with weights) → Tasks (with processing times)
+- Bin capacity → Station cycle time
+- Minimize bins → Minimize stations
+- No precedence constraints (empty list)</p>
+<p>This transformation is INCOMPLETE IN BOTH DIRECTIONS:
+- Forward (problem): LOSSY - incompatibility constraints cannot be represented in SALBP
+- Backward (solution): LOSSY - precedence constraints from SALBP cannot be verified in BinPack</p>
+<dl class="simple">
+<dt>Only use when:</dt><dd><ul class="simple">
+<li><p>BinPack has NO incompatibility constraints AND</p></li>
+<li><p>SALBP has NO precedence constraints</p></li>
+<li><p>In this case, both problems are equivalent (pure capacity allocation)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_salbp.BinpackToSalbpTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution" title="discrete_optimization.alb.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_salbp.html#BinpackToSalbpTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_salbp.BinpackToSalbpTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform SALBP solution back to BinPack solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – SALBP solution (allocation_to_station)</p></li>
+<li><p><strong>source_problem</strong> – Original BinPack problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent BinPack solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_salbp.BinpackToSalbpTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem" title="discrete_optimization.alb.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution" title="discrete_optimization.alb.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_salbp.html#BinpackToSalbpTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_salbp.BinpackToSalbpTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPack solution to SALBP solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – BinPack solution</p></li>
+<li><p><strong>target_problem</strong> – Target SALBP problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent SALBP solution for warmstart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_salbp.BinpackToSalbpTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_salbp.html#BinpackToSalbpTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_salbp.BinpackToSalbpTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward problem transformation (BinPack → SALBP).</p>
+<p>This direction is LOSSY: incompatibility constraints cannot be represented.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.to_salbp.BinpackToSalbpTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem" title="discrete_optimization.alb.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_salbp.html#BinpackToSalbpTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.to_salbp.BinpackToSalbpTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPack to SALBP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – BinPack problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent SALBP problem</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.binpack.transformations">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.binpack.transformations" title="Link to this heading"></a></h2>
+<p>Problem transformations for BinPacking.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToFacilityTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.binpack.transformations.</span></span><span class="sig-name descname"><span class="pre">BinpackToFacilityTransformation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">setup_cost_per_bin</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_facility.html#BinpackToFacilityTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToFacilityTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">FacilityProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">FacilitySolution</span></code></a>]</p>
+<p>Transform BinPack problem to Facility Location problem.</p>
+<p>Mapping:
+- Items (with weights) → Customers (with demands)
+- Bins (with capacity) → Facilities (with capacity)
+- Opening a bin → Setup cost for facility (cost = 1)
+- Minimize bins → Minimize setup costs
+- No spatial component (all locations at origin)
+- No assignment costs (distance-based cost = 0)</p>
+<p>This transformation is ASYMMETRIC:
+- Forward (problem): LOSSY - incompatibility constraints lost
+- Backward (solution): EXACT - facility assignments map to bins</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToFacilityTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><span class="pre">FacilitySolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_facility.html#BinpackToFacilityTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToFacilityTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform Facility solution back to BinPack solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – Facility Location solution</p></li>
+<li><p><strong>source_problem</strong> – Original BinPack problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent BinPack solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToFacilityTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><span class="pre">FacilityProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilitySolution" title="discrete_optimization.facility.problem.FacilitySolution"><span class="pre">FacilitySolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_facility.html#BinpackToFacilityTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToFacilityTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPack solution to Facility solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – BinPack solution</p></li>
+<li><p><strong>target_problem</strong> – Target Facility problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent Facility solution for warmstart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToFacilityTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_facility.html#BinpackToFacilityTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToFacilityTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward problem transformation (BinPack → Facility).</p>
+<p>This direction is LOSSY: incompatibility constraints cannot be represented.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToFacilityTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.facility.html#discrete_optimization.facility.problem.FacilityProblem" title="discrete_optimization.facility.problem.FacilityProblem"><span class="pre">FacilityProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_facility.html#BinpackToFacilityTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToFacilityTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPack to Facility Location.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – BinPack problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent Facility Location problem</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToRcpspTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.binpack.transformations.</span></span><span class="sig-name descname"><span class="pre">BinpackToRcpspTransformation</span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_rcpsp.html#BinpackToRcpspTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToRcpspTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">RcpspProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.solution.RcpspSolution" title="discrete_optimization.rcpsp.solution.RcpspSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">RcpspSolution</span></code></a>]</p>
+<p>Transform BinPacking to RCPSP.</p>
+<p>Mapping strategy:
+- Each item → task with duration=1
+- Bin capacity → cumulative resource “BinCapacity”
+- Item weight → resource requirement for that task
+- Time slot t → bin t (items at same time = same bin)
+- Incompatible items → virtual resources of capacity 1</p>
+<p>Key insight: Tasks scheduled at the same time (time slot t) go in bin t.
+Cumulative resource constraint ensures bin capacity is respected.
+Virtual resources ensure incompatible items can’t be in same bin (same time).</p>
+<p>This transformation is EXACT in both directions:
+- Forward (problem): All constraints can be represented (incompatibility via virtual resources)
+- Backward (solution): Time slots map directly to bin assignments</p>
+<p class="rubric">Example</p>
+<p># &gt;&gt;&gt; # Bin packing: 3 items, capacity 10
+# &gt;&gt;&gt; # Item 0: weight 5, Item 1: weight 3, Item 2: weight 6
+# &gt;&gt;&gt; # Items 0 and 2 are incompatible
+# &gt;&gt;&gt; problem = BinPackProblem(
+# …     list_items=[ItemBinPack(0, 5), ItemBinPack(1, 3), ItemBinPack(2, 6)],
+# …     capacity_bin=10,
+# …     incompatible_items={(0, 2)}
+# … )
+# &gt;&gt;&gt;
+# &gt;&gt;&gt; # RCPSP transformation:
+# &gt;&gt;&gt; # - 3 tasks with duration=1
+# &gt;&gt;&gt; # - Resource “BinCapacity” with capacity=10
+# &gt;&gt;&gt; # - Task 0 needs 5, Task 1 needs 3, Task 2 needs 6
+# &gt;&gt;&gt; # - Resource “Incompatible_0_2” with capacity=1 (both tasks consume it)
+# &gt;&gt;&gt; # - Tasks at time 0 → bin 0, tasks at time 1 → bin 1, etc.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToRcpspTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.solution.RcpspSolution" title="discrete_optimization.rcpsp.solution.RcpspSolution"><span class="pre">RcpspSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_rcpsp.html#BinpackToRcpspTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToRcpspTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform RCPSP solution back to BinPacking solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – RCPSP solution</p></li>
+<li><p><strong>source_problem</strong> – Original BinPacking problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent BinPacking solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToRcpspTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><span class="pre">RcpspProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.solution.RcpspSolution" title="discrete_optimization.rcpsp.solution.RcpspSolution"><span class="pre">RcpspSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_rcpsp.html#BinpackToRcpspTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToRcpspTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPacking solution to RCPSP solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – BinPacking solution</p></li>
+<li><p><strong>target_problem</strong> – Target RCPSP problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent RCPSP solution for warmstart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToRcpspTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_rcpsp.html#BinpackToRcpspTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToRcpspTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward problem transformation (BinPack → RCPSP).</p>
+<p>This direction is EXACT: all constraints can be represented in RCPSP.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToRcpspTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><span class="pre">RcpspProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_rcpsp.html#BinpackToRcpspTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToRcpspTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPacking to RCPSP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – BinPacking problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent RCPSP problem</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToSalbpTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.binpack.transformations.</span></span><span class="sig-name descname"><span class="pre">BinpackToSalbpTransformation</span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_salbp.html#BinpackToSalbpTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToSalbpTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">BinPackSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem" title="discrete_optimization.alb.salbp.problem.SalbpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">SalbpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution" title="discrete_optimization.alb.salbp.problem.SalbpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">SalbpSolution</span></code></a>]</p>
+<p>Transform BinPack problem to SALBP (Assembly Line Balancing) problem.</p>
+<p>Mapping:
+- Items (with weights) → Tasks (with processing times)
+- Bin capacity → Station cycle time
+- Minimize bins → Minimize stations
+- No precedence constraints (empty list)</p>
+<p>This transformation is INCOMPLETE IN BOTH DIRECTIONS:
+- Forward (problem): LOSSY - incompatibility constraints cannot be represented in SALBP
+- Backward (solution): LOSSY - precedence constraints from SALBP cannot be verified in BinPack</p>
+<dl class="simple">
+<dt>Only use when:</dt><dd><ul class="simple">
+<li><p>BinPack has NO incompatibility constraints AND</p></li>
+<li><p>SALBP has NO precedence constraints</p></li>
+<li><p>In this case, both problems are equivalent (pure capacity allocation)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToSalbpTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution" title="discrete_optimization.alb.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_salbp.html#BinpackToSalbpTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToSalbpTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform SALBP solution back to BinPack solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – SALBP solution (allocation_to_station)</p></li>
+<li><p><strong>source_problem</strong> – Original BinPack problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent BinPack solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToSalbpTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackSolution" title="discrete_optimization.binpack.problem.BinPackSolution"><span class="pre">BinPackSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem" title="discrete_optimization.alb.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution" title="discrete_optimization.alb.salbp.problem.SalbpSolution"><span class="pre">SalbpSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_salbp.html#BinpackToSalbpTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToSalbpTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPack solution to SALBP solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – BinPack solution</p></li>
+<li><p><strong>target_problem</strong> – Target SALBP problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent SALBP solution for warmstart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToSalbpTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_salbp.html#BinpackToSalbpTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToSalbpTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward problem transformation (BinPack → SALBP).</p>
+<p>This direction is LOSSY: incompatibility constraints cannot be represented.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.binpack.transformations.BinpackToSalbpTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.binpack.html#discrete_optimization.binpack.problem.BinPackProblem" title="discrete_optimization.binpack.problem.BinPackProblem"><span class="pre">BinPackProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem" title="discrete_optimization.alb.salbp.problem.SalbpProblem"><span class="pre">SalbpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/binpack/transformations/to_salbp.html#BinpackToSalbpTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.binpack.transformations.BinpackToSalbpTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform BinPack to SALBP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – BinPack problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent SALBP problem</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.binpack.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.binpack.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.coloring.html" class="btn btn-neutral float-right" title="discrete_optimization.coloring package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

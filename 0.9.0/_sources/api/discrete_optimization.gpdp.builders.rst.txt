@@ -1,0 +1,21 @@
+discrete\_optimization.gpdp.builders package
+============================================
+
+Submodules
+----------
+
+discrete\_optimization.gpdp.builders.instance\_builders module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.gpdp.builders.instance_builders
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.gpdp.builders
+   :members:
+   :show-inheritance:
+   :undoc-members:

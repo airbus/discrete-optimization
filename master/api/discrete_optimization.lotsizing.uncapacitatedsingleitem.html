@@ -1,0 +1,548 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.uncapacitatedsingleitem package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers package" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html" />
+    <link rel="prev" title="discrete_optimization.lotsizing.generic_solver.toulbar package" href="discrete_optimization.lotsizing.generic_solver.toulbar.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.alb.html">discrete_optimization.alb package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.flex_scheduling.html">discrete_optimization.flex_scheduling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.lotsizing.html">discrete_optimization.lotsizing package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.shop.html">discrete_optimization.shop package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.lotsizing.html">discrete_optimization.lotsizing package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.uncapacitatedsingleitem package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-lotsizing-uncapacitatedsingleitem-package">
+<h1>discrete_optimization.lotsizing.uncapacitatedsingleitem package<a class="headerlink" href="#discrete-optimization-lotsizing-uncapacitatedsingleitem-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html">discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#module-discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat">discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat.CpSatUncapacitatedSingleItemSolver"><code class="docutils literal notranslate"><span class="pre">CpSatUncapacitatedSingleItemSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat.CpSatUncapacitatedSingleItemSolver.init_model"><code class="docutils literal notranslate"><span class="pre">CpSatUncapacitatedSingleItemSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat.CpSatUncapacitatedSingleItemSolver.problem"><code class="docutils literal notranslate"><span class="pre">CpSatUncapacitatedSingleItemSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat.CpSatUncapacitatedSingleItemSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">CpSatUncapacitatedSingleItemSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat.CpSatUncapacitatedSingleItemSolver.variables"><code class="docutils literal notranslate"><span class="pre">CpSatUncapacitatedSingleItemSolver.variables</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#module-discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp">discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp.DpUncapacitatedLotSizingSolver"><code class="docutils literal notranslate"><span class="pre">DpUncapacitatedLotSizingSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp.DpUncapacitatedLotSizingSolver.init_model"><code class="docutils literal notranslate"><span class="pre">DpUncapacitatedLotSizingSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp.DpUncapacitatedLotSizingSolver.problem"><code class="docutils literal notranslate"><span class="pre">DpUncapacitatedLotSizingSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp.DpUncapacitatedLotSizingSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">DpUncapacitatedLotSizingSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp.DpUncapacitatedLotSizingSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">DpUncapacitatedLotSizingSolver.set_warm_start()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp.DpUncapacitatedLotSizingSolver.transition_name"><code class="docutils literal notranslate"><span class="pre">DpUncapacitatedLotSizingSolver.transition_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp.DpUncapacitatedLotSizingSolver.transition_objects"><code class="docutils literal notranslate"><span class="pre">DpUncapacitatedLotSizingSolver.transition_objects</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#module-discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner">discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner.WagnerWhitinSolver"><code class="docutils literal notranslate"><span class="pre">WagnerWhitinSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner.WagnerWhitinSolver.problem"><code class="docutils literal notranslate"><span class="pre">WagnerWhitinSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner.WagnerWhitinSolver.solve"><code class="docutils literal notranslate"><span class="pre">WagnerWhitinSolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#module-discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.lp">discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.lp module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.lp.GurobiUncapacitatedSingleItemSolver"><code class="docutils literal notranslate"><span class="pre">GurobiUncapacitatedSingleItemSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.lp.GurobiUncapacitatedSingleItemSolver.convert_to_variable_values"><code class="docutils literal notranslate"><span class="pre">GurobiUncapacitatedSingleItemSolver.convert_to_variable_values()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.lp.MathoptUncapacitatedSingleItemSolver"><code class="docutils literal notranslate"><span class="pre">MathoptUncapacitatedSingleItemSolver</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#module-discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.toulbar">discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.toulbar module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.toulbar.ToulbarUncapacitatedSingleItemSolver"><code class="docutils literal notranslate"><span class="pre">ToulbarUncapacitatedSingleItemSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.toulbar.ToulbarUncapacitatedSingleItemSolver.init_model"><code class="docutils literal notranslate"><span class="pre">ToulbarUncapacitatedSingleItemSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.toulbar.ToulbarUncapacitatedSingleItemSolver.problem"><code class="docutils literal notranslate"><span class="pre">ToulbarUncapacitatedSingleItemSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.toulbar.ToulbarUncapacitatedSingleItemSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">ToulbarUncapacitatedSingleItemSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.toulbar.ToulbarUncapacitatedSingleItemSolver.set_warm_start"><code class="docutils literal notranslate"><span class="pre">ToulbarUncapacitatedSingleItemSolver.set_warm_start()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#module-discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers">Module contents</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.CpSatUncapacitatedSingleItemSolver"><code class="docutils literal notranslate"><span class="pre">CpSatUncapacitatedSingleItemSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.CpSatUncapacitatedSingleItemSolver.init_model"><code class="docutils literal notranslate"><span class="pre">CpSatUncapacitatedSingleItemSolver.init_model()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.CpSatUncapacitatedSingleItemSolver.problem"><code class="docutils literal notranslate"><span class="pre">CpSatUncapacitatedSingleItemSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.CpSatUncapacitatedSingleItemSolver.retrieve_solution"><code class="docutils literal notranslate"><span class="pre">CpSatUncapacitatedSingleItemSolver.retrieve_solution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.CpSatUncapacitatedSingleItemSolver.variables"><code class="docutils literal notranslate"><span class="pre">CpSatUncapacitatedSingleItemSolver.variables</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.WagnerWhitinSolver"><code class="docutils literal notranslate"><span class="pre">WagnerWhitinSolver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.WagnerWhitinSolver.problem"><code class="docutils literal notranslate"><span class="pre">WagnerWhitinSolver.problem</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html#discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.WagnerWhitinSolver.solve"><code class="docutils literal notranslate"><span class="pre">WagnerWhitinSolver.solve()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.lotsizing.uncapacitatedsingleitem.problem">
+<span id="discrete-optimization-lotsizing-uncapacitatedsingleitem-problem-module"></span><h2>discrete_optimization.lotsizing.uncapacitatedsingleitem.problem module<a class="headerlink" href="#module-discrete_optimization.lotsizing.uncapacitatedsingleitem.problem" title="Link to this heading"></a></h2>
+<p>Single-item lot sizing problem implementations.</p>
+<p>This module provides concrete implementations for single-item lot sizing variants:
+- UncapacitatedSingleItemLSP: Wagner-Whitin problem (ULSP)
+- CapacitatedSingleItemLSP: Single-item with capacity constraints</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.Testttt">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.</span></span><span class="sig-name descname"><span class="pre">Testttt</span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#Testttt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.Testttt" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.capacity.WithoutCapacityProblem" title="discrete_optimization.lotsizing.capacity.WithoutCapacityProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutCapacityProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.backlog.WithoutBacklogProblem" title="discrete_optimization.lotsizing.backlog.WithoutBacklogProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutBacklogProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsProblem" title="discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutChangeoverCostsProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.setup_times.WithoutSetupTimesProblem" title="discrete_optimization.lotsizing.setup_times.WithoutSetupTimesProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutSetupTimesProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.WithoutParallelProductionProblem" title="discrete_optimization.lotsizing.parallel_production.WithoutParallelProductionProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutParallelProductionProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.stock_limits.WithoutStockLimitsProblem" title="discrete_optimization.lotsizing.stock_limits.WithoutStockLimitsProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutStockLimitsProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem" title="discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericLotSizingProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.</span></span><span class="sig-name descname"><span class="pre">UncapacitatedSingleItemLSP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">demands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_costs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">production_costs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inventory_costs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.capacity.WithoutCapacityProblem" title="discrete_optimization.lotsizing.capacity.WithoutCapacityProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutCapacityProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.backlog.WithoutBacklogProblem" title="discrete_optimization.lotsizing.backlog.WithoutBacklogProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutBacklogProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsProblem" title="discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutChangeoverCostsProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.setup_times.WithoutSetupTimesProblem" title="discrete_optimization.lotsizing.setup_times.WithoutSetupTimesProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutSetupTimesProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.WithoutParallelProductionProblem" title="discrete_optimization.lotsizing.parallel_production.WithoutParallelProductionProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutParallelProductionProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.stock_limits.WithoutStockLimitsProblem" title="discrete_optimization.lotsizing.stock_limits.WithoutStockLimitsProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutStockLimitsProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem" title="discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericLotSizingProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+<p>Uncapacitated single-item lot sizing problem (ULSP / Wagner-Whitin problem).</p>
+<p>This is the classical lot sizing problem:
+- Single product (item = 0)
+- No capacity constraints
+- No backlog allowed (demands must be satisfied on time)
+- No changeover costs (single item)
+- No setup times</p>
+<p>Can be solved optimally in O(T²) with Wagner-Whitin dynamic programming.</p>
+<dl class="simple">
+<dt>The problem minimizes:</dt><dd><p>sum_t (s_t * Y_t + v_t * X_t + c_t * I_t)</p>
+</dd>
+<dt>Subject to:</dt><dd><p>I_t = I_{t-1} + X_t - d_t    (inventory balance)
+X_t &lt;= M * Y_t               (big-M constraint for setup)
+X_t, I_t &gt;= 0                (non-negativity)
+Y_t in {0, 1}                (setup binary)
+I_0 = 0                      (no initial inventory)</p>
+</dd>
+<dt>Where:</dt><dd><p>s_t: setup cost in period t
+v_t: production cost per unit in period t
+c_t: inventory cost per unit in period t
+d_t: demand in period t
+X_t: production quantity in period t
+Y_t: setup indicator (1 if production, 0 otherwise)
+I_t: inventory at end of period t</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.allows_lost_demand">
+<span class="sig-name descname"><span class="pre">allows_lost_demand</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.allows_lost_demand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.allows_lost_demand" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.get_demand">
+<span class="sig-name descname"><span class="pre">get_demand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.get_demand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.get_demand" title="Link to this definition"></a></dt>
+<dd><p>Get demand for item in period.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.get_inventory_cost_per_unit">
+<span class="sig-name descname"><span class="pre">get_inventory_cost_per_unit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.get_inventory_cost_per_unit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.get_inventory_cost_per_unit" title="Link to this definition"></a></dt>
+<dd><p>Get inventory cost per unit.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.get_production_cost_per_unit">
+<span class="sig-name descname"><span class="pre">get_production_cost_per_unit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.get_production_cost_per_unit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.get_production_cost_per_unit" title="Link to this definition"></a></dt>
+<dd><p>Get production cost per unit.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.get_setup_cost">
+<span class="sig-name descname"><span class="pre">get_setup_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.get_setup_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.get_setup_cost" title="Link to this definition"></a></dt>
+<dd><p>Get setup cost.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.get_solution_type">
+<span class="sig-name descname"><span class="pre">get_solution_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.get_solution_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.get_solution_type" title="Link to this definition"></a></dt>
+<dd><p>Return solution class for this problem.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.horizon">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">horizon</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.horizon" title="Link to this definition"></a></dt>
+<dd><p>Number of time periods.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.items_list">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">items_list</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP.items_list" title="Link to this definition"></a></dt>
+<dd><p>Single item with index 0.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemSolution">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.</span></span><span class="sig-name descname"><span class="pre">UncapacitatedSingleItemSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP" title="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP"><span class="pre">UncapacitatedSingleItemLSP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">production_periods</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">production_quantities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemSolution" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution" title="discrete_optimization.lotsizing.production_solution.ProductionBasedSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProductionBasedSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.backlog.WithoutBacklogSolution" title="discrete_optimization.lotsizing.backlog.WithoutBacklogSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutBacklogSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.capacity.WithoutCapacitySolution" title="discrete_optimization.lotsizing.capacity.WithoutCapacitySolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutCapacitySolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsSolution" title="discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutChangeoverCostsSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+<p>Solution for uncapacitated single-item lot sizing problem.</p>
+<p>This uses ProductionBasedSolution which automatically computes:
+- Inventory levels
+- Delivery quantities
+- Backlog (0 for this problem)</p>
+<p>From the production decisions.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemSolution.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP" title="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP"><span class="pre">UncapacitatedSingleItemLSP</span></a></span><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemSolution.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.generate_random_instance">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.</span></span><span class="sig-name descname"><span class="pre">generate_random_instance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">horizon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_demand</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_cost</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">production_cost</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inventory_cost</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP" title="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP"><span class="pre">UncapacitatedSingleItemLSP</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#generate_random_instance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.generate_random_instance" title="Link to this definition"></a></dt>
+<dd><p>Generate random instance for testing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>horizon</strong> – Number of periods</p></li>
+<li><p><strong>avg_demand</strong> – Average demand per period</p></li>
+<li><p><strong>setup_cost</strong> – Fixed setup cost per period</p></li>
+<li><p><strong>production_cost</strong> – Variable production cost per unit</p></li>
+<li><p><strong>inventory_cost</strong> – Inventory holding cost per unit</p></li>
+<li><p><strong>seed</strong> – Random seed for reproducibility</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Random problem instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.lotsizing.uncapacitatedsingleitem">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.lotsizing.uncapacitatedsingleitem" title="Link to this heading"></a></h2>
+<p>Uncapacitated single-item lot sizing problem (ULSP / Wagner-Whitin problem).</p>
+<p>This module provides the classical Wagner-Whitin problem and its optimal solver.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.uncapacitatedsingleitem.</span></span><span class="sig-name descname"><span class="pre">UncapacitatedSingleItemLSP</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">demands</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_costs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">production_costs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inventory_costs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.capacity.WithoutCapacityProblem" title="discrete_optimization.lotsizing.capacity.WithoutCapacityProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutCapacityProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.backlog.WithoutBacklogProblem" title="discrete_optimization.lotsizing.backlog.WithoutBacklogProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutBacklogProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsProblem" title="discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutChangeoverCostsProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.setup_times.WithoutSetupTimesProblem" title="discrete_optimization.lotsizing.setup_times.WithoutSetupTimesProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutSetupTimesProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.parallel_production.WithoutParallelProductionProblem" title="discrete_optimization.lotsizing.parallel_production.WithoutParallelProductionProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutParallelProductionProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.stock_limits.WithoutStockLimitsProblem" title="discrete_optimization.lotsizing.stock_limits.WithoutStockLimitsProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutStockLimitsProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem" title="discrete_optimization.lotsizing.generic_lotsizing.GenericLotSizingProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericLotSizingProblem</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+<p>Uncapacitated single-item lot sizing problem (ULSP / Wagner-Whitin problem).</p>
+<p>This is the classical lot sizing problem:
+- Single product (item = 0)
+- No capacity constraints
+- No backlog allowed (demands must be satisfied on time)
+- No changeover costs (single item)
+- No setup times</p>
+<p>Can be solved optimally in O(T²) with Wagner-Whitin dynamic programming.</p>
+<dl class="simple">
+<dt>The problem minimizes:</dt><dd><p>sum_t (s_t * Y_t + v_t * X_t + c_t * I_t)</p>
+</dd>
+<dt>Subject to:</dt><dd><p>I_t = I_{t-1} + X_t - d_t    (inventory balance)
+X_t &lt;= M * Y_t               (big-M constraint for setup)
+X_t, I_t &gt;= 0                (non-negativity)
+Y_t in {0, 1}                (setup binary)
+I_0 = 0                      (no initial inventory)</p>
+</dd>
+<dt>Where:</dt><dd><p>s_t: setup cost in period t
+v_t: production cost per unit in period t
+c_t: inventory cost per unit in period t
+d_t: demand in period t
+X_t: production quantity in period t
+Y_t: setup indicator (1 if production, 0 otherwise)
+I_t: inventory at end of period t</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.allows_lost_demand">
+<span class="sig-name descname"><span class="pre">allows_lost_demand</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.allows_lost_demand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.allows_lost_demand" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.get_demand">
+<span class="sig-name descname"><span class="pre">get_demand</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.get_demand"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.get_demand" title="Link to this definition"></a></dt>
+<dd><p>Get demand for item in period.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.get_inventory_cost_per_unit">
+<span class="sig-name descname"><span class="pre">get_inventory_cost_per_unit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.get_inventory_cost_per_unit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.get_inventory_cost_per_unit" title="Link to this definition"></a></dt>
+<dd><p>Get inventory cost per unit.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.get_production_cost_per_unit">
+<span class="sig-name descname"><span class="pre">get_production_cost_per_unit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.get_production_cost_per_unit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.get_production_cost_per_unit" title="Link to this definition"></a></dt>
+<dd><p>Get production cost per unit.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.get_setup_cost">
+<span class="sig-name descname"><span class="pre">get_setup_cost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.get_setup_cost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.get_setup_cost" title="Link to this definition"></a></dt>
+<dd><p>Get setup cost.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.get_solution_type">
+<span class="sig-name descname"><span class="pre">get_solution_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemLSP.get_solution_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.get_solution_type" title="Link to this definition"></a></dt>
+<dd><p>Return solution class for this problem.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.horizon">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">horizon</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.horizon" title="Link to this definition"></a></dt>
+<dd><p>Number of time periods.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.items_list">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">items_list</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemLSP.items_list" title="Link to this definition"></a></dt>
+<dd><p>Single item with index 0.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemSolution">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.uncapacitatedsingleitem.</span></span><span class="sig-name descname"><span class="pre">UncapacitatedSingleItemSolution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP" title="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP"><span class="pre">UncapacitatedSingleItemLSP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">production_periods</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">production_quantities</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#UncapacitatedSingleItemSolution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemSolution" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.production_solution.ProductionBasedSolution" title="discrete_optimization.lotsizing.production_solution.ProductionBasedSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProductionBasedSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.backlog.WithoutBacklogSolution" title="discrete_optimization.lotsizing.backlog.WithoutBacklogSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutBacklogSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.capacity.WithoutCapacitySolution" title="discrete_optimization.lotsizing.capacity.WithoutCapacitySolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutCapacitySolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.lotsizing.html#discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsSolution" title="discrete_optimization.lotsizing.changeover.WithoutChangeoverCostsSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithoutChangeoverCostsSolution</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+<p>Solution for uncapacitated single-item lot sizing problem.</p>
+<p>This uses ProductionBasedSolution which automatically computes:
+- Inventory levels
+- Delivery quantities
+- Backlog (0 for this problem)</p>
+<p>From the production decisions.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemSolution.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP" title="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP"><span class="pre">UncapacitatedSingleItemLSP</span></a></span><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.UncapacitatedSingleItemSolution.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.WagnerWhitinSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.uncapacitatedsingleitem.</span></span><span class="sig-name descname"><span class="pre">WagnerWhitinSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP" title="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP"><span class="pre">UncapacitatedSingleItemLSP</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/solvers/dp_wagner.html#WagnerWhitinSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.WagnerWhitinSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<p>Wagner-Whitin dynamic programming solver.</p>
+<p>This solver computes the optimal solution for the uncapacitated single-item
+lot sizing problem in O(T²) time using dynamic programming.</p>
+<p>The algorithm exploits the Zero Inventory Ordering (ZIO) property:
+In an optimal solution, production in period t (if any) should satisfy
+demand for an integer number of consecutive future periods, with zero
+inventory before period t.</p>
+<p>This means we only need to consider T² possible solutions (for each period,
+consider producing to satisfy demand up to each future period).</p>
+<dl>
+<dt>The dynamic programming recurrence is:</dt><dd><p>f[t] = min over k in [0, t) of [f[k] + cost(k, t)]</p>
+</dd>
+<dt>Where:</dt><dd><p>f[t] = minimum cost to satisfy demands from period 0 to t-1
+cost(k, t) = cost to produce in period k to satisfy demands k to t-1</p>
+<blockquote>
+<div><dl class="simple">
+<dt>= setup_cost[k] + production_cost[k] * sum(demands[k:t])</dt><dd><ul class="simple">
+<li><p>sum of inventory costs for holding from k to t</p></li>
+</ul>
+</dd>
+</dl>
+</div></blockquote>
+</dd>
+</dl>
+<p>Base case: f[0] = 0 (no cost before first period)</p>
+<p>Time complexity: O(T²) where T is the horizon
+Space complexity: O(T)</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.WagnerWhitinSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP" title="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP"><span class="pre">UncapacitatedSingleItemLSP</span></a></span><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.WagnerWhitinSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.WagnerWhitinSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/solvers/dp_wagner.html#WagnerWhitinSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.WagnerWhitinSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Solve the problem optimally using Wagner-Whitin algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> – Additional parameters (ignored)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ResultStorage containing the optimal solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.uncapacitatedsingleitem.generate_random_instance">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.uncapacitatedsingleitem.</span></span><span class="sig-name descname"><span class="pre">generate_random_instance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">horizon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_demand</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_cost</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">production_cost</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inventory_cost</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP" title="discrete_optimization.lotsizing.uncapacitatedsingleitem.problem.UncapacitatedSingleItemLSP"><span class="pre">UncapacitatedSingleItemLSP</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/uncapacitatedsingleitem/problem.html#generate_random_instance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.uncapacitatedsingleitem.generate_random_instance" title="Link to this definition"></a></dt>
+<dd><p>Generate random instance for testing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>horizon</strong> – Number of periods</p></li>
+<li><p><strong>avg_demand</strong> – Average demand per period</p></li>
+<li><p><strong>setup_cost</strong> – Fixed setup cost per period</p></li>
+<li><p><strong>production_cost</strong> – Variable production cost per unit</p></li>
+<li><p><strong>inventory_cost</strong> – Inventory holding cost per unit</p></li>
+<li><p><strong>seed</strong> – Random seed for reproducibility</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Random problem instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.lotsizing.generic_solver.toulbar.html" class="btn btn-neutral float-left" title="discrete_optimization.lotsizing.generic_solver.toulbar package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.html" class="btn btn-neutral float-right" title="discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

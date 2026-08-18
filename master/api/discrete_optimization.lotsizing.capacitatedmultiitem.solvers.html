@@ -1,0 +1,573 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.lotsizing.capacitatedmultiitem.solvers package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.lotsizing.capacitatedsetuptimes package" href="discrete_optimization.lotsizing.capacitatedsetuptimes.html" />
+    <link rel="prev" title="discrete_optimization.lotsizing.capacitatedmultiitem package" href="discrete_optimization.lotsizing.capacitatedmultiitem.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.alb.html">discrete_optimization.alb package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.flex_scheduling.html">discrete_optimization.flex_scheduling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.lotsizing.html">discrete_optimization.lotsizing package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.shop.html">discrete_optimization.shop package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.lotsizing.html">discrete_optimization.lotsizing package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.lotsizing.capacitatedmultiitem.html">discrete_optimization.lotsizing.capacitatedmultiitem package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.lotsizing.capacitatedmultiitem.solvers package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-lotsizing-capacitatedmultiitem-solvers-package">
+<h1>discrete_optimization.lotsizing.capacitatedmultiitem.solvers package<a class="headerlink" href="#discrete-optimization-lotsizing-capacitatedmultiitem-solvers-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat">
+<span id="discrete-optimization-lotsizing-capacitatedmultiitem-solvers-cpsat-module"></span><h2>discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat module<a class="headerlink" href="#module-discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat" title="Link to this heading"></a></h2>
+<p>CP-SAT solvers for capacitated multi-item lot sizing problem.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.ChangeoverModel">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">ChangeoverModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/cpsat.html#ChangeoverModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.ChangeoverModel" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>Modeling approach for changeover costs in CP-SAT solver.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.ChangeoverModel.SHORTEST_PATH_BASED">
+<span class="sig-name descname"><span class="pre">SHORTEST_PATH_BASED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'shortest_path_based'</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.ChangeoverModel.SHORTEST_PATH_BASED" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.ChangeoverModel.STATE_BASED">
+<span class="sig-name descname"><span class="pre">STATE_BASED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'state_based'</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.ChangeoverModel.STATE_BASED" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">CpSatCapacitatedLotSizingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/cpsat.html#CpSatCapacitatedLotSizingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver" title="discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<p>CP-SAT solver for capacitated multi-item lot sizing.</p>
+<p>Supports multiple changeover cost encodings:
+- STATE_BASED: Track last produced item using element constraints
+- TRANSITION_BASED: Model explicit transitions between production events
+- SHORTEST_PATH_BASED: Model as shortest path through production sequence</p>
+<p>Supports warm-start from existing solutions.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='changeover_model',</span> <span class="pre">default=&lt;ChangeoverModel.STATE_BASED:</span> <span class="pre">'state_based'&gt;,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='changeover_model')]</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/cpsat.html#CpSatCapacitatedLotSizingSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize the CP-SAT model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>changeover_model</strong> – How to model changeover costs (default: STATE_BASED)</p></li>
+<li><p><strong>**kwargs</strong> – Additional parameters passed to parent class</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP"><span class="pre">CapacitatedMultiItemLSP</span></a></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution"><span class="pre">CapacitatedMultiItemSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/cpsat.html#CpSatCapacitatedLotSizingSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Extract solution from CP-SAT solver.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution"><span class="pre">CapacitatedMultiItemSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/cpsat.html#CpSatCapacitatedLotSizingSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Set warm-start hints from a solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>solution</strong> – A solution to use as warm-start</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.variables">
+<span class="sig-name descname"><span class="pre">variables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat.CpSatCapacitatedLotSizingSolver.variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling">
+<span id="discrete-optimization-lotsizing-capacitatedmultiitem-solvers-cpsat-scheduling-module"></span><h2>discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling module<a class="headerlink" href="#module-discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling" title="Link to this heading"></a></h2>
+<p>CP-SAT scheduling solver for capacitated multi-item lot sizing problem.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.</span></span><span class="sig-name descname"><span class="pre">CpSatSchedulingCapacitatedLotSizing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/cpsat_scheduling.html#CpSatSchedulingCapacitatedLotSizing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver" title="discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<p>CP-SAT scheduling solver for capacitated multi-item lot sizing.</p>
+<p>Uses interval variables to model production events:
+- One interval for each demand occurrence
+- NoOverlap constraint ensures at most one production per period
+- Circuit constraint models changeover costs between consecutive productions
+- Stock cost computed as (deadline - production_time) per demand</p>
+<p>Based on the original scheduling solver approach.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.deadlines">
+<span class="sig-name descname"><span class="pre">deadlines</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.deadlines" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/cpsat_scheduling.html#CpSatSchedulingCapacitatedLotSizing.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize the CP-SAT scheduling model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP"><span class="pre">CapacitatedMultiItemLSP</span></a></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution"><span class="pre">CapacitatedMultiItemSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/cpsat_scheduling.html#CpSatSchedulingCapacitatedLotSizing.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Extract solution from CP-SAT solver.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution"><span class="pre">CapacitatedMultiItemSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/cpsat_scheduling.html#CpSatSchedulingCapacitatedLotSizing.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Set warm-start hints from a solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>solution</strong> – A solution to use as warm-start</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.variables">
+<span class="sig-name descname"><span class="pre">variables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling.CpSatSchedulingCapacitatedLotSizing.variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp">
+<span id="discrete-optimization-lotsizing-capacitatedmultiitem-solvers-dp-module"></span><h2>discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp module<a class="headerlink" href="#module-discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp" title="Link to this heading"></a></h2>
+<p>Dynamic programming solvers for capacitated multi-item lot sizing problem.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.</span></span><span class="sig-name descname"><span class="pre">DpCapacitatedLotSizingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP"><span class="pre">CapacitatedMultiItemLSP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/dp.html#DpCapacitatedLotSizingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.dyn_prog_tools.DpSolver" title="discrete_optimization.generic_tools.dyn_prog_tools.DpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">DpSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='relax_delays',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='relax_delays'),</span> <span class="pre">CategoricalHyperparameter(name='use_lookahead_constraints',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='use_lookahead_constraints'),</span> <span class="pre">IntegerHyperparameter(name='lookahead_window',</span> <span class="pre">default=5,</span> <span class="pre">depends_on=[('use_lookahead_constraints',</span> <span class="pre">True)],</span> <span class="pre">name_in_kwargs='lookahead_window',</span> <span class="pre">low=1,</span> <span class="pre">high=20,</span> <span class="pre">step=1,</span> <span class="pre">log=False),</span> <span class="pre">CategoricalHyperparameter(name='use_flexibility_delays',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='use_flexibility_delays'),</span> <span class="pre">IntegerHyperparameter(name='flexibility_delta',</span> <span class="pre">default=2,</span> <span class="pre">depends_on=[('use_flexibility_delays',</span> <span class="pre">True)],</span> <span class="pre">name_in_kwargs='flexibility_delta',</span> <span class="pre">low=0,</span> <span class="pre">high=30,</span> <span class="pre">step=1,</span> <span class="pre">log=False)]</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/dp.html#DpCapacitatedLotSizingSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP"><span class="pre">CapacitatedMultiItemLSP</span></a></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/dp.html#DpCapacitatedLotSizingSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution"><span class="pre">CapacitatedMultiItemSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/dp.html#DpCapacitatedLotSizingSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Convert a CapacitatedMultiItemSolution to a sequence of DP transitions for warmstart.</p>
+<p>The DP model expects transitions in a specific order:
+- For each timestep: production(s), delivery(ies), advance_in_time
+- Final timestep: production(s), delivery(ies), finish</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.transition_objects">
+<span class="sig-name descname"><span class="pre">transition_objects</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.transition_objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.transitions">
+<span class="sig-name descname"><span class="pre">transitions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.transitions" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.variables">
+<span class="sig-name descname"><span class="pre">variables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpCapacitatedLotSizingSolver.variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.</span></span><span class="sig-name descname"><span class="pre">DpSchedCapacitatedLotSizingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP"><span class="pre">CapacitatedMultiItemLSP</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/dp.html#DpSchedCapacitatedLotSizingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.dyn_prog_tools.DpSolver" title="discrete_optimization.generic_tools.dyn_prog_tools.DpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">DpSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<p>Scheduling-based DP solver for capacitated multi-item lot sizing.</p>
+<p>This solver models the problem as scheduling demand occurrences,
+where each demand is a task with a deadline.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='relax_delays',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='relax_delays'),</span> <span class="pre">CategoricalHyperparameter(name='use_lookahead_constraints',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='use_lookahead_constraints'),</span> <span class="pre">IntegerHyperparameter(name='lookahead_window',</span> <span class="pre">default=5,</span> <span class="pre">depends_on=[('use_lookahead_constraints',</span> <span class="pre">True)],</span> <span class="pre">name_in_kwargs='lookahead_window',</span> <span class="pre">low=1,</span> <span class="pre">high=20,</span> <span class="pre">step=1,</span> <span class="pre">log=False),</span> <span class="pre">CategoricalHyperparameter(name='use_flexibility_delays',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='use_flexibility_delays'),</span> <span class="pre">IntegerHyperparameter(name='flexibility_delta',</span> <span class="pre">default=2,</span> <span class="pre">depends_on=[('use_flexibility_delays',</span> <span class="pre">True)],</span> <span class="pre">name_in_kwargs='flexibility_delta',</span> <span class="pre">low=0,</span> <span class="pre">high=30,</span> <span class="pre">step=1,</span> <span class="pre">log=False)]</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/dp.html#DpSchedCapacitatedLotSizingSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP"><span class="pre">CapacitatedMultiItemLSP</span></a></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/dp.html#DpSchedCapacitatedLotSizingSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution"><span class="pre">CapacitatedMultiItemSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/dp.html#DpSchedCapacitatedLotSizingSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Convert a CapacitatedMultiItemSolution to a sequence of DP transitions for warmstart.</p>
+<p>DpSchedLotSizingSolver uses a scheduling-based DP model where:
+- Each demand occurrence is a task with a deadline
+- Transitions are produce_{i} where i is the index into all_items list
+- advance_in_time is used for idle periods
+- No deliver or finish transitions</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.transition_objects">
+<span class="sig-name descname"><span class="pre">transition_objects</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.transition_objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.transitions">
+<span class="sig-name descname"><span class="pre">transitions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.transitions" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.variables">
+<span class="sig-name descname"><span class="pre">variables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp.DpSchedCapacitatedLotSizingSolver.variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy">
+<span id="discrete-optimization-lotsizing-capacitatedmultiitem-solvers-greedy-module"></span><h2>discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy module<a class="headerlink" href="#module-discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy" title="Link to this heading"></a></h2>
+<p>Greedy solver for capacitated multi-item lot sizing problem.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyLotSizingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.</span></span><span class="sig-name descname"><span class="pre">GreedyLotSizingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/greedy.html#GreedyLotSizingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyLotSizingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<p>Greedy solver for capacitated multi-item lot sizing problems.</p>
+<p>This solver provides various greedy heuristics for constructing initial solutions.
+These solutions can be used as starting points for local search or other metaheuristic methods.</p>
+<dl class="simple">
+<dt>Hyperparameters:</dt><dd><p>strategy: The greedy strategy to use for constructing the solution</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>solver = GreedyLotSizingSolver(problem)
+result = solver.solve(strategy=GreedyStrategy.BALANCED)</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyLotSizingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='strategy',</span> <span class="pre">default=&lt;GreedyStrategy.BALANCED:</span> <span class="pre">'balanced'&gt;,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='strategy')]</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyLotSizingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyLotSizingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP"><span class="pre">CapacitatedMultiItemLSP</span></a></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyLotSizingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyLotSizingSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/greedy.html#GreedyLotSizingSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyLotSizingSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Solve the problem using a greedy strategy.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyStrategy">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.</span></span><span class="sig-name descname"><span class="pre">GreedyStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/greedy.html#GreedyStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyStrategy" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<p>Greedy strategy for lot sizing problem.</p>
+<ul class="simple">
+<li><p>EARLIEST_DEMAND_FIRST: Produce items to satisfy earliest unmet demands</p></li>
+<li><p>MINIMUM_CHANGEOVER: Batch production of same items to minimize changeover costs</p></li>
+<li><p>JUST_IN_TIME: Produce items as late as possible while meeting demands</p></li>
+<li><p>BALANCED: Balance between changeover costs and stock holding costs</p></li>
+</ul>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyStrategy.BALANCED">
+<span class="sig-name descname"><span class="pre">BALANCED</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'balanced'</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyStrategy.BALANCED" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyStrategy.EARLIEST_DEMAND_FIRST">
+<span class="sig-name descname"><span class="pre">EARLIEST_DEMAND_FIRST</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'earliest_demand_first'</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyStrategy.EARLIEST_DEMAND_FIRST" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyStrategy.JUST_IN_TIME">
+<span class="sig-name descname"><span class="pre">JUST_IN_TIME</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'just_in_time'</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyStrategy.JUST_IN_TIME" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyStrategy.MINIMUM_CHANGEOVER">
+<span class="sig-name descname"><span class="pre">MINIMUM_CHANGEOVER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'minimum_changeover'</span></span><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.GreedyStrategy.MINIMUM_CHANGEOVER" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.greedy_best">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.</span></span><span class="sig-name descname"><span class="pre">greedy_best</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemLSP"><span class="pre">CapacitatedMultiItemLSP</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.lotsizing.capacitatedmultiitem.html#discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution" title="discrete_optimization.lotsizing.capacitatedmultiitem.problem.CapacitatedMultiItemSolution"><span class="pre">CapacitatedMultiItemSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/greedy.html#greedy_best"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy.greedy_best" title="Link to this definition"></a></dt>
+<dd><p>Try all greedy strategies and return the best solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>problem</strong> – The lot sizing problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The best solution found among all strategies</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp">
+<span id="discrete-optimization-lotsizing-capacitatedmultiitem-solvers-lp-module"></span><h2>discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp module<a class="headerlink" href="#module-discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp" title="Link to this heading"></a></h2>
+<p>MILP solvers for capacitated multi-item lot sizing problem.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp.GurobiCapacitatedLotSizingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp.</span></span><span class="sig-name descname"><span class="pre">GurobiCapacitatedLotSizingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/lp.html#GurobiCapacitatedLotSizingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp.GurobiCapacitatedLotSizingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_BaseLpCapacitatedLotSizingSolver</span></code>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver" title="discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">GurobiMilpSolver</span></code></a></p>
+<p>Gurobi-based MILP solver for capacitated multi-item lot sizing.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp.MathOptCapacitatedLotSizingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp.</span></span><span class="sig-name descname"><span class="pre">MathOptCapacitatedLotSizingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/lotsizing/capacitatedmultiitem/solvers/lp.html#MathOptCapacitatedLotSizingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp.MathOptCapacitatedLotSizingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_BaseLpCapacitatedLotSizingSolver</span></code>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver" title="discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsMathOptMilpSolver</span></code></a></p>
+<p>MathOpt-based MILP solver for capacitated multi-item lot sizing.</p>
+</dd></dl>
+
+</section>
+<section id="discrete-optimization-lotsizing-capacitatedmultiitem-solvers-lp-milp-module">
+<h2>discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp_milp module<a class="headerlink" href="#discrete-optimization-lotsizing-capacitatedmultiitem-solvers-lp-milp-module" title="Link to this heading"></a></h2>
+</section>
+<section id="discrete-optimization-lotsizing-capacitatedmultiitem-solvers-ls-module">
+<h2>discrete_optimization.lotsizing.capacitatedmultiitem.solvers.ls module<a class="headerlink" href="#discrete-optimization-lotsizing-capacitatedmultiitem-solvers-ls-module" title="Link to this heading"></a></h2>
+</section>
+<section id="discrete-optimization-lotsizing-capacitatedmultiitem-solvers-mutation-module">
+<h2>discrete_optimization.lotsizing.capacitatedmultiitem.solvers.mutation module<a class="headerlink" href="#discrete-optimization-lotsizing-capacitatedmultiitem-solvers-mutation-module" title="Link to this heading"></a></h2>
+</section>
+<section id="discrete-optimization-lotsizing-capacitatedmultiitem-solvers-sa-fast-module">
+<h2>discrete_optimization.lotsizing.capacitatedmultiitem.solvers.sa_fast module<a class="headerlink" href="#discrete-optimization-lotsizing-capacitatedmultiitem-solvers-sa-fast-module" title="Link to this heading"></a></h2>
+</section>
+<section id="discrete-optimization-lotsizing-capacitatedmultiitem-solvers-toulbar-module">
+<h2>discrete_optimization.lotsizing.capacitatedmultiitem.solvers.toulbar module<a class="headerlink" href="#discrete-optimization-lotsizing-capacitatedmultiitem-solvers-toulbar-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-contents">
+<h2>Module contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.lotsizing.capacitatedmultiitem.html" class="btn btn-neutral float-left" title="discrete_optimization.lotsizing.capacitatedmultiitem package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.lotsizing.capacitatedsetuptimes.html" class="btn btn-neutral float-right" title="discrete_optimization.lotsizing.capacitatedsetuptimes package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
