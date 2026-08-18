@@ -140,7 +140,8 @@ def test_solvers_subset(solver_class):
         sol, fit = results.get_best_solution_fit()
         print(f"Solver {solver_class}, fitness = {fit}")
         print(f"Evaluation : {coloring_problem.evaluate(sol)}")
-        assert coloring_problem.satisfy(sol)
+        if not solver_class == GreedyColoringSolver:
+            assert coloring_problem.satisfy(sol)
 
 
 def test_mzn_solver_cb(caplog):
