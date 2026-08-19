@@ -95,7 +95,7 @@ class RcpspResourceDependentProblem(
     def non_skill_cumulative_resources_list(self) -> list[Skill]:
         return [r for r in self.resources if r not in self.non_renewable_resources]
 
-    def is_resource_task_mode_consumption_dependent(
+    def is_cumulative_resource_task_mode_consumption_dependent(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> bool:
         # To be Overridden in child classes
@@ -109,7 +109,9 @@ class RcpspResourceDependentProblem(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> dict[frozenset[tuple[Task, int]], int]:
         # To be Overridden in child classes
-        if self.is_resource_task_mode_consumption_dependent(resource, task, mode):
+        if self.is_cumulative_resource_task_mode_consumption_dependent(
+            resource, task, mode
+        ):
             return self.mode_details[task][mode][resource]
         return {
             frozenset([]): self.get_cumulative_resource_consumption(
