@@ -5,6 +5,7 @@
 import logging
 
 import numpy as np
+from matplotlib import pyplot as plt
 
 from discrete_optimization.datasets import get_data_home
 from discrete_optimization.generic_tools.callbacks.loggers import (
@@ -14,9 +15,11 @@ from discrete_optimization.generic_tools.callbacks.loggers import (
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.problem import RcpspProblem
+from discrete_optimization.rcpsp.solution import RcpspSolution
 from discrete_optimization.rcpsp.solvers.cpsat import (
     CpSatCumulativeResourceRcpspSolver,
     CpSatRcpspSolver,
+    CpSatResourceRcpspSolver,
 )
 from discrete_optimization.rcpsp.solvers.cpsat_auto import (
     CpSatAutoCumulativeResourceRcpspSolver,
@@ -74,6 +77,7 @@ def solve_resource_with_cp_sat(problem: RcpspProblem, auto: bool = True):
         time_limit=10,
     )
     # solution, fit = result_storage.get_best_solution_fit()
+    print([sol._internal_objectives for sol, _ in result_storage])
     solution, fit = result_storage[-1]
     plot_task_gantt(rcpsp_problem=problem, rcpsp_sol=solution, title="Resource optim")
     plot_ressource_view(
@@ -92,9 +96,9 @@ def cpsat_single_mode_makespan_optimization():
 
 def cpsat_single_mode_resource_optimization():
     files_available = get_data_available()
-    file = [f for f in files_available if "j301_1.sm" in f][0]
+    file = [f for f in files_available if "j1201_1.sm" in f][0]
     rcpsp_problem = parse_file(file)
-    solve_resource_with_cp_sat(rcpsp_problem)
+    solve_resource_with_cp_sat(rcpsp_problem, auto=True)
 
 
 def cpsat_single_mode_makespan_optimization_rcp():
@@ -151,8 +155,46 @@ def cpsat_with_calendar():
     print(solver.status_solver)
 
 
+def run_multimode_rcpsp_resource():
+    files_available = get_data_available()
+    file = [f for f in files_available if "j1010_1.mm" in f][0]
+    rcpsp_problem = parse_file(file)
+    solver = CpSatResourceRcpspSolver(problem=rcpsp_problem)
+    result_storage = solver.solve(time_limit=50)
+    solution, fit = result_storage.get_best_solution_fit()
+    plot_task_gantt(rcpsp_problem, solution)
+    plot_ressource_view(rcpsp_problem, solution)
+    solution: RcpspSolution
+    l = solution.check_non_renewable_resource_capacity_constraints(
+        resources=rcpsp_problem.non_renewable_resources_list
+    )
+    plt.show()
+    assert rcpsp_problem.satisfy(solution)
+    assert solution.check_all_calendar_resource_capacity_constraints()
+
+
+def run_multimode_cumulative_rcpsp_resource():
+    files_available = get_data_available()
+    file = [f for f in files_available if "j1010_1.mm" in f][0]
+    rcpsp_problem = parse_file(file)
+    solver = CpSatCumulativeResourceRcpspSolver(problem=rcpsp_problem)
+    result_storage = solver.solve(time_limit=50)
+    solution, fit = result_storage.get_best_solution_fit()
+    plot_task_gantt(rcpsp_problem, solution)
+    plot_ressource_view(rcpsp_problem, solution)
+    solution: RcpspSolution
+    l = solution.check_non_renewable_resource_capacity_constraints(
+        resources=rcpsp_problem.non_renewable_resources_list
+    )
+    plt.show()
+    assert rcpsp_problem.satisfy(solution)
+    assert solution.check_all_calendar_resource_capacity_constraints()
+
+
 if __name__ == "__main__":
-    cpsat_single_mode_makespan_optimization()
+    cpsat_single_mode_resource_optimization()
+    plt.show()
+    # cpsat_single_mode_makespan_optimization()
     # cpsat_single_mode_makespan_optimization()
     # cpsat_single_mode_resource_optimization_rcp_sd()
     # cpsat_single_mode_makespan_optimization()
