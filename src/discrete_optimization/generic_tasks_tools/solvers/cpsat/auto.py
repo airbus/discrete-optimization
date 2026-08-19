@@ -334,6 +334,8 @@ class GenericSchedulingAutoCpSatSolver(
         self.all_used_variables = {}
         self.resource_level_variables_created = False
         self.resource_level_variables = {}
+        self.demand_resource_task_initialized = False
+        self._demands_resource_task = {}
 
     def _create_variables(self):
         self._create_start_or_end_variables()
@@ -543,16 +545,11 @@ class GenericSchedulingAutoCpSatSolver(
                     )
                 )
             for resource in self.problem.cumulative_resources_list:
-                self.demand_variables[task][resource] = self._create_var_per_mode(
-                    name=f"demand_{task}_{resource}",
-                    mode2value={
-                        mode: self.problem.get_cumulative_resource_consumption(
-                            resource=resource, task=task, mode=mode
-                        )
-                        for mode in self.problem.get_task_modes(task=task)
-                    },
-                    task=task,
-                )
+                if not self.cumulative_demand_resource_task_initialized:
+                    self.initialize_resource_demand_vars_and_expr()
+                self.demand_variables[task][resource] = self.demands_resource_task[
+                    resource, task
+                ]
             for resource in self.problem.non_renewable_resources_list:
                 self.demand_variables[task][resource] = self._create_var_per_mode(
                     name=f"demand_{task}_{resource}",
@@ -979,13 +976,18 @@ class GenericSchedulingAutoCpSatSolver(
         if self.needs_task_interval:
             return self.task_interval_variables[task]
         else:
-            return super().get_task_interval(task=task)
+            return self.cp_model.new_interval_var(
+                start=self.start_or_end_variables[task, StartOrEnd.START],
+                size=self.duration_variables[task],
+                end=self.start_or_end_variables[task, StartOrEnd.END],
+                name=f"interval_{task}",
+            )
 
     def get_cumulative_resource_demand_variable(
         self, task: Task, resource: CumulativeResource
     ) -> LinearExprT:
-        if self.avoid_interval_optional:
-            return self.demand_variables[task][resource]
+        # if self.avoid_interval_optional:
+        #    return self.demand_variables[task][resource]
         return super().get_cumulative_resource_demand_variable(
             task=task, resource=resource
         )
