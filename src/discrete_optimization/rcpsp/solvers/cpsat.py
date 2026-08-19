@@ -167,7 +167,6 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
         weight_on_makespan = kwargs.get("weight_on_makespan", 1)
         weight_on_used_resource = kwargs.get("weight_on_used_resource", 10000)
         super().init_model(**kwargs)
-
         nb_used_resources_var = self.get_nb_resources_used_variable()
         makespan_var = self.get_global_makespan_variable()
 
@@ -280,10 +279,8 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
         weight_on_used_resource = kwargs.get("weight_on_used_resource", 10000)
 
         super().init_model(**kwargs)
-
         resources_level_var = self.get_aggregated_resources_levels_variable()
         makespan_var = self.get_global_makespan_variable()
-
         self.cp_model.minimize(
             weight_on_used_resource * resources_level_var
             + weight_on_makespan * makespan_var
