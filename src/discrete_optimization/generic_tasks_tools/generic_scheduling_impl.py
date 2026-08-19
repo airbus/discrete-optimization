@@ -10,6 +10,10 @@ from typing import Optional
 import numpy as np
 import wrapt
 
+from discrete_optimization.generic_tasks_tools import AbsentValue
+from discrete_optimization.generic_tasks_tools.alternative_subproblems import (
+    AlternativeSchedulingSubProblem,
+)
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
     convert_availability_intervals_to_calendar,
     convert_calendar_to_availability_intervals,
@@ -99,6 +103,8 @@ class GenericSchedulingImplProblem(
         unary_resource_costs: Optional[
             dict[Task, dict[int, dict[UnaryResource, int]]]
         ] = None,
+        optional_tasks: Optional[set[Task]] = None,
+        alternative_subproblems: Optional[list[AlternativeSchedulingSubProblem]] = None,
         compute_time_penalty: bool = True,
     ):
         """
@@ -252,6 +258,14 @@ class GenericSchedulingImplProblem(
         else:
             self.unary_resource_costs = unary_resource_costs
         self.compute_time_penalty = compute_time_penalty
+        if optional_tasks is None:
+            self._optional_tasks = set()
+        else:
+            self._optional_tasks = optional_tasks
+        if alternative_subproblems is None:
+            self.alternative_subproblems = []
+        else:
+            self.alternative_subproblems = alternative_subproblems
         self.update_problem()
 
     def update_problem(self):
@@ -263,7 +277,6 @@ class GenericSchedulingImplProblem(
         )
         self._non_renewable_resources_list = list(self.non_renewable_resources)
         self._unary_resources_list = list(self.unary_resources)
-
         self.check_resources_lists()
         self.update_tasks_list()
         self.update_skills()
@@ -438,6 +451,14 @@ class GenericSchedulingImplProblem(
     @property
     def tasks_list(self) -> list[Task]:
         return self._tasks_list
+
+    def is_optional(self, task: Task) -> bool:
+        return task in self._optional_tasks
+
+    def get_alternative_scheduling_subproblem(
+        self,
+    ) -> list[AlternativeSchedulingSubProblem]:
+        return self.alternative_subproblems
 
     def get_solution_type(self) -> type[Solution]:
         return GenericSchedulingImplSolution
@@ -780,19 +801,34 @@ class GenericSchedulingImplSolution(
         except KeyError:
             return False
 
-    def get_end_time(self, task: Task) -> int:
+    def get_end_time(self, task: Task) -> int | AbsentValue:
+        if task not in self.raw_sol.task_variables:
+            return AbsentValue.ABSENT
         return self.raw_sol.task_variables[task].end
 
-    def get_start_time(self, task: Task) -> int:
+    def get_start_time(self, task: Task) -> int | AbsentValue:
+        if task not in self.raw_sol.task_variables:
+            return AbsentValue.ABSENT
         return self.raw_sol.task_variables[task].start
 
     def get_mode(self, task: Task) -> int:
+        if task not in self.raw_sol.task_variables:
+            return AbsentValue.ABSENT
         return self.raw_sol.task_variables[task].mode
 
+    def is_present(self, task: Task) -> bool:
+        if task not in self.raw_sol.task_variables:
+            return False
+        return super().is_present(task)
+
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
+        if task not in self.raw_sol.task_variables:
+            return False
         return unary_resource in self.raw_sol.task_variables[task].allocated
 
     def get_task_allocation(self, task: Task) -> set[UnaryResource]:
+        if task not in self.raw_sol.task_variables:
+            return set()
         return set(self.raw_sol.task_variables[task].allocated)
 
     def copy(self) -> Solution:

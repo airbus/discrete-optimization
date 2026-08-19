@@ -186,6 +186,9 @@ class AllocSchedulingProblem(
         self.horizon_start_shift = horizon_start_shift
         self.update_problem()
 
+    def is_optional(self, task: Task) -> bool:
+        return False
+
     @property
     def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:
         return self.resources_list

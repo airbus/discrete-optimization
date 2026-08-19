@@ -4,6 +4,7 @@
 
 import pytest
 
+from discrete_optimization.generic_tasks_tools.base import NoOptionalTasksProblem
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
     convert_calendar_to_availability_intervals,
 )
@@ -21,7 +22,8 @@ Task = str
 
 
 class MyCumulativeResourceProblem(
-    CumulativeResourceProblem[Task, CumulativeResource, OtherRenewableResource]
+    CumulativeResourceProblem[Task, CumulativeResource, OtherRenewableResource],
+    NoOptionalTasksProblem[Task],
 ):
     resource_availabilities = dict(
         R1=[
@@ -129,6 +131,9 @@ class MyCumulativeResourceSolution(
         super().__init__(problem)
         self.modes = modes
         self.starts = starts
+
+    def is_present(self, task: Task) -> bool:
+        return True
 
     def get_mode(self, task: Task) -> int:
         return self.modes[task]

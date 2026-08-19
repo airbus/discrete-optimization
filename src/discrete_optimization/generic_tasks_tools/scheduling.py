@@ -4,6 +4,7 @@ from abc import abstractmethod
 from collections.abc import Iterable
 from typing import Any
 
+from discrete_optimization.generic_tasks_tools import AbsentValue
 from discrete_optimization.generic_tasks_tools.base import (
     Task,
     TasksCpSolver,
@@ -49,23 +50,34 @@ class SchedulingSolution(TasksSolution[Task]):
     problem: SchedulingProblem[Task]
 
     @abstractmethod
-    def get_end_time(self, task: Task) -> int: ...
+    def get_end_time(self, task: Task) -> int | AbsentValue: ...
 
     @abstractmethod
-    def get_start_time(self, task: Task) -> int: ...
+    def get_start_time(self, task: Task) -> int | AbsentValue: ...
 
-    def get_start_or_end_time(self, task: Task, start_or_end: StartOrEnd) -> int:
+    def is_scheduled(self, task: Task) -> bool:
+        return self.get_start_time(task) != AbsentValue.ABSENT
+
+    def get_start_or_end_time(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> int | AbsentValue:
         """Get the start or end time for a given task."""
         if start_or_end == StartOrEnd.START:
             return self.get_start_time(task)
         else:
             return self.get_end_time(task)
 
-    def get_duration(self, task: Task) -> int:
-        return self.get_end_time(task) - self.get_start_time(task)
+    def get_duration(self, task: Task) -> int | AbsentValue:
+        if self.is_scheduled(task):
+            return self.get_end_time(task) - self.get_start_time(task)
+        return AbsentValue.ABSENT
 
     def get_max_end_time(self) -> int:
-        return max(self.get_end_time(task) for task in self.problem.get_last_tasks())
+        return max(
+            self.get_end_time(task)
+            for task in self.problem.get_last_tasks()
+            if self.is_scheduled(task)
+        )
 
     def constraint_on_task_satisfied(
         self, task: Task, start_or_end: StartOrEnd, sign: SignEnum, time: int
@@ -92,8 +104,8 @@ class SchedulingSolution(TasksSolution[Task]):
         return [
             task
             for task in self.problem.tasks_list
-            if self.get_start_time(task=task) <= time
-            and self.get_end_time(task=task) > time
+            if self.is_scheduled(task)
+            and self.get_start_time(task=task) <= time < self.get_end_time(task=task)
         ]
 
 

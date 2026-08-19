@@ -27,6 +27,9 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
     _subtasks_makespan: Optional[IntVar] = None
     """Internal variable use to define the partial makespan."""
 
+    task_is_scheduled: dict[Task, IntVar]
+    """For optional/alternative scheduling problems."""
+
     constraints_on_makespan: Optional[list[Any]] = None
     """Constraints on partial makespan so that it can be considered as the objective."""
 
@@ -36,6 +39,11 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
         self._makespan = None
         self._subtasks_makespan = None
         self.constraints_on_makespan = None
+
+    def get_task_scheduled_variable(self, task: Task) -> LinearExprT:
+        if self.task_is_scheduled is None:
+            return None
+        return self.task_is_scheduled[task]
 
     @abstractmethod
     def get_task_start_or_end_variable(

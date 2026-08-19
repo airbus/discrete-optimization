@@ -118,15 +118,15 @@ class CpSatRcpspSolver(
             starts_var[task] = model.NewIntVar(lb=lbs, ub=ubs, name=f"start_{task}")
             ends_var[task] = model.NewIntVar(lb=lbe, ub=ube, name=f"end_{task}")
         interval_per_tasks = {}
-        for task in self.problem.mode_details:
+        for task in self.problem.tasks_list:
             interval_per_tasks[task] = set()
-            for mode in self.problem.mode_details[task]:
+            for mode in self.problem.get_task_modes(task):
                 is_present_var[(task, mode)] = model.NewBoolVar(
                     f"is_present_{task, mode}"
                 )
                 interval_var[(task, mode)] = model.NewOptionalIntervalVar(
                     start=starts_var[task],
-                    size=self.problem.mode_details[task][mode]["duration"],
+                    size=self.problem.get_task_mode_duration(task, mode),
                     end=ends_var[task],
                     is_present=is_present_var[(task, mode)],
                     name=f"interval_{task, mode}",

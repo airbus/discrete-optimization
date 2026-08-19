@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import logging
 
+from discrete_optimization.generic_tasks_tools.base import NoOptionalTasksProblem
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResourceProblem,
     NonRenewableResourceSolution,
@@ -16,7 +17,8 @@ Task = str
 
 
 class MyNonRenewableResourceProblem(
-    NonRenewableResourceProblem[Task, NonRenewableResource]
+    NonRenewableResourceProblem[Task, NonRenewableResource],
+    NoOptionalTasksProblem[Task],
 ):
     resource_capacities = {"R0": 2, "R1": 5}
     mode_details = {
@@ -72,6 +74,9 @@ class MyNonRenewableResourceSolution(
     ):
         super().__init__(problem)
         self.modes = modes
+
+    def is_present(self, task: Task) -> bool:
+        return True
 
     def get_mode(self, task: Task) -> int:
         return self.modes[task]

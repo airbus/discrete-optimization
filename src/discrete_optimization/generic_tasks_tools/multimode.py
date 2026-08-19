@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Any
 
+from discrete_optimization.generic_tasks_tools import AbsentValue
 from discrete_optimization.generic_tasks_tools.base import (
     Task,
     TasksCpSolver,
@@ -17,7 +18,7 @@ class MultimodeSolution(TasksSolution[Task]):
     problem: MultimodeProblem[Task]
 
     @abstractmethod
-    def get_mode(self, task: Task) -> int:
+    def get_mode(self, task: Task) -> int | AbsentValue:
         """Retrieve mode found for given task.
 
         Args:
@@ -27,6 +28,9 @@ class MultimodeSolution(TasksSolution[Task]):
 
         """
         ...
+
+    def has_a_mode(self, task: Task) -> bool:
+        return self.get_mode(task) != AbsentValue.ABSENT
 
 
 class MultimodeProblem(TasksProblem[Task]):

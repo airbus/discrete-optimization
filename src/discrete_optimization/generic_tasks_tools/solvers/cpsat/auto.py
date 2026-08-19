@@ -15,6 +15,7 @@ from ortools.sat.python.cp_model import (
     LinearExprT,
 )
 
+from discrete_optimization.generic_tasks_tools import AbsentValue
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
@@ -141,11 +142,16 @@ class GenericSchedulingAutoCpSatSolver(
     as the calendar for a skill is deduce from unary_resource calendars.
 
     """
+    create_present_task_variables_for_all_tasks = False
+    """
+    Either creating present var for all task (not only for optional tasks)
+    """
 
     # cpsat variables
     start_or_end_variables: dict[tuple[Task, StartOrEnd], LinearExprT]
     duration_variables: dict[Task, LinearExprT]
     task_interval_variables = dict[Task, IntervalVar]
+    task_is_present: dict[Task, LinearExprT]
     modes_is_present: dict[Task, dict[int, LinearExprT]]
     modes_intervals: dict[Task, dict[int, IntervalVar]]
     modes_start_variables: dict[Task, dict[int, LinearExprT]]
@@ -280,12 +286,17 @@ class GenericSchedulingAutoCpSatSolver(
         use_energy_constraints: Optional[bool] = None,
         keep_only_most_nested_energy_constraints: Optional[bool] = None,
         add_redundant_skill_cumulative_constraints: Optional[bool] = None,
+        create_present_task_variables_for_all_tasks: Optional[bool] = None,
         **kwargs: Any,
     ) -> None:
         """Init cp model and reset stored variables if any."""
         super().init_model(**kwargs)
 
         # update default settings
+        if create_present_task_variables_for_all_tasks is not None:
+            self.create_present_task_variables_for_all_tasks = (
+                create_present_task_variables_for_all_tasks
+            )
         if add_redundant_skill_cumulative_constraints is not None:
             self.add_redundant_skill_cumulative_constraints = (
                 add_redundant_skill_cumulative_constraints
@@ -319,6 +330,7 @@ class GenericSchedulingAutoCpSatSolver(
         self.start_or_end_variables = {}
         self.duration_variables = {}
         self.task_interval_variables = {}
+        self.task_is_scheduled = {}
         self.modes_is_present = {}
         self.modes_intervals = {}
         self.modes_start_variables = {}
@@ -336,6 +348,7 @@ class GenericSchedulingAutoCpSatSolver(
         self.resource_level_variables = {}
 
     def _create_variables(self):
+        self._create_present_variables()
         self._create_start_or_end_variables()
         self._create_mode_variables()
         if self.needs_duration_variables or self.needs_task_interval:
@@ -386,12 +399,23 @@ class GenericSchedulingAutoCpSatSolver(
             )
             if self.needs_task_interval:
                 # interval constraint
-                self.task_interval_variables[task] = self.cp_model.new_interval_var(
-                    start=self.start_or_end_variables[task, StartOrEnd.START],
-                    size=self.duration_variables[task],
-                    end=self.start_or_end_variables[task, StartOrEnd.END],
-                    name=f"interval_{task}",
-                )
+                if task in self.task_is_scheduled:
+                    self.task_interval_variables[task] = (
+                        self.cp_model.new_optional_interval_var(
+                            start=self.start_or_end_variables[task, StartOrEnd.START],
+                            size=self.duration_variables[task],
+                            is_present=self.task_is_scheduled[task],
+                            end=self.start_or_end_variables[task, StartOrEnd.END],
+                            name=f"interval_{task}",
+                        )
+                    )
+                else:
+                    self.task_interval_variables[task] = self.cp_model.new_interval_var(
+                        start=self.start_or_end_variables[task, StartOrEnd.START],
+                        size=self.duration_variables[task],
+                        end=self.start_or_end_variables[task, StartOrEnd.END],
+                        name=f"interval_{task}",
+                    )
 
     def _create_mode_variables(self):
         for task in self.problem.tasks_list:
@@ -399,7 +423,7 @@ class GenericSchedulingAutoCpSatSolver(
             self.modes_intervals[task] = {}
             self.modes_start_variables[task] = {}
             modes = self.problem.get_task_modes(task=task)
-            if len(modes) == 1:
+            if len(modes) == 1 and not self.problem.is_optional(task):
                 # single mode (at least for this very task)
                 mode = next(iter(modes))
                 self.modes_is_present[task][mode] = 1
@@ -409,14 +433,29 @@ class GenericSchedulingAutoCpSatSolver(
                     self.modes_is_present[task][mode] = self.cp_model.new_bool_var(
                         name=f"is_present_mode_{task}_{mode}"
                     )
-                self.cp_model.add_exactly_one(
-                    self.modes_is_present[task][mode] for mode in modes
-                )
+                if not self.problem.is_optional(task):
+                    self.cp_model.add_exactly_one(
+                        self.modes_is_present[task][mode] for mode in modes
+                    )
+                else:
+                    self.cp_model.add_at_most_one(
+                        self.modes_is_present[task][mode] for mode in modes
+                    )
             if not self.avoid_interval_optional:
                 for mode in modes:
                     self._create_mode_interval_on_the_fly(
                         task=task, mode=mode, modes=modes
                     )
+
+    def _create_present_variables(self):
+        for task in self.problem.tasks_list:
+            if (
+                self.create_present_task_variables_for_all_tasks
+                or task in self.problem.optional_tasks_list
+            ):
+                self.task_is_scheduled[task] = self.cp_model.new_bool_var(
+                    f"is_present_task_{task}"
+                )
 
     def _create_mode_interval_on_the_fly(
         self, task: Task, mode: int, modes: Optional[set[int]] = None
@@ -424,13 +463,24 @@ class GenericSchedulingAutoCpSatSolver(
         if modes is None:
             modes = self.problem.get_task_modes(task=task)
         if len(modes) == 1:  # single mode
-            # create the interval var with start and end => constraint on end - start
-            self.modes_intervals[task][mode] = self.cp_model.new_interval_var(
-                start=self.start_or_end_variables[task, StartOrEnd.START],
-                size=self.problem.get_task_mode_duration(task=task, mode=mode),
-                end=self.start_or_end_variables[task, StartOrEnd.END],
-                name=f"interval_mode_{task}_{mode}",
-            )
+            if task in self.task_is_scheduled:
+                self.modes_intervals[task][mode] = (
+                    self.cp_model.new_optional_interval_var(
+                        start=self.start_or_end_variables[task, StartOrEnd.START],
+                        size=self.problem.get_task_mode_duration(task=task, mode=mode),
+                        end=self.start_or_end_variables[task, StartOrEnd.END],
+                        is_present=self.task_is_scheduled[task],
+                        name=f"interval_mode_{task}_{mode}",
+                    )
+                )
+            else:
+                # create the interval var with start and end => constraint on end - start
+                self.modes_intervals[task][mode] = self.cp_model.new_interval_var(
+                    start=self.start_or_end_variables[task, StartOrEnd.START],
+                    size=self.problem.get_task_mode_duration(task=task, mode=mode),
+                    end=self.start_or_end_variables[task, StartOrEnd.END],
+                    name=f"interval_mode_{task}_{mode}",
+                )
             if self.duplicate_start_var_per_mode:
                 self.modes_start_variables[task][mode] = self.start_or_end_variables[
                     task, StartOrEnd.START
@@ -921,7 +971,16 @@ class GenericSchedulingAutoCpSatSolver(
             self._create_cost_variables()
             return self._get_total_cost_variable()
 
+    def create_link_mode_to_presence(self):
+        for t in self.task_is_scheduled:
+            self.cp_model.add_max_equality(
+                self.task_is_scheduled[t],
+                [self.modes_is_present[t][mode] for mode in self.modes_is_present[t]],
+            )
+
     def _add_constraints(self) -> None:
+        # mode selection -> presence
+        self.create_link_mode_to_presence()
         # time lag
         self.create_timelag_constraints()
         # non-renewable resources capacity
@@ -947,6 +1006,8 @@ class GenericSchedulingAutoCpSatSolver(
         self.create_no_overlap_constraints()
         # forbidden intervals
         self.create_forbidden_intervals_constraints()
+        # alternative subproblems
+        self.create_alternative_subproblems_constraints()
 
     def _set_objective(self) -> None:
         if self.objective == Objective.CUSTOM:
@@ -1083,40 +1144,57 @@ class GenericSchedulingAutoCpSatSolver(
         """
         task_variables = {}
         for task in self.problem.tasks_list:
-            start = cpsolvercb.Value(
-                self.start_or_end_variables[task, StartOrEnd.START]
-            )
-            end = cpsolvercb.Value(self.start_or_end_variables[task, StartOrEnd.END])
-            modes = self.problem.get_task_modes(task)
-            if len(modes) == 1:
-                mode = next(iter(modes))
+            if task in self.task_is_scheduled and not cpsolvercb.Value(
+                self.task_is_scheduled[task]
+            ):
+                task_variables[task] = TaskVariable(
+                    start=AbsentValue.ABSENT,
+                    end=AbsentValue.ABSENT,
+                    mode=AbsentValue.ABSENT,
+                    allocated={},
+                )
             else:
-                for mode in modes:
-                    if cpsolvercb.Value(self.modes_is_present[task][mode]):
-                        break
-
-            def get_skill_used(task: Task, unary_resource: UnaryResource) -> set[Skill]:
-                try:
-                    skill_variables = self.skill_variables[task][unary_resource]
-                except KeyError:
-                    return set()
+                start = cpsolvercb.Value(
+                    self.start_or_end_variables[task, StartOrEnd.START]
+                )
+                end = cpsolvercb.Value(
+                    self.start_or_end_variables[task, StartOrEnd.END]
+                )
+                modes = self.problem.get_task_modes(task)
+                mode = None
+                if len(modes) == 1:
+                    mode = next(iter(modes))
                 else:
-                    return {
-                        skill
-                        for skill, skill_var in skill_variables.items()
-                        if cpsolvercb.Value(skill_var)
-                    }
+                    for mode in modes:
+                        if cpsolvercb.Value(self.modes_is_present[task][mode]):
+                            break
 
-            allocated = {
-                unary_resource: get_skill_used(task=task, unary_resource=unary_resource)
-                for unary_resource, is_allocated_var in self.allocation_is_present[
-                    task
-                ].items()
-                if cpsolvercb.Value(is_allocated_var)
-            }
-            task_variables[task] = TaskVariable(
-                start=start, end=end, mode=mode, allocated=allocated
-            )
+                def get_skill_used(
+                    task: Task, unary_resource: UnaryResource
+                ) -> set[Skill]:
+                    try:
+                        skill_variables = self.skill_variables[task][unary_resource]
+                    except KeyError:
+                        return set()
+                    else:
+                        return {
+                            skill
+                            for skill, skill_var in skill_variables.items()
+                            if cpsolvercb.Value(skill_var)
+                        }
+
+                allocated = {
+                    unary_resource: get_skill_used(
+                        task=task, unary_resource=unary_resource
+                    )
+                    for unary_resource, is_allocated_var in self.allocation_is_present[
+                        task
+                    ].items()
+                    if cpsolvercb.Value(is_allocated_var)
+                }
+                task_variables[task] = TaskVariable(
+                    start=start, end=end, mode=mode, allocated=allocated
+                )
         return RawSolution(task_variables=task_variables)
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:

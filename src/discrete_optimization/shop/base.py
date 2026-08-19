@@ -270,6 +270,9 @@ class CommonShopProblem(
             return False
         return True
 
+    def is_optional(self, task: Task) -> bool:
+        return False
+
     def get_makespan_upper_bound(self) -> int:
         return self.horizon
 
