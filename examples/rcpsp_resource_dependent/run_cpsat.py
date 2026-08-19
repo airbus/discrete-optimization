@@ -21,7 +21,7 @@ def create_toy_model():
         "2": {
             1: {
                 "R1": {frozenset([("1", 1)]): 1, frozenset([("1", 2)]): 5},
-                "N1": 1,
+                "N1": {frozenset([("1", 1)]): 20, frozenset([("1", 2)]): 10},
                 "duration": 2,
             },
             2: {
@@ -74,10 +74,21 @@ def create_toy_model():
     )
     sol: RcpspResourceDependentSolution = res[-1][0]
     resource_consumption = {}
+    total_conso_nr = {r: 0 for r in problem.non_renewable_resources}
     for t in problem.tasks_list:
         for r in problem.cumulative_resources_list:
             resource_consumption[(t, r)] = sol.get_calendar_resource_consumption(r, t)
-    print(resource_consumption)
+        for r in problem.non_renewable_resources_list:
+            resource_consumption[(t, r)] = sol.get_non_renewable_resource_consumption(
+                r, t
+            )
+            total_conso_nr[r] += resource_consumption[(t, r)]
+    for t in problem.tasks_list:
+        for r in (
+            problem.cumulative_resources_list + problem.non_renewable_resources_list
+        ):
+            print(t, r, ":", resource_consumption[(t, r)])
+    print(total_conso_nr)
     print(sol.schedule, "\n", sol.modes)
     print(problem.evaluate(sol), problem.satisfy(sol))
     from discrete_optimization.generic_tasks_tools.plot_utils import (
