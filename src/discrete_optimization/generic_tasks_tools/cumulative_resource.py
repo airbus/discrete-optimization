@@ -40,12 +40,13 @@ class CumulativeResourceProblem(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> dict[frozenset[tuple[Task, int]], int]:
         # To be Overridden in child classes
+
         return {}
 
-    def get_possible_resource_consumption(
+    def get_possible_cumulative_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> set[int]:
-        if self.is_resource_task_mode_consumption_dependent(
+        if self.is_cumulative_resource_task_mode_consumption_dependent(
             resource=resource, task=task, mode=mode
         ):
             return set(
@@ -59,12 +60,12 @@ class CumulativeResourceProblem(
             )
         }
 
-    def get_possible_resource_consumption_all_modes(
+    def get_possible_cumulative_resource_consumption_all_modes(
         self, resource: CumulativeResource, task: Task
     ) -> set[int]:
         return reduce(
             lambda prev, y: prev.union(
-                self.get_possible_resource_consumption(
+                self.get_possible_cumulative_resource_consumption(
                     resource=resource, task=task, mode=y
                 )
             ),
@@ -72,31 +73,36 @@ class CumulativeResourceProblem(
             set(),
         )
 
-    def is_resource_task_mode_consumption_dependent(
+    def is_cumulative_resource_task_mode_consumption_dependent(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> bool:
         # To be Overridden in child classes
         return False
 
-    def is_resource_task_consumption_dependent(
+    def is_cumulative_resource_task_consumption_dependent(
         self, resource: CumulativeResource, task: Task
     ):
         return any(
-            self.is_resource_task_mode_consumption_dependent(
+            self.is_cumulative_resource_task_mode_consumption_dependent(
                 resource=resource, task=task, mode=mode
             )
             for mode in self.get_task_modes(task)
         )
 
-    def is_task_consumption_dependent(self, task: Task):
+    def is_task_cumulative_consumption_dependent(self, task: Task):
         # To be Overridden in child classes
         return any(
-            self.is_resource_task_consumption_dependent(resource=resource, task=task)
+            self.is_cumulative_resource_task_consumption_dependent(
+                resource=resource, task=task
+            )
             for resource in self.cumulative_resources_list
         )
 
-    def has_any_consumption_dependent(self):
-        return any(self.is_task_consumption_dependent(task) for task in self.tasks_list)
+    def has_any_cumulative_consumption_dependent(self):
+        return any(
+            self.is_task_cumulative_consumption_dependent(task)
+            for task in self.tasks_list
+        )
 
     @abstractmethod
     def get_cumulative_resource_consumption(
@@ -175,7 +181,7 @@ class CumulativeResourceSolution(
 
         """
         if self.problem.is_cumulative_resource(resource):
-            if not self.problem.is_resource_task_mode_consumption_dependent(
+            if not self.problem.is_cumulative_resource_task_mode_consumption_dependent(
                 resource, task, self.get_mode(task)
             ):
                 return self.problem.get_cumulative_resource_consumption(
