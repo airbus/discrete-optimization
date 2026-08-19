@@ -136,9 +136,7 @@ class GenericSchedulingImplProblem(
     unary_resources_skills: dict[UnaryResource, dict[Skill, int]] = field(
         default_factory=dict
     )
-    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = (
-        field(default_factory=dict)
-    )
+    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = field(default_factory=dict)
     unary_resources_task_compatibility: dict[Task, set[UnaryResource]] = field(
         default_factory=dict
     )
@@ -149,9 +147,7 @@ class GenericSchedulingImplProblem(
     non_renewable_resources: dict[NonRenewableResource, int] = field(
         default_factory=dict
     )
-    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = (
-        field(default_factory=dict)
-    )
+    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = field(default_factory=dict)
     start_to_start_min_time_lags: list[tuple[Task, Task, int]] = field(
         default_factory=list
     )
@@ -191,7 +187,6 @@ class GenericSchedulingImplProblem(
             )
         else:
             self.weighted_objectives = tuple(objective)
-
         self.update_problem()
 
     def update_problem(self):
@@ -233,6 +228,28 @@ class GenericSchedulingImplProblem(
             "There are duplicates in resources list, "
             "potentially because calendar and non-renewable resources intersect."
         )
+
+    def is_resource_task_mode_consumption_dependent(
+        self, resource: CumulativeResource, task: Task, mode: int
+    ) -> bool:
+        # To be Overridden in child classes
+        if isinstance(self.resource_consumptions[task][mode][resource], int):
+            return False
+        if isinstance(self.resource_consumptions[task][mode][resource], dict):
+            return True
+        return None
+
+    def get_cumulative_resource_consumption_mapping(
+        self, resource: CumulativeResource, task: Task, mode: int
+    ) -> dict[frozenset[tuple[Task, int]], int]:
+        # To be Overridden in child classes
+        if self.is_resource_task_mode_consumption_dependent(resource, task, mode):
+            return self.resource_consumptions[task][mode][resource]
+        return {
+            frozenset([]): self.get_cumulative_resource_consumption(
+                resource, task, mode
+            )
+        }
 
     @property
     def skills_list(self) -> list[Skill]:
