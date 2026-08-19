@@ -40,7 +40,7 @@ class CumulativeResourceSchedulingCpSatSolver(
         if self.problem.is_cumulative_resource(resource):
             if (
                 self.avoid_interval_optional
-                or self.problem.has_any_consumption_dependent()
+                or self.problem.has_any_cumulative_consumption_dependent()
             ):
                 # no optional interval, use rather demand variables
                 return [
@@ -85,13 +85,11 @@ class CumulativeResourceSchedulingCpSatSolver(
         self.demands_resource_task = {}
         for task in self.problem.tasks_list:
             for resource in self.problem.cumulative_resources_list:
-                if self.problem.is_resource_task_consumption_dependent(
+                if self.problem.is_cumulative_resource_task_consumption_dependent(
                     resource=resource, task=task
                 ):
-                    possible_values = (
-                        self.problem.get_possible_resource_consumption_all_modes(
-                            task=task, resource=resource
-                        )
+                    possible_values = self.problem.get_possible_cumulative_resource_consumption_all_modes(
+                        task=task, resource=resource
                     )
                     self.demands_resource_task[resource, task] = (
                         self.cp_model.new_int_var_from_domain(

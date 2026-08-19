@@ -311,7 +311,7 @@ class GenericSchedulingImplProblem(
             "potentially because calendar and non-renewable resources intersect."
         )
 
-    def is_resource_task_mode_consumption_dependent(
+    def is_cumulative_resource_task_mode_consumption_dependent(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> bool:
         # To be Overridden in child classes
@@ -325,7 +325,9 @@ class GenericSchedulingImplProblem(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> dict[frozenset[tuple[Task, int]], int]:
         # To be Overridden in child classes
-        if self.is_resource_task_mode_consumption_dependent(resource, task, mode):
+        if self.is_cumulative_resource_task_mode_consumption_dependent(
+            resource, task, mode
+        ):
             return self.resource_consumptions[task][mode][resource]
         return {
             frozenset([]): self.get_cumulative_resource_consumption(

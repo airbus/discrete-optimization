@@ -18,15 +18,27 @@ from discrete_optimization.rcpsp.solvers.cpsat import (
     CpSatCumulativeResourceRcpspSolver,
     CpSatRcpspSolver,
 )
+from discrete_optimization.rcpsp.solvers.cpsat_auto import (
+    CpSatAutoCumulativeResourceRcpspSolver,
+    CpSatAutoRcpspSolver,
+)
 from discrete_optimization.rcpsp.utils import plot_ressource_view, plot_task_gantt
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def solve_makespan_with_cp_sat(problem: RcpspProblem):
-    solver = CpSatRcpspSolver(problem)
-    solver.init_model()
+def solve_makespan_with_cp_sat(problem: RcpspProblem, auto: bool = True):
+    if auto:
+        solver = CpSatAutoRcpspSolver(problem)
+        solver.init_model(
+            use_cpm_for_task_bounds=True,
+            avoid_interval_optional=False,
+            use_energy_constraints=True,
+        )
+    else:
+        solver = CpSatRcpspSolver(problem)
+        solver.init_model()
     parameters_cp = ParametersCp.default()
     parameters_cp.nb_process = 8
     result_storage = solver.solve(
@@ -45,8 +57,11 @@ def solve_makespan_with_cp_sat(problem: RcpspProblem):
     )
 
 
-def solve_resource_with_cp_sat(problem: RcpspProblem):
-    solver = CpSatCumulativeResourceRcpspSolver(problem)
+def solve_resource_with_cp_sat(problem: RcpspProblem, auto: bool = True):
+    if auto:
+        solver = CpSatAutoCumulativeResourceRcpspSolver(problem)
+    else:
+        solver = CpSatCumulativeResourceRcpspSolver(problem)
     solver.init_model(weight_on_used_resource=100, weight_on_makespan=1)
     parameters_cp = ParametersCp.default()
     parameters_cp.nb_process = 8
