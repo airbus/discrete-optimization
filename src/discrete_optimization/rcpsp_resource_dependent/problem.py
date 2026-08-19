@@ -95,6 +95,15 @@ class RcpspResourceDependentProblem(
     def non_skill_cumulative_resources_list(self) -> list[Skill]:
         return [r for r in self.resources if r not in self.non_renewable_resources]
 
+    def is_non_renewable_resource_task_mode_consumption_dependent(
+        self, resource: NonRenewableResource, task: Task, mode: int
+    ):
+        if isinstance(self.mode_details[task][mode].get(resource, 0), int):
+            return False
+        if isinstance(self.mode_details[task][mode].get(resource, 0), dict):
+            return True
+        return None
+
     def is_cumulative_resource_task_mode_consumption_dependent(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> bool:
@@ -115,6 +124,19 @@ class RcpspResourceDependentProblem(
             return self.mode_details[task][mode][resource]
         return {
             frozenset([]): self.get_cumulative_resource_consumption(
+                resource, task, mode
+            )
+        }
+
+    def get_non_renewable_resource_consumption_mapping(
+        self, resource: NonRenewableResource, task: Task, mode: int
+    ) -> dict[frozenset[tuple[Task, int]], int]:
+        if self.is_non_renewable_resource_task_mode_consumption_dependent(
+            resource, task, mode
+        ):
+            return self.mode_details[task][mode][resource]
+        return {
+            frozenset([]): self.get_non_renewable_resource_consumption(
                 resource, task, mode
             )
         }

@@ -29,8 +29,8 @@ class CumulativeResourceSchedulingCpSatSolver(
     """Base class for cpsat solvers dealing with scheduling problems handling cumulative resources."""
 
     problem: CumulativeResourceProblem[Task, CumulativeResource, OtherCalendarResource]
-    cumulative_demand_resource_task_initialized: bool = False
-    demands_resource_task: dict[tuple[CumulativeResource, Task], LinearExprT]
+    demand_cumulative_resource_task_initialized: bool = False
+    demands_cumulative_resource_vars: dict[tuple[CumulativeResource, Task], LinearExprT]
     avoid_interval_optional: bool = False
     """Whether using task intervals + demand vars instead of optional intervals depending on is_present[mode]."""
 
@@ -76,13 +76,15 @@ class CumulativeResourceSchedulingCpSatSolver(
                 f"{resource} is not a cumulative resource whose consumption depends only on task mode."
             )
 
-    def initialize_resource_demand_vars_and_expr(self):
+    def initialize_cumulative_resource_demand_vars(
+        self, use_enforce_if_instead_of_sum: bool = True
+    ):
         """
         Build either expression or variable array for resource demand.
         For task for which resource demand only depends on its own mode, this is a simple expression,
         While for dependent consumption based of other task mode, additional variable is added.
         """
-        self.demands_resource_task = {}
+        self.demands_cumulative_resource_vars = {}
         for task in self.problem.tasks_list:
             for resource in self.problem.cumulative_resources_list:
                 if self.problem.is_cumulative_resource_task_consumption_dependent(
@@ -91,7 +93,7 @@ class CumulativeResourceSchedulingCpSatSolver(
                     possible_values = self.problem.get_possible_cumulative_resource_consumption_all_modes(
                         task=task, resource=resource
                     )
-                    self.demands_resource_task[resource, task] = (
+                    self.demands_cumulative_resource_vars[task, resource] = (
                         self.cp_model.new_int_var_from_domain(
                             domain=Domain.FromValues(list(possible_values)),
                             name=f"conso_{task}_{resource}",
@@ -111,7 +113,10 @@ class CumulativeResourceSchedulingCpSatSolver(
                             ]
                             (
                                 self.cp_model.add(
-                                    self.demands_resource_task[resource, task] == value
+                                    self.demands_cumulative_resource_vars[
+                                        task, resource
+                                    ]
+                                    == value
                                 ).only_enforce_if(
                                     *(
                                         [
@@ -124,18 +129,43 @@ class CumulativeResourceSchedulingCpSatSolver(
                                 )
                             )
                 else:
-                    self.demands_resource_task[resource, task] = sum(
-                        self.get_task_mode_is_present_variable(task=task, mode=mode)
-                        * conso
-                        for mode in self.problem.get_task_modes(task)
-                        if (
-                            conso := self.problem.get_cumulative_resource_consumption(
-                                resource=resource, task=task, mode=mode
+                    if not use_enforce_if_instead_of_sum:
+                        # Just an expression
+                        self.demands_cumulative_resource_vars[task, resource] = sum(
+                            self.get_task_mode_is_present_variable(task=task, mode=mode)
+                            * conso
+                            for mode in self.problem.get_task_modes(task)
+                            if (
+                                conso
+                                := self.problem.get_cumulative_resource_consumption(
+                                    resource=resource, task=task, mode=mode
+                                )
+                            )
+                            > 0
+                        )
+                    else:
+                        possible_values = self.problem.get_possible_cumulative_resource_consumption_all_modes(
+                            resource=resource, task=task
+                        )
+                        self.demands_cumulative_resource_vars[task, resource] = (
+                            self.cp_model.new_int_var_from_domain(
+                                domain=Domain.FromValues(list(possible_values)),
+                                name=f"conso_{task}_{resource}",
                             )
                         )
-                        > 0
-                    )
-        self.demand_resource_task_initialized = True
+                        for mode in self.problem.get_task_modes(task=task):
+                            value = self.problem.get_cumulative_resource_consumption(
+                                resource=resource, task=task, mode=mode
+                            )
+                            self.cp_model.add(
+                                self.demands_cumulative_resource_vars[task, resource]
+                                == value
+                            ).only_enforce_if(
+                                self.get_task_mode_is_present_variable(
+                                    task=task, mode=mode
+                                )
+                            )
+        self.demand_cumulative_resource_task_initialized = True
 
     def get_cumulative_resource_demand_variable(
         self, task: Task, resource: CumulativeResource
@@ -155,6 +185,6 @@ class CumulativeResourceSchedulingCpSatSolver(
         Returns:
 
         """
-        if not self.cumulative_demand_resource_task_initialized:
-            self.initialize_resource_demand_vars_and_expr()
-        return self.demands_resource_task[resource, task]
+        if not self.demand_cumulative_resource_task_initialized:
+            self.initialize_cumulative_resource_demand_vars()
+        return self.demands_cumulative_resource_vars[task, resource]
