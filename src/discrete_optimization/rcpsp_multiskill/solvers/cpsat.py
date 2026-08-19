@@ -215,6 +215,7 @@ class CpSatMultiskillRcpspSolver(
         for task in self.problem.tasks_list:
             modes = list(self.problem.mode_details[task])
             if len(modes) == 1:
+                is_present_var[task] = {modes[0]: 1}
                 continue
             is_present_var[task] = {}
             opt_interval_var[task] = {}
