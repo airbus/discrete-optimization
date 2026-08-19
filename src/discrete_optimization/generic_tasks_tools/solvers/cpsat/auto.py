@@ -378,6 +378,8 @@ class GenericSchedulingAutoCpSatSolver(
         self.all_used_variables = {}
         self.resource_level_variables_created = False
         self.resource_level_variables = {}
+        self.demand_resource_task_initialized = False
+        self._demands_resource_task = {}
 
     def _create_variables(self):
         self._create_start_or_end_variables()
@@ -591,6 +593,7 @@ class GenericSchedulingAutoCpSatSolver(
                         },
                         task=task,
                     )
+
 
     def _create_var_per_mode(
         self,
@@ -1117,8 +1120,11 @@ class GenericSchedulingAutoCpSatSolver(
     def get_cumulative_resource_demand_variable(
         self, task: Task, resource: CumulativeResource
     ) -> LinearExprT:
+        # TODO : FIX THIS BEHAVIOUR WHEN RESOURCE DEPENDENT.
         if self.avoid_interval_optional_for_cumulative_resources:
             return self.demand_variables[task][resource]
+        # if self.avoid_interval_optional:
+        #    return self.demand_variables[task][resource]
         return super().get_cumulative_resource_demand_variable(
             task=task, resource=resource
         )
