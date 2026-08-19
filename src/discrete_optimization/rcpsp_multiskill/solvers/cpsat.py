@@ -138,7 +138,6 @@ class CpSatMultiskillRcpspSolver(
         # skill
         self.use_exact_skill = kwargs.get("exact_skill", False)
         self.use_slack_for_skill = kwargs.get("slack_skill", False)
-
         super().init_model(**kwargs)
 
     def create_workload_variables(self):
