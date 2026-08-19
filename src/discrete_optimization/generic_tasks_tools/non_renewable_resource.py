@@ -6,6 +6,7 @@ from __future__ import annotations
 import logging
 from abc import abstractmethod
 from collections.abc import Hashable, Iterable
+from functools import reduce
 from typing import Generic, Optional, TypeVar
 
 from discrete_optimization.generic_tasks_tools.base import Task
@@ -68,11 +69,101 @@ class NonRenewableResourceProblem(
         """
         ...
 
+    def get_non_renewable_resource_consumption_mapping(
+        self, resource: NonRenewableResource, task: Task, mode: int
+    ) -> dict[frozenset[tuple[Task, int]], int]:
+        # To be Overridden in child classes
+
+        return {}
+
+    def get_possible_non_renewable_resource_consumption(
+        self, resource: NonRenewableResource, task: Task, mode: int
+    ) -> set[int]:
+        if self.is_non_renewable_resource_task_mode_consumption_dependent(
+            resource=resource, task=task, mode=mode
+        ):
+            return set(
+                self.get_non_renewable_resource_consumption_mapping(
+                    resource=resource, task=task, mode=mode
+                ).values()
+            )
+        return {
+            self.get_non_renewable_resource_consumption(
+                resource=resource, task=task, mode=mode
+            )
+        }
+
+    def get_possible_non_renewable_resource_consumption_all_modes(
+        self, resource: NonRenewableResource, task: Task
+    ) -> set[int]:
+        return reduce(
+            lambda prev, y: prev.union(
+                self.get_possible_non_renewable_resource_consumption(
+                    resource=resource, task=task, mode=y
+                )
+            ),
+            list(self.get_task_modes(task)),
+            set(),
+        )
+
+    def is_non_renewable_resource_task_mode_consumption_dependent(
+        self, resource: NonRenewableResource, task: Task, mode: int
+    ) -> bool:
+        # To be Overridden in child classes
+        return False
+
+    def is_non_renewable_resource_task_consumption_dependent(
+        self, resource: NonRenewableResource, task: Task
+    ):
+        return any(
+            self.is_non_renewable_resource_task_mode_consumption_dependent(
+                resource=resource, task=task, mode=mode
+            )
+            for mode in self.get_task_modes(task)
+        )
+
+    def is_task_non_renewable_consumption_dependent(self, task: Task):
+        # To be Overridden in child classes
+        return any(
+            self.is_non_renewable_resource_task_consumption_dependent(
+                resource=resource, task=task
+            )
+            for resource in self.non_renewable_resources_list
+        )
+
+    def has_any_non_renewable_consumption_dependent(self):
+        return any(
+            self.is_task_non_renewable_consumption_dependent(task)
+            for task in self.tasks_list
+        )
+
 
 class NonRenewableResourceSolution(
     MultimodeSolution[Task], Generic[Task, NonRenewableResource]
 ):
     problem: NonRenewableResourceProblem[Task, NonRenewableResource]
+
+    def get_non_renewable_resource_consumption_from_mapping(
+        self, resource: NonRenewableResource, task: Task
+    ) -> int:
+        mode = self.get_mode(task)
+        mapping = self.problem.get_non_renewable_resource_consumption_mapping(
+            resource=resource, task=task, mode=mode
+        )
+        set_of_tasks = set([frozenset([t for t, m in k]) for k in mapping])
+        value = next(
+            (
+                mapping[key_mapping]
+                for set_task in set_of_tasks
+                if (key_mapping := frozenset([(t, self.get_mode(t)) for t in set_task]))
+                in mapping
+            ),
+            None,
+        )
+        if value is None:
+            logging.info(f"No found mapping")
+            return None
+        return value
 
     def get_non_renewable_resource_consumption(
         self, resource: NonRenewableResource, task: Task
@@ -86,9 +177,16 @@ class NonRenewableResourceSolution(
         Returns:
 
         """
-        return self.problem.get_non_renewable_resource_consumption(
+        if not self.problem.is_non_renewable_resource_task_mode_consumption_dependent(
             resource=resource, task=task, mode=self.get_mode(task)
-        )
+        ):
+            return self.problem.get_non_renewable_resource_consumption(
+                resource=resource, task=task, mode=self.get_mode(task)
+            )
+        else:
+            return self.get_non_renewable_resource_consumption_from_mapping(
+                resource=resource, task=task
+            )
 
     def check_non_renewable_resource_capacity_constraint(
         self, resource: NonRenewableResource

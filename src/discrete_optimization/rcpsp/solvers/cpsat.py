@@ -414,51 +414,22 @@ class CpSatResourceRcpspSolver(CpSatRcpspSolver):
         weight_on_used_resource = kwargs.get("weight_on_used_resource", 10000)
         super().init_model(**kwargs)
         model = self.cp_model
-        (
-            starts_var,
-            ends_var,
-            is_present_var,
-            interval_var,
-            interval_per_tasks,
-        ) = self.init_temporal_variable(model=model)
         resources = self.problem.resources_list
         is_used_resource = {res: model.NewBoolVar(f"used_{res}") for res in resources}
-        self.variables = {
-            "start": starts_var,
-            "end": ends_var,
-            "is_present": is_present_var,
-            "is_used_resource": is_used_resource,
-            "interval_var": interval_var,
-        }
-        self.add_one_mode_selected_per_task(
-            model=model,
-            is_present_var=is_present_var,
-            interval_per_tasks=interval_per_tasks,
-        )
-        self.create_precedence_constraints()
+        self.variables["is_used_resource"] = is_used_resource
         for resource in resources:
             self.create_cumulative_constraint_and_used_resource(
                 model=model,
                 resource=resource,
                 is_used_resource=is_used_resource,
             )
-        if include_special_constraints:
-            if self.problem.special_constraints.pair_mode_constraint is not None:
-                self.create_mode_pair_constraint(
-                    model=model,
-                    interval_per_tasks=interval_per_tasks,
-                    is_present_var=is_present_var,
-                    pair_mode_constraint=self.problem.special_constraints.pair_mode_constraint,
-                )
-            self.add_special_temporal_constraints(
-                model=model,
-                starts_var=starts_var,
-                ends_var=ends_var,
-            )
         model.Minimize(
             weight_on_used_resource
             * sum([is_used_resource[x] for x in is_used_resource])
-            + weight_on_makespan * starts_var[self.problem.sink_task]
+            + weight_on_makespan
+            * self.get_task_start_or_end_variable(
+                self.problem.sink_task, StartOrEnd.END
+            )
         )
 
     def _internal_used_resource(self) -> LinearExpr:
@@ -594,9 +565,6 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
                 )
 
     def init_model(self, **kwargs):
-        include_special_constraints = kwargs.get(
-            "include_special_constraints", self.problem.includes_special_constraint()
-        )
         weight_on_makespan = kwargs.get("weight_on_makespan", 1)
         weight_on_used_resource = kwargs.get("weight_on_used_resource", 10000)
         use_overlap_for_disjunctive_resource = kwargs.get(
@@ -604,55 +572,25 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
         )
         super().init_model(**kwargs)
         model = self.cp_model
-        (
-            starts_var,
-            ends_var,
-            is_present_var,
-            interval_var,
-            interval_per_tasks,
-        ) = self.init_temporal_variable(model=model)
         resource_capacity_var = self.create_resource_capacity_var(model=model)
-        self.variables = {
-            "start": starts_var,
-            "end": ends_var,
-            "is_present": is_present_var,
-            "resource_capacity": resource_capacity_var,
-            "interval_var": interval_var,
-        }
-        self.create_precedence_constraints()
-        self.add_one_mode_selected_per_task(
-            model=model,
-            is_present_var=is_present_var,
-            interval_per_tasks=interval_per_tasks,
-        )
+        self.variables["resource_capacity"] = resource_capacity_var
         resources = self.problem.resources_list
         for resource in resources:
             self.create_cumulative_constraint_and_resource_capa(
                 model=model,
                 resource=resource,
                 resource_capacity_var=resource_capacity_var,
-                interval_var=interval_var,
-                is_present_var=is_present_var,
+                interval_var=self.variables["interval_var"],
+                is_present_var=self.variables["is_present"],
                 use_overlap_for_disjunctive_resource=use_overlap_for_disjunctive_resource,
             )
-        if include_special_constraints:
-            if self.problem.special_constraints.pair_mode_constraint is not None:
-                self.create_mode_pair_constraint(
-                    model=model,
-                    interval_per_tasks=interval_per_tasks,
-                    is_present_var=is_present_var,
-                    pair_mode_constraint=self.problem.special_constraints.pair_mode_constraint,
-                )
-            self.add_special_temporal_constraints(
-                model=model,
-                starts_var=starts_var,
-                ends_var=ends_var,
-            )
-
         model.Minimize(
             weight_on_used_resource
             * sum([resource_capacity_var[x] for x in resource_capacity_var])
-            + weight_on_makespan * starts_var[self.problem.sink_task]
+            + weight_on_makespan
+            * self.get_task_start_or_end_variable(
+                self.problem.sink_task, StartOrEnd.END
+            )
         )
 
     def _internal_used_resource(self) -> LinearExpr:

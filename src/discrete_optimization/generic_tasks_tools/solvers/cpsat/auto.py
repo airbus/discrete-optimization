@@ -164,6 +164,8 @@ class GenericSchedulingAutoCpSatSolver(
     """Variables tracking level (capacity needed) of each (unary, cumulative, or non-renewable) resource."""
     resource_level_variables_created = False
     """Flag telling whether 'resource_level_variables' have been created"""
+    use_enforce_if_instead_of_sum = True
+    """For demand variable, use enforce if instead of sum of mode boolean*conso"""
 
     @property
     def needs_duration_variables(self) -> bool:
@@ -280,6 +282,7 @@ class GenericSchedulingAutoCpSatSolver(
         use_energy_constraints: Optional[bool] = None,
         keep_only_most_nested_energy_constraints: Optional[bool] = None,
         add_redundant_skill_cumulative_constraints: Optional[bool] = None,
+        use_enforce_if_instead_of_sum: Optional[bool] = None,
         **kwargs: Any,
     ) -> None:
         """Init cp model and reset stored variables if any."""
@@ -302,7 +305,8 @@ class GenericSchedulingAutoCpSatSolver(
             self.avoid_interval_optional = avoid_interval_optional
         if duplicate_start_var_per_mode is not None:
             self.duplicate_start_var_per_mode = duplicate_start_var_per_mode
-
+        if use_enforce_if_instead_of_sum is not None:
+            self.use_enforce_if_instead_of_sum = use_enforce_if_instead_of_sum
         # pre-compute tasks start/end bounds ?
         if tasks_bounds is None:
             self.compute_task_bounds()
@@ -334,6 +338,12 @@ class GenericSchedulingAutoCpSatSolver(
         self.all_used_variables = {}
         self.resource_level_variables_created = False
         self.resource_level_variables = {}
+
+        # In cumulative_resource, non_renewable_resource
+        self.demand_cumulative_resource_task_initialized = False
+        self.demands_cumulative_resource_vars = {}
+        self.demands_non_renewable_resource_initialized = False
+        self.demands_non_renewable_resource_vars = {}
 
     def _create_variables(self):
         self._create_start_or_end_variables()
@@ -543,26 +553,20 @@ class GenericSchedulingAutoCpSatSolver(
                     )
                 )
             for resource in self.problem.cumulative_resources_list:
-                self.demand_variables[task][resource] = self._create_var_per_mode(
-                    name=f"demand_{task}_{resource}",
-                    mode2value={
-                        mode: self.problem.get_cumulative_resource_consumption(
-                            resource=resource, task=task, mode=mode
-                        )
-                        for mode in self.problem.get_task_modes(task=task)
-                    },
-                    task=task,
+                if not self.demand_cumulative_resource_task_initialized:
+                    self.initialize_cumulative_resource_demand_vars(
+                        use_enforce_if_instead_of_sum=self.use_enforce_if_instead_of_sum
+                    )
+                self.demand_variables[task][resource] = (
+                    self.demands_cumulative_resource_vars[task, resource]
                 )
             for resource in self.problem.non_renewable_resources_list:
-                self.demand_variables[task][resource] = self._create_var_per_mode(
-                    name=f"demand_{task}_{resource}",
-                    mode2value={
-                        mode: self.problem.get_non_renewable_resource_consumption(
-                            resource=resource, task=task, mode=mode
-                        )
-                        for mode in self.problem.get_task_modes(task=task)
-                    },
-                    task=task,
+                if not self.demands_non_renewable_resource_initialized:
+                    self.initialize_non_renewable_resource_demand_vars(
+                        use_enforce_if_instead_of_sum=self.use_enforce_if_instead_of_sum
+                    )
+                self.demand_variables[task][resource] = (
+                    self.demands_non_renewable_resource_vars[task, resource]
                 )
 
     def _create_var_per_mode(
@@ -979,13 +983,18 @@ class GenericSchedulingAutoCpSatSolver(
         if self.needs_task_interval:
             return self.task_interval_variables[task]
         else:
-            return super().get_task_interval(task=task)
+            return self.cp_model.new_interval_var(
+                start=self.start_or_end_variables[task, StartOrEnd.START],
+                size=self.duration_variables[task],
+                end=self.start_or_end_variables[task, StartOrEnd.END],
+                name=f"interval_{task}",
+            )
 
     def get_cumulative_resource_demand_variable(
         self, task: Task, resource: CumulativeResource
     ) -> LinearExprT:
-        if self.avoid_interval_optional:
-            return self.demand_variables[task][resource]
+        # if self.avoid_interval_optional:
+        #    return self.demand_variables[task][resource]
         return super().get_cumulative_resource_demand_variable(
             task=task, resource=resource
         )
