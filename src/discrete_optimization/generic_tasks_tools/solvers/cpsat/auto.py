@@ -922,6 +922,7 @@ class GenericSchedulingAutoCpSatSolver(
             return self._get_total_cost_variable()
 
     def _add_constraints(self) -> None:
+        self.create_resource_blocking_constraints()
         # time lag
         self.create_timelag_constraints()
         # non-renewable resources capacity
@@ -934,8 +935,12 @@ class GenericSchedulingAutoCpSatSolver(
             ) or self.include_constraint_on_cumulative_resource(resource=resource):
                 self.create_calendar_resources_constraint(resource=resource)
         # precedence: already included in time lag constraints
-        # at most or exactly one resource allocated per task?
-        self.add_unary_resources_per_task_constraints()
+
+        # Allocation constraints:
+        # 1) at most or exactly one resource allocated per task?
+        # 2) Same allocation constraints
+        self.add_allocation_constraints()
+
         # skill value per task constraints
         self.create_fine_skill_constraints()
         self.create_coarse_skill_constraints()  # redundant
@@ -947,6 +952,8 @@ class GenericSchedulingAutoCpSatSolver(
         self.create_no_overlap_constraints()
         # forbidden intervals
         self.create_forbidden_intervals_constraints()
+        # mode constraint
+        self.add_mode_constraints()
 
     def _set_objective(self) -> None:
         if self.objective == Objective.CUSTOM:
@@ -965,12 +972,43 @@ class GenericSchedulingAutoCpSatSolver(
                 objective_var = self.get_nb_tasks_done_variable()
             case Objective.NB_UNARY_RESOURCES_USED:
                 objective_var = self.get_nb_unary_resources_used_variable()
+                if self.exactly_one_unary_resource_per_task:
+                    # TODO = make this an option
+                    capa_used = self.cp_model.new_int_var(
+                        lb=0,
+                        ub=len(self.problem.unary_resources_list),
+                        name=f"unary_res",
+                    )
+                    self.cp_model.add_cumulative(
+                        [self.get_task_interval(t) for t in self.problem.tasks_list],
+                        demands=[1 for t in self.problem.tasks_list],
+                        capacity=capa_used,
+                    )
+                    self.cp_model.add(capa_used <= objective_var)
             case Objective.NB_RESOURCES_USED:
                 objective_var = self.get_nb_resources_used_variable()
             case Objective.RESOURCES_LEVELS:
                 objective_var = self.get_aggregated_resources_levels_variable()
             case Objective.COST:
                 objective_var = self.get_cost_variable()
+            case Objective.DISPERSION_WORKLOAD:
+                from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumul_objective import (
+                    CumulativeObjective,
+                    ModelisationDispersion,
+                )
+
+                c = CumulativeObjective(problem=self.problem, solver=self)
+                objective_var = c.create_dispersion_objective(
+                    val_per_task_per_mode={
+                        t: {
+                            m: self.problem.get_task_mode_duration(task=t, mode=m)
+                            for m in self.problem.get_task_modes(t)
+                        }
+                        for t in self.problem.tasks_list
+                    },
+                    name_value="duration",
+                    modelisation_dispersion=ModelisationDispersion.EXACT,
+                )
             case _:
                 raise NotImplementedError()
         return objective_var
@@ -979,7 +1017,12 @@ class GenericSchedulingAutoCpSatSolver(
         if self.needs_task_interval:
             return self.task_interval_variables[task]
         else:
-            return super().get_task_interval(task=task)
+            return self.cp_model.new_interval_var(
+                start=self.start_or_end_variables[task, StartOrEnd.START],
+                size=self.duration_variables[task],
+                end=self.start_or_end_variables[task, StartOrEnd.END],
+                name=f"interval_{task}",
+            )
 
     def get_cumulative_resource_demand_variable(
         self, task: Task, resource: CumulativeResource

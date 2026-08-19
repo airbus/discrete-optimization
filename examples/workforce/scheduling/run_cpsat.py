@@ -45,7 +45,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def run_cpsat():
-    instance = [p for p in get_data_available() if "instance_196.json" in p][0]
+    instance = [p for p in get_data_available() if "instance_191.json" in p][0]
     problem = parse_json_to_problem(instance)
     print(problem.number_tasks)
     solver = CPSatAllocSchedulingSolver(problem)
@@ -263,4 +263,4 @@ def run_cpsat_lexico_delta_objective():
 
 
 if __name__ == "__main__":
-    run_cpsat_lexico_delta_objective()
+    run_cpsat()

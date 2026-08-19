@@ -29,6 +29,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.non_renewable_resou
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduling import (
     PrecedenceSchedulingCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking import (
+    ResourceBlockingCpSatSolver,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.skill import (
     SkillSchedulingCpSatSolver,
 )
@@ -38,6 +41,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.timelag import (
 
 
 class GenericSchedulingCpSatSolver(
+    ResourceBlockingCpSatSolver[Task, NonSkillCumulativeResource, UnaryResource],
     SkillSchedulingCpSatSolver[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource
     ],
@@ -56,6 +60,7 @@ class GenericSchedulingCpSatSolver(
     - renewable resource with calendar (unary resource to allocate, or cumulative resource)
     - non-renewable resource capacity
     - skills brought to tasks by allocated unary resources
+    - resource blocking (gaps and spans)
 
     For a more all-in-one version actually creating variables, constraints and objectives,
     see `GenericSchedulingAutoCpSatSolver`.
@@ -99,6 +104,8 @@ class GenericSchedulingCpSatSolver(
                     )
                 ]
         else:
+            # For cumulative resources, delegate to parent
+            # ResourceBlockingCpSatSolver will add blocking intervals
             return super().get_resource_consumption_intervals(resource=resource)
 
     @abstractmethod

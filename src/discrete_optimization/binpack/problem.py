@@ -81,6 +81,9 @@ class BinInstance:
     compatible_items: set[int] | None = field(default=None)
 
 
+from discrete_optimization.generic_tasks_tools.scheduling import SchedulingProblem
+
+
 class BinPackProblemBinType(AllocationProblem[Item, BinPack], SchedulingProblem[Item]):
     def __init__(
         self,

@@ -30,6 +30,10 @@ from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
     PrecedenceSchedulingProblem,
     PrecedenceSchedulingSolution,
 )
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    ResourceBlockingProblem,
+    ResourceBlockingSolution,
+)
 from discrete_optimization.generic_tasks_tools.skill import (
     NonSkillCumulativeResource,
     Skill,
@@ -53,6 +57,7 @@ AnyResource = NonRenewableResource | Resource
 
 
 class GenericSchedulingProblem(
+    ResourceBlockingProblem[Task, CumulativeResource, UnaryResource],
     SkillProblem[Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource],
     NonRenewableResourceProblem[Task, NonRenewableResource],
     PrecedenceSchedulingProblem[Task],
@@ -74,6 +79,7 @@ class GenericSchedulingProblem(
     - skill: some cumulative resource are skills that are brought to tasks by allocated unary resources
     - non-renewable: the tasks consume non-renewable resources according to the chosen mode
     - precedence: precedence constraints between tasks
+    - resource blocking: resources blocked during non-execution periods (gaps, spans)
     - cost: the choice of a mode or of an allocation has a given cost
 
     Even though this class is generic but encompasses also more specific cases:
@@ -84,6 +90,7 @@ class GenericSchedulingProblem(
     - no calendar: resource capacity can be given as a constant on [0, horizon)
     - no non-renewable ressources: if non_renewable_resources_list empty
     - no precedence constraints: precedence constraints empty
+    - no resource blocking: no blocking constraints defined
     - no cost: cost = 0
 
     We suppose that all renewable resources are
@@ -527,6 +534,8 @@ class GenericSchedulingProblem(
                 )
             case Objective.COST:
                 return variable.compute_cost()
+            case Objective.DISPERSION_WORKLOAD:
+                return variable.compute_workload_dispersion()
             case _:
                 raise NotImplementedError()
 
@@ -629,6 +638,8 @@ class GenericSchedulingProblem(
         time_windows: bool = True,
         no_overlap: bool = True,
         forbidden_intervals: bool = True,
+        resource_blocking: bool = True,
+        mode_constraints: bool = True,
     ) -> bool:
         """Partial checks on solution.
 
@@ -646,6 +657,7 @@ class GenericSchedulingProblem(
             time_windows:
             no_overlap:
             forbidden_intervals:
+            resource_blocking:
 
         Returns:
 
@@ -684,10 +696,14 @@ class GenericSchedulingProblem(
             and (not no_overlap or variable.check_no_overlap())
             # forbidden intervals
             and (not forbidden_intervals or variable.check_forbidden_intervals())
+            # resource blocking
+            and (not resource_blocking or variable.check_blocking_constraints())
+            and (not mode_constraints or variable.check_mode_constraint())
         )
 
 
 class GenericSchedulingSolution(
+    ResourceBlockingSolution[Task, CumulativeResource, UnaryResource],
     SkillSolution[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource
     ],
@@ -732,3 +748,15 @@ class GenericSchedulingSolution(
             )
             for task in self.problem.tasks_list
         )
+
+    def compute_workload_dispersion(self) -> int:
+        workload = [0 for i in range(len(self.problem.unary_resources_list))]
+        for task in self.problem.tasks_list:
+            urs = self.get_task_allocation(task)
+            duration = self.get_duration(task)
+            for ur in urs:
+                workload[self.problem.get_index_from_unary_resource(ur)] += duration
+        nz = [w for w in workload if w > 0]
+        if nz:
+            return max(nz) - min(nz)
+        return 0

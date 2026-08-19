@@ -9,6 +9,7 @@ from ortools.sat.python.cp_model import LinearExprT
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.multimode import (
+    ModeConstraintType,
     MultimodeCpSolver,
     SinglemodeProblem,
 )
@@ -43,6 +44,24 @@ class MultimodeCpSatSolver(OrtoolsCpSatSolver, MultimodeCpSolver[Task]):
             else:
                 constraints.append(self.cp_model.add(var == False))
         return constraints
+
+    def add_mode_constraints(self):
+        for i, constraint in enumerate(self.problem.get_mode_constraints()):
+            mode_constraint, list_task_mode = constraint
+            vars = [
+                self.get_task_mode_is_present_variable(task=t, mode=m)
+                for t, m in list_task_mode
+            ]
+            if mode_constraint == ModeConstraintType.SORTED_IMPLICATION:
+                # All true if vars[0] is true.
+                self.cp_model.AddBoolAnd(vars).only_enforce_if(vars[0])
+                self.cp_model.add(sum(vars) == len(vars)).only_enforce_if(vars[0])
+                for i in range(1, len(vars)):
+                    self.cp_model.add_implication(vars[i - 1], vars[i])
+            if mode_constraint == ModeConstraintType.UNORDERED:
+                or_ = self.cp_model.NewBoolVar(f"constraint_mode_active_{i}")
+                self.cp_model.add(sum(vars) == len(vars)).only_enforce_if(or_)
+                self.cp_model.add(sum(vars) == 0).only_enforce_if(or_.Not())
 
 
 class SinglemodeCpSatSolver(MultimodeCpSatSolver[Task]):

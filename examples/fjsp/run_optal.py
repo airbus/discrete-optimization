@@ -11,12 +11,12 @@ logging.basicConfig(level=logging.INFO)
 
 
 def run_optal():
-    file = get_data_available()[0]
+    file = get_data_available()[16]
     problem = parse_file(file)
     p = ParametersCp.default_cpsat()
     solver = OptalFJspSolver(problem=problem)
     solver.init_model()
-    res = solver.solve(parameters_cp=p, time_limit=5)
+    res = solver.solve(parameters_cp=p, time_limit=100)
     sol = res.get_best_solution()
     print(solver.status_solver)
     print(problem.satisfy(sol), problem.evaluate(sol))

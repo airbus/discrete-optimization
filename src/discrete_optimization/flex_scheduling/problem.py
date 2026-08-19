@@ -14,6 +14,12 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
     convert_calendar_to_availability_intervals,
 )
+from discrete_optimization.generic_tasks_tools.entities import (
+    GroupEntity,
+    SchedulingEntity,
+    TaskEntity,
+    TaskModeEntity,
+)
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
@@ -22,6 +28,11 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
 from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolution
 from discrete_optimization.generic_tasks_tools.no_overlap import (
     WithoutNoOverlapProblem,
+)
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    BlockingConstraintMetadata,
+    FlexibleGapBlockingConstraint,
+    SpanBlockingConstraint,
 )
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
 from discrete_optimization.generic_tasks_tools.skill import (
@@ -338,6 +349,155 @@ class FlexProblem(
     ],
     WithoutAllocationProblem[Task],
 ):
+    def get_flexible_gap_blocking_constraints(
+        self,
+    ) -> list[FlexibleGapBlockingConstraint]:
+        """Convert flex_scheduling constraints to flexible gap blocking constraints.
+
+        This method converts the following constraint types:
+        1. successor_with_res_release_at_start_of_successor: (task1, task2, {res: amount})
+           -> Block resource from end of task1 to start of task2
+        2. successor_with_res_release_at_start_of_successor_mode: ((task1, mode), task2, {res: amount})
+           -> Block resource from end of task1 (in mode) to start of task2
+        3. successor_generic_with_res_release_at_start_of_successor_generic:
+           (TaskGroupAbstraction, TaskGroupAbstraction, {res: amount})
+           -> Block resource from end of entity1 to start of entity2
+
+        Returns:
+            List of flexible gap blocking constraints
+        """
+        constraints = []
+
+        # Type 1: Simple task-to-task constraints
+        if self.constraints.successor_with_res_release_at_start_of_successor:
+            for (
+                task1,
+                task2,
+                resources,
+            ) in self.constraints.successor_with_res_release_at_start_of_successor:
+                constraint = FlexibleGapBlockingConstraint(
+                    (
+                        TaskEntity(task1),
+                        StartOrEnd.END,
+                        TaskEntity(task2),
+                        StartOrEnd.START,
+                        resources,
+                        BlockingConstraintMetadata(
+                            description=f"Resource release from {task1} to {task2}"
+                        ),
+                    )
+                )
+                constraints.append(constraint)
+
+        # Type 2: Mode-dependent constraints
+        if self.constraints.successor_with_res_release_at_start_of_successor_mode:
+            for (
+                (task1, mode1),
+                task2,
+                resources,
+            ) in self.constraints.successor_with_res_release_at_start_of_successor_mode:
+                constraint = FlexibleGapBlockingConstraint(
+                    (
+                        TaskModeEntity(task1, mode1),
+                        StartOrEnd.END,
+                        TaskEntity(task2),
+                        StartOrEnd.START,
+                        resources,
+                        BlockingConstraintMetadata(
+                            description=f"Resource release from {task1} (mode {mode1}) to {task2}"
+                        ),
+                    )
+                )
+                constraints.append(constraint)
+
+        # Type 3: Generic entity-to-entity constraints
+        if self.constraints.successor_generic_with_res_release_at_start_of_successor_generic:
+            for (
+                entity1_abstraction,
+                entity2_abstraction,
+                resources,
+            ) in self.constraints.successor_generic_with_res_release_at_start_of_successor_generic:
+                # Convert TaskGroupAbstraction to SchedulingEntity
+                entity1 = self._convert_task_group_abstraction_to_entity(
+                    entity1_abstraction
+                )
+                entity2 = self._convert_task_group_abstraction_to_entity(
+                    entity2_abstraction
+                )
+
+                constraint = FlexibleGapBlockingConstraint(
+                    (
+                        entity1,
+                        StartOrEnd.END,
+                        entity2,
+                        StartOrEnd.START,
+                        resources,
+                        BlockingConstraintMetadata(
+                            description=f"Generic resource release constraint"
+                        ),
+                    )
+                )
+                constraints.append(constraint)
+
+        return constraints
+
+    def get_span_blocking_constraints(
+        self,
+    ) -> list[SpanBlockingConstraint]:
+        """Convert task groups with non-released resources to span blocking constraints.
+
+        This method converts TasksGroups with:
+        - type_of_group == GROUP_TASK_NON_RELEASED_RESOURCE
+        - res_not_released != None
+
+        The resource is blocked during the entire span of the group (from minimum
+        start of tasks in group to maximum end of tasks in group).
+
+        Returns:
+            List of span blocking constraints
+        """
+        constraints = []
+
+        for group in self.tasks_group:
+            # Only process groups that have non-released resources
+            if (
+                group.type_of_group == GroupType.GROUP_TASK_NON_RELEASED_RESOURCE
+                and group.res_not_released is not None
+            ):
+                constraint = SpanBlockingConstraint(
+                    (
+                        GroupEntity(frozenset(group.tasks_group)),
+                        group.res_not_released,
+                        BlockingConstraintMetadata(
+                            description=f"Group {group.name or group.id} span blocking"
+                        ),
+                    )
+                )
+                constraints.append(constraint)
+
+        return constraints
+
+    def _convert_task_group_abstraction_to_entity(
+        self, abstraction: TaskGroupAbstraction
+    ) -> SchedulingEntity:
+        """Convert a TaskGroupAbstraction to a SchedulingEntity.
+
+        Args:
+            abstraction: The abstraction to convert
+
+        Returns:
+            TaskEntity if is_a_task=True, GroupEntity otherwise
+        """
+        if abstraction.is_a_task:
+            return TaskEntity(abstraction.task_id)
+        else:
+            # Find the group by ID
+            group_idx = self.group_id_to_index[abstraction.group_id]
+            group = self.tasks_group[group_idx]
+            return GroupEntity(
+                tasks=frozenset(group.tasks_group), group_id=abstraction.group_id
+            )
+
     @property
     def non_skill_cumulative_resources_list(self) -> list[Skill]:
         return [resource.id for resource in self.resources if resource.renewable]

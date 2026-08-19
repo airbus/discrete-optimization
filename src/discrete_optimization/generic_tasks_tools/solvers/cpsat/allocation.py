@@ -4,6 +4,7 @@
 import logging
 from abc import abstractmethod
 from enum import Enum
+from functools import reduce
 from typing import Any, Iterable, Optional
 
 from ortools.sat.python.cp_model import IntVar, LinearExprT
@@ -312,6 +313,41 @@ class AllocationCpSatSolver(
                     and self.at_most_one_unary_resource_per_task
                 ):
                     self.cp_model.add_at_most_one(list_is_present_variables)
+
+    def add_same_unary_allocation_constraints(self):
+        for set_tasks in self.problem.get_same_unary_allocation():
+            common_ur = reduce(
+                lambda x, y: x.intersection(self.problem.compatible_unary_resources(y)),
+                list(set_tasks),
+                set(self.problem.unary_resources_list),
+            )
+            for c_ur in common_ur:
+                self.cp_model.AddAllowedAssignments(
+                    [
+                        self.get_task_unary_resource_is_present_variable(task, c_ur)
+                        for task in set_tasks
+                    ],
+                    [
+                        tuple([1] * len(set_tasks)),
+                        tuple([0] * len(set_tasks)),
+                    ],
+                )
+            # Redundant
+            list_tasks = list(set_tasks)
+            for c_ur in common_ur:
+                for i in range(len(list_tasks) - 1):
+                    self.cp_model.Add(
+                        self.get_task_unary_resource_is_present_variable(
+                            list_tasks[i], c_ur
+                        )
+                        == self.get_task_unary_resource_is_present_variable(
+                            list_tasks[i + 1], c_ur
+                        )
+                    )
+
+    def add_allocation_constraints(self):
+        self.add_same_unary_allocation_constraints()
+        self.add_unary_resources_per_task_constraints()
 
     def get_nb_tasks_done_variable(self) -> LinearExprT:
         self.create_done_variables()
