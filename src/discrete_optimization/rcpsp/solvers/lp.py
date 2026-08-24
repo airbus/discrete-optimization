@@ -355,13 +355,15 @@ class _BaseLpMultimodeRcpspSolver(MilpSolver, RcpspSolver):
                 store_solution = greedy_solver.solve(
                     greedy_choice=GreedyChoice.MOST_SUCCESSORS
                 )
-                self.start_solution = store_solution.get_best_solution_fit()[0]
-                makespan = self.problem.evaluate(self.start_solution)["makespan"]
+                self.start_solution: RcpspSolution = (
+                    store_solution.get_best_solution_fit()[0]
+                )
+                makespan = self.start_solution.get_max_end_time()
             else:
                 logger.info("Get dummy solution")
                 solution = self.problem.get_dummy_solution()
                 self.start_solution = solution
-                makespan = self.problem.evaluate(solution)["makespan"]
+                makespan = self.start_solution.get_max_end_time()
         else:
             self.start_solution = start_solution
             makespan = self.problem.evaluate(start_solution)["makespan"]

@@ -3,10 +3,10 @@
 #  LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
-from collections.abc import Callable, Container, Hashable, Iterable
+from collections.abc import Container, Hashable, Iterable
 from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
-from typing import Optional
+from typing import Optional, Callable
 
 import numpy as np
 import wrapt
@@ -26,9 +26,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     OBJECTIVE_DEFAULT_WEIGHTS,
-    PENALTY_DEFAULT_WEIGHTS,
     Objective,
-    Penalty,
     RawSolution,
 )
 from discrete_optimization.generic_tasks_tools.multimode import ModeConstraintType
@@ -36,13 +34,14 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     FlexibleGapBlockingConstraint,
     SpanBlockingConstraint,
 )
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
 from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
-    ObjectiveDoc,
-    ObjectiveHandling,
-    ObjectiveRegister,
     Solution,
-    TypeObjective,
 )
 from discrete_optimization.generic_tools.encoding_register import EncodingRegister
 
@@ -129,7 +128,6 @@ class GenericSchedulingImplProblem(
         compute_time_penalty: whether to include time penalties in evaluation
 
     """
-
     horizon: int
     durations_per_mode: dict[Task, dict[int, int]]
     resource_consumptions: dict[
@@ -150,9 +148,7 @@ class GenericSchedulingImplProblem(
     unary_resources_skills: dict[UnaryResource, dict[Skill, int]] = field(
         default_factory=dict
     )
-    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = (
-        field(default_factory=dict)
-    )
+    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = field(default_factory=dict)
     unary_resources_task_compatibility: dict[Task, set[UnaryResource]] = field(
         default_factory=dict
     )
@@ -163,9 +159,7 @@ class GenericSchedulingImplProblem(
     non_renewable_resources: dict[NonRenewableResource, int] = field(
         default_factory=dict
     )
-    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = (
-        field(default_factory=dict)
-    )
+    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = field(default_factory=dict)
     start_to_start_min_time_lags: list[tuple[Task, Task, int]] = field(
         default_factory=list
     )
@@ -198,6 +192,7 @@ class GenericSchedulingImplProblem(
     )
     compute_time_penalty: bool = True
     optional_tasks: set[Task] = field(default_factory=set)
+    list_objective_computer: list[ObjectiveComputer] = None
 
     def __post_init__(self, objective: Objective | Iterable[tuple[Objective, int]]):
         if isinstance(objective, Objective):
@@ -206,6 +201,14 @@ class GenericSchedulingImplProblem(
             )
         else:
             self.weighted_objectives = tuple(objective)
+        if self.list_objective_computer is None:
+            self.list_objective_computer = [
+                MakespanObjectiveComputer(
+                    None, OBJECTIVE_DEFAULT_WEIGHTS[Objective.MAKESPAN]
+                )
+            ]
+        for l in self.list_objective_computer:
+            l.set_problem(self)
         self.update_problem()
 
     def update_problem(self):
@@ -224,14 +227,6 @@ class GenericSchedulingImplProblem(
         self.update_task_bounds()
         self.update_time_lags()
         self.update_precedence_constraints()
-
-        if (
-            Objective.CUSTOM in {objective for objective, _ in self.weighted_objectives}
-            and self.custom_evaluate_fn is None
-        ):
-            raise RuntimeError(
-                "self.custom_evaluate_fn is not defined but custom objective used."
-            )
 
     def update_resource_availabilities(self) -> None:
         self.get_resource_availabilities.cache_clear()
@@ -458,82 +453,11 @@ class GenericSchedulingImplProblem(
     def set_fixed_attributes(self, attribute_name: str, solution: Solution) -> None:
         raise NotImplementedError()
 
-    def evaluate(self, variable: Solution) -> dict[str, float]:
-        dict_eval = {
-            objective.value: self.compute_subobjective(
-                variable=variable, objective=objective
-            )
-            for objective, _ in self.weighted_objectives
-        }
-        if self.compute_time_penalty:
-            penalty = Penalty.TIME
-            dict_eval[penalty.value] = self.compute_penalty(
-                variable=variable, penalty=penalty
-            )
-        return dict_eval
-
-    def compute_subobjective(
-        self,
-        variable: GenericSchedulingSolution,
-        objective: Objective,
-        resource_weights: Optional[dict[AnyResource, int]] = None,
-    ) -> int:
-        if resource_weights is None:
-            resource_weights = self.objective_resource_weights
-        match objective:
-            case Objective.CUSTOM:
-                if self.custom_evaluate_fn is None:
-                    raise RuntimeError(
-                        "self.custom_evaluate_fn is not defined but custom objective used."
-                    )
-                assert isinstance(variable, GenericSchedulingImplSolution)
-                return self.custom_evaluate_fn(variable)
-            case _:
-                return super().compute_subobjective(
-                    variable=variable,
-                    objective=objective,
-                    resource_weights=resource_weights,
-                )
-
-    def get_objective_register(self) -> ObjectiveRegister:
-        if len(self.weighted_objectives) == 1:
-            handling = ObjectiveHandling.SINGLE
-        else:
-            handling = ObjectiveHandling.AGGREGATE
-        dict_objective = {
-            objective.value: ObjectiveDoc(
-                type=TypeObjective.OBJECTIVE, default_weight=weight
-            )
-            for objective, weight in self.weighted_objectives
-        }
-        if self.compute_time_penalty:
-            penalty = Penalty.TIME
-            dict_objective[penalty.value] = ObjectiveDoc(
-                type=TypeObjective.PENALTY,
-                default_weight=PENALTY_DEFAULT_WEIGHTS[penalty],
-            )
-        return ObjectiveRegister(
-            objective_sense=ModeOptim.MAXIMIZATION,
-            objective_handling=handling,
-            dict_objective_to_doc=dict_objective,
-        )
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        return self.list_objective_computer
 
     def get_dummy_solution(self) -> Solution:
         raise NotImplementedError()
-
-    def get_mode_cost(self, task: Task, mode: int) -> int:
-        try:
-            return self.mode_costs[task][mode]
-        except KeyError:
-            return super().get_mode_cost(task, mode)
-
-    def get_unary_resource_cost(
-        self, task: Task, mode: int, unary_resource: UnaryResource
-    ) -> int:
-        try:
-            return self.unary_resource_costs[task][mode][unary_resource]
-        except KeyError:
-            return super().get_unary_resource_cost(task, mode, unary_resource)
 
     def create_subproblem_from_partial_solution(
         self, partial_solution: RawSolution[Task, UnaryResource, Skill]
@@ -747,12 +671,7 @@ class GenericSchedulingImplProblem(
             end_to_end_min_time_lags=new_end_to_end_min_time_lags,
             no_overlap_sets=new_no_overlap_sets,
             forbidden_intervals=new_forbidden_intervals,
-            objective=self.weighted_objectives,
-            custom_evaluate_fn=self.custom_evaluate_fn,
-            objective_resource_weights=self.objective_resource_weights,
-            mode_costs=self.mode_costs,
-            unary_resource_costs=self.unary_resource_costs,
-            compute_time_penalty=self.compute_time_penalty,
+            list_objective_computer=self.list_objective_computer,
         )
 
 

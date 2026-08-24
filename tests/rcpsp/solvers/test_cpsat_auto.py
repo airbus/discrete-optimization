@@ -21,10 +21,9 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.solution import RcpspSolution
-from discrete_optimization.rcpsp.solvers.cpsat import (
-    CpSatCumulativeResourceRcpspSolver,
-    CpSatRcpspSolver,
-    CpSatResourceRcpspSolver,
+from discrete_optimization.rcpsp.solvers.cpsat_auto import (
+    CpSatAutoCumulativeResourceRcpspSolver,
+    CpSatAutoRcpspSolver,
 )
 from discrete_optimization.rcpsp.solvers.pile import (
     PileCalendarRcpspSolver,
@@ -50,7 +49,7 @@ def test_ortools(model):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
-    solver = CpSatRcpspSolver(problem=rcpsp_problem)
+    solver = CpSatAutoRcpspSolver(problem=rcpsp_problem)
     result_storage = solver.solve(time_limit=100)
     solution: RcpspSolution
     solution, fit = result_storage.get_best_solution_fit()
@@ -88,17 +87,13 @@ def test_ortools(model):
     "model",
     ["j301_1.sm", "j1010_1.mm"],
 )
-@pytest.mark.parametrize(
-    "avoid_interval_optional_for_cumulative_resources", [False, True]
-)
-def test_objectives(model, avoid_interval_optional_for_cumulative_resources):
+@pytest.mark.parametrize("avoid_interval_optional", [False, True])
+def test_objectives(model, avoid_interval_optional):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
-    solver = CpSatRcpspSolver(problem=rcpsp_problem)
-    solver.init_model(
-        avoid_interval_optional_for_cumulative_resources=avoid_interval_optional_for_cumulative_resources
-    )
+    solver = CpSatAutoRcpspSolver(problem=rcpsp_problem)
+    solver.init_model(avoid_interval_optional=avoid_interval_optional)
 
     subtasks = {1, 4}
     # max end time subtasks
@@ -115,12 +110,12 @@ def test_objectives(model, avoid_interval_optional_for_cumulative_resources):
     objective = solver.get_subtasks_sum_start_time_variable(subtasks)
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    solver.solver.ObjectiveValue() == sum(sol.get_start_time(task) for task in subtasks)
+    assert solver.solver.ObjectiveValue() == sum(sol.get_start_time(task) for task in subtasks)
     # max end time
     objective = solver.get_global_makespan_variable()
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    solver.solver.ObjectiveValue() == sol.get_max_end_time()
+    assert solver.solver.ObjectiveValue() == sol.get_max_end_time()
 
 
 def test_mode_constraint_monomode():
@@ -130,7 +125,7 @@ def test_mode_constraint_monomode():
     problem = parse_file(file)
     assert not problem.is_multimode
 
-    solver = CpSatRcpspSolver(problem=problem)
+    solver = CpSatAutoRcpspSolver(problem=problem)
 
     task = 2
     mode = 1
@@ -152,7 +147,7 @@ def test_mode_constraint_multimode(random_seed):
     problem = parse_file(file)
     assert problem.is_multimode
 
-    solver = CpSatRcpspSolver(problem=problem)
+    solver = CpSatAutoRcpspSolver(problem=problem)
     solver.init_model()
 
     task = 2
@@ -189,7 +184,7 @@ def test_task_constraint(task, start_or_end, sign, time):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     problem = parse_file(file)
-    solver = CpSatRcpspSolver(problem=problem)
+    solver = CpSatAutoRcpspSolver(problem=problem)
     sol: RcpspSolution = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution()
@@ -225,7 +220,7 @@ def test_chaining_constraints():
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
-    solver = CpSatRcpspSolver(problem=rcpsp_problem)
+    solver = CpSatAutoRcpspSolver(problem=rcpsp_problem)
     sol: RcpspSolution = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution()
@@ -248,12 +243,8 @@ def test_chaining_constraints():
     "model",
     ["j301_1.sm", "j1010_1.mm"],
 )
-@pytest.mark.parametrize(
-    "avoid_interval_optional_for_cumulative_resources", [False, True]
-)
-def test_ortools_with_calendar_resource(
-    model, avoid_interval_optional_for_cumulative_resources
-):
+@pytest.mark.parametrize("avoid_interval_optional", [False, True])
+def test_ortools_with_calendar_resource(model, avoid_interval_optional):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
@@ -264,10 +255,9 @@ def test_ortools_with_calendar_resource(
         rcpsp_problem.resources[resource][10:15] = 0
     rcpsp_problem.update_problem()
     assert rcpsp_problem.is_calendar
-    solver = CpSatRcpspSolver(problem=rcpsp_problem)
+    solver = CpSatAutoRcpspSolver(problem=rcpsp_problem)
     result_storage = solver.solve(
-        time_limit=100,
-        avoid_interval_optional_for_cumulative_resources=avoid_interval_optional_for_cumulative_resources,
+        time_limit=100, avoid_interval_optional=avoid_interval_optional
     )
     solution, fit = result_storage.get_best_solution_fit()
     solution_rebuilt = RcpspSolution(
@@ -275,8 +265,8 @@ def test_ortools_with_calendar_resource(
         rcpsp_permutation=solution.rcpsp_permutation,
         rcpsp_modes=solution.rcpsp_modes,
     )
-    fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    assert fit == fit_2[Objective.MAKESPAN]
+    eval_dict = rcpsp_problem.evaluate(solution_rebuilt)
+    assert fit == eval_dict[Objective.MAKESPAN]
     assert rcpsp_problem.satisfy(solution)
     assert solution.check_all_calendar_resource_capacity_constraints()
 
@@ -311,22 +301,7 @@ def test_ortools_cumulativeresource_optim(model):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
-    solver = CpSatCumulativeResourceRcpspSolver(problem=rcpsp_problem)
-    result_storage = solver.solve(time_limit=50)
-    solution, fit = result_storage.get_best_solution_fit()
-    assert rcpsp_problem.satisfy(solution)
-    assert solution.check_all_calendar_resource_capacity_constraints()
-
-
-@pytest.mark.parametrize(
-    "model",
-    ["j301_1.sm", "j1010_1.mm"],
-)
-def test_ortools_resource_optim(model):
-    files_available = get_data_available()
-    file = [f for f in files_available if model in f][0]
-    rcpsp_problem = parse_file(file)
-    solver = CpSatResourceRcpspSolver(problem=rcpsp_problem)
+    solver = CpSatAutoCumulativeResourceRcpspSolver(problem=rcpsp_problem)
     result_storage = solver.solve(time_limit=50)
     solution, fit = result_storage.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)
@@ -338,14 +313,16 @@ def test_ortools_with_cb(caplog, random_seed):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
-    solver = CpSatRcpspSolver(problem=rcpsp_problem)
+    solver = CpSatAutoRcpspSolver(problem=rcpsp_problem)
 
     class VariablePrinterCallback(Callback):
         def __init__(self) -> None:
             super().__init__()
             self.nb_solution = 0
 
-        def on_step_end(self, step: int, res: ResultStorage, solver: CpSatRcpspSolver):
+        def on_step_end(
+            self, step: int, res: ResultStorage, solver: CpSatAutoRcpspSolver
+        ):
             self.nb_solution += 1
             sol: RcpspSolution
             sol, fit = res.list_solution_fits[-1]
@@ -400,7 +377,7 @@ def test_special_constraints():
         special_constraints=special_constraints_1,
     )
 
-    solver_1 = CpSatRcpspSolver(problem=problem_1)
+    solver_1 = CpSatAutoRcpspSolver(problem=problem_1)
     result_1 = solver_1.solve(time_limit=10)
     solution_1 = result_1.get_best_solution()
 
@@ -428,7 +405,7 @@ def test_special_constraints():
         special_constraints=special_constraints_2,
     )
 
-    solver_2 = CpSatRcpspSolver(problem=problem_2)
+    solver_2 = CpSatAutoRcpspSolver(problem=problem_2)
     result_2 = solver_2.solve(time_limit=10)
     solution_2 = result_2.get_best_solution()
 
@@ -455,7 +432,7 @@ def test_special_constraints():
         special_constraints=special_constraints_3,
     )
 
-    solver_3 = CpSatRcpspSolver(problem=problem_3)
+    solver_3 = CpSatAutoRcpspSolver(problem=problem_3)
     result_3 = solver_3.solve(time_limit=10)
     solution_3 = result_3.get_best_solution()
 
@@ -487,7 +464,7 @@ def test_special_constraints():
         special_constraints=special_constraints_4,
     )
 
-    solver_4 = CpSatRcpspSolver(problem=problem_4)
+    solver_4 = CpSatAutoRcpspSolver(problem=problem_4)
     result_4 = solver_4.solve(time_limit=10)
     solution_4 = result_4.get_best_solution()
 
@@ -541,7 +518,7 @@ def test_start_to_start_min_time_lag_negative_offset():
     )
 
     # Test CP-SAT solver
-    solver = CpSatRcpspSolver(problem=problem)
+    solver = CpSatAutoRcpspSolver(problem=problem)
     result = solver.solve(time_limit=10)
     solution = result.get_best_solution()
 
@@ -624,7 +601,7 @@ def test_start_to_start_min_time_lag_positive_offset():
         special_constraints=special_constraints,
     )
 
-    solver = CpSatRcpspSolver(problem=problem)
+    solver = CpSatAutoRcpspSolver(problem=problem)
     result = solver.solve(time_limit=10)
     solution = result.get_best_solution()
 

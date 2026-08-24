@@ -137,7 +137,7 @@ class ObjectiveRegister:
         self.dict_objective_to_doc = dict_objective_to_doc
 
     def get_objective_names(self) -> list[str]:
-        return sorted(self.dict_objective_to_doc)
+        return list(self.dict_objective_to_doc)
 
     def get_list_objective_and_default_weight(self) -> tuple[list[str], list[float]]:
         """Flatten the list of kpi names and default weight.
