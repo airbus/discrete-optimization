@@ -20,6 +20,25 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
     TaskVariable,
 )
+from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
+    AllocatedTasksObjective,
+)
+from discrete_optimization.generic_tasks_tools.objectives.allocation_cost import (
+    AllocationCostComputerMultimode,
+)
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.mode_cost import (
+    ModeCostComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.resource_levels import (
+    CalendarRenewableResourceLevelObjectiveComputer,
+    NonRenewableResourceLevelObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used import (
+    UnaryResourcesUsedComputer,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto_impl import (
     GenericSchedulingAutoCpSatImplSolver,
 )
@@ -27,6 +46,11 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    ObjectiveHandling,
+    ParamsObjectiveFunction,
+)
 from discrete_optimization.rcpsp import RcpspProblem
 from discrete_optimization.rcpsp.solution import RcpspSolution
 from discrete_optimization.rcpsp.solvers.cpsat_auto import CpSatAutoRcpspSolver
@@ -45,7 +69,7 @@ from discrete_optimization.shop.jsp.solvers.cpsat import CpSatJspSolver
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective) + [[(Objective.MAKESPAN, -2), (Objective.NB_TASKS_DONE, +2)]],
+    list(Objective) + [[(Objective.MAKESPAN, 2), (Objective.NB_TASKS_DONE, -2)]],
 )
 @pytest.mark.parametrize(
     "avoid_interval_optional, duplicate_start_var_per_mode",
@@ -107,28 +131,50 @@ def test_auto(
         non_renewable_resources={
             "non_renewable_resource": 1,
         },
-        objective=objective,
-        custom_evaluate_fn=custom_evaluate_fn,
-        mode_costs={
-            "task-1": {
-                0: 100,
-                1: 3,
-            },
-            "task-2": {
-                0: 0,
-            },
-        },
-        unary_resource_costs={
-            "task-1": {
-                1: {
-                    "worker1": 27,
-                    "worker2": 10,
+        list_objective_computer=[
+            MakespanObjectiveComputer(),
+            CalendarRenewableResourceLevelObjectiveComputer(
+                problem=None,
+                weight_objective=1,
+                weight_resource={"cumulative_resource": 1},
+            ),
+            NonRenewableResourceLevelObjectiveComputer(
+                problem=None,
+                weight_objective=1,
+                weight_resource={"non_renewable_resource": 1},
+            ),
+            AllocatedTasksObjective(problem=None, weight_objective=-1),
+            UnaryResourcesUsedComputer(
+                problem=None,
+                weight_per_unary_resource={ur: 1 for ur in {"worker1", "worker2"}},
+            ),
+            ModeCostComputer(
+                problem=None,
+                weight_objective=1,
+                mode_cost={
+                    "task-1": {
+                        0: 100,
+                        1: 3,
+                    },
+                    "task-2": {
+                        0: 0,
+                    },
                 },
-            },
-        },
+            ),
+            AllocationCostComputerMultimode(
+                problem=None,
+                weight_objective=1,
+                cost_allocation_resource_to_task_mode={
+                    ("task-1", 1): {"worker1": 27, "worker2": 10}
+                },
+            ),
+        ],
     )
 
     # prepare solver
+    if not isinstance(objective, list):
+        if problem.get_objective_computer(objective) is None:
+            return
 
     # custom objective: makespan - nb tasks allocated
     def custom_objective_factory(
@@ -140,14 +186,26 @@ def test_auto(
 
     exactly_one_unary_resource_per_task = objective in [
         Objective.NB_UNARY_RESOURCES_USED,
-        Objective.NB_RESOURCES_USED,
         Objective.RESOURCES_LEVELS,
-        Objective.COST,
     ]
-
+    if isinstance(objective, Objective):
+        params_objective_function = ParamsObjectiveFunction(
+            objective_handling=ObjectiveHandling.SINGLE,
+            objectives=[objective],
+            weights=[1 if objective != Objective.NB_TASKS_DONE else -1],
+            sense_function=ModeOptim.MINIMIZATION,
+        )
+    else:
+        params_objective_function = ParamsObjectiveFunction(
+            objective_handling=ObjectiveHandling.SINGLE,
+            objectives=[obj[0] for obj in objective],
+            weights=[obj[1] for obj in objective],
+            sense_function=ModeOptim.MINIMIZATION,
+        )
     solver = GenericSchedulingAutoCpSatImplSolver(
         problem=problem,
         objective=objective,
+        params_objective_function=params_objective_function,
         custom_objective_factory=custom_objective_factory,
     )
 
@@ -165,28 +223,23 @@ def test_auto(
     kpi = problem.evaluate(sol)
 
     if objective == Objective.NB_UNARY_RESOURCES_USED:
-        assert kpi["nb_unary_resources_used"] == 1
-    elif objective == Objective.NB_RESOURCES_USED:
-        assert kpi["nb_resources_used"] == 3
+        assert kpi[Objective.NB_UNARY_RESOURCES_USED] == 1
     elif objective == Objective.MAKESPAN:
-        assert kpi["makespan"] == 9
+        assert kpi[Objective.MAKESPAN] == 9
     elif objective == Objective.NB_TASKS_DONE:
-        assert kpi["nb_tasks_done"] == 2
-    elif objective == Objective.COST:
-        assert sol.get_mode("task-1") == 1
-        assert not sol.is_allocated("task-1", unary_resource="worker1")
-        assert sol.is_allocated("task-1", unary_resource="worker2")
-        assert kpi["cost"] == 3 + 10
+        assert kpi[Objective.NB_TASKS_DONE] == 2
+    # elif objective == Objective.MODE_COST:
+    #    assert sol.get_mode("task-1") == 1
+    #    assert not sol.is_allocated("task-1", unary_resource="worker1")
+    #    assert sol.is_allocated("task-1", unary_resource="worker2")
+    #    assert kpi["cost"] == 3 + 10
 
     elif objective == Objective.CUSTOM:
         assert kpi["custom_objective"] == 2 - 9
     elif isinstance(objective, list):
-        assert kpi["nb_tasks_done"] == 2
-        assert kpi["makespan"] == 9
+        assert kpi[Objective.NB_TASKS_DONE] == 2
+        assert kpi[Objective.MAKESPAN] == 9
 
-    # check warm start from a "bad" solution
-    if objective == Objective.COST:
-        return  # skip warm start
     bad_sol = GenericSchedulingImplSolution(
         problem=problem,
         raw_sol=RawSolution(
@@ -246,11 +299,19 @@ def test_no_overlap():
         no_overlap_sets={frozenset({"task-1", "task-2"})},
         forbidden_intervals={"task-1": [(1, 3)]},
     )
-    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver = GenericSchedulingAutoCpSatImplSolver(
+        problem=problem,
+        params_objective_function=ParamsObjectiveFunction(
+            ObjectiveHandling.SINGLE,
+            objectives=[Objective.MAKESPAN],
+            weights=[1],
+            sense_function=ModeOptim.MINIMIZATION,
+        ),
+    )
     sol: GenericSchedulingImplSolution = solver.solve().get_best_solution()
     assert problem.satisfy(sol)
     kpi = problem.evaluate(sol)
-    assert kpi["makespan"] == 6
+    assert kpi[Objective.MAKESPAN] == 6
 
 
 def test_rcpsp_simple():

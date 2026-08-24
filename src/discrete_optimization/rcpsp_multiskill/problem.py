@@ -33,6 +33,16 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     WithoutResourceBlockingProblem,
 )
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.soft_time_penalty import (
+    SoftTimePenaltyComputer,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -2650,7 +2660,7 @@ class MultiskillRcpspProblem(
 
     def evaluate(self, rcpsp_sol: MultiskillRcpspSolution) -> dict[str, float]:
         obj_makespan = self.evaluate_function(rcpsp_sol)
-        d = {"makespan": obj_makespan}
+        d = {Objective.MAKESPAN: obj_makespan}
         if self.includes_special_constraint():
             penalty = evaluate_constraints(
                 solution=rcpsp_sol, constraints=self.special_constraints
@@ -2856,18 +2866,28 @@ class MultiskillRcpspProblem(
             "by using `to_variant_model()` method."
         )
 
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        objectives = [MakespanObjectiveComputer(problem=self, weight_objective=1)]
+        if self.includes_special_constraint():
+            objectives.append(
+                SoftTimePenaltyComputer(problem=self, weight_objective=100)
+            )
+        return objectives
+
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
-            "makespan": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0)
+            Objective.MAKESPAN: ObjectiveDoc(
+                type=TypeObjective.OBJECTIVE, default_weight=1.0
+            )
         }
         handling = ObjectiveHandling.SINGLE
         if self.includes_special_constraint():
             dict_objective["constraint_penalty"] = ObjectiveDoc(
-                type=TypeObjective.PENALTY, default_weight=-100.0
+                type=TypeObjective.PENALTY, default_weight=100.0
             )
             handling = ObjectiveHandling.AGGREGATE
         return ObjectiveRegister(
-            objective_sense=ModeOptim.MAXIMIZATION,
+            objective_sense=ModeOptim.MINIMIZATION,
             objective_handling=handling,
             dict_objective_to_doc=dict_objective,
         )

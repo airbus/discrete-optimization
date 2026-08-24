@@ -20,12 +20,43 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
     TaskVariable,
 )
+from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
+    AllocatedTasksObjective,
+)
+from discrete_optimization.generic_tasks_tools.objectives.allocation_cost import (
+    AllocationCostComputer,
+    AllocationCostComputerMultimode,
+)
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.mode_cost import (
+    ModeCostComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.resource_levels import (
+    CalendarRenewableResourceLevelObjectiveComputer,
+    NonRenewableResourceLevelObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.soft_time_penalty import (
+    SoftTimePenaltyComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used import (
+    UnaryResourcesUsedComputer,
+)
 
 
 @fixture
 def problem_wo_skills():
-    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
-        return variable.compute_nb_tasks_done() - variable.get_max_end_time()
+    class CustomComputer(ObjectiveComputer):
+        def compute_objective(self, solution: GenericSchedulingImplSolution):
+            return solution.compute_nb_tasks_done() - solution.get_max_end_time()
+
+        @staticmethod
+        def get_objective_name() -> Objective | str:
+            return Objective.CUSTOM
 
     return GenericSchedulingImplProblem(
         horizon=10,
@@ -68,9 +99,30 @@ def problem_wo_skills():
         non_renewable_resources={
             "non_renewable_resource": 1,
         },
-        objective=[(Objective.MAKESPAN, -1)]
-        + [(obj, 0) for obj in Objective if obj not in [Objective.MAKESPAN]],
-        custom_evaluate_fn=custom_evaluate_fn,
+        list_objective_computer=[
+            MakespanObjectiveComputer(weight_objective=1),
+            AllocatedTasksObjective(weight_objective=1),
+            ModeCostComputer(weight_objective=1, mode_cost={}),
+            AllocationCostComputer(
+                weight_objective=1, cost_allocation_resource_to_task={}
+            ),
+            AllocationCostComputerMultimode(
+                weight_objective=1, cost_allocation_resource_to_task_mode={}
+            ),
+            CalendarRenewableResourceLevelObjectiveComputer(
+                problem=None,
+                weight_objective=1,
+                weight_resource={"cumulative_resource": 1},
+            ),
+            NonRenewableResourceLevelObjectiveComputer(
+                problem=None, weight_resource={"non_renewable_resource": 1}
+            ),
+            UnaryResourcesUsedComputer(
+                weight_per_unary_resource={"worker1": 1, "worker2": 1}
+            ),
+            CustomComputer(weight_objective=1),
+            SoftTimePenaltyComputer(weight_objective=1),
+        ],
     )
 
 
@@ -109,12 +161,12 @@ def test_problem(problem_wo_skills, caplog):
     problem.satisfy(sol)
     d = problem.evaluate(sol)
     print(d)
-    assert d["makespan"] == 9
-    assert d["nb_tasks_done"] == 2
-    assert d["nb_unary_resources_used"] == 2
-    assert d["nb_resources_used"] == 4
-    assert d["resources_levels"] == 5
-    assert d["custom_objective"] == -7
+    assert d[Objective.MAKESPAN] == 9
+    assert d[Objective.NB_TASKS_DONE] == 2
+    assert d[Objective.NB_UNARY_RESOURCES_USED] == 2
+    assert d[Objective.CALENDAR_RESOURCES_LEVELS] == 2
+    assert d[Objective.NON_RENEWABLE_RESOURCES_LEVELS] == 1
+    assert d[Objective.CUSTOM] == -7
 
     sol = GenericSchedulingImplSolution(
         problem=problem,
@@ -131,9 +183,9 @@ def test_problem(problem_wo_skills, caplog):
     )
     problem.satisfy(sol)
     d = problem.evaluate(sol)
-    assert d["makespan"] == 10
-    assert d["nb_tasks_done"] == 2
-    assert d["nb_unary_resources_used"] == 1
+    assert d[Objective.MAKESPAN] == 10
+    assert d[Objective.NB_TASKS_DONE] == 2
+    assert d[Objective.NB_UNARY_RESOURCES_USED] == 1
 
     sol = GenericSchedulingImplSolution(
         problem=problem,
@@ -154,9 +206,9 @@ def test_problem(problem_wo_skills, caplog):
     )
     problem.satisfy(sol)
     d = problem.evaluate(sol)
-    assert d["makespan"] == 10
-    assert d["nb_tasks_done"] == 0
-    assert d["nb_unary_resources_used"] == 0
+    assert d[Objective.MAKESPAN] == 10
+    assert d[Objective.NB_TASKS_DONE] == 0
+    assert d[Objective.NB_UNARY_RESOURCES_USED] == 0
 
     # nok: worker not available
     sol = GenericSchedulingImplSolution(
@@ -230,22 +282,29 @@ def test_problem(problem_wo_skills, caplog):
     )
     assert problem.satisfy(sol)
     d = problem.evaluate(sol)
-    assert d["time_penalty"] == 0
-    assert d["cost"] == 0
+    assert d[Objective.TIME_PENALTY] == 0
+    # assert d["cost"] == 0
 
     # non-null cost
-    problem.mode_costs = {"task-1": {0: 10, 1: 35}}
-    problem.unary_resource_costs = {"task-2": {0: {"worker1": 23, "worker2": 3}}}
+    mode_cost_computer: ModeCostComputer = problem.get_objective_computer(
+        Objective.MODE_COST
+    )[0]
+    mode_cost_computer._mode_cost = {("task-1", 0): 10, ("task-1", 1): 35}
+    unary_cost_computer: AllocationCostComputerMultimode = (
+        problem.get_objective_computer(Objective.ALLOCATION_COST)[1]
+    )
+    unary_cost_computer._cost_allocation_resource_to_task_mode = {
+        ("task-2", 0): {"worker1": 23, "worker2": 3}
+    }
     d = problem.evaluate(sol)
-    assert d["cost"] == 38
-
+    assert d[Objective.ALLOCATION_COST] + d[Objective.MODE_COST] == 38
     # time penalty with wrong time windows and time lags
     problem.time_windows["task-1"] = 2, None, None, None
     problem.end_to_start_min_time_lags.append(("task-1", "task-2", 2))
     problem.update_problem()
     assert not problem.satisfy(sol)
     d = problem.evaluate(sol)
-    assert d["time_penalty"] == 3
+    assert d[Objective.TIME_PENALTY] == 3
 
 
 def test_task_bounds_simple(problem_wo_skills):

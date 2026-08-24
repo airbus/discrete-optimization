@@ -39,6 +39,18 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     WithoutResourceBlockingProblem,
     WithoutResourceBlockingSolution,
 )
+from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
+    AllocatedTasksObjective,
+)
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used import (
+    UnaryResourcesUsedComputer,
+)
 from discrete_optimization.generic_tasks_tools.skill import (
     NoSkill,
     WithoutSkillProblem,
@@ -311,6 +323,13 @@ class AllocSchedulingProblem(
 
     def get_solution_type(self) -> type[Solution]:
         return AllocSchedulingSolution
+
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        return [
+            AllocatedTasksObjective(problem=self, weight_objective=100000),
+            UnaryResourcesUsedComputer(problem=self, weight_objective=1),
+            MakespanObjectiveComputer(problem=self, weight_objective=1),
+        ]
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {

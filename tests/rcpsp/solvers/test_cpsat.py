@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
@@ -59,7 +60,7 @@ def test_ortools(model):
         rcpsp_modes=solution.rcpsp_modes,
     )
     fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    assert fit == -fit_2["makespan"]
+    assert fit == fit_2[Objective.MAKESPAN]
     assert rcpsp_problem.satisfy(solution)
     assert solution.check_all_calendar_resource_capacity_constraints()
     rcpsp_problem.plot_ressource_view(solution)
@@ -262,7 +263,7 @@ def test_ortools_with_calendar_resource(model):
         rcpsp_modes=solution.rcpsp_modes,
     )
     fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    assert fit == -fit_2["makespan"]
+    assert fit == fit_2[Objective.MAKESPAN]
     assert rcpsp_problem.satisfy(solution)
     assert solution.check_all_calendar_resource_capacity_constraints()
 

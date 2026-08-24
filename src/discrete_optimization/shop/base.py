@@ -27,18 +27,19 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     WithoutResourceBlockingProblem,
     WithoutResourceBlockingSolution,
 )
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
 from discrete_optimization.generic_tasks_tools.skill import (
     NoSkill,
     WithoutSkillProblem,
     WithoutSkillSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
-    ObjectiveDoc,
-    ObjectiveHandling,
-    ObjectiveRegister,
     Solution,
-    TypeObjective,
 )
 
 logger = logging.getLogger(__name__)
@@ -329,17 +330,8 @@ class CommonShopProblem(
     def get_task_modes(self, task: Task) -> set[int]:
         return {i for i in range(len(self.list_jobs[task[0]].subjobs[task[1]].recipes))}
 
-    def evaluate(self, variable: AnyShopSolution) -> dict[str, float]:
-        return {"makespan": variable.get_max_end_time()}
-
     def get_solution_type(self) -> type[Solution]:
         return AnyShopSolution
 
-    def get_objective_register(self) -> ObjectiveRegister:
-        return ObjectiveRegister(
-            dict_objective_to_doc={
-                "makespan": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=1)
-            },
-            objective_sense=ModeOptim.MINIMIZATION,
-            objective_handling=ObjectiveHandling.AGGREGATE,
-        )
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        return [MakespanObjectiveComputer(problem=self, weight_objective=1)]

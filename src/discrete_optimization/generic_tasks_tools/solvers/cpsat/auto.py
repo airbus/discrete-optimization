@@ -1,10 +1,12 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import logging
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any, Optional, Type
 
 import networkx as nx
 from ortools.sat.python.cp_model import (
@@ -23,7 +25,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     Resource,
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
-    OBJECTIVE_DEFAULT_WEIGHTS,
     Objective,
     RawSolution,
     TaskVariable,
@@ -51,6 +52,14 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
+)
+
+if False:
+    from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.objective_modeler import (
+        ObjectiveModelerCpSat,
+    )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.utils import (
+    create_computer_to_modeler_mapping,
 )
 
 logger = logging.getLogger(__name__)
@@ -106,20 +115,6 @@ class GenericSchedulingAutoCpSatSolver(
             depends_on=("use_energy_constraints", [True]),
         ),
     ]
-
-    # objective settings
-    objective: Objective = Objective.MAKESPAN  # Objective set by `init_model()`
-    objective_resource_weights: Optional[dict[AnyResource, int]] = None
-    """Weights to be used by the objective when summing used resources or resources levels.
-
-    This is the case if `objective` is set to `Objective.NB_RESOURCES_USED` or  `Objective.RESOURCES_LEVELS`.
-    Default to 1 for resources not mentioned.
-
-    Hypothesis: cumulative, unary, and non-renewable resources have different values.
-    (It could happen that non-renewable resources and renewable lists intersect which whould be a problem
-    for weights definition).
-
-    """
     # Task start/end bounds settings
     use_cpm_for_task_bounds = False
     """Flag telling whether cpm should be used to refine task bounds."""
@@ -164,6 +159,9 @@ class GenericSchedulingAutoCpSatSolver(
     """Variables tracking level (capacity needed) of each (unary, cumulative, or non-renewable) resource."""
     resource_level_variables_created = False
     """Flag telling whether 'resource_level_variables' have been created"""
+
+    list_obj_modeler_weight: list[tuple[ObjectiveModelerCpSat, float]] = None
+    dict_objective_expr: dict[Objective | str, LinearExprT]
 
     @property
     def needs_duration_variables(self) -> bool:
@@ -334,6 +332,7 @@ class GenericSchedulingAutoCpSatSolver(
         self.all_used_variables = {}
         self.resource_level_variables_created = False
         self.resource_level_variables = {}
+        self.list_obj_modeler_weight = None
 
     def _create_variables(self):
         self._create_start_or_end_variables()
@@ -851,76 +850,6 @@ class GenericSchedulingAutoCpSatSolver(
             "potentially because calendar and non-renewable resources intersect."
         )
 
-    def get_nb_resources_used_variable(self) -> LinearExprT:
-        """Get cpsat variable tracking number of resources used at least in one task.
-
-        If necessary, intermediate variables tracking is a specific resource is used are created.
-
-        """
-        weights = self.objective_resource_weights
-        if weights is None:
-            weights = {}
-        self._create_all_used_variables()
-        return sum(
-            weights.get(resource, 1) * used
-            for resource, used in self.all_used_variables.items()
-        )
-
-    def get_aggregated_resources_levels_variable(self) -> LinearExprT:
-        """Get cpsat variable aggregating levels (ie min capacities needed) of each resource."""
-        weights = self.objective_resource_weights
-        if weights is None:
-            weights = {}
-        self._create_resource_level_variables()
-        return sum(
-            weights.get(resource, 1) * conso
-            for resource, conso in self.resource_level_variables.items()
-        )
-
-    def _create_cost_variables(self):
-        for task in self.problem.tasks_list:
-            self.mode_cost_variables[task] = sum(
-                self.modes_is_present[task][mode]
-                * self.problem.get_mode_cost(task=task, mode=mode)
-                for mode in self.problem.get_task_modes(task)
-            )
-            self.unary_resource_cost_variables[task] = {}
-            for unary_resource in self.problem.unary_resources_list:
-                self.unary_resource_cost_variables[task][unary_resource] = (
-                    self._create_var_per_mode_if_allocated(
-                        name=f"unary_resource_cost_{task}_{unary_resource}",
-                        mode2value={
-                            mode: self.problem.get_unary_resource_cost(
-                                task=task, mode=mode, unary_resource=unary_resource
-                            )
-                            for mode in self.problem.get_task_modes(task=task)
-                        },
-                        task=task,
-                        unary_resource=unary_resource,
-                    )
-                )
-
-    def _get_total_cost_variable(self) -> LinearExprT:
-        return sum(
-            (
-                self.mode_cost_variables[task]
-                + sum(
-                    self.unary_resource_cost_variables[task][unary_resource]
-                    for unary_resource in self.problem.unary_resources_list
-                )
-            )
-            for task in self.problem.tasks_list
-        )
-
-    def get_cost_variable(self) -> LinearExprT:
-        """Get cpsat variable tracking cost."""
-        try:
-            return self._get_total_cost_variable()
-        except KeyError:
-            # cost variables not yet created
-            self._create_cost_variables()
-            return self._get_total_cost_variable()
-
     def _add_constraints(self) -> None:
         self.create_resource_blocking_constraints()
         # time lag
@@ -955,63 +884,60 @@ class GenericSchedulingAutoCpSatSolver(
         # mode constraint
         self.add_mode_constraints()
 
+    def init_list_obj_modelers(self):
+        mapping_obj_computer_to_modeler = create_computer_to_modeler_mapping()
+        self.list_obj_modeler_weight = []
+        for obj, weight in zip(
+            self.params_objective_function.objectives,
+            self.params_objective_function.weights,
+        ):
+            obj_computers = self.problem.get_objective_computer(obj)
+            if obj_computers is None:
+                continue
+            for obj_computer in obj_computers:
+                obj_modeler_class: Type[ObjectiveModelerCpSat] = (
+                    mapping_obj_computer_to_modeler[obj_computer.__class__]
+                )
+                obj_modeler = obj_modeler_class(
+                    solver=self, objective_computer=obj_computer
+                )
+                self.list_obj_modeler_weight.append((obj_modeler, weight))
+
     def _set_objective(self) -> None:
-        if self.objective == Objective.CUSTOM:
-            # for custom objective, inheriting classes should override `init_model()` to define the objective.
-            return
-
-        objective_var = self.get_objective_variable(self.objective)
-        weight = -OBJECTIVE_DEFAULT_WEIGHTS[self.objective]
-        self.cp_model.minimize(weight * objective_var)
-
-    def get_objective_variable(self, objective: Objective) -> LinearExprT:
-        match objective:
-            case Objective.MAKESPAN:
-                objective_var = self.get_global_makespan_variable()
-            case Objective.NB_TASKS_DONE:
-                objective_var = self.get_nb_tasks_done_variable()
-            case Objective.NB_UNARY_RESOURCES_USED:
-                objective_var = self.get_nb_unary_resources_used_variable()
-                if self.exactly_one_unary_resource_per_task:
-                    # TODO = make this an option
-                    capa_used = self.cp_model.new_int_var(
-                        lb=0,
-                        ub=len(self.problem.unary_resources_list),
-                        name=f"unary_res",
+        if self.list_obj_modeler_weight is None:
+            self.init_list_obj_modelers()
+        self.dict_objective_expr = {}
+        for obj_modeler, weight in self.list_obj_modeler_weight:
+            obj_modeler: ObjectiveModelerCpSat
+            if (
+                key := obj_modeler.objective_computer.get_objective_name()
+            ) not in self.dict_objective_expr:
+                self.dict_objective_expr[key] = 0
+            self.dict_objective_expr[key] += obj_modeler.get_objective_expr()
+        # print(
+        #     sum(
+        #         [
+        #             weight * self.dict_objective_expr[obj]
+        #             for obj, weight in zip(
+        #                 self.params_objective_function.objectives,
+        #                 self.params_objective_function.weights,
+        #             )
+        #             if obj in self.dict_objective_expr
+        #         ]
+        #     )
+        # )
+        self.cp_model.minimize(
+            sum(
+                [
+                    weight * self.dict_objective_expr[obj]
+                    for obj, weight in zip(
+                        self.params_objective_function.objectives,
+                        self.params_objective_function.weights,
                     )
-                    self.cp_model.add_cumulative(
-                        [self.get_task_interval(t) for t in self.problem.tasks_list],
-                        demands=[1 for t in self.problem.tasks_list],
-                        capacity=capa_used,
-                    )
-                    self.cp_model.add(capa_used <= objective_var)
-            case Objective.NB_RESOURCES_USED:
-                objective_var = self.get_nb_resources_used_variable()
-            case Objective.RESOURCES_LEVELS:
-                objective_var = self.get_aggregated_resources_levels_variable()
-            case Objective.COST:
-                objective_var = self.get_cost_variable()
-            case Objective.DISPERSION_WORKLOAD:
-                from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumul_objective import (
-                    CumulativeObjective,
-                    ModelisationDispersion,
-                )
-
-                c = CumulativeObjective(problem=self.problem, solver=self)
-                objective_var = c.create_dispersion_objective(
-                    val_per_task_per_mode={
-                        t: {
-                            m: self.problem.get_task_mode_duration(task=t, mode=m)
-                            for m in self.problem.get_task_modes(t)
-                        }
-                        for t in self.problem.tasks_list
-                    },
-                    name_value="duration",
-                    modelisation_dispersion=ModelisationDispersion.EXACT,
-                )
-            case _:
-                raise NotImplementedError()
-        return objective_var
+                    if obj in self.dict_objective_expr
+                ]
+            )
+        )
 
     def get_task_interval(self, task: Task) -> IntervalVar:
         if self.needs_task_interval:
@@ -1131,6 +1057,7 @@ class GenericSchedulingAutoCpSatSolver(
             )
             end = cpsolvercb.Value(self.start_or_end_variables[task, StartOrEnd.END])
             modes = self.problem.get_task_modes(task)
+            mode = None
             if len(modes) == 1:
                 mode = next(iter(modes))
             else:
@@ -1225,10 +1152,6 @@ class GenericSchedulingAutoCpSatSolver(
 
     def prepare_energy_constraints(self) -> list[tuple[Task, Task, set[Task]]]:
         """Analyses the dependency graph to improve the model.
-
-        Args:
-          problem: the protobuf of the problem to solve.
-
         Returns:
           a list of (task1, task2, in_between_tasks) with task2 and indirect successor
           of task1, and in_between_tasks being the list of all tasks after task1 and

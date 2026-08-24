@@ -6,7 +6,7 @@ from __future__ import annotations
 import copy
 import logging
 import re
-from abc import ABC
+#from abc import ABC
 from copy import deepcopy
 from typing import Any, Iterable, Optional
 
@@ -28,6 +28,16 @@ from discrete_optimization.generic_tasks_tools.no_overlap import (
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     WithoutResourceBlockingProblem,
     WithoutResourceBlockingSolution,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.utils import (
+    AllocatedTasksObjective,
+    CalendarRenewableResourceLevelObjectiveComputer,
+    MakespanObjectiveComputer,
+    NonRenewableResourceLevelObjectiveComputer,
+    UnaryResourcesUsedComputer,
 )
 from discrete_optimization.generic_tasks_tools.skill import (
     NoSkill,
@@ -69,7 +79,7 @@ class MySolution(
         Task, UnaryResource, NonSkillCumulativeResource, UnaryResource
     ],
     WithoutResourceBlockingSolution[Task, NonRenewableResource, UnaryResource],
-    ABC,
+    #ABC,
 ):
     problem: MyProblem
 
@@ -128,6 +138,27 @@ class MyProblem(
         },
     }
     successors = {"task-1": ["task-2"]}
+
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        return [
+            MakespanObjectiveComputer(problem=self, weight_objective=1),
+            UnaryResourcesUsedComputer(
+                problem=self,
+                weight_objective=1,
+                weight_per_unary_resource={ur: 1 for ur in self.unary_resources},
+            ),
+            AllocatedTasksObjective(problem=self, weight_objective=-1),
+            CalendarRenewableResourceLevelObjectiveComputer(
+                problem=self,
+                weight_objective=1,
+                weight_resource={r: 1 for r in self.cumulative_resources},
+            ),
+            NonRenewableResourceLevelObjectiveComputer(
+                problem=self,
+                weight_objective=1,
+                weight_resource={r: 1 for r in self.non_renewable_resources},
+            ),
+        ]
 
     @property
     def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:
@@ -418,11 +449,16 @@ def test_auto(
 
     # prepare solver
     solver = MyAutoCpsatSolver(problem=problem)
-    solver.objective = objective
+    if objective != Objective.CUSTOM:
+        solver.params_objective_function = ParamsObjectiveFunction(
+            objective_handling=ObjectiveHandling.SINGLE,
+            objectives=[objective],
+            weights=[1 if objective != Objective.NB_TASKS_DONE else -1],
+            sense_function=ModeOptim.MINIMIZATION,
+        )
     if objective in [
         Objective.NB_UNARY_RESOURCES_USED,
-        Objective.NB_RESOURCES_USED,
-        Objective.RESOURCES_LEVELS,
+        Objective.CALENDAR_RESOURCES_LEVELS,
     ]:
         solver.exactly_one_unary_resource_per_task = True
     with caplog.at_level(logging.WARNING):
@@ -453,8 +489,6 @@ def test_auto(
 
     if objective == Objective.NB_UNARY_RESOURCES_USED:
         assert kpi["nb_allocated"] == 1
-    elif objective == Objective.NB_RESOURCES_USED:
-        assert kpi["nb_resources_used"] == 3
     elif objective == Objective.MAKESPAN:
         assert kpi["makespan"] == 9
     elif objective == Objective.NB_TASKS_DONE:

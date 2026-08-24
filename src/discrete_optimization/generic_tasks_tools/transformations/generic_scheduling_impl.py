@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 from abc import abstractmethod
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from typing import Generic, Optional, TypeVar
 
 from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
@@ -11,7 +11,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
-    AnyResource,
     AvailabilityIntervals,
     CumulativeResource,
     GenericSchedulingImplProblem,
@@ -24,9 +23,14 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
-    Objective,
     RawSolution,
     TaskVariable,
+)
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
 )
 from discrete_optimization.generic_tools.transformation import ProblemTransformation
 
@@ -57,20 +61,6 @@ class ToGenericSchedulingImpl(
 
     """
 
-    def __init__(
-        self,
-        objective: Objective | Iterable[tuple[Objective, int]] = Objective.MAKESPAN,
-        custom_evaluate_fn: Optional[
-            Callable[[GenericSchedulingImplSolution], int]
-        ] = None,
-        objective_resource_weights: Optional[dict[AnyResource, int]] = None,
-        compute_time_penalty: bool = True,
-    ):
-        self.objective = objective
-        self.custom_evaluate_fn = custom_evaluate_fn
-        self.objective_resource_weights = objective_resource_weights
-        self.compute_time_penalty = compute_time_penalty
-
     @abstractmethod
     def transform_solution_from_raw_generic_to_specific(
         self,
@@ -80,7 +70,8 @@ class ToGenericSchedulingImpl(
         """Convert a raw solution (from generic problem) into a specific solution to the source problem.
 
         Args:
-            source_problem:
+            raw_sol: Raw solution to convert to a specific solution
+            source_problem: Target Problem we want to build a solution for.
 
         Returns:
 
@@ -96,41 +87,19 @@ class ToGenericSchedulingImpl(
             raw_sol=solution.raw_sol, source_problem=source_problem
         )
 
-    def transform_objective(
+    def get_list_objective_computer(
         self,
         source_problem: SpecificSchedulingProblem,
-    ) -> tuple[
-        Objective | Iterable[tuple[Objective, int]],
-        Optional[Callable[[GenericSchedulingImplSolution], int]],
-        Optional[dict[AnyResource, int]],
-        bool,
-    ]:
-        """Transform scheduling problem objective for the generic implementation.
-
-        This default implementation returns default values of `GenericSchedulingImplProblem`.
+    ) -> list[ObjectiveComputer]:
+        """From the source problem, compute a list of objective computers to be used in `GenericSchedulingImplProblem`.
         To be overriden in child classes.
 
         Returns:
-            objective, custom_evaluate_fn, objective_resource_weights, compute_time_penalty: the corresponding arguments
-            `of GenericSchedulingImplProblem.__init__()`, resulting to computing makespan + time penalty.
-            See its documentation for more details.
-
 
         """
-        objective = self.objective
-        custom_evaluate_fn = self.custom_evaluate_fn  # No custom objective
-        objective_resource_weights = (
-            self.objective_resource_weights
-        )  # All resources have same weights
-        compute_time_penalty = (
-            self.compute_time_penalty
-        )  # Time penalty will be computed during `evaluate()`
-        return (
-            objective,
-            custom_evaluate_fn,
-            objective_resource_weights,
-            compute_time_penalty,
-        )
+        # We put None as problem, it will be linked to its parent scheduling problem, when calling __init__
+        # of GenericSchedulingImplProblem
+        return [MakespanObjectiveComputer(None, 1.0)]
 
     def transform_problem(
         self,
@@ -268,31 +237,7 @@ class ToGenericSchedulingImpl(
             task: source_problem.get_forbidden_intervals(task)
             for task in source_problem.tasks_list
         }
-        mode_costs: dict[Task, dict[int, int]] = {
-            task: {
-                mode: source_problem.get_mode_cost(task=task, mode=mode)
-                for mode in source_problem.get_task_modes(task=task)
-            }
-            for task in source_problem.tasks_list
-        }
-        unary_resource_costs: dict[Task, dict[int, dict[UnaryResource, int]]] = {
-            task: {
-                mode: {
-                    unary_resource: source_problem.get_unary_resource_cost(
-                        unary_resource=unary_resource, task=task, mode=mode
-                    )
-                    for unary_resource in source_problem.unary_resources_list
-                }
-                for mode in source_problem.get_task_modes(task=task)
-            }
-            for task in source_problem.tasks_list
-        }
-        (
-            objective,
-            custom_evaluate_fn,
-            objective_resource_weights,
-            compute_time_penalty,
-        ) = self.transform_objective(source_problem)
+        list_objective_computer = self.get_list_objective_computer(source_problem)
 
         return GenericSchedulingImplProblem(
             horizon=horizon,
@@ -313,16 +258,11 @@ class ToGenericSchedulingImpl(
             end_to_end_min_time_lags=end_to_end_min_time_lags,
             no_overlap_sets=no_overlap_sets,
             forbidden_intervals=forbidden_intervals,
-            mode_costs=mode_costs,
-            unary_resource_costs=unary_resource_costs,
             flexible_gap_blocking_constraints=source_problem.get_flexible_gap_blocking_constraints(),
             span_blocking_constraints=source_problem.get_span_blocking_constraints(),
             mode_constraints=source_problem.get_mode_constraints(),
             same_unary_allocation=source_problem.get_same_unary_allocation(),
-            objective=objective,
-            custom_evaluate_fn=custom_evaluate_fn,
-            objective_resource_weights=objective_resource_weights,
-            compute_time_penalty=compute_time_penalty,
+            list_objective_computer=list_objective_computer,
         )
 
     def forward_transform_solution(
