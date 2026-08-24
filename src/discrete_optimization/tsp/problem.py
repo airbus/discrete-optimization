@@ -16,6 +16,7 @@ import numpy as np
 import numpy.typing as npt
 from numba import njit
 
+from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
@@ -98,6 +99,9 @@ class TspSolution(SchedulingSolution[Node]):
 
     def get_end_time(self, task: Node) -> int:
         return self.get_start_time(task) + 1
+
+    def is_present(self, task: Task) -> bool:
+        return True
 
     def get_start_time(self, task: Node) -> int:
         return self.permutation.index(task)
@@ -184,6 +188,9 @@ class TspProblem(SchedulingProblem[Node]):
             if i != self.start_index and i != self.end_index:
                 self.original_indices_to_permutation_indices_dict[i] = counter
                 counter += 1
+
+    def is_optional(self, task: Task) -> bool:
+        return False
 
     # for a given tsp kind of problem, you should provide a custom evaluate function, for now still abstract.
     @abstractmethod

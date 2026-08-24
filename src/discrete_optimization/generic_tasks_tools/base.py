@@ -1,3 +1,6 @@
+#  Copyright (c) 2026 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -21,6 +24,12 @@ class TasksProblem(Problem, Generic[Task]):
         """List of all tasks to schedule or allocate to."""
         ...
 
+    @abstractmethod
+    def is_optional(self, task: Task) -> bool: ...
+    @property
+    def optional_tasks_list(self) -> list[Task]:
+        return [t for t in self.tasks_list if self.is_optional(t)]
+
     def get_index_from_task(self, task: Task) -> int:
         if self._map_task_to_index is None:
             self._map_task_to_index = {
@@ -36,10 +45,28 @@ class TasksProblem(Problem, Generic[Task]):
         self._map_task_to_index = None
 
 
+class NoOptionalTasksProblem(TasksProblem[Task]):
+    def is_optional(self, task: Task) -> bool:
+        return False
+
+
 class TasksSolution(Solution, Generic[Task]):
     """Base class for scheduling/allocation solutions."""
 
     problem: TasksProblem[Task]
+
+    @abstractmethod
+    def is_present(self, task: Task) -> bool: ...
+
+    def check_present_tasks(self) -> bool:
+        for t in self.problem.tasks_list:
+            if not self.problem.is_optional(t):
+                if not self.is_present(t):
+                    return False
+        return True
+
+    def get_present_tasks(self):
+        return [t for t in self.problem.tasks_list if self.is_present(t)]
 
 
 class TasksCpSolver(CpSolver, Generic[Task]):

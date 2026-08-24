@@ -11,6 +11,10 @@ import wrapt
 from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
 )
+from discrete_optimization.generic_tasks_tools.alternative_subproblems import (
+    AlternativeSchedulingProblem,
+    AlternativeSchedulingSolution,
+)
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
@@ -59,6 +63,7 @@ class GenericSchedulingProblem(
     TimelagProblem[Task],
     TimewindowProblem[Task],
     NoOverlapProblem[Task],
+    AlternativeSchedulingProblem[Task],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
@@ -629,6 +634,8 @@ class GenericSchedulingProblem(
         time_windows: bool = True,
         no_overlap: bool = True,
         forbidden_intervals: bool = True,
+        presence_tasks: bool = True,
+        alternative_subproblems: bool = True,
     ) -> bool:
         """Partial checks on solution.
 
@@ -646,13 +653,21 @@ class GenericSchedulingProblem(
             time_windows:
             no_overlap:
             forbidden_intervals:
-
+            presence_tasks:
+            alternative_subproblems:
         Returns:
 
         """
         return (
+            # alternative subproblems
+            (
+                not alternative_subproblems
+                or variable.check_alternative_scheduling_subproblem()
+            )
+            # presence of tasks
+            and (not presence_tasks or variable.check_present_tasks())
             # duration consistency
-            (not duration or variable.check_duration_constraints())
+            and (not duration or variable.check_duration_constraints())
             # calendar resources capacity violations (unary resources + skills + cumulative resources)
             and (
                 not calendar
@@ -696,6 +711,7 @@ class GenericSchedulingSolution(
     TimelagSolution[Task],
     TimewindowSolution[Task],
     NoOverlapSolution[Task],
+    AlternativeSchedulingSolution[Task],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
@@ -732,3 +748,6 @@ class GenericSchedulingSolution(
             )
             for task in self.problem.tasks_list
         )
+
+    def is_present(self, task: Task) -> bool:
+        return self.is_scheduled(task) and self.has_a_mode(task)

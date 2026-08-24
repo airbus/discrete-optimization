@@ -62,6 +62,7 @@ from discrete_optimization.alb.base.problem import (
     BaseALBSolution,
     ResourceTaskData,
 )
+from discrete_optimization.generic_tasks_tools import AbsentValue
 from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
 )
@@ -106,6 +107,12 @@ class RCALBPSolution(
     """
 
     problem: "RCALBPProblem"
+
+    def is_present(self, task: Task) -> bool:
+        return task in self.task_assignment and self.task_assignment[task] not in {
+            None,
+            AbsentValue.ABSENT,
+        }
 
     def get_renewable_resource_consumption(self, resource: Resource, task: Task) -> int:
         return self.problem.get_task_demand(task, resource)
@@ -453,6 +460,9 @@ class RCALBPProblem(
     @property
     def renewable_resources_list(self) -> list[Resource]:
         return list(set(self.resources) | self.shared_resources)
+
+    def is_optional(self, task: Task) -> bool:
+        return False
 
     def get_resource_availabilities(
         self, resource: Resource

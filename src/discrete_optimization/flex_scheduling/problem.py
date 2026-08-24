@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import field
 from functools import cache
 from typing import Dict, Hashable, List, Set, Tuple, Type
 
@@ -308,6 +308,9 @@ class ScheduleSolutionPreemptive(SchedulingSolution[Task], MultimodeSolution[Tas
         self.schedule = schedule
         self.modes = modes
 
+    def is_present(self, task: Task) -> bool:
+        return self.modes[self.problem.task_id_to_index[task]] is not None
+
     def get_mode(self, task: Task) -> int:
         index = self.problem.task_id_to_index[task]
         return self.modes[index]
@@ -338,6 +341,9 @@ class FlexProblem(
     ],
     WithoutAllocationProblem[Task],
 ):
+    def is_optional(self, task: Task) -> bool:
+        return False
+
     @property
     def non_skill_cumulative_resources_list(self) -> list[Skill]:
         return [resource.id for resource in self.resources if resource.renewable]

@@ -51,6 +51,9 @@ class VRPTWSolution(SchedulingSolution[Task], AllocationSolution[Task, UnaryReso
         capacity_violation (float): Total violation of vehicle capacities.
     """
 
+    def is_present(self, task: Task) -> bool:
+        return self.get_start_time(task) is not None
+
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
         return task in self.routes[unary_resource]
 
@@ -157,6 +160,9 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
     - Customers with service times.
     - Objectives: 1) Minimize number of vehicles, 2) Minimize total distance.
     """
+
+    def is_optional(self, task: Task) -> bool:
+        return False
 
     def get_makespan_upper_bound(self) -> int:
         return round(1000 ** self.time_windows[self.depot_node][1])

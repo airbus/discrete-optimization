@@ -10,11 +10,13 @@ from matplotlib import colors as mcolors
 from matplotlib import pyplot as plt
 from matplotlib.widgets import Slider
 
+from discrete_optimization.generic_tasks_tools import AbsentValue
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
     UnaryResource,
 )
+from discrete_optimization.generic_tasks_tools.base import NoOptionalTasksProblem
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
@@ -65,6 +67,12 @@ class RCALBPLSolution(AllocationSolution[Task, WorkStation], SchedulingSolution[
         # Evaluations
         self.ramp_up_duration = ramp_up_duration
         self.nb_adjustments = nb_adjustments
+
+    def is_present(self, task: Task) -> bool:
+        return task[0] in self.wks and self.wks[task[0]] not in {
+            None,
+            AbsentValue.ABSENT,
+        }
 
     def is_allocated(self, task: Task, unary_resource: WorkStation) -> bool:
         return self.wks[task[0]] == unary_resource
@@ -140,7 +148,11 @@ class RCALBPLVectorSolution(RCALBPLSolution):
         self.raw = sol.raw
 
 
-class RCALBPLProblem(SchedulingProblem[Task], AllocationProblem[Task, WorkStation]):
+class RCALBPLProblem(
+    SchedulingProblem[Task],
+    AllocationProblem[Task, WorkStation],
+    NoOptionalTasksProblem[Task],
+):
     """
     Problem definition for Resource-Constrained Assembly Line Balancing
     with Learning Effect (RC-ALBP/L).
