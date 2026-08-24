@@ -6,6 +6,7 @@ import logging
 
 import pytest
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.callbacks.loggers import (
     ObjectiveLogger,
 )
@@ -123,8 +124,8 @@ def test_osp_evaluate(simple_osp_problem):
         machine_index=[[0, 1, 2], [0, 1, 2]],
     )
     evaluation = problem.evaluate(sol)
-    assert "makespan" in evaluation
-    assert evaluation["makespan"] == 10  # max end time
+    assert Objective.MAKESPAN in evaluation
+    assert evaluation[Objective.MAKESPAN] == 10  # max end time
 
 
 @pytest.mark.parametrize("jsp_file", get_data_available()[:3])
@@ -162,4 +163,4 @@ def test_osp_cpsat_solver(simple_osp_problem):
     best_solution = results[-1][0]
     assert problem.satisfy(best_solution)
     evaluation = problem.evaluate(best_solution)
-    assert evaluation["makespan"] > 0
+    assert evaluation[Objective.MAKESPAN] > 0

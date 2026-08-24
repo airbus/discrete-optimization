@@ -28,6 +28,10 @@ from discrete_optimization.generic_tasks_tools.calendar_resource import (
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
+    Objective,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.multimode import ModeConstraintType
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
@@ -276,11 +280,21 @@ class RcpspProblem(
             )
         else:
             self.special_constraints = special_constraints
-
+        super().is_optional()
         self.update_problem()
 
-    def is_optional(self, task: Task) -> bool:
-        return False
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        from discrete_optimization.generic_tasks_tools.objectives.utils import (
+            Objective,
+            get_objective_computer_class,
+        )
+
+        return [
+            class_objective_computer_class(problem=self, weight_objective=1)
+            for class_objective_computer_class in get_objective_computer_class(
+                Objective.MAKESPAN
+            )
+        ]
 
     def update_problem(self) -> None:
         """Method to call when some attributes have been modified.
@@ -651,7 +665,7 @@ class RcpspProblem(
             variable
         )
         return {
-            "makespan": float(obj_makespan),
+            Objective.MAKESPAN: float(obj_makespan),
             "mean_resource_reserve": obj_mean_resource_reserve,
             "constraint_penalty": float(penalty),
         }
@@ -661,7 +675,9 @@ class RcpspProblem(
 
     def evaluate_mobj_from_dict(self, dict_values: dict[str, float]) -> TupleFitness:
         return TupleFitness(
-            np.array([-dict_values["makespan"], dict_values["mean_resource_reserve"]]),
+            np.array(
+                [-dict_values[Objective.MAKESPAN], dict_values["mean_resource_reserve"]]
+            ),
             2,
         )
 
@@ -745,16 +761,17 @@ class RcpspProblem(
     def get_objective_register(self) -> ObjectiveRegister:
         objective_handling = ObjectiveHandling.SINGLE
         dict_objective = {
-            "makespan": ObjectiveDoc(type=TypeObjective.OBJECTIVE, default_weight=-1.0)
+            Objective.MAKESPAN: ObjectiveDoc(
+                type=TypeObjective.OBJECTIVE, default_weight=1.0
+            )
         }
-        # "mean_resource_reserve": {"type": TypeObjective.OBJECTIVE, "default_weight": 1}}
         if self.do_special_constraints:
             objective_handling = ObjectiveHandling.AGGREGATE
             dict_objective["constraint_penalty"] = ObjectiveDoc(
-                type=TypeObjective.PENALTY, default_weight=-100.0
+                type=TypeObjective.PENALTY, default_weight=100.0
             )
         return ObjectiveRegister(
-            objective_sense=ModeOptim.MAXIMIZATION,
+            objective_sense=ModeOptim.MINIMIZATION,
             objective_handling=objective_handling,
             dict_objective_to_doc=dict_objective,
         )
