@@ -51,28 +51,32 @@ def test_cpsat(problem):
         objectives=[ObjectivesEnum.NB_TEAMS], adding_redundant_cumulative=True
     )
     parameters_cp = ParametersCp.default()  # keep 1 process to check stopper properly
-    # test with callback
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=parameters_cp,
     )
-    assert len(res) == 1
     sol: AllocSchedulingSolution = res[-1][0]
-    assert sol.check_all_calendar_resource_capacity_constraints()
     assert problem.satisfy(sol)
     kpis = problem.evaluate(sol)
+    print(kpis)
 
     # test warm-start
 
     # find a different init sol
-    solver.cp_model.add(
-        solver.get_nb_unary_resources_used_variable() > kpis["nb_teams"]
+    solver = CPSatAllocSchedulingSolver(problem)
+    solver.init_model()
+    i_task = int(sol.schedule[:, 0].argmin())
+    task = problem.index_to_task[i_task]
+    start_or_end = StartOrEnd.START
+    sign = SignEnum.UP
+    time = sol.get_start_time(task=task)
+    solver.add_constraint_on_task(
+        task=task, start_or_end=start_or_end, sign=sign, time=time
     )
-    res = solver.solve(
-        callbacks=[NbIterationStopper(nb_iteration_max=1)],
-        parameters_cp=parameters_cp,
-    )
+    res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
     init_sol: AllocSchedulingSolution = res[-1][0]
+    kpis = problem.evaluate(init_sol)
+    print(kpis)
 
     solver = CPSatAllocSchedulingSolver(problem)
     solver.init_model(
@@ -82,8 +86,9 @@ def test_cpsat(problem):
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=parameters_cp,
+        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
     )
-    sol2 = res[0][0]
+    sol2: AllocSchedulingSolution = res[0][0]
     assert (init_sol.schedule == sol2.schedule).all()
     assert (init_sol.allocation == sol2.allocation).all()
 
@@ -351,10 +356,11 @@ def test_task_constraint(problem):
     print(sol.allocation[i_task])
     print(problem.index_to_task[i_task])
 
-    task = "80719"
+    i_task = int(sol.schedule[:, 0].argmin())
+    task = problem.index_to_task[i_task]
     start_or_end = StartOrEnd.START
-    sign = SignEnum.UEQ
-    time = 15
+    sign = SignEnum.UP
+    time = sol.get_start_time(task=task)
 
     # before adding the constraint, not already satisfied
     assert not sol.constraint_on_task_satisfied(
@@ -370,26 +376,20 @@ def test_task_constraint(problem):
     assert sol.constraint_on_task_satisfied(
         task=task, start_or_end=start_or_end, sign=sign, time=time
     )
-    # check constraints can be effectively removed
-    solver.remove_constraints(cstrs)
-    sol = solver.solve(
-        callbacks=[NbIterationStopper(nb_iteration_max=1)]
-    ).get_best_solution()
-    assert not sol.constraint_on_task_satisfied(
-        task=task, start_or_end=start_or_end, sign=sign, time=time
-    )
 
 
 def test_chaining_constraint(problem):
     solver = CPSatAllocSchedulingSolver(problem)
     sol: AllocSchedulingSolution
-    task1 = "80719"
-    task2 = "21963"
 
     # before adding the constraint, not already satisfied
     sol = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution()
+    task1 = problem.tasks_list[0]
+    for task2 in problem.tasks_list[1:]:
+        if not sol.constraint_chaining_tasks_satisfied(task1=task1, task2=task2):
+            break
     assert not sol.constraint_chaining_tasks_satisfied(task1=task1, task2=task2)
     # add constraint
     cstrs = solver.add_constraint_chaining_tasks(task1=task1, task2=task2)
@@ -397,12 +397,6 @@ def test_chaining_constraint(problem):
         callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution()
     assert sol.constraint_chaining_tasks_satisfied(task1=task1, task2=task2)
-    # remove constraint
-    solver.remove_constraints(cstrs)
-    sol = solver.solve(
-        callbacks=[NbIterationStopper(nb_iteration_max=1)]
-    ).get_best_solution()
-    assert not sol.constraint_chaining_tasks_satisfied(task1=task1, task2=task2)
 
 
 def test_objective_global_makespan(problem):

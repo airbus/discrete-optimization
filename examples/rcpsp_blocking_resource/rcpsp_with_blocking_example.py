@@ -12,9 +12,7 @@ This shows how blocking constraints affect optimal schedules.
 """
 
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
-from discrete_optimization.rcpsp.solvers.cpsat_auto import (
-    CpSatAutoRcpspSolver,
-)
+from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
 from discrete_optimization.rcpsp_blocking_resource.blocking_generator import (
     generate_setup_time_blocking,
 )
@@ -41,7 +39,7 @@ def solve_and_compare():
     print("SCENARIO 1: Standard RCPSP (no blocking)")
     print("-" * 80)
 
-    solver1 = CpSatAutoRcpspSolver(base_problem)
+    solver1 = CpSatRcpspSolver(base_problem)
     solver1.init_model()
     result1 = solver1.solve(time_limit=10)
     sol1 = result1.get_best_solution()
@@ -63,7 +61,7 @@ def solve_and_compare():
         f"Gap blocking constraints: {len(problem_setup.get_flexible_gap_blocking_constraints())}"
     )
 
-    solver2 = CpSatAutoRcpspSolver(problem_setup)
+    solver2 = CpSatRcpspSolver(problem_setup)
     solver2.init_model()
     result2 = solver2.solve(time_limit=10)
     sol2 = result2.get_best_solution()
@@ -88,7 +86,7 @@ def solve_and_compare():
         f"Gap blocking constraints: {len(problem_aggressive.get_flexible_gap_blocking_constraints())}"
     )
 
-    solver3 = CpSatAutoRcpspSolver(problem_aggressive)
+    solver3 = CpSatRcpspSolver(problem_aggressive)
     solver3.init_model()
     result3 = solver3.solve(time_limit=10)
     sol3 = result3.get_best_solution()
@@ -117,7 +115,7 @@ def solve_and_compare():
         f"Gap blocking constraints: {len(problem_conservative.get_flexible_gap_blocking_constraints())}"
     )
 
-    solver4 = CpSatAutoRcpspSolver(problem_conservative)
+    solver4 = CpSatRcpspSolver(problem_conservative)
     solver4.init_model()
     result4 = solver4.solve(time_limit=10)
     sol4 = result4.get_best_solution()
