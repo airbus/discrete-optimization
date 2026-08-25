@@ -1,0 +1,9 @@
+test_id,status,mode_optim,objective
+tests/rcpsp_multiskill/solvers/test_cpsat_non_regression.py::test_cpsat_solver[mslib-MSLIB1-MSLIB_Set1_42-cpsat-30],OPTIMAL,1,"42"
+tests/rcpsp_multiskill/solvers/test_cpsat_non_regression.py::test_cpsat_solver[mslib-MSLIB2-MSLIB_Set2_3360-cpsat-30],OPTIMAL,1,"41"
+tests/rcpsp_multiskill/solvers/test_cpsat_non_regression.py::test_cpsat_solver[mslib-MSLIB2-MSLIB_Set2_6363-cpsat-30],OPTIMAL,1,"63"
+tests/rcpsp_multiskill/solvers/test_cpsat_non_regression.py::test_cpsat_solver[mslib-MSLIB2-MSLIB_Set2_42-cpsat-30],OPTIMAL,1,"29"
+tests/rcpsp_multiskill/solvers/test_cpsat_non_regression.py::test_cpsat_solver[mslib-MSLIB3-MSLIB_Set3_42-cpsat-30],OPTIMAL,1,"81"
+tests/rcpsp_multiskill/solvers/test_cpsat_non_regression.py::test_cpsat_solver[mslib-MSLIB3-MSLIB_Set3_7127-cpsat-30],OPTIMAL,1,"79"
+tests/rcpsp_multiskill/solvers/test_cpsat_non_regression.py::test_cpsat_solver[mslib-MSLIB4-MSLIB_Set4_3860-cpsat-30],SATISFIED,1,"26"
+tests/rcpsp_multiskill/solvers/test_cpsat_non_regression.py::test_cpsat_solver[mslib-MSLIB4-MSLIB_Set4_42-cpsat-30],OPTIMAL,1,"72"
