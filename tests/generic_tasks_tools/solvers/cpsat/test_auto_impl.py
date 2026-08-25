@@ -29,13 +29,13 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.rcpsp import RcpspProblem
 from discrete_optimization.rcpsp.solution import RcpspSolution
-from discrete_optimization.rcpsp.solvers.cpsat_auto import CpSatAutoRcpspSolver
+from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
 from discrete_optimization.rcpsp.special_constraints import (
     SpecialConstraintsDescription,
 )
 from discrete_optimization.rcpsp_multiskill.problem import MultiskillRcpspSolution
-from discrete_optimization.rcpsp_multiskill.solvers.cpsat_auto import (
-    CpSatAutoMultiskillRcpspSolver,
+from discrete_optimization.rcpsp_multiskill.solvers.cpsat import (
+    CpSatMultiskillRcpspSolver,
 )
 from discrete_optimization.shop.fjsp.problem import FJobShopSolution
 from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
@@ -288,7 +288,7 @@ def test_rcpsp_simple():
         horizon=horizon,
         special_constraints=special_constraints,
     )
-    solver = CpSatAutoRcpspSolver(problem=problem)
+    solver = CpSatRcpspSolver(problem=problem)
     result = solver.solve(time_limit=10, parameters_cp=ParametersCp.default())
     solution: RcpspSolution = result.get_best_solution()
 
@@ -388,7 +388,7 @@ def test_rcpsp_mm():
         )
         problem.resources[resource][10:15] = 0
     problem.update_problem()
-    solver = CpSatAutoRcpspSolver(problem=problem)
+    solver = CpSatRcpspSolver(problem=problem)
     solution, _ = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=ParametersCp.default(),
@@ -506,7 +506,7 @@ def test_rcpsp_multiskill(
     problem.mode_details[task][2]["R0"] = 1
     problem.mode_details[task][1]["R0"] = 2
     problem.update_problem()
-    solver = CpSatAutoMultiskillRcpspSolver(
+    solver = CpSatMultiskillRcpspSolver(
         problem=problem,
     )
     solver.init_model(

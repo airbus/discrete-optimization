@@ -28,7 +28,6 @@ from discrete_optimization.generic_tools.study.study import Study
 from discrete_optimization.rcpsp import RcpspProblem
 from discrete_optimization.rcpsp.parser import parse_file_mmlib
 from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
-from discrete_optimization.rcpsp.solvers.cpsat_auto import CpSatAutoRcpspSolver
 from discrete_optimization.rcpsp.solvers.optal import OptalRcpspSolver
 
 mmlib_home = os.path.join(get_data_home(), "mmlib")
@@ -71,15 +70,15 @@ def problem_factory(instance: str) -> RcpspProblem:
 p = ParametersCp.default_cpsat()
 p.nb_process = 12
 solver_configs = {
-    "cpsat-multiproc": SolverConfig(
+    "cpsat": SolverConfig(
         cls=CpSatRcpspSolver,
         kwargs=dict(
             time_limit=time_limit,
             parameters_cp=p,
         ),
     ),
-    "cpsat-auto+CPM": SolverConfig(
-        cls=CpSatAutoRcpspSolver,
+    "cpsat+CPM": SolverConfig(
+        cls=CpSatRcpspSolver,
         kwargs=dict(
             time_limit=time_limit,
             parameters_cp=p,
@@ -87,8 +86,8 @@ solver_configs = {
             avoid_interval_optional=False,
         ),
     ),
-    "cpsat-auto+CPM+energy": SolverConfig(
-        cls=CpSatAutoRcpspSolver,
+    "cpsat+CPM+energy": SolverConfig(
+        cls=CpSatRcpspSolver,
         kwargs=dict(
             time_limit=time_limit,
             parameters_cp=p,
@@ -97,14 +96,14 @@ solver_configs = {
             avoid_interval_optional=False,
         ),
     ),
-    "cpsat-auto+no_opt_interval": SolverConfig(
-        cls=CpSatAutoRcpspSolver,
+    "cpsat+no_opt_interval": SolverConfig(
+        cls=CpSatRcpspSolver,
         kwargs=dict(
             time_limit=time_limit, parameters_cp=p, avoid_interval_optional=True
         ),
     ),
-    "cpsat-auto+no_opt_interval+CPM+energy": SolverConfig(
-        cls=CpSatAutoRcpspSolver,
+    "cpsat+no_opt_interval+CPM+energy": SolverConfig(
+        cls=CpSatRcpspSolver,
         kwargs=dict(
             time_limit=time_limit,
             parameters_cp=p,

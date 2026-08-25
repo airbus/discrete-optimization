@@ -31,7 +31,6 @@ def test_imopse_cpsat():
     cp_model.init_model(
         one_worker_per_task=True,
     )
-    cp_model.cp_model.Minimize(cp_model.variables["makespan"])
     p = ParametersCp.default_cpsat()
     res = cp_model.solve(
         parameters_cp=p, time_limit=20, callbacks=[NbIterationStopper(1)]
@@ -41,35 +40,44 @@ def test_imopse_cpsat():
 
 
 @pytest.mark.parametrize(
-    "one_worker_per_task, one_skill_per_task, exact_skill, slack_skill",
+    "one_worker_per_task, one_skill_per_task, exact_skill, slack_skill, use_energy_constraints, redundant_skill_cumulative",
     [
-        (True, False, False, False),
-        (True, False, False, False),
-        (False, True, False, False),
-        (False, True, True, False),
-        (False, True, True, True),
-        (False, False, True, True),
-        (True, False, True, True),
+        (False, False, False, False, False, False),
+        (False, False, False, False, False, True),
+        (True, False, False, False, False, False),
+        (True, False, False, False, True, False),
+        (False, True, False, False, False, False),
+        (False, True, True, False, False, False),
+        (False, True, True, True, False, False),
+        (False, False, True, True, False, False),
+        (True, False, True, True, False, False),
     ],
 )
 def test_imopse_cpsat_w_non_renewable_n_cumulative_resource(
-    one_worker_per_task, one_skill_per_task, exact_skill, slack_skill
+    one_worker_per_task,
+    one_skill_per_task,
+    exact_skill,
+    slack_skill,
+    use_energy_constraints,
+    redundant_skill_cumulative,
 ):
     file = [f for f in get_data_available() if "100_5_64_9.def" in f][0]
     model, _ = parse_file(file, max_horizon=1000)
     model.only_one_skill_per_task = one_skill_per_task
 
-    cp_model = CpSatMultiskillRcpspSolver(
+    solver = CpSatMultiskillRcpspSolver(
         problem=model,
     )
-    cp_model.init_model(
+    solver.init_model(
         one_worker_per_task=one_worker_per_task,
         exact_skill=exact_skill,
         slack_skill=slack_skill,
+        use_energy_constraints=use_energy_constraints,
+        redundant_skill_cumulative=redundant_skill_cumulative,
     )
-    cp_model.cp_model.Minimize(cp_model.variables["makespan"])
+    print(len(solver.cp_model.proto.constraints))
     p = ParametersCp.default_cpsat()
-    res = cp_model.solve(
+    res = solver.solve(
         parameters_cp=p, time_limit=20, callbacks=[NbIterationStopper(1)]
     )
     solution: MultiskillRcpspSolution = res.get_best_solution_fit()[0]
@@ -91,6 +99,7 @@ def test_imopse_cpsat_w_non_renewable_n_cumulative_resource(
     # add resources that should change schedule and mode choice
     task = model.tasks_list[0]
     t = solution.get_start_time(task)
+    print(t)
     assert solution.get_mode(task) == 1
     calendar = [2] * model.horizon
     calendar[t] = 1
@@ -108,15 +117,18 @@ def test_imopse_cpsat_w_non_renewable_n_cumulative_resource(
     # previous mode ko
     model.mode_details[task][1]["R0"] = 2
     model.update_problem()
-    cp_model = CpSatMultiskillRcpspSolver(
+    solver = CpSatMultiskillRcpspSolver(
         problem=model,
     )
-    cp_model.init_model(
-        one_worker_per_task=True,
+    solver.init_model(
+        one_worker_per_task=one_worker_per_task,
+        exact_skill=exact_skill,
+        slack_skill=slack_skill,
+        use_energy_constraints=use_energy_constraints,
+        redundant_skill_cumulative=redundant_skill_cumulative,
     )
-    cp_model.cp_model.Minimize(cp_model.variables["makespan"])
     p = ParametersCp.default_cpsat()
-    res = cp_model.solve(
+    res = solver.solve(
         parameters_cp=p, time_limit=20, callbacks=[NbIterationStopper(1)]
     )
     solution: MultiskillRcpspSolution = res.get_best_solution_fit()[0]
@@ -143,7 +155,6 @@ def test_imopse_cpsat_with_calendar(caplog):
     cp_model.init_model(
         one_worker_per_task=True,
     )
-    cp_model.cp_model.Minimize(cp_model.variables["makespan"])
     p = ParametersCp.default_cpsat()
     res = cp_model.solve(
         parameters_cp=p, time_limit=20, callbacks=[NbIterationStopper(1)]
@@ -301,10 +312,9 @@ def test_constraint_same_allocation_as_ref(problem):
         ref, tasks=subtasks, unary_resources=subresources
     )
     solver.add_constraint_on_task_unary_resource_allocation(
-        task=task, unary_resource=employee, used=True
-    )
-    solver.add_constraint_on_task_unary_resource_allocation(
-        task=98, unary_resource=employee, used=True
+        task=task,
+        unary_resource=employee,
+        used=not (ref.is_allocated(task=task, unary_resource=employee)),
     )
     sol = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)]

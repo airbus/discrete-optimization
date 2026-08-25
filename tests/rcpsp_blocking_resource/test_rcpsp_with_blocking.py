@@ -12,7 +12,7 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingMode,
 )
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
-from discrete_optimization.rcpsp.solvers.cpsat_auto import CpSatAutoRcpspSolver
+from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
 from discrete_optimization.rcpsp_blocking_resource.blocking_generator import (
     generate_batch_blocking,
     generate_combined_blocking,
@@ -88,7 +88,7 @@ def test_setup_blocking_affects_schedule():
     )
 
     # Solve base problem
-    solver_base = CpSatAutoRcpspSolver(base_problem)
+    solver_base = CpSatRcpspSolver(base_problem)
     solver_base.init_model()
     result_base = solver_base.solve(time_limit=5)
     sol_base = result_base.get_best_solution()
@@ -117,7 +117,7 @@ def test_setup_blocking_affects_schedule():
         flexible_gap_blocking_constraints=blocking_constraints,
     )
 
-    solver_blocking = CpSatAutoRcpspSolver(problem_blocking)
+    solver_blocking = CpSatRcpspSolver(problem_blocking)
     solver_blocking.init_model()
     result_blocking = solver_blocking.solve(time_limit=5)
     sol_blocking = result_blocking.get_best_solution()
@@ -162,7 +162,7 @@ def test_span_blocking_forces_reservation():
         span_blocking_constraints=span_constraints,
     )
 
-    solver = CpSatAutoRcpspSolver(problem)
+    solver = CpSatRcpspSolver(problem)
     solver.init_model()
     result = solver.solve(time_limit=5)
     sol = result.get_best_solution()
@@ -192,7 +192,7 @@ def test_generator_setup_blocking():
     assert len(gap_constraints) >= 0  # May be 0 if no tasks share resources
 
     # Should be solvable
-    solver = CpSatAutoRcpspSolver(problem)
+    solver = CpSatRcpspSolver(problem)
     solver.init_model()
     result = solver.solve(time_limit=10)
     sol = result.get_best_solution()
@@ -221,7 +221,7 @@ def test_generator_batch_blocking():
     assert len(span_constraints) >= 0
 
     # Should be solvable
-    solver = CpSatAutoRcpspSolver(problem)
+    solver = CpSatRcpspSolver(problem)
     solver.init_model()
     result = solver.solve(time_limit=10)
     sol = result.get_best_solution()
@@ -254,7 +254,7 @@ def test_generator_combined_blocking():
     assert len(gap_constraints) + len(span_constraints) >= 0
 
     # Should be solvable
-    solver = CpSatAutoRcpspSolver(problem)
+    solver = CpSatRcpspSolver(problem)
     solver.init_model()
     result = solver.solve(time_limit=10)
     sol = result.get_best_solution()
@@ -298,7 +298,7 @@ def test_blocking_constraints_validation():
     )
 
     # The blocking constraint should be enforced by the solver
-    solver = CpSatAutoRcpspSolver(problem)
+    solver = CpSatRcpspSolver(problem)
     solver.init_model()
     result = solver.solve(time_limit=5)
     sol = result.get_best_solution()

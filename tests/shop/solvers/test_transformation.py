@@ -17,7 +17,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import S
 from discrete_optimization.generic_tools.transformation.transformation_solver import (
     TransformationSolver,
 )
-from discrete_optimization.rcpsp.solvers.cpsat_auto import CpSatAutoRcpspSolver
+from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
 from discrete_optimization.rcpsp.solvers.pile import PileRcpspSolver
 from discrete_optimization.shop.base import Job, Subjob, SubjobRecipe
 from discrete_optimization.shop.fjsp.parser import get_data_available as get_fjsp_data
@@ -124,7 +124,7 @@ def test_jsp_via_rcpsp_cpsat(simple_jsp_problem):
     solver = TransformationSolver(
         transformation=ShopToRcpspMultimodeTransformation(),
         source_problem=simple_jsp_problem,
-        solver_brick=SubBrick(cls=CpSatAutoRcpspSolver, kwargs={}),
+        solver_brick=SubBrick(cls=CpSatRcpspSolver, kwargs={}),
     )
     solver.init_model()
     res = solver.solve(
@@ -192,7 +192,7 @@ def test_fjsp_via_rcpsp_cpsat(simple_fjsp_problem):
     solver = TransformationSolver(
         transformation=ShopToRcpspMultimodeTransformation(),
         source_problem=simple_fjsp_problem,
-        solver_brick=SubBrick(cls=CpSatAutoRcpspSolver, kwargs={}),
+        solver_brick=SubBrick(cls=CpSatRcpspSolver, kwargs={}),
     )
     solver.init_model()
     res = solver.solve(
@@ -260,7 +260,7 @@ def test_osp_via_rcpsp_cpsat(simple_osp_problem):
     solver = TransformationSolver(
         transformation=ShopToRcpspMultimodeTransformation(),
         source_problem=simple_osp_problem,
-        solver_brick=SubBrick(cls=CpSatAutoRcpspSolver, kwargs={}),
+        solver_brick=SubBrick(cls=CpSatRcpspSolver, kwargs={}),
     )
     solver.init_model()
     res = solver.solve(

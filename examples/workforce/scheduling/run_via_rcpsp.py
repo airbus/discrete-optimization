@@ -16,9 +16,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import S
 from discrete_optimization.generic_tools.transformation.transformation_solver import (
     TransformationSolver,
 )
-from discrete_optimization.rcpsp.solvers.cpsat_auto import (
-    CpSatAutoCumulativeResourceRcpspSolver,
-)
+from discrete_optimization.rcpsp.solvers.cpsat import CpSatCumulativeResourceRcpspSolver
 from discrete_optimization.workforce.scheduling.parser import (
     get_data_available,
     parse_json_to_problem,
@@ -44,7 +42,7 @@ def run_cpsat():
     solver = TransformationSolver(
         transformation=WorkforceSchedulingToRcpspTransformation(True, True, True),
         solver_brick=SubBrick(
-            CpSatAutoCumulativeResourceRcpspSolver,
+            CpSatCumulativeResourceRcpspSolver,
             {
                 "time_limit": 100,
                 "parameters_cp": p,
