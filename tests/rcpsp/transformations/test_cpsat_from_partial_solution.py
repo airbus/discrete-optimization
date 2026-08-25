@@ -12,7 +12,7 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
 )
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solution import RcpspSolution
-from discrete_optimization.rcpsp.solvers.cpsat_auto import CpSatAutoRcpspSolver
+from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
 from discrete_optimization.rcpsp.transformations.generic_scheduling_impl import (
     GenericSchedulingToRcpspTransformation,
     RcpspToGenericSchedulingTransformation,
@@ -63,7 +63,7 @@ def test_transfo_to_generic_and_subproblem_from_partial_solution():
     rcpsp_subproblem = back_transformation.transform_problem(
         source_problem=generic_subproblem
     )
-    rcpsp_solver = CpSatAutoRcpspSolver(problem=rcpsp_subproblem)
+    rcpsp_solver = CpSatRcpspSolver(problem=rcpsp_subproblem)
     rcpsp_subsolution: RcpspSolution = rcpsp_solver.solve(
         callbacks=[NbIterationStopper(1)]
     ).get_best_solution()

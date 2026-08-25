@@ -2,44 +2,41 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-from typing import Any, Iterable
+from typing import Any
 
 from ortools.sat.python.cp_model import (
-    Constraint,
     CpSolverSolutionCallback,
-    Domain,
-    IntervalVar,
-    LinearExpr,
-    LinearExprT,
 )
 
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.generic_scheduling import (
-    GenericSchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
+    RawSolution,
 )
-from discrete_optimization.generic_tools.do_problem import Problem, Solution
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
+    GenericSchedulingAutoCpSatSolver,
+)
+from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
-from discrete_optimization.generic_tools.result_storage.result_storage import (
-    ResultStorage,
-)
 from discrete_optimization.rcpsp_multiskill.problem import (
     NB_EMPLOYEES_LB,
+    CumulativeResource,
     MultiskillRcpspProblem,
-    MultiskillRcpspSolution,
     NonRenewableResource,
     NonSkillCumulativeResource,
     Skill,
     Task,
     UnaryResource,
 )
+from discrete_optimization.rcpsp_multiskill.transformations.generic_scheduling_impl import (
+    transform_solution_from_raw_generic_to_rcpsp_ms,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class CpSatMultiskillRcpspSolver(
-    GenericSchedulingCpSatSolver[
+    GenericSchedulingAutoCpSatSolver[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
 ):
@@ -51,636 +48,133 @@ class CpSatMultiskillRcpspSolver(
             name="redundant_worker_cumulative", choices=[True, False], default=True
         ),
     ]
+    use_only_skill_to_allocate = True  # do not allocate worker without relevant skills
+
     problem: MultiskillRcpspProblem
 
-    def __init__(self, problem: Problem, **kwargs: Any):
-        super().__init__(problem, **kwargs)
+    def convert_task_variables_to_solution(
+        self, raw_sol: RawSolution[Task, UnaryResource, Skill]
+    ) -> Solution:
+        """Convert solution from autosolver format into do format.
+
+        To be used in `self.retrieve_solution()`.
+
+        Args:
+            raw_sol:
+
+        Returns:
+
+        """
+        sol = transform_solution_from_raw_generic_to_rcpsp_ms(
+            raw_sol=raw_sol, problem=self.problem
+        )
+        sol._internal_obj = raw_sol.metadata
+        return sol
+
+    def retrieve_tasks_variables(
+        self, cpsolvercb: CpSolverSolutionCallback
+    ) -> RawSolution[Task, UnaryResource, Skill]:
+        """Construct each task variable from the cpsat solver internal solution.
+
+        It will be called each time the cpsat solver find a new solution.
+        At that point, value of internal variables are accessible via `cpsolvercb.value(VARIABLE_NAME)`.
+
+        We override the method from generic auto solver to add internal objective value.
+
+        Args:
+            cpsolvercb: the ortools callback called when the cpsat solver finds a new solution.
+
+        Returns:
+            the task variables for the intermediate solution
+
+        """
+        raw_sol: RawSolution[Task, UnaryResource, Skill] = (
+            super().retrieve_tasks_variables(cpsolvercb)
+        )
+
+        # internal objective
+        raw_sol.metadata["makespan"] = cpsolvercb.value(
+            self.get_global_makespan_variable()
+        )
+
+        return raw_sol
+
+    def include_constraint_on_cumulative_resource(
+        self, resource: CumulativeResource
+    ) -> bool:
+        """Whether the cp model should take into account the constraint on the given cumulative resource.
+
+        The constraints on skills as cumulative resources and on number of employees are to be added
+        according to `redundant_skill_cumulative` and `redundant_worker_cumulative` hyperparameters.
+
+        Args:
+            resource:
+
+        Returns:
+
+        """
+        if resource == NB_EMPLOYEES_LB:
+            return self._redundant_worker_cumulative
+        else:
+            return super().include_constraint_on_cumulative_resource(resource)
+
+    def init_model(self, **kwargs: Any) -> None:
         if self.problem.is_preemptive():
             raise NotImplementedError()
-        self.variables = {}
 
-    def get_skill_variable(
-        self, task: Task, unary_resource: UnaryResource, skill: Skill
-    ) -> LinearExprT:
-        try:
-            return self.variables["worker_variable"]["skill_used"][task][
-                unary_resource
-            ][skill]
-        except KeyError:
-            return 0
+        kwargs = self.complete_with_default_hyperparameters(kwargs)
 
-    def get_task_unary_resource_interval(
-        self, task: Task, unary_resource: UnaryResource
-    ) -> IntervalVar:
-        return self.variables["worker_variable"]["opt_intervals"][task][unary_resource]
-
-    def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
-        if not self.problem.is_multimode or len(self.problem.get_task_modes(task)) == 1:
-            return self.variables["base_variable"]["intervals"][task]
-        else:
-            return self.variables["mode_variable"]["opt_intervals"][task][mode]
-
-    def get_task_start_or_end_variable(
-        self, task: Task, start_or_end: StartOrEnd
-    ) -> LinearExprT:
-        if start_or_end == StartOrEnd.START:
-            key = "starts"
-        else:
-            key = "ends"
-
-        return self.variables["base_variable"][key][task]
-
-    def get_task_mode_is_present_variable(self, task: Task, mode: int) -> LinearExprT:
-        return self.variables["mode_variable"]["is_present"][task][mode]
-
-    def get_global_makespan_variable(self) -> LinearExprT:
-        self.remove_constraints_on_objective()
-        return self.variables["makespan"]
-
-    def get_task_unary_resource_is_present_variable(
-        self, task: Task, unary_resource: UnaryResource
-    ) -> LinearExprT:
-        try:
-            return self.variables["worker_variable"]["is_present"][task][unary_resource]
-        except KeyError:
-            return 0
-
-    def set_lexico_objective(self, obj: str) -> None:
-        self.cp_model.Minimize(self.variables[obj])
-
-    def add_lexico_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
-        return [self.cp_model.Add(self.variables[obj] <= int(value))]
-
-    @staticmethod
-    def implements_lexico_api() -> bool:
-        return True
-
-    def get_lexico_objectives_available(self) -> list[str]:
-        return ["makespan"]
-        # return ["makespan", "cost"]
-
-    def get_lexico_objective_value(self, obj: str, res: ResultStorage) -> float:
-        return min(s._internal_obj[obj] for s, _ in res.list_solution_fits)
-
-    def init_model(self, **args: Any) -> None:
-        args = self.complete_with_default_hyperparameters(args)
-        one_worker_per_task = args.get("one_worker_per_task", False)
-        one_skill_per_task = self.problem.only_one_skill_per_task
-        redundant_skill_cumulative = args["redundant_skill_cumulative"]
-        redundant_worker_cumulative = args["redundant_worker_cumulative"]
-        # store one_worker_per_task to be used in `is_compatible_task_unary_resource`
-        self.at_most_one_unary_resource_per_task = one_worker_per_task
-
-        super().init_model(**args)
-        self.variables = {}
-        self.create_base_variable()
-        self.create_opt_variable_modes()
-        self.create_employee_intervals(
-            one_worker_per_task=one_worker_per_task,
-            one_skill_per_task=one_skill_per_task,
-        )
-        self.create_skills_variables()
-        self.create_constraint_resource()
-        if redundant_skill_cumulative:
-            self.constraint_redundant_cumulative_skills()
-        if redundant_worker_cumulative:
-            self.constraint_redundant_cumulative_worker()
-        self.create_disjunctive_worker()
-        self.create_skills_constraint_to_mode()
-        self.create_skills_constraint_worker(**args)
-        self.create_skills_constraints_v2(**args)
-        self.create_precedence_constraints()
-        self.variables["makespan"] = self.variables["base_variable"]["ends"][
-            self.problem.sink_task
+        # redundant cumulative resources to consider
+        self.add_redundant_skill_cumulative_constraints = kwargs[
+            "redundant_skill_cumulative"
         ]
-        self.create_workload_variables()
-        objective = self.get_global_makespan_variable()
-        self.minimize_variable(objective)
+        self._redundant_worker_cumulative = kwargs["redundant_worker_cumulative"]
 
-    def get_lb_ub_start_end(self, task: Task) -> tuple[int, int, int, int]:
-        lbs, ubs, lbe, ube = 0, self.problem.horizon, 0, self.problem.horizon
-        if self.problem.special_constraints.start_times_window:
-            if task in self.problem.special_constraints.start_times_window:
-                x = self.problem.special_constraints.start_times_window[task]
-                if x[0] is not None:
-                    lbs = x[0]
-                if x[1] is not None:
-                    ubs = x[1]
-        if self.problem.special_constraints.end_times_window:
-            if task in self.problem.special_constraints.end_times_window:
-                x = self.problem.special_constraints.end_times_window[task]
-                if x[0] is not None:
-                    lbe = x[0]
-                if x[1] is not None:
-                    ube = x[1]
-        return int(lbs), int(ubs), int(lbe), int(ube)
+        # additional constraints (we solve a subproblem)
+        # allocation
+        self.at_most_one_unary_resource_per_task = kwargs.get(
+            "one_worker_per_task", False
+        )
+        # skill
+        self.use_exact_skill = kwargs.get("exact_skill", False)
+        self.use_slack_for_skill = kwargs.get("slack_skill", False)
 
-    def create_base_variable(self):
-        start_var = {}
-        end_var = {}
-        duration_var = {}
-        interval_var = {}
-        for task in self.problem.tasks_list:
-            lbs, ubs, lbe, ube = self.get_lb_ub_start_end(task)
-            possible_duration = [
-                self.problem.mode_details[task][m]["duration"]
-                for m in self.problem.mode_details[task]
-            ]
-            start_var[task] = self.cp_model.NewIntVar(
-                lb=lbs, ub=ubs, name=f"start_{task}"
-            )
-            end_var[task] = self.cp_model.NewIntVar(lb=lbe, ub=ube, name=f"end_{task}")
-            duration_var[task] = self.cp_model.NewIntVarFromDomain(
-                domain=Domain.FromValues(possible_duration), name=f"duration_{task}"
-            )
-            interval_var[task] = self.cp_model.NewIntervalVar(
-                start=start_var[task],
-                size=duration_var[task],
-                end=end_var[task],
-                name=f"interval_{task}",
-            )
-        self.variables["base_variable"] = {
-            "starts": start_var,
-            "ends": end_var,
-            "durations": duration_var,
-            "intervals": interval_var,
-        }
-
-    def create_opt_variable_modes(self):
-        if not self.problem.is_multimode:
-            self.variables["mode_variable"] = {"is_present": {}, "opt_intervals": {}}
-            return
-        opt_interval_var = {}
-        is_present_var = {}
-        for task in self.problem.tasks_list:
-            modes = list(self.problem.mode_details[task])
-            if len(modes) == 1:
-                continue
-            is_present_var[task] = {}
-            opt_interval_var[task] = {}
-            for mode in modes:
-                is_present_var[task][mode] = self.cp_model.NewBoolVar(
-                    name=f"{task}_{mode}"
-                )
-                opt_interval_var[task][mode] = self.cp_model.NewOptionalIntervalVar(
-                    start=self.variables["base_variable"]["starts"][task],
-                    size=self.problem.mode_details[task][mode]["duration"],
-                    end=self.variables["base_variable"]["ends"][task],
-                    is_present=is_present_var[task][mode],
-                    name=f"opt_{task}_{mode}",
-                )
-            self.cp_model.AddExactlyOne(is_present_var[task].values())
-        self.variables["mode_variable"] = {
-            "is_present": is_present_var,
-            "opt_intervals": opt_interval_var,
-        }
-
-    def create_employee_intervals(
-        self, one_worker_per_task: bool, one_skill_per_task: bool
-    ):
-        opt_interval_var = {}
-        is_present_var = {}
-        skills_used_var = {}
-        for task in self.problem.tasks_list:
-            skills_of_task = set()
-            for mode in self.problem.mode_details[task]:
-                for skill in self.problem.skills_set:
-                    if self.problem.mode_details[task][mode].get(skill, 0) > 0:
-                        skills_of_task.add(skill)
-            if len(skills_of_task) == 0:
-                # no need of employees
-                continue
-            is_present_var[task] = {}
-            opt_interval_var[task] = {}
-            skills_used_var[task] = {}
-            for worker in self.problem.employees:
-                if (
-                    one_worker_per_task
-                    and any(
-                        all(
-                            self.problem.employees[worker].get_skill_level(s)
-                            >= self.problem.mode_details[task][mode].get(s, 0)
-                            for s in skills_of_task
-                        )
-                        for mode in self.problem.mode_details[task]
-                    )
-                ) or (
-                    not one_worker_per_task
-                    and any(
-                        worker in self.problem.employees_per_skill[s]
-                        for s in skills_of_task
-                    )
-                ):
-                    skills_used_var[task][worker] = {}
-                    is_present_var[task][worker] = self.cp_model.NewBoolVar(
-                        name=f"used_{task}_{worker}"
-                    )
-                    opt_interval_var[task][worker] = (
-                        self.cp_model.NewOptionalIntervalVar(
-                            start=self.variables["base_variable"]["starts"][task],
-                            size=self.variables["base_variable"]["durations"][task],
-                            end=self.variables["base_variable"]["ends"][task],
-                            is_present=is_present_var[task][worker],
-                            name=f"opt_{task}_{worker}",
-                        )
-                    )
-                    skills_of_worker = self.problem.employees[
-                        worker
-                    ].get_non_zero_skills()
-                    for s in skills_of_task:
-                        if s not in skills_of_worker:
-                            # skills_used_var[task][worker][s] = 0
-                            continue
-                        else:
-                            if not one_skill_per_task or len(skills_of_worker) == 1:
-                                skills_used_var[task][worker][s] = is_present_var[task][
-                                    worker
-                                ]
-                            else:
-                                skills_used_var[task][worker][s] = (
-                                    self.cp_model.NewBoolVar(
-                                        name=f"skill_{task}_{worker}_{s}"
-                                    )
-                                )
-                    for s in skills_used_var[task][worker]:
-                        self.cp_model.Add(
-                            skills_used_var[task][worker][s]
-                            <= is_present_var[task][worker]
-                        )
-                    self.cp_model.AddBoolOr(
-                        [
-                            skills_used_var[task][worker][s]
-                            for s in skills_used_var[task][worker]
-                        ]
-                    ).OnlyEnforceIf(is_present_var[task][worker])
-                    if one_skill_per_task:
-                        if len(skills_used_var[task][worker]) >= 1:
-                            self.cp_model.AddAtMostOne(
-                                [
-                                    skills_used_var[task][worker][s]
-                                    for s in skills_used_var[task][worker]
-                                ]
-                            )
-            if one_worker_per_task:
-                self.cp_model.AddAtMostOne(
-                    [is_present_var[task][worker] for worker in is_present_var[task]]
-                )
-        self.variables["worker_variable"] = {
-            "is_present": is_present_var,
-            "opt_intervals": opt_interval_var,
-            "skills_used": skills_used_var,
-        }
-
-    def create_skills_variables(self):
-        skills_var = {}
-        for task in self.problem.tasks_list:
-            skills_of_task = set()
-            for mode in self.problem.mode_details[task]:
-                for skill in self.problem.skills_set:
-                    if self.problem.mode_details[task][mode].get(skill, 0) > 0:
-                        skills_of_task.add(skill)
-            skills_var[task] = {}
-            for s in skills_of_task:
-                skills_var[task][s] = self.cp_model.NewIntVar(
-                    lb=min(
-                        [
-                            self.problem.mode_details[task][m].get(s, 0)
-                            for m in self.problem.mode_details[task]
-                        ]
-                    ),
-                    ub=max(
-                        [
-                            self.problem.mode_details[task][m].get(s, 0)
-                            for m in self.problem.mode_details[task]
-                        ]
-                    ),
-                    name=f"skills_{task}_{s}",
-                )
-        self.variables["skills_req"] = skills_var
+        super().init_model(**kwargs)
 
     def create_workload_variables(self):
         workload = {}
         for emp in self.problem.employees:
-            tasks = {
-                task
-                for task in self.variables["worker_variable"]["is_present"]
-                if emp in self.variables["worker_variable"]["is_present"][task]
-            }
             workload[emp] = sum(
                 [
-                    self.problem.mode_details[t][1]["duration"]
-                    * self.variables["worker_variable"]["is_present"][t][emp]
-                    for t in tasks
+                    # NB: we use duration of mode 1 instead of actual duration variable to avoid quadratic constraint
+                    # (impossible in cpsat)
+                    # the constraint is correct in single mode
+                    self.problem.get_task_mode_duration(task=task, mode=1)
+                    * is_present_task_worker[emp]
+                    for task, is_present_task_worker in self.allocation_is_present.items()
+                    if emp in is_present_task_worker
                 ]
             )
-
-        # Handle case when there are no employees
-        if len(workload) == 0:
-            # Create dummy variables with value 0
-            max_workload = self.cp_model.NewIntVar(lb=0, ub=0, name=f"max_workload")
-            min_workload = self.cp_model.NewIntVar(lb=0, ub=0, name=f"min_workload")
-        else:
-            max_workload = self.cp_model.NewIntVar(
-                lb=0, ub=self.problem.horizon, name=f"max_workload"
-            )
-            min_workload = self.cp_model.NewIntVar(
-                lb=0, ub=self.problem.horizon, name=f"min_workload"
-            )
-            self.cp_model.AddMaxEquality(
-                max_workload, [workload[emp] for emp in workload]
-            )
-            self.cp_model.AddMinEquality(
-                min_workload, [workload[emp] for emp in workload]
-            )
-
-        self.variables["max_workload"] = max_workload
-        self.variables["min_workload"] = min_workload
-
-    def create_skills_constraint_to_mode(self):
-        for task in self.variables["skills_req"]:
-            if task in self.variables["mode_variable"]["is_present"]:
-                for mode in self.variables["mode_variable"]["is_present"][task]:
-                    for s in self.variables["skills_req"][task]:
-                        val = self.problem.mode_details[task][mode].get(s, 0)
-                        self.cp_model.Add(
-                            self.variables["skills_req"][task][s] == val
-                        ).OnlyEnforceIf(
-                            self.variables["mode_variable"]["is_present"][task][mode]
-                        )
-
-    def create_skills_constraint_worker(self, **args):
-        exact_skill = args.get("exact_skill", False)
-        slack_skill = args.get("slack_skill", False)
-        if slack_skill:
-            slack_skill_dict = {}
-        for task in self.variables["skills_req"]:
-            if slack_skill:
-                slack_skill_dict[task] = {}
-            for s in self.variables["skills_req"][task]:
-                if slack_skill:
-                    slack_skill_dict[task][s] = self.cp_model.NewIntVar(
-                        lb=0, ub=5, name=f"slack_{task}_{s}"
-                    )
-                terms = []
-                weights = []
-                for worker in self.variables["worker_variable"]["is_present"][task]:
-                    skill_value = self.problem.employees[worker].get_skill_level(s)
-                    if skill_value != 0:
-                        terms.append(
-                            self.variables["worker_variable"]["is_present"][task][
-                                worker
-                            ]
-                        )
-                        weights.append(skill_value)
-                if exact_skill:
-                    if not slack_skill:
-                        self.cp_model.Add(
-                            LinearExpr.weighted_sum(terms, weights)
-                            == self.variables["skills_req"][task][s]
-                        )
-                    else:
-                        self.cp_model.Add(
-                            LinearExpr.weighted_sum(terms, weights)
-                            == self.variables["skills_req"][task][s]
-                            + slack_skill_dict[task][s]
-                        )
-
-                else:
-                    if not slack_skill:
-                        self.cp_model.Add(
-                            LinearExpr.weighted_sum(terms, weights)
-                            >= self.variables["skills_req"][task][s]
-                        )
-                    else:
-                        self.cp_model.Add(
-                            LinearExpr.weighted_sum(terms, weights)
-                            >= self.variables["skills_req"][task][s]
-                            + slack_skill_dict[task][s]
-                        )
-        if slack_skill:
-            self.variables["slack_skill_var"] = slack_skill_dict
-
-    def create_skills_constraints_v2(self, **args):
-        """
-        using skills_used variable
-        """
-        exact_skill = args.get("exact_skill", False)
-        slack_skill = args.get("slack_skill", False)
-        if slack_skill:
-            slack_skill_dict = {}
-        for task in self.variables["skills_req"]:
-            if slack_skill:
-                slack_skill_dict[task] = {}
-            for s in self.variables["skills_req"][task]:
-                if slack_skill:
-                    slack_skill_dict[task][s] = self.cp_model.NewIntVar(
-                        lb=0, ub=5, name=f"slack_{task}_{s}"
-                    )
-                terms = []
-                weights = []
-                for worker in self.variables["worker_variable"]["is_present"][task]:
-                    if (
-                        s
-                        in self.variables["worker_variable"]["skills_used"][task][
-                            worker
-                        ]
-                    ):
-                        terms.append(
-                            self.variables["worker_variable"]["skills_used"][task][
-                                worker
-                            ][s]
-                        )
-                        weights.append(
-                            self.problem.employees[worker].get_skill_level(s)
-                        )
-                if exact_skill:
-                    if not slack_skill:
-                        self.cp_model.Add(
-                            LinearExpr.weighted_sum(terms, weights)
-                            == self.variables["skills_req"][task][s]
-                        )
-                    else:
-                        self.cp_model.Add(
-                            LinearExpr.weighted_sum(terms, weights)
-                            == self.variables["skills_req"][task][s]
-                            + slack_skill_dict[task][s]
-                        )
-
-                else:
-                    if not slack_skill:
-                        self.cp_model.Add(
-                            LinearExpr.weighted_sum(terms, weights)
-                            >= self.variables["skills_req"][task][s]
-                        )
-                    else:
-                        self.cp_model.Add(
-                            LinearExpr.weighted_sum(terms, weights)
-                            >= self.variables["skills_req"][task][s]
-                            + slack_skill_dict[task][s]
-                        )
-        if slack_skill:
-            self.variables["slack_skill_var"] = slack_skill_dict
-
-    def create_constraint_resource(self):
-        for r in self.problem.resources_list:
-            if r in self.problem.non_renewable_resources:
-                self.create_non_renewable_resources_constraint(r)
-            else:
-                self.create_calendar_resources_constraint(r)
-
-    def create_disjunctive_worker(self):
-        for worker in self.problem.employees:
-            self.create_calendar_resources_constraint(worker)
-
-    def constraint_redundant_cumulative_skills(self):
-        for skill in self.problem.skills_set:
-            self.create_calendar_resources_constraint(skill)
-
-    def constraint_redundant_cumulative_worker(self):
-        self.create_calendar_resources_constraint(NB_EMPLOYEES_LB)
-
-    def constraint_mode(self):
-        for task in self.variables["mode_variable"]["is_present"]:
-            self.cp_model.AddExactlyOne(
-                [
-                    self.variables["mode_variable"]["is_present"][task][m]
-                    for m in self.variables["mode_variable"]["is_present"][task]
-                ]
-            )
-
-    def create_cost_objective_function(self):
-        max_salary = max(
-            self.problem.employees[x].salary for x in self.problem.employees
+        max_workload = self.cp_model.new_int_var(
+            lb=0, ub=self.problem.horizon, name=f"max_workload"
         )
-        cost_per_tasks = {
-            task: self.cp_model.NewIntVar(
-                lb=0,
-                ub=int(
-                    10
-                    * max_salary
-                    * max(
-                        self.problem.mode_details[task][m]["duration"]
-                        for m in self.problem.mode_details[task]
-                    )
-                ),
-                name=f"cost_{task}",
-            )
-            for task in self.problem.tasks_list
-        }
-        for task in self.problem.tasks_list:
-            modes = list(self.problem.mode_details[task].keys())
-            if len(modes) == 1:
-                dur = self.problem.mode_details[task][modes[0]]["duration"]
-                if task not in self.variables["worker_variable"]["is_present"]:
-                    self.cp_model.Add(cost_per_tasks[task] == 0)
-                else:
-                    workers = [
-                        w for w in self.variables["worker_variable"]["is_present"][task]
-                    ]
-                    self.cp_model.Add(
-                        LinearExpr.weighted_sum(
-                            [
-                                self.variables["worker_variable"]["is_present"][task][w]
-                                for w in self.variables["worker_variable"][
-                                    "is_present"
-                                ][task]
-                            ],
-                            [
-                                dur * int(10 * self.problem.employees[w].salary)
-                                for w in workers
-                            ],
-                        )
-                        == cost_per_tasks[task]
-                    )
-            else:
-                workers = [
-                    w for w in self.variables["worker_variable"]["is_present"][task]
-                ]
-                self.cp_model.AddMultiplicationEquality(
-                    cost_per_tasks[task],
-                    [
-                        self.variables["base_variable"]["durations"][task],
-                        LinearExpr.weighted_sum(
-                            [
-                                self.variables["worker_variable"]["is_present"][task][w]
-                                for w in self.variables["worker_variable"][
-                                    "is_present"
-                                ][task]
-                            ],
-                            [
-                                int(10 * self.problem.employees[w].salary)
-                                for w in workers
-                            ],
-                        ),
-                    ],
-                )
-        self.variables["cost"] = sum([cost_per_tasks[t] for t in cost_per_tasks])
-
-    def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
-        logger.info(
-            f"Current obj {cpsolvercb.ObjectiveValue()}, bound={cpsolvercb.BestObjectiveBound()}"
+        min_workload = self.cp_model.new_int_var(
+            lb=0, ub=self.problem.horizon, name=f"min_workload"
         )
-        modes_dict = {}
-        schedule = {}
-        employee_usage = {}
-        for task in self.variables["base_variable"]["starts"]:
-            schedule[task] = {
-                "start_time": cpsolvercb.Value(
-                    self.variables["base_variable"]["starts"][task]
-                ),
-                "end_time": cpsolvercb.Value(
-                    self.variables["base_variable"]["ends"][task]
-                ),
-            }
-        for task in self.problem.tasks_list:
-            modes = list(self.problem.mode_details[task].keys())
-            if len(modes) == 1:
-                modes_dict[task] = modes[0]
-            else:
-                for mode in self.variables["mode_variable"]["is_present"][task]:
-                    if cpsolvercb.Value(
-                        self.variables["mode_variable"]["is_present"][task][mode]
-                    ):
-                        modes_dict[task] = mode
-                        break
-
-        for task in self.problem.tasks_list:
-            skills_needed = set(
-                [
-                    s
-                    for s in self.problem.skills_set
-                    if self.problem.mode_details[task][modes_dict[task]].get(s, 0) > 0
-                ]
-            )
-            employee_usage[task] = {}
-            if task in self.variables["worker_variable"]["is_present"]:
-                for worker in self.variables["worker_variable"]["is_present"][task]:
-                    if cpsolvercb.Value(
-                        self.variables["worker_variable"]["is_present"][task][worker]
-                    ):
-                        sk_nz = self.problem.employees[worker].get_non_zero_skills()
-                        if "skills_used" in self.variables["worker_variable"]:
-                            contrib = set()
-                            for s in self.variables["worker_variable"]["skills_used"][
-                                task
-                            ][worker]:
-                                if cpsolvercb.Value(
-                                    self.variables["worker_variable"]["skills_used"][
-                                        task
-                                    ][worker][s]
-                                ):
-                                    contrib.add(s)
-                        else:
-                            contrib = set(sk_nz).intersection(skills_needed)
-                        if len(contrib) > 0:
-                            employee_usage[task][worker] = contrib
-        sol = MultiskillRcpspSolution(
-            problem=self.problem,
-            schedule=schedule,
-            modes=modes_dict,
-            employee_usage=employee_usage,
+        self.cp_model.add_max_equality(
+            max_workload, [workload[emp] for emp in workload]
         )
-        sol._internal_obj = {}
-        for k in self.get_lexico_objectives_available():
-            sol._internal_obj[k] = cpsolvercb.Value(self.variables[k])
-        return sol
+        self.cp_model.add_min_equality(
+            min_workload, [workload[emp] for emp in workload]
+        )
+        self.max_workload_var = max_workload
+        self.min_workload_var = min_workload
+
+    def create_total_cost_variable(self):
+        self.total_cost_var = sum(
+            int(10 * self.problem.employees[worker].salary)
+            * is_allocated
+            * self.duration_variables[task]
+            for task, is_allocated_vars in self.allocation_is_present.items()
+            for worker, is_allocated in is_allocated_vars.items()
+        )
