@@ -5,6 +5,7 @@
 import random
 from copy import deepcopy
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solution import RcpspSolution
 from discrete_optimization.rcpsp.solvers.cpm import (
@@ -83,7 +84,7 @@ def test_cpm_sm():
         rcpsp_modes=[1 for i in range(rcpsp_problem.n_jobs)],
     )
     fit = rcpsp_problem.evaluate(solution)
-    results += [(solution, -fit["makespan"])]
+    results += [(solution, fit[Objective.MAKESPAN])]
 
 
 def test_cpm_partial():

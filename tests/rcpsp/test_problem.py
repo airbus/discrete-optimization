@@ -9,6 +9,7 @@ from math import isclose
 import pytest
 
 from discrete_optimization.datasets import get_data_home
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.solution import RcpspSolution, TaskDetails
@@ -73,7 +74,7 @@ def test_unfeasible_modes_solution():
     assert not rcpsp_problem.satisfy(rcpsp_sol)
     evaluation = rcpsp_problem.evaluate(rcpsp_sol)
     assert evaluation == {
-        "makespan": 99999999,
+        Objective.MAKESPAN: 99999999,
         "mean_resource_reserve": 0,
         "constraint_penalty": 0.0,
     }

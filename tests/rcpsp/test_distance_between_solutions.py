@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from scipy.spatial import distance
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -40,7 +41,7 @@ def test_rank_solutions_by_permutation_distance(random_seed):
     # Run NSGA to get ResultStorage
 
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
-    objectives = ["makespan", "mean_resource_reserve"]
+    objectives = [Objective.MAKESPAN, "mean_resource_reserve"]
     objective_weights = [-1, +1]
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.MULTI_OBJ,
