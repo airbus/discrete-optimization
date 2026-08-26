@@ -11,6 +11,7 @@ from time import sleep
 import numpy as np
 import pytest
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.callbacks.backup import (
     PickleBestSolutionBackup,
 )
@@ -66,7 +67,7 @@ def test_sa_with_callbacks(caplog, random_seed):
     mixed_mutation = create_mutations_portfolio_from_problem(
         problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
-    objectives = ["makespan"]
+    objectives = [Objective.MAKESPAN]
     objective_weights = [-1]
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.AGGREGATE,
@@ -139,7 +140,7 @@ def test_sa_with_optuna_callback(random_seed):
         mixed_mutation = create_mutations_portfolio_from_problem(
             problem=rcpsp_problem, selected_mutations={RcpspMutation}
         )
-        objectives = ["makespan"]
+        objectives = [Objective.MAKESPAN]
         objective_weights = [-1]
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.AGGREGATE,
