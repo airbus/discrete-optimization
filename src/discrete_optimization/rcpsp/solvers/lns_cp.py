@@ -7,6 +7,7 @@ from discrete_optimization.generic_rcpsp_tools.solvers.ls import (
     LsGenericRcpspSolver,
     LsSolverType,
 )
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.lns_mip import PostProcessSolution
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -97,7 +98,10 @@ class PostProcessLeftShift(PostProcessSolution):
                     problem=self.rcpsp_problem, solution=solution
                 ) and self.rcpsp_problem.satisfy(solution)
                 result_storage.append(
-                    (solution, -self.rcpsp_problem.evaluate(solution)["makespan"])
+                    (
+                        solution,
+                        -self.rcpsp_problem.evaluate(solution)[Objective.MAKESPAN],
+                    )
                 )
         if self.partial_solution is None:
             solver = LsGenericRcpspSolver(
@@ -113,6 +117,9 @@ class PostProcessLeftShift(PostProcessSolution):
             for solution, f in result_store:
                 solution.satisfy = self.check_sol(self.rcpsp_problem, solution)
                 result_storage.append(
-                    (solution, -self.rcpsp_problem.evaluate(solution)["makespan"])
+                    (
+                        solution,
+                        -self.rcpsp_problem.evaluate(solution)[Objective.MAKESPAN],
+                    )
                 )
         return result_storage
