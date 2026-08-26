@@ -186,7 +186,7 @@ def test_auto(
 
     exactly_one_unary_resource_per_task = objective in [
         Objective.NB_UNARY_RESOURCES_USED,
-        Objective.RESOURCES_LEVELS,
+        Objective.CALENDAR_RESOURCES_LEVELS,
     ]
     if isinstance(objective, Objective):
         params_objective_function = ParamsObjectiveFunction(
