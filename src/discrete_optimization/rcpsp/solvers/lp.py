@@ -366,7 +366,7 @@ class _BaseLpMultimodeRcpspSolver(MilpSolver, RcpspSolver):
                 makespan = self.start_solution.get_max_end_time()
         else:
             self.start_solution = start_solution
-            makespan = self.problem.evaluate(start_solution)["makespan"]
+            makespan = self.start_solution.get_max_end_time()
         sorted_tasks = self.problem.tasks_list
         resources = self.problem.resources_list
         p = [
