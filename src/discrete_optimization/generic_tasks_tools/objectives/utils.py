@@ -14,6 +14,9 @@ from discrete_optimization.generic_tasks_tools.objectives.allocation_cost import
     AllocationCostComputer,
     AllocationCostComputerMultimode,
 )
+from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
+    CumulCostComputer,
+)
 from discrete_optimization.generic_tasks_tools.objectives.earliness_tardiness import (
     EarlinessTardinessComputer,
 )
@@ -55,6 +58,7 @@ def get_mapping():
         ScheduleChangesComputer,
         SoftTimePenaltyComputer,
         UnaryResourcesUsedComputer,
+        CumulCostComputer,
     ]
     mapping = {}
     for objective_computer in list_available:
