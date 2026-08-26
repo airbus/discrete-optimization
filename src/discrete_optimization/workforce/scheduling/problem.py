@@ -31,7 +31,6 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
 )
-
 from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
     AllocatedTasksObjective,
 )
@@ -103,7 +102,7 @@ class AllocSchedulingSolution(
             allocation=np.copy(self.allocation),
         )
 
-    def get_end_time(self, task: Task) -> int | AbsentValue.ABSENT:
+    def get_end_time(self, task: Task) -> int | AbsentValue:
         i_task = self.problem.tasks_to_index[task]
         time = int(self.schedule[i_task, 1])
         try:
@@ -111,7 +110,7 @@ class AllocSchedulingSolution(
         except (TypeError, ValueError):
             return AbsentValue.ABSENT
 
-    def get_start_time(self, task: Task) -> int | AbsentValue.ABSENT:
+    def get_start_time(self, task: Task) -> int | AbsentValue:
         i_task = self.problem.tasks_to_index[task]
         time = self.schedule[i_task, 0]
         try:
@@ -820,9 +819,9 @@ def satisfy_detailed_precedence(
 
 def satisfy_detailed_same_allocation(
     problem: AllocSchedulingProblem, solution: AllocSchedulingSolution
-) -> list[tuple[str, set[Hashable]], set[int]]:
+) -> list[tuple[str, set[Hashable], set[int]]]:
     list_violated_same_allocation_constraint: list[
-        tuple[str, set[Hashable]], set[int]
+        tuple[str, set[Hashable], set[int]]
     ] = []
     for set_same_alloc in problem.same_allocation:
         one_ac = next(iter(set_same_alloc))

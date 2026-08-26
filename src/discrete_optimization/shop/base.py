@@ -24,7 +24,6 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
 )
-
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
 )

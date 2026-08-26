@@ -21,7 +21,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
     TaskVariable,
 )
-
 from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
     ObjectiveComputer,
 )
