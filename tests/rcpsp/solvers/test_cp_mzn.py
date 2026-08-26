@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from discrete_optimization.datasets import get_data_home
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
@@ -76,7 +77,7 @@ def test_cp_sm(optimisation_level):
         problem=rcpsp_problem, rcpsp_permutation=solution.rcpsp_permutation
     )
     fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    assert fit == -fit_2["makespan"]
+    assert fit == fit_2[Objective.MAKESPAN]
     assert rcpsp_problem.satisfy(solution)
     rcpsp_problem.plot_ressource_view(solution)
     plot_task_gantt(rcpsp_problem, solution)
@@ -110,7 +111,7 @@ def test_cp_rcp(optimisation_level):
         problem=rcpsp_problem, rcpsp_permutation=solution.rcpsp_permutation
     )
     fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    assert fit == -fit_2["makespan"]
+    assert fit == fit_2[Objective.MAKESPAN]
     assert rcpsp_problem.satisfy(solution)
     rcpsp_problem.plot_ressource_view(solution)
     plot_task_gantt(rcpsp_problem, solution)
@@ -186,24 +187,24 @@ def test_cp_sm_robust():
     sol_average, fit_average = solver_average.solve(
         time_limit=5, callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution_fit()
-    assert fit_worst < fit_average and fit_worst < fit_original
+    assert fit_worst > fit_average and fit_worst > fit_original
     permutation_worst = sol_worst.rcpsp_permutation
     permutation_original = sol_original.rcpsp_permutation
     permutation_average = sol_average.rcpsp_permutation
     for instance in many_random_instance:
         sol_ = RcpspSolution(problem=instance, rcpsp_permutation=permutation_original)
-        fit_original = -instance.evaluate(sol_)["makespan"]
+        fit_original = instance.evaluate(sol_)[Objective.MAKESPAN]
         sol_ = RcpspSolution(problem=instance, rcpsp_permutation=permutation_average)
-        fit_average = -instance.evaluate(sol_)["makespan"]
+        fit_average = instance.evaluate(sol_)[Objective.MAKESPAN]
         sol_ = RcpspSolution(problem=instance, rcpsp_permutation=permutation_worst)
-        fit_worst = -instance.evaluate(sol_)["makespan"]
+        fit_worst = instance.evaluate(sol_)[Objective.MAKESPAN]
 
     sol_ = RcpspSolution(problem=rcpsp_problem, rcpsp_permutation=permutation_worst)
-    fit_worst = -rcpsp_problem.evaluate(sol_)["makespan"]
+    fit_worst = rcpsp_problem.evaluate(sol_)[Objective.MAKESPAN]
     sol_ = RcpspSolution(problem=rcpsp_problem, rcpsp_permutation=permutation_original)
-    fit_original = -rcpsp_problem.evaluate(sol_)["makespan"]
+    fit_original = rcpsp_problem.evaluate(sol_)[Objective.MAKESPAN]
     sol_ = RcpspSolution(problem=rcpsp_problem, rcpsp_permutation=permutation_average)
-    fit_average = -rcpsp_problem.evaluate(sol_)["makespan"]
+    fit_average = rcpsp_problem.evaluate(sol_)[Objective.MAKESPAN]
 
 
 @pytest.mark.skipif(sys.platform.startswith("win"), reason="Much too long on windows")
@@ -258,7 +259,7 @@ def test_cp_mm_integer_vs_bool():
             time_limit=5, callbacks=[NbIterationStopper(nb_iteration_max=1)]
         )
         solution = result_storage.get_best_solution()
-        makespans.append(rcpsp_problem.evaluate(solution)["makespan"])
+        makespans.append(rcpsp_problem.evaluate(solution)[Objective.MAKESPAN])
 
 
 def test_cp_mm_intermediate_solution():

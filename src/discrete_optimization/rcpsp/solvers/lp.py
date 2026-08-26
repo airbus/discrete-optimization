@@ -81,15 +81,15 @@ class _BaseLpRcpspSolver(MilpSolver, RcpspSolver):
                     greedy_choice=GreedyChoice.MOST_SUCCESSORS
                 )
                 self.start_solution = store_solution.get_best_solution_fit()[0]
-                makespan = self.problem.evaluate(self.start_solution)["makespan"]
+                makespan = self.start_solution.get_max_end_time()
             else:
                 logger.info("Get dummy solution")
                 solution = self.problem.get_dummy_solution()
                 self.start_solution = solution
-                makespan = self.problem.evaluate(solution)["makespan"]
+                makespan = solution.get_max_end_time()
         else:
             self.start_solution = start_solution
-            makespan = self.problem.evaluate(start_solution)["makespan"]
+            makespan = self.start_solution.get_max_end_time()
         sorted_tasks = self.problem.tasks_list
         resources = self.problem.resources_list
         p = [int(self.problem.mode_details[key][1]["duration"]) for key in sorted_tasks]

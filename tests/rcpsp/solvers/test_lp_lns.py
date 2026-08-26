@@ -4,6 +4,7 @@
 
 import pytest
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
@@ -102,7 +103,7 @@ def test_lns_mm(solver_cls, constraint_handler_cls):
     if rcpsp_problem.is_rcpsp_multimode():
         rcpsp_problem.set_fixed_modes([1 for i in range(rcpsp_problem.n_jobs)])
     params_objective_function = ParamsObjectiveFunction(
-        objectives=["makespan"],
+        objectives=[Objective.MAKESPAN],
         weights=[-1],
         objective_handling=ObjectiveHandling.AGGREGATE,
         sense_function=ModeOptim.MAXIMIZATION,
