@@ -8,6 +8,7 @@ import random
 import numpy as np
 import pytest
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -50,7 +51,7 @@ def test_sa_warm_start(random_seed):
     mixed_mutation = create_mutations_portfolio_from_problem(
         problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
-    objectives = ["makespan"]
+    objectives = [Objective.MAKESPAN]
     objective_weights = [-1]
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.AGGREGATE,
