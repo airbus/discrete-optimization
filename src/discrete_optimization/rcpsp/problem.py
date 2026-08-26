@@ -30,10 +30,10 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     Objective,
 )
+from discrete_optimization.generic_tasks_tools.multimode import ModeConstraintType
 from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
     ObjectiveComputer,
 )
-from discrete_optimization.generic_tasks_tools.multimode import ModeConstraintType
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     FlexibleGapBlockingConstraint,
     ResourceBlockingProblem,

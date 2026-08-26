@@ -7,6 +7,7 @@ import pytest
 
 from discrete_optimization.generic_tasks_tools.entities import GroupEntity, TaskEntity
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
     BlockingMode,
@@ -92,7 +93,7 @@ def test_setup_blocking_affects_schedule():
     solver_base.init_model()
     result_base = solver_base.solve(time_limit=5)
     sol_base = result_base.get_best_solution()
-    makespan_base = base_problem.evaluate(sol_base)["makespan"]
+    makespan_base = base_problem.evaluate(sol_base)[Objective.MAKESPAN]
 
     # With blocking: setup time between task 2 and 3
     blocking_constraints = [
@@ -121,7 +122,7 @@ def test_setup_blocking_affects_schedule():
     solver_blocking.init_model()
     result_blocking = solver_blocking.solve(time_limit=5)
     sol_blocking = result_blocking.get_best_solution()
-    makespan_blocking = problem_blocking.evaluate(sol_blocking)["makespan"]
+    makespan_blocking = problem_blocking.evaluate(sol_blocking)[Objective.MAKESPAN]
 
     # Blocking should affect the schedule (may increase makespan or change task timing)
     assert problem_blocking.satisfy(sol_blocking)

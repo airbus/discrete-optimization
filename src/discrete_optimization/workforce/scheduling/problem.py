@@ -35,10 +35,6 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
 )
-from discrete_optimization.generic_tasks_tools.resource_blocking import (
-    WithoutResourceBlockingProblem,
-    WithoutResourceBlockingSolution,
-)
 from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
     AllocatedTasksObjective,
 )
@@ -50,6 +46,10 @@ from discrete_optimization.generic_tasks_tools.objectives.objective_computer imp
 )
 from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used import (
     UnaryResourcesUsedComputer,
+)
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    WithoutResourceBlockingProblem,
+    WithoutResourceBlockingSolution,
 )
 from discrete_optimization.generic_tasks_tools.skill import (
     NoSkill,

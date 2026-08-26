@@ -25,15 +25,15 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
 )
 from discrete_optimization.generic_tasks_tools.multimode import ModeConstraintType
-from discrete_optimization.generic_tasks_tools.resource_blocking import (
-    FlexibleGapBlockingConstraint,
-    SpanBlockingConstraint,
-)
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
     ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    FlexibleGapBlockingConstraint,
+    SpanBlockingConstraint,
 )
 from discrete_optimization.generic_tools.do_problem import (
     Solution,

@@ -30,9 +30,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
 )
-from discrete_optimization.generic_tasks_tools.resource_blocking import (
-    WithoutResourceBlockingProblem,
-)
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
@@ -42,6 +39,9 @@ from discrete_optimization.generic_tasks_tools.objectives.objective_computer imp
 )
 from discrete_optimization.generic_tasks_tools.objectives.soft_time_penalty import (
     SoftTimePenaltyComputer,
+)
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    WithoutResourceBlockingProblem,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,

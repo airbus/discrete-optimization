@@ -29,16 +29,16 @@ from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolutio
 from discrete_optimization.generic_tasks_tools.no_overlap import (
     WithoutNoOverlapProblem,
 )
-from discrete_optimization.generic_tasks_tools.resource_blocking import (
-    BlockingConstraintMetadata,
-    FlexibleGapBlockingConstraint,
-    SpanBlockingConstraint,
-)
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
     ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    BlockingConstraintMetadata,
+    FlexibleGapBlockingConstraint,
+    SpanBlockingConstraint,
 )
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
 from discrete_optimization.generic_tasks_tools.skill import (

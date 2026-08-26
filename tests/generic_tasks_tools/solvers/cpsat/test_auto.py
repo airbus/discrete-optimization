@@ -6,7 +6,6 @@ from __future__ import annotations
 import copy
 import logging
 import re
-#from abc import ABC
 from copy import deepcopy
 from typing import Any, Iterable, Optional
 
@@ -25,10 +24,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
 from discrete_optimization.generic_tasks_tools.no_overlap import (
     WithoutNoOverlapProblem,
 )
-from discrete_optimization.generic_tasks_tools.resource_blocking import (
-    WithoutResourceBlockingProblem,
-    WithoutResourceBlockingSolution,
-)
 from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
     ObjectiveComputer,
 )
@@ -38,6 +33,10 @@ from discrete_optimization.generic_tasks_tools.objectives.utils import (
     MakespanObjectiveComputer,
     NonRenewableResourceLevelObjectiveComputer,
     UnaryResourcesUsedComputer,
+)
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    WithoutResourceBlockingProblem,
+    WithoutResourceBlockingSolution,
 )
 from discrete_optimization.generic_tasks_tools.skill import (
     NoSkill,
@@ -79,7 +78,6 @@ class MySolution(
         Task, UnaryResource, NonSkillCumulativeResource, UnaryResource
     ],
     WithoutResourceBlockingSolution[Task, NonRenewableResource, UnaryResource],
-    #ABC,
 ):
     problem: MyProblem
 

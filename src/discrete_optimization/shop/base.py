@@ -23,15 +23,15 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
 )
-from discrete_optimization.generic_tasks_tools.resource_blocking import (
-    WithoutResourceBlockingProblem,
-    WithoutResourceBlockingSolution,
-)
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
     ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    WithoutResourceBlockingProblem,
+    WithoutResourceBlockingSolution,
 )
 from discrete_optimization.generic_tasks_tools.skill import (
     NoSkill,

@@ -514,7 +514,6 @@ class GenericSchedulingProblem(
         """
         self.update_time_lags()
 
-
     def satisfy(self, variable: "GenericSchedulingSolution") -> bool:
         return self.satisfy_partial(variable=variable)
 
