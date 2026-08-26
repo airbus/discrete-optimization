@@ -15,6 +15,9 @@ def create_computer_to_modeler_mapping():
         AllocationCostComputer,
         AllocationCostComputerMultimode,
     )
+    from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
+        CumulCostComputer,
+    )
     from discrete_optimization.generic_tasks_tools.objectives.earliness_tardiness import (
         EarlinessTardinessComputer,
     )
@@ -46,6 +49,9 @@ def create_computer_to_modeler_mapping():
     from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.allocation_cost import (
         AllocationCostModelerCpSat,
         AllocationCostMultimodeModelerCpSat,
+    )
+    from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.cumul_objective import (
+        CumulCostModelerCpSat,
     )
     from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.earliness_tardiness import (
         EarlinessTardinessCpSatModeler,
@@ -83,4 +89,5 @@ def create_computer_to_modeler_mapping():
         ScheduleChangesComputer: ScheduleChangesModelerCpSat,
         SoftTimePenaltyComputer: SoftTimePenaltyModelerCpSat,
         UnaryResourcesUsedComputer: UnaryResourcesUsedModelerCpSat,
+        CumulCostComputer: CumulCostModelerCpSat,
     }

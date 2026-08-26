@@ -99,7 +99,10 @@ class Objective(Enum):
     MODE_COST = "mode_cost"
     EARLINESS_TARDINESS = "earliness_tardiness"
     SCHEDULE_CHANGES = "scheduling_changes"
+
+    CUMUL_COST = "cumulative_cost"
     TIME_PENALTY = "time_penalty"
+
     CUSTOM = "custom_objective"
 
 

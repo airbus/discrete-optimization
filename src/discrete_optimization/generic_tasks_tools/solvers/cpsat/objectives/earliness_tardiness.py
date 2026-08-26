@@ -156,22 +156,28 @@ class EarlinessTardinessCpSatModeler(ObjectiveModelerCpSat, Generic[Task]):
         )
         sum_end_earliness = sum(
             [
-                self.earliness_start_vars[task]
-                * self.objective_computer.get_weight_start_for_earliness(task)
+                self.earliness_end_vars[task]
+                * self.objective_computer.get_weight_end_for_earliness(task)
+                for task in self.earliness_end_vars
+            ]
+        )
+        sum_start_tardiness = sum(
+            [
+                self.tardiness_start_vars[task]
+                * self.objective_computer.get_weight_start_for_tardiness(task)
+                for task in self.tardiness_start_vars
+            ]
+        )
+        sum_end_tardiness = sum(
+            [
+                self.tardiness_end_vars[task]
+                * self.objective_computer.get_weight_end_for_tardiness(task)
                 for task in self.earliness_start_vars
             ]
         )
-        sum_start_earliness = sum(
-            [
-                self.earliness_start_vars[task]
-                * self.objective_computer.get_weight_start_for_earliness(task)
-                for task in self.earliness_start_vars
-            ]
-        )
-        sum_start_earliness = sum(
-            [
-                self.earliness_start_vars[task]
-                * self.objective_computer.get_weight_start_for_earliness(task)
-                for task in self.earliness_start_vars
-            ]
+        return (
+            sum_start_earliness
+            + sum_end_earliness
+            + sum_start_tardiness
+            + sum_end_tardiness
         )
