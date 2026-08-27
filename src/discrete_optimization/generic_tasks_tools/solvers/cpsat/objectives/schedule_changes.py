@@ -89,8 +89,8 @@ class ScheduleChangesModelerCpSat(ObjectiveModelerCpSat):
             ]
         ) + sum(
             [
-                self.variables["delta_start_abs"][tt]
+                self.variables["delta_starts_abs"][tt]
                 * self.objective_computer.cost_unit_deviation(tt)
-                for tt in self.variables["delta_start_abs"].keys()
+                for tt in self.variables["delta_starts_abs"].keys()
             ]
         )

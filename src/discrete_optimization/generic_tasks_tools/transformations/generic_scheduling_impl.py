@@ -26,9 +26,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
     TaskVariable,
 )
-from discrete_optimization.generic_tasks_tools.objectives.makespan import (
-    MakespanObjectiveComputer,
-)
 from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
     ObjectiveComputer,
 )
@@ -60,6 +57,9 @@ class ToGenericSchedulingImpl(
 
 
     """
+
+    def __init__(self, list_objective_computer: list[ObjectiveComputer] = None):
+        self._list_objective_computer = list_objective_computer
 
     @abstractmethod
     def transform_solution_from_raw_generic_to_specific(
@@ -99,7 +99,9 @@ class ToGenericSchedulingImpl(
         """
         # We put None as problem, it will be linked to its parent scheduling problem, when calling __init__
         # of GenericSchedulingImplProblem
-        return [MakespanObjectiveComputer(None, 1.0)]
+        if self._list_objective_computer is not None:
+            return self._list_objective_computer
+        return source_problem.get_list_objective_computer()
 
     def transform_problem(
         self,

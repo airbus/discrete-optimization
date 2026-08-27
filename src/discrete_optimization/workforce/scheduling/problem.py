@@ -38,6 +38,9 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
 from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
     AllocatedTasksObjective,
 )
+from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
+    CumulCostComputer,
+)
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
 )
@@ -327,7 +330,16 @@ class AllocSchedulingProblem(
     def get_list_objective_computer(self) -> list[ObjectiveComputer]:
         return [
             AllocatedTasksObjective(problem=self, weight_objective=100000),
-            UnaryResourcesUsedComputer(problem=self, weight_objective=1),
+            CumulCostComputer(
+                problem=self,
+                weight_objective=1,
+                cumul_dimensions=["duration"],
+                value_tasks={
+                    "duration": {t: self.get_task_duration(t) for t in self.tasks_list}
+                },
+                value_tasks_per_mode={},
+            ),
+            UnaryResourcesUsedComputer(problem=self, weight_objective=10000),
             MakespanObjectiveComputer(problem=self, weight_objective=1),
         ]
 

@@ -351,7 +351,7 @@ class CumulCostModelerCpSat(ObjectiveModelerCpSat):
             Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
         ],
         objective_computer: CumulCostComputer,
-        modelisation_dispersion: ModelisationDispersion,
+        modelisation_dispersion: ModelisationDispersion = ModelisationDispersion.EXACT,
     ) -> None:
         super().__init__(solver, objective_computer)
         self.modelisation_dispersion = modelisation_dispersion
