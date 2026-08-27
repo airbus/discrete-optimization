@@ -412,6 +412,11 @@ def plotly_schedule_comparison(
             if not show_all_changes:
                 if not show_change.get(i, True):
                     continue
+            print(
+                "Change : ",
+                (int(start_updated), team_updated),
+                (int(start_base), team_base),
+            )
             # Plot base solution as a rectangle
             hover = {
                 "activity": problem.index_to_task[i],

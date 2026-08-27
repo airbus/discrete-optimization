@@ -78,6 +78,8 @@ class AllocationSwitchModelerCpSat(ObjectiveModelerCpSat, Generic[Task, UnaryRes
         self.allocation_change_variables_initialized = True
 
     def get_objective_expr(self) -> LinearExpr:
+        if not self.allocation_change_variables_initialized:
+            self.create_allocation_change_variables()
         return sum(
             [
                 self.allocation_change_variables[task, unary_resource]

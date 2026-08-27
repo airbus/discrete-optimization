@@ -25,11 +25,13 @@ class ScheduleChangesComputer(ObjectiveComputer[Task]):
     def __init__(
         self,
         problem: SchedulingProblem[Task],
+        base_scheduling_solution: SchedulingSolution[Task],
         weight_objective: float = 1.0,
         cost_any_shift: dict[Task, float] = None,
         cost_unit_deviation: dict[Task, float] = None,
     ):
         super().__init__(problem, weight_objective)
+        self.base_scheduling_solution = base_scheduling_solution
         if cost_any_shift is None:
             self._cost_any_shift = {}
         else:
