@@ -1,102 +1,81 @@
-import json
+#  Copyright (c) 2026 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
 import os
 import re
 import sys
-import urllib.request
+from typing import TextIO
+
+sys.path.insert(0, os.path.dirname(__file__))
+
+from parse_pytest_output_utils import TEST_SUMMARY_HEADER, get_code_url, get_log_url
 
 
-def get_log_url(log_line_number):
-    """Fetches exact runtime Job ID and Step Number dynamically using GitHub APIs"""
-    token = os.getenv("GITHUB_TOKEN")
-    repo = os.getenv("GITHUB_REPOSITORY")
-    run_id = os.getenv("GITHUB_RUN_ID")
-    target_job_name = os.getenv("TARGET_JOB_NAME")
-    target_step_name = os.getenv("TARGET_STEP_NAME")
+def parse_pytest_output(input: TextIO | None = None):
+    if input is None:
+        input = sys.stdin
 
-    job_id = None
-    step_number = 1
-    if token and repo or run_id or target_job_name and target_step_name:
-        url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}/jobs"
-        req = urllib.request.Request(url)
-        req.add_header("Authorization", f"Bearer {token}")
-        req.add_header("Accept", "application/vnd.github+json")
-        try:
-            with urllib.request.urlopen(req) as response:
-                data = json.loads(response.read().decode())
-                for job in data.get("jobs", []):
-                    # Target the exact job name/matrix item specified by the environment
-                    if job.get("name") == target_job_name:
-                        job_id = job["id"]
-                        # Iterate through steps to match the target step name
-                        for step in job.get("steps", []):
-                            if step.get("name", "") == target_step_name:
-                                step_number = step["number"]
-
-        except Exception as e:
-            sys.stderr.write(
-                f"Warning: Failed to fetch exact runtime Job/Step ID: {e}\n"
-            )
-        return _construct_log_url(repo, run_id, job_id, step_number, log_line_number)
-
-
-def _construct_log_url(repo, run_id, job_id, step_number, log_line_number):
-    if job_id:
-        if step_number:
-            return f"https://github.com/{repo}/actions/runs/{run_id}/job/{job_id}#step:{step_number}:{log_line_number}"
-        else:
-            return f"https://github.com/{repo}/actions/runs/{run_id}/job/{job_id}"
-    else:
-        return f"https://github.com/{repo}/actions/runs/{run_id}"
-
-
-def get_code_url(filename, line_number):
-    repo = os.getenv("GITHUB_REPOSITORY")
-    sha = os.getenv("GITHUB_SHA")
-    return f"https://github.com/{repo}/blob/{sha}/{filename}#L{line_number}"
-
-
-def parse_pytest_output():
     # Fetch environment variables supplied by GitHub Actions
-    summary_file = os.getenv("GITHUB_STEP_SUMMARY")
+    summary_file = os.getenv("GITHUB_STEP_SUMMARY", "summary.md")
 
-    failures = []
+    doctest_failures = []
     log_line_number = 0
+    in_test_summary = False
+    collection_failures = []
 
-    for line in sys.stdin:
+    for line in input:
         log_line_number += 1
         print(line, end="")  # Preserve standard log output
 
-        if "DocTestFailure" in line or "UnexpectedException" in line:
-            match = re.search(r"([\w./-]+):(\d+):", line)
+        if not in_test_summary:
+            if TEST_SUMMARY_HEADER in line:
+                in_test_summary = True
+            elif any(
+                exception_to_catch in line
+                for exception_to_catch in ["DocTestFailure", "UnexpectedException"]
+            ):
+                match = re.search(r"([\w./-]+):(\d+):", line)
+                if match:
+                    raw_file = match.group(1)
+                    line_number = match.group(2)
+
+                    # Normalize path to be relative to repo root
+                    clean_file = raw_file
+                    if "src/" in raw_file:
+                        clean_file = "src/" + raw_file.split("src/", 1)[1]
+                    clean_file = clean_file.lstrip("./")
+
+                    doctest_failures.append(
+                        {
+                            "file": clean_file,
+                            "line": line_number,
+                            "code_url": get_code_url(
+                                filename=clean_file, line_number=line_number
+                            ),
+                            "log_url": get_log_url(log_line_number=log_line_number),
+                        }
+                    )
+
+        else:
+            match = re.search(r"^ERROR\s+([^\s]+)\s(.*)$", line)
             if match:
-                raw_file = match.group(1)
-                line_number = match.group(2)
-
-                # Normalize path to be relative to repo root
-                clean_file = raw_file
-                if "src/" in raw_file:
-                    clean_file = "src/" + raw_file.split("src/", 1)[1]
-                clean_file = clean_file.lstrip("./")
-
-                failures.append(
+                file = match.group(1)
+                collection_failures.append(
                     {
-                        "file": clean_file,
-                        "line": line_number,
-                        "code_url": get_code_url(
-                            filename=clean_file, line_number=line_number
-                        ),
+                        "file": file,
+                        "code_url": get_code_url(filename=file),
+                        "line": "-",
                         "log_url": get_log_url(log_line_number=log_line_number),
-                        "warning": f"::warning file={clean_file},line={line_number}::Doctest failure at {clean_file}:{line_number}",
                     }
                 )
-    # warning workflow commands
-    for fail in failures:
-        print(fail["warning"])
+
+    failures = doctest_failures + collection_failures
 
     # summary of failures with proper links
-    if failures and summary_file:
+    if failures:
         with open(summary_file, "a") as f:
-            f.write("\n### ⚠️ Failing examples found in docstrings\n\n")
+            f.write(f"\n### ⚠️ Failing examples found in docstrings\n\n")
             f.write("| Target File | Line | Jump to Execution Logs | Link to code |\n")
             f.write("| --- | --- | --- | --- |\n")
             for fail in failures:
