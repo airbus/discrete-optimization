@@ -24,6 +24,7 @@ on:
         type: string
 jobs:
   trigger-binder-build:
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     if: inputs.binder-env-fullref != ''
     steps:
@@ -38,6 +39,7 @@ jobs:
           bash scripts/trigger_binder.sh https://notebooks.gesis.org/binder/build/gh/${binder_env_full_ref}
 
   deploy-doc:
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -57,6 +59,7 @@ jobs:
 
   update-doc-versions:
     # update doc versions index if the doc has been deployed
+    timeout-minutes: 5
     needs: [deploy-doc]
     runs-on: ubuntu-latest
     steps:
