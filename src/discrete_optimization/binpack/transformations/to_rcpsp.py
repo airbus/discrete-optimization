@@ -48,21 +48,28 @@ class BinpackToRcpspTransformation(
     - Backward (solution): Time slots map directly to bin assignments
 
     Example:
-        # >>> # Bin packing: 3 items, capacity 10
-        # >>> # Item 0: weight 5, Item 1: weight 3, Item 2: weight 6
-        # >>> # Items 0 and 2 are incompatible
-        # >>> problem = BinPackProblem(
-        # ...     list_items=[ItemBinPack(0, 5), ItemBinPack(1, 3), ItemBinPack(2, 6)],
-        # ...     capacity_bin=10,
-        # ...     incompatible_items={(0, 2)}
-        # ... )
-        # >>>
-        # >>> # RCPSP transformation:
-        # >>> # - 3 tasks with duration=1
-        # >>> # - Resource "BinCapacity" with capacity=10
-        # >>> # - Task 0 needs 5, Task 1 needs 3, Task 2 needs 6
-        # >>> # - Resource "Incompatible_0_2" with capacity=1 (both tasks consume it)
-        # >>> # - Tasks at time 0 → bin 0, tasks at time 1 → bin 1, etc.
+        >>> from discrete_optimization.binpack.problem import ItemBinPack
+        >>> # Bin packing: 3 items, capacity 10
+        >>> # Item 0: weight 5, Item 1: weight 3, Item 2: weight 6
+        >>> # Items 0 and 2 are incompatible
+        >>> problem = BinPackProblem(
+        ...     list_items=[ItemBinPack(0, 5), ItemBinPack(1, 3), ItemBinPack(2, 6)],
+        ...     capacity_bin=10,
+        ...     incompatible_items={(0, 2)}
+        ... )
+        >>>
+        >>> # RCPSP transformation:
+        >>> # - 3 tasks with duration=1
+        >>> # - Resource "BinCapacity" with capacity=10
+        >>> # - Task 0 needs 5, Task 1 needs 3, Task 2 needs 6
+        >>> # - Resource "Incompatible_0_2" with capacity=1 (both tasks consume it)
+        >>> # - Tasks at time 0 → bin 0, tasks at time 1 → bin 1, etc.
+        >>> transfo = BinpackToRcpspTransformation()
+        >>> rcpsp = transfo.transform_problem(source_problem=problem)
+        >>> print(rcpsp.resources)
+        {'BinCapacity': 10, 'Incompatible_0_2': 1}
+        >>> print(rcpsp.mode_details)
+        {'source': {1: {'duration': 0, 'BinCapacity': 0, 'Incompatible_0_2': 0}}, 'sink': {1: {'duration': 0, 'BinCapacity': 0, 'Incompatible_0_2': 0}}, 'item_0': {1: {'duration': 1, 'BinCapacity': 5, 'Incompatible_0_2': 1}}, 'item_1': {1: {'duration': 1, 'BinCapacity': 3, 'Incompatible_0_2': 0}}, 'item_2': {1: {'duration': 1, 'BinCapacity': 6, 'Incompatible_0_2': 1}}}
 
     """
 
