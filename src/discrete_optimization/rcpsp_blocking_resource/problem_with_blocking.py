@@ -38,7 +38,6 @@ class RcpspWithResourceBlocking(RcpspProblem):
         span_blocking_constraints: List of span blocking constraints
 
     Example:
-        >>> from discrete_optimization.rcpsp.problem_with_blocking import RcpspWithResourceBlocking
         >>> from discrete_optimization.generic_tasks_tools.resource_blocking import (
         ...     BlockingMode, BlockingConstraintMetadata,
         ... )

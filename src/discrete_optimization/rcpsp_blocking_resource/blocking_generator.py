@@ -53,7 +53,6 @@ def generate_setup_time_blocking(
 
     Example:
         >>> from discrete_optimization.rcpsp.parser import parse_file, get_data_available
-        >>> from discrete_optimization.rcpsp.blocking_generator import generate_setup_time_blocking
         >>> files = get_data_available()
         >>> base_problem = parse_file(files[0])
         >>> problem_with_setup = generate_setup_time_blocking(base_problem, blocking_intensity=0.7)
@@ -170,11 +169,10 @@ def generate_batch_blocking(
         RcpspWithResourceBlocking with span blocking constraints for batches
 
     Example:
-        #>>> from discrete_optimization.rcpsp.parser import parse_file, get_data_available
-        #>>> from discrete_optimization.rcpsp.blocking_generator import generate_batch_blocking
-        #>>> files = get_data_available()
-        #>>> base_problem = parse_file(files[0])
-        #>>> problem_with_batches = generate_batch_blocking(base_problem, blocking_intensity=0.6)
+        >>> from discrete_optimization.rcpsp.parser import parse_file, get_data_available
+        >>> files = get_data_available()
+        >>> base_problem = parse_file(files[0])
+        >>> problem_with_batches = generate_batch_blocking(base_problem, blocking_intensity=0.6)
     """
     if seed is not None:
         random.seed(seed)
@@ -280,11 +278,10 @@ def generate_combined_blocking(
         RcpspWithResourceBlocking with both types of blocking constraints
 
     Example:
-        #>>> from discrete_optimization.rcpsp.parser import parse_file, get_data_available
-        #>>> from discrete_optimization.rcpsp.blocking_generator import generate_combined_blocking
-        #>>> files = get_data_available()
-        #>>> base_problem = parse_file(files[0])
-        #>>> problem = generate_combined_blocking(base_problem)
+        >>> from discrete_optimization.rcpsp.parser import parse_file, get_data_available
+        >>> files = get_data_available()
+        >>> base_problem = parse_file(files[0])
+        >>> problem = generate_combined_blocking(base_problem)
     """
     if seed is not None:
         random.seed(seed)

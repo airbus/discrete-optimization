@@ -182,7 +182,7 @@ def load_problem_from_json(filepath: str) -> FlexProblem:
 
     Example:
         >>> from discrete_optimization.flex_scheduling.parser import load_problem_from_json
-        >>> problem = load_problem_from_json("my_problem.json")
+        >>> problem = load_problem_from_json("my_problem.json") # doctest: +SKIP
     """
     with open(filepath, "r") as f:
         data = json.load(f, object_hook=decode_flex_problem_json)
