@@ -158,6 +158,7 @@ class GenericSchedulingAutoCpSatSolver(
     as the calendar for a skill is deduce from unary_resource calendars.
 
     """
+    add_cumulative_approximation_nb_unary_resource_used = False
 
     # cpsat variables
     start_or_end_variables: dict[tuple[Task, StartOrEnd], LinearExprT]
@@ -998,8 +999,10 @@ class GenericSchedulingAutoCpSatSolver(
                 objective_var = self.get_nb_tasks_done_variable()
             case Objective.NB_UNARY_RESOURCES_USED:
                 objective_var = self.get_nb_unary_resources_used_variable()
-                if self.exactly_one_unary_resource_per_task:
-                    # TODO = make this an option
+                if (
+                    self.exactly_one_unary_resource_per_task
+                    and self.add_cumulative_approximation_nb_unary_resource_used
+                ):
                     capa_used = self.cp_model.new_int_var(
                         lb=0,
                         ub=len(self.problem.unary_resources_list),
