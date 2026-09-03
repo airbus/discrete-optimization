@@ -28,19 +28,70 @@ class CumulativeResourceProblem(
     MultimodeSchedulingProblem[Task],
     Generic[Task, CumulativeResource, OtherCalendarResource],
 ):
-    """Scheduling problem with cumulative resources consumed by task.
+    """Scheduling problem with cumulative resources consumed by tasks.
 
-    This derives from problem with renewable calendar resources, some of them are cumulative, some are not (e.g. unary resource
-    if it is moreover an allocation problem).
-    The task consumption of these cumulative resources is supposed to be determined entirely determined by the task mode.
+    Supports two consumption modes:
+
+    1. **Standard**: Task consumption is fixed by task mode.
+       Example: Task A in mode 1 always consumes 5 units.
+
+    2. **Resource-dependent**: Task consumption depends on other tasks' modes.
+       Modeled via a consumption mapping.
+
+    **Resource-Dependent Example:**
+
+    Task A's electricity varies based on whether task B's heater is on:
+
+        >>> mapping = {
+        ...     frozenset([(task_B, 0)]): 10,  # B heater off: A uses 10 kW
+        ...     frozenset([(task_B, 1)]): 8,   # B heater on: A uses 8 kW
+        ... }
+
+    Implementation pattern:
+
+        >>> class MyProblem(CumulativeResourceProblem):
+        ...     def is_cumulative_resource_task_mode_consumption_dependent(
+        ...         self, resource, task, mode
+        ...     ):
+        ...         return resource in self.mode_details[task][mode]
+        ...
+        ...     def get_cumulative_resource_consumption_mapping(
+        ...         self, resource, task, mode
+        ...     ):
+        ...         if self.is_cumulative_resource_task_mode_consumption_dependent(
+        ...             resource, task, mode
+        ...         ):
+        ...             return self.mode_details[task][mode][resource]
+        ...         return {frozenset([]): self.get_cumulative_resource_consumption(
+        ...             resource, task, mode
+        ...         )}
+
+    See `src/discrete_optimization/rcpsp_resource_dependent/problem.py` for a complete implementation.
 
     """
 
     def get_cumulative_resource_consumption_mapping(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> dict[frozenset[tuple[Task, int]], int]:
-        # To be Overridden in child classes
+        """Get resource consumption mapping for resource-dependent tasks.
 
+        Args:
+            resource: The cumulative resource
+            task: The task
+            mode: The task mode
+
+        Returns:
+            Mapping from task/mode configurations to consumption values.
+            Keys are frozensets of (task, mode) tuples.
+            Returns {} if task has standard (non-dependent) consumption.
+
+        Example:
+            >>> mapping = problem.get_cumulative_resource_consumption_mapping(
+            ...     "electricity", task_A, 0
+            ... )
+            >>> # {frozenset([(task_B, 0)]): 100, frozenset([(task_B, 1)]): 80}
+        """
+        # To be overridden in child classes
         return {}
 
     def get_possible_cumulative_resource_consumption(
@@ -149,6 +200,19 @@ class CumulativeResourceSolution(
     def get_calendar_resource_consumption_from_mapping(
         self, resource: CumulativeResource, task: Task
     ) -> int:
+        """Retrieve resource consumption from mapping based on current solution's mode assignments.
+
+        Args:
+            resource: The cumulative resource
+            task: The task
+
+        Returns:
+            Resource consumption value, or None if no matching configuration found.
+
+        Example:
+            Given mapping {frozenset([(task_B, 1)]): 8, frozenset([(task_B, 0)]): 10}
+            and solution with task_B in mode 1, returns 8.
+        """
         mode = self.get_mode(task)
         mapping = self.problem.get_cumulative_resource_consumption_mapping(
             resource=resource, task=task, mode=mode
@@ -171,14 +235,19 @@ class CumulativeResourceSolution(
     def get_calendar_resource_consumption(self, resource: Resource, task: Task) -> int:
         """Get resource consumption by given task.
 
-        Default implementation works only for cumulative resources whose consumptions depend only on task mode.
+        Dispatches to either:
+        - `get_cumulative_resource_consumption()` for standard (fixed) consumption
+        - `get_calendar_resource_consumption_from_mapping()` for resource-dependent consumption
 
         Args:
-            resource:
-            task:
+            resource: The calendar resource (must be cumulative)
+            task: The task
 
         Returns:
+            Resource consumption amount
 
+        Raises:
+            NotImplementedError: If resource is not cumulative
         """
         if self.problem.is_cumulative_resource(resource):
             if not self.problem.is_cumulative_resource_task_mode_consumption_dependent(

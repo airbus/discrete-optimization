@@ -126,26 +126,10 @@ class ToGenericSchedulingImpl(
             }
             for task in source_problem.tasks_list
         }
-        resources_consumption: dict[
-            Task, dict[int, dict[CumulativeResource | NonRenewableResource, int]]
-        ] = {
-            task: {
-                mode: {
-                    resource: source_problem.get_non_renewable_resource_consumption(
-                        resource=resource, task=task, mode=mode
-                    )
-                    for resource in source_problem.non_renewable_resources_list
-                }
-                | {
-                    resource: source_problem.get_cumulative_resource_consumption(
-                        resource=resource, task=task, mode=mode
-                    )
-                    for resource in source_problem.cumulative_resources_list
-                }
-                for mode in source_problem.get_task_modes(task=task)
-            }
-            for task in source_problem.tasks_list
-        }
+        (
+            resources_consumption,
+            resources_consumption_dependent,
+        ) = _extract_resource_consumptions(source_problem)
         successors: dict[Task, Iterable[Task]] = (
             source_problem.get_precedence_constraints()
         )
@@ -280,6 +264,7 @@ class ToGenericSchedulingImpl(
             horizon=horizon,
             durations_per_mode=durations_per_mode,
             resource_consumptions=resources_consumption,
+            resource_consumptions_dependent=resources_consumption_dependent,
             successors=successors,
             unary_resources=unary_resources,
             unary_resources_skills=unary_resources_skills,
@@ -334,6 +319,84 @@ def _construct_min_only_time_lags_from_min_and_max_time_lags(
             min_or_max=MinOrMax.MAX,
         )
     ]
+
+
+def _extract_resource_consumptions(
+    source_problem: GenericSchedulingProblem,
+) -> tuple[
+    dict[Task, dict[int, dict[CumulativeResource | NonRenewableResource, int]]],
+    dict[
+        Task,
+        dict[
+            int,
+            dict[
+                CumulativeResource | NonRenewableResource,
+                dict[frozenset[tuple[Task, int]], int],
+            ],
+        ],
+    ],
+]:
+    """Extract static and dependent resource consumptions from a scheduling problem.
+
+    Returns:
+        Tuple of (static_consumptions, dependent_consumptions)
+    """
+    resources_consumption: dict[
+        Task, dict[int, dict[CumulativeResource | NonRenewableResource, int]]
+    ] = {}
+    resources_consumption_dependent: dict[
+        Task,
+        dict[
+            int,
+            dict[
+                CumulativeResource | NonRenewableResource,
+                dict[frozenset[tuple[Task, int]], int],
+            ],
+        ],
+    ] = {}
+
+    for task in source_problem.tasks_list:
+        resources_consumption[task] = {}
+        resources_consumption_dependent[task] = {}
+        for mode in source_problem.get_task_modes(task=task):
+            resources_consumption[task][mode] = {}
+            resources_consumption_dependent[task][mode] = {}
+
+            # Non-renewable resources
+            for resource in source_problem.non_renewable_resources_list:
+                if source_problem.is_non_renewable_resource_task_mode_consumption_dependent(
+                    resource=resource, task=task, mode=mode
+                ):
+                    resources_consumption_dependent[task][mode][resource] = (
+                        source_problem.get_non_renewable_resource_consumption_mapping(
+                            resource=resource, task=task, mode=mode
+                        )
+                    )
+                else:
+                    conso = source_problem.get_non_renewable_resource_consumption(
+                        resource=resource, task=task, mode=mode
+                    )
+                    if conso != 0:
+                        resources_consumption[task][mode][resource] = conso
+
+            # Cumulative resources
+            for resource in source_problem.cumulative_resources_list:
+                if source_problem.is_cumulative_resource_task_mode_consumption_dependent(
+                    resource=resource, task=task, mode=mode
+                ):
+                    resources_consumption_dependent[task][mode][resource] = (
+                        source_problem.get_cumulative_resource_consumption_mapping(
+                            resource=resource, task=task, mode=mode
+                        )
+                    )
+                else:
+                    conso = source_problem.get_cumulative_resource_consumption(
+                        resource=resource, task=task, mode=mode
+                    )
+                    if conso != 0:
+                        resources_consumption[task][mode][resource] = conso
+
+    return resources_consumption, resources_consumption_dependent
 
 
 def convert_solution_from_specific_to_generic(
