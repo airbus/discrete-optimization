@@ -123,6 +123,7 @@ jobs:
             python-version: "3.13"
     env:
       JOB_NAME: test (${{ matrix.os }}, ${{ matrix.python-version }})
+      WORKER_ID: ${{ matrix.os }}-python${{ matrix.python-version }}
     name: test (${{ matrix.os }}, ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     defaults:
@@ -286,6 +287,19 @@ jobs:
           TARGET_STEP_NAME: "Test non-regression"
         run: |
           pytest -v $(python tests/find_non_regression_tests.py) | python -u .github/scripts/parse_non_regression.py || true
+
+      - name: Post a comment in the PR triggering the workflow
+        if: github.event_name == 'pull_request' && hashFiles('./regressions_pr_comment.md') != ''
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: fs.readFileSync('./regressions_pr_comment.md', 'utf8')
+            });
 
       - name: Upload nonregression report as artifact
         uses: actions/upload-artifact@v7

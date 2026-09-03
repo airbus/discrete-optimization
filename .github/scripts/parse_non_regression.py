@@ -9,9 +9,14 @@ from typing import TextIO
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from parse_pytest_output_utils import TEST_SUMMARY_HEADER, get_log_url
+from parse_pytest_output_utils import (
+    TEST_SUMMARY_HEADER,
+    get_log_url,
+    get_workflow_summary_url,
+)
 
 REGRESSIONS_CSVFILE = "regressions.csv"
+PR_COMMENT_FILE = "regressions_pr_comment.md"
 
 
 def parse_pytest_output(input: TextIO | None = None):
@@ -100,6 +105,30 @@ def parse_pytest_output(input: TextIO | None = None):
         with open(REGRESSIONS_CSVFILE, "wt") as f:
             for fail in regression_failures:
                 f.write(fail["csv_line"] + "\n")
+
+    if os.getenv("GITHUB_EVENT_NAME", "") == "pull_request":
+        failure_types_found_list = []
+        if collection_failures:
+            failure_types_found_list.append("collecting errors")
+        if other_failures:
+            failure_types_found_list.append("errors")
+        if regression_failures:
+            failure_types_found_list.append("regressions")
+        if failure_types_found_list:
+            if len(failure_types_found_list) > 2:
+                first_types = ", ".join(failure_types_found_list[:-1])
+                failure_types_found = ", and ".join(
+                    [first_types, failure_types_found_list[-1]]
+                )
+            else:
+                failure_types_found = " and ".join(failure_types_found_list)
+            worker_id = os.getenv("WORKER_ID", "")
+            PR_comment = (
+                f"### ⚠️ Non-regression tests{' for ' + worker_id if worker_id else ''}\n\n"
+                f"{failure_types_found.capitalize()} found. See [workflow logs]({get_workflow_summary_url()}) for more details.\n"
+            )
+            with open(PR_COMMENT_FILE, "at", encoding="utf-8") as f:
+                f.write(PR_comment)
 
 
 if __name__ == "__main__":

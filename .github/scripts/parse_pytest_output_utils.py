@@ -10,6 +10,13 @@ import urllib.request
 TEST_SUMMARY_HEADER = "short test summary info"
 
 
+def get_workflow_summary_url():
+    server_url = os.environ.get("GITHUB_SERVER_URL")
+    repository = os.environ.get("GITHUB_REPOSITORY")
+    run_id = os.environ.get("GITHUB_RUN_ID")
+    return f"{server_url}/{repository}/actions/runs/{run_id}"
+
+
 def get_log_url(log_line_number):
     """Fetches exact runtime Job ID and Step Number dynamically using GitHub APIs"""
     token = os.getenv("GITHUB_TOKEN")
