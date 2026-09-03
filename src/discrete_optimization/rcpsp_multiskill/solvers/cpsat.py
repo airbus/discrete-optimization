@@ -52,6 +52,8 @@ class CpSatMultiskillRcpspSolver(
 
     problem: MultiskillRcpspProblem
 
+    avoid_interval_optional = False  # better on benchmarks
+
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, UnaryResource, Skill]
     ) -> Solution:
