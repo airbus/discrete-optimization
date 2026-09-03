@@ -87,13 +87,17 @@ def test_ortools(model):
     "model",
     ["j301_1.sm", "j1010_1.mm"],
 )
-@pytest.mark.parametrize("avoid_interval_optional", [False, True])
-def test_objectives(model, avoid_interval_optional):
+@pytest.mark.parametrize(
+    "avoid_interval_optional_for_cumulative_resources", [False, True]
+)
+def test_objectives(model, avoid_interval_optional_for_cumulative_resources):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
     solver = CpSatRcpspSolver(problem=rcpsp_problem)
-    solver.init_model(avoid_interval_optional=avoid_interval_optional)
+    solver.init_model(
+        avoid_interval_optional_for_cumulative_resources=avoid_interval_optional_for_cumulative_resources
+    )
 
     subtasks = {1, 4}
     # max end time subtasks
@@ -243,8 +247,12 @@ def test_chaining_constraints():
     "model",
     ["j301_1.sm", "j1010_1.mm"],
 )
-@pytest.mark.parametrize("avoid_interval_optional", [False, True])
-def test_ortools_with_calendar_resource(model, avoid_interval_optional):
+@pytest.mark.parametrize(
+    "avoid_interval_optional_for_cumulative_resources", [False, True]
+)
+def test_ortools_with_calendar_resource(
+    model, avoid_interval_optional_for_cumulative_resources
+):
     files_available = get_data_available()
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
@@ -257,7 +265,8 @@ def test_ortools_with_calendar_resource(model, avoid_interval_optional):
     assert rcpsp_problem.is_calendar
     solver = CpSatRcpspSolver(problem=rcpsp_problem)
     result_storage = solver.solve(
-        time_limit=100, avoid_interval_optional=avoid_interval_optional
+        time_limit=100,
+        avoid_interval_optional_for_cumulative_resources=avoid_interval_optional_for_cumulative_resources,
     )
     solution, fit = result_storage.get_best_solution_fit()
     solution_rebuilt = RcpspSolution(

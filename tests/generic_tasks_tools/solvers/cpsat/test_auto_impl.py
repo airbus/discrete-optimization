@@ -47,20 +47,8 @@ from discrete_optimization.shop.jsp.solvers.cpsat import CpSatJspSolver
     "objective",
     list(Objective) + [[(Objective.MAKESPAN, -2), (Objective.NB_TASKS_DONE, +2)]],
 )
-@pytest.mark.parametrize(
-    "avoid_interval_optional, duplicate_start_var_per_mode",
-    [(True, False), (False, False), (False, True)],
-)
-@pytest.mark.parametrize(
-    "use_energy_constraints, keep_only_most_nested_energy_constraints",
-    [(False, False), (True, False), (True, True)],
-)
 def test_auto(
     objective,
-    avoid_interval_optional,
-    duplicate_start_var_per_mode,
-    use_energy_constraints,
-    keep_only_most_nested_energy_constraints,
     caplog,
 ):
     def custom_evaluate_fn(variable: GenericSchedulingImplSolution):

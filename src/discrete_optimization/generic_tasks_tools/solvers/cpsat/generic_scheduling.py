@@ -71,11 +71,14 @@ class GenericSchedulingCpSatSolver(
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ]
 
+    avoid_interval_optional_for_unary_resources: bool = False
+    """Whether using task intervals + is_present(unary_resource) as demand variables or optional intervals depending on is_present(unary_resource) in cumulative/no_overlap constraints."""
+
     def get_resource_consumption_intervals(
         self, resource: Resource
     ) -> list[tuple[IntervalVar, LinearExprT]]:
         if self.problem.is_unary_resource(resource=resource):
-            if self.avoid_interval_optional:
+            if self.avoid_interval_optional_for_unary_resources:
                 # no optional interval, use rather demand variables
                 return [
                     (self.get_task_interval(task=task), conso)

@@ -80,7 +80,19 @@ class GenericSchedulingAutoCpSatSolver(
 
     hyperparameters = [
         CategoricalHyperparameter(
-            name="avoid_interval_optional", choices=[True, False], default=True
+            name="avoid_interval_optional_for_unary_resources",
+            choices=[True, False],
+            default=False,
+        ),
+        CategoricalHyperparameter(
+            name="avoid_interval_optional_for_cumulative_resources",
+            choices=[True, False],
+            default=True,
+        ),
+        CategoricalHyperparameter(
+            name="use_demand_variables_for_non_renewable_resources",
+            choices=[True, False],
+            default=False,
         ),
         CategoricalHyperparameter(
             name="add_redundant_skill_cumulative_constraints",
@@ -94,7 +106,7 @@ class GenericSchedulingAutoCpSatSolver(
             name="duplicate_start_var_per_mode",
             choices=[True, False],
             default=False,
-            depends_on=("avoid_interval_optional", [False]),
+            depends_on=("avoid_interval_optional_for_cumulative_resources", [False]),
         ),
         CategoricalHyperparameter(
             name="use_energy_constraints", choices=[True, False], default=False
@@ -126,14 +138,19 @@ class GenericSchedulingAutoCpSatSolver(
     # Multimode settings
     duplicate_start_var_per_mode = False
     """Whether adding a start variable for each task mode."""
-    avoid_interval_optional: bool = True
-    """Whether using task intervals + demand vars instead of optional intervals depending on is_present[mode]."""
+    # Non-renewable resource settings
+    use_demand_variables_for_non_renewable_resources: bool = False
+    """Whether using dedicated demand variables or a linear combination with is_present variables to compute demand."""
     # Energy constraints settings
     use_energy_constraints = False
     """Whether using energy constraints."""
     keep_only_most_nested_energy_constraints = True
     """Whether to keep only most nested subgraphs for energy constraints."""
     # Calendar constraints settings
+    avoid_interval_optional_for_cumulative_resources: bool = True
+    """Whether using task intervals + demand vars or optional intervals depending on is_present[unary_resource] in cumulative/no_overlap constraints."""
+    avoid_interval_optional_for_unary_resources: bool = False
+    """Whether using task intervals + is_present(unary_resource) as demand variables or optional intervals depending on is_present(unary_resource) in cumulative/no_overlap constraints."""
     add_redundant_skill_cumulative_constraints = False
     """Whether adding redundant calendar cumulative constraints on skills.
 
@@ -169,23 +186,37 @@ class GenericSchedulingAutoCpSatSolver(
     def needs_duration_variables(self) -> bool:
         """Whether the task duration variables are needed by the model.
 
-        Default implementation, returns True only if the problem is an allocation one (at least one unary resource).
+        Default implementation, returns True if
+        - the problem is an allocation one (at least one unary resource) and use optional intervals for correspondant cumulative/nooverlap constraints,
+        - or need task intervals (according to `self.needs_task_interval`)
+
         If additional custom constraints require them, override it.
 
         """
-        return (
-            len(self.problem.unary_resources_list) > 0 or self.avoid_interval_optional
+        return self.needs_task_intervals or (
+            len(self.problem.unary_resources_list) > 0
+            and not self.avoid_interval_optional_for_unary_resources
         )
 
     @property
-    def needs_task_interval(self) -> bool:
+    def needs_task_intervals(self) -> bool:
         """Whether the task interval variables are needed by the model.
 
-        By default, these variables are only constraints on durations variables and need not to be stored.
+        By default, these variables are needed only if we are not using the optional intervals for cumulative constraints.
+        NB: Even if no cumulative resources are present, optional intervals per mode or task intervals are still needed
+        to create the duration constraints between start and end.
         If additional custom constraints require them, override this property.
 
         """
-        return self.avoid_interval_optional
+        return (
+            # no optional interval per mode created => need task intervals at least for end-start=duration constraint
+            # + for cumulative constraints if cumulative resources existing
+            self.avoid_interval_optional_for_cumulative_resources
+        ) or (
+            # no optional interval per unary resource created => need task intervals if unary resources exist
+            self.avoid_interval_optional_for_unary_resources
+            and len(self.problem.unary_resources_list) > 0
+        )
 
     def include_constraint_on_cumulative_resource(
         self, resource: CumulativeResource
@@ -275,7 +306,9 @@ class GenericSchedulingAutoCpSatSolver(
         self,
         tasks_bounds: Optional[dict[Task, tuple[int, int, int, int]]] = None,
         use_cpm_for_task_bounds: Optional[bool] = None,
-        avoid_interval_optional: Optional[bool] = None,
+        avoid_interval_optional_for_unary_resources: Optional[bool] = None,
+        avoid_interval_optional_for_cumulative_resources: Optional[bool] = None,
+        use_demand_variables_for_non_renewable_resources: Optional[bool] = None,
         duplicate_start_var_per_mode: Optional[bool] = None,
         use_energy_constraints: Optional[bool] = None,
         keep_only_most_nested_energy_constraints: Optional[bool] = None,
@@ -298,8 +331,18 @@ class GenericSchedulingAutoCpSatSolver(
             self.keep_only_most_nested_energy_constraints = (
                 keep_only_most_nested_energy_constraints
             )
-        if avoid_interval_optional is not None:
-            self.avoid_interval_optional = avoid_interval_optional
+        if avoid_interval_optional_for_unary_resources is not None:
+            self.avoid_interval_optional_for_unary_resources = (
+                avoid_interval_optional_for_unary_resources
+            )
+        if avoid_interval_optional_for_cumulative_resources is not None:
+            self.avoid_interval_optional_for_cumulative_resources = (
+                avoid_interval_optional_for_cumulative_resources
+            )
+        if use_demand_variables_for_non_renewable_resources is not None:
+            self.use_demand_variables_for_non_renewable_resources = (
+                use_demand_variables_for_non_renewable_resources
+            )
         if duplicate_start_var_per_mode is not None:
             self.duplicate_start_var_per_mode = duplicate_start_var_per_mode
 
@@ -338,12 +381,11 @@ class GenericSchedulingAutoCpSatSolver(
     def _create_variables(self):
         self._create_start_or_end_variables()
         self._create_mode_variables()
-        if self.needs_duration_variables or self.needs_task_interval:
+        if self.needs_duration_variables or self.needs_task_intervals:
             self._create_task_duration_and_interval_variables()
         self._create_allocation_variables()
         self._create_skill_variables()
-        if self.avoid_interval_optional:
-            self._create_demand_variables()
+        self._create_demand_variables()
         if self.use_energy_constraints:
             self._create_energy_variables()
 
@@ -369,29 +411,10 @@ class GenericSchedulingAutoCpSatSolver(
 
         """
         for task in self.problem.tasks_list:
-            mode2duration = {
-                mode: self.problem.get_task_mode_duration(task=task, mode=mode)
-                for mode in self.problem.get_task_modes(task)
-            }
-            # constraint var value enforced by is_present_mode
-            # not needed if intervals optional per mode + intervals constraints also defined
-            create_constraint_with_is_present_mode = (
-                self.avoid_interval_optional or not self.needs_task_interval
-            )
-            self.duration_variables[task] = self._create_var_per_mode(
-                name=f"duration_{task}",
-                mode2value=mode2duration,
-                task=task,
-                create_constraint_with_is_present_mode=create_constraint_with_is_present_mode,
-            )
-            if self.needs_task_interval:
+            self._create_duration_variable_on_the_fly(task=task)
+            if self.needs_task_intervals:
                 # interval constraint
-                self.task_interval_variables[task] = self.cp_model.new_interval_var(
-                    start=self.start_or_end_variables[task, StartOrEnd.START],
-                    size=self.duration_variables[task],
-                    end=self.start_or_end_variables[task, StartOrEnd.END],
-                    name=f"interval_{task}",
-                )
+                self._create_on_the_fly_task_interval(task=task)
 
     def _create_mode_variables(self):
         for task in self.problem.tasks_list:
@@ -412,7 +435,7 @@ class GenericSchedulingAutoCpSatSolver(
                 self.cp_model.add_exactly_one(
                     self.modes_is_present[task][mode] for mode in modes
                 )
-            if not self.avoid_interval_optional:
+            if not self.avoid_interval_optional_for_cumulative_resources:
                 for mode in modes:
                     self._create_mode_interval_on_the_fly(
                         task=task, mode=mode, modes=modes
@@ -536,34 +559,37 @@ class GenericSchedulingAutoCpSatSolver(
     def _create_demand_variables(self):
         for task in self.problem.tasks_list:
             self.demand_variables[task] = {}
-            for resource in self.problem.unary_resources_list:
-                self.demand_variables[task][resource] = (
-                    self.get_task_unary_resource_is_present_variable(
-                        task=task, unary_resource=resource
+            if self.avoid_interval_optional_for_unary_resources:
+                for resource in self.problem.unary_resources_list:
+                    self.demand_variables[task][resource] = (
+                        self.get_task_unary_resource_is_present_variable(
+                            task=task, unary_resource=resource
+                        )
                     )
-                )
-            for resource in self.problem.cumulative_resources_list:
-                self.demand_variables[task][resource] = self._create_var_per_mode(
-                    name=f"demand_{task}_{resource}",
-                    mode2value={
-                        mode: self.problem.get_cumulative_resource_consumption(
-                            resource=resource, task=task, mode=mode
-                        )
-                        for mode in self.problem.get_task_modes(task=task)
-                    },
-                    task=task,
-                )
-            for resource in self.problem.non_renewable_resources_list:
-                self.demand_variables[task][resource] = self._create_var_per_mode(
-                    name=f"demand_{task}_{resource}",
-                    mode2value={
-                        mode: self.problem.get_non_renewable_resource_consumption(
-                            resource=resource, task=task, mode=mode
-                        )
-                        for mode in self.problem.get_task_modes(task=task)
-                    },
-                    task=task,
-                )
+            if self.avoid_interval_optional_for_cumulative_resources:
+                for resource in self.problem.cumulative_resources_list:
+                    self.demand_variables[task][resource] = self._create_var_per_mode(
+                        name=f"demand_{task}_{resource}",
+                        mode2value={
+                            mode: self.problem.get_cumulative_resource_consumption(
+                                resource=resource, task=task, mode=mode
+                            )
+                            for mode in self.problem.get_task_modes(task=task)
+                        },
+                        task=task,
+                    )
+            if self.use_demand_variables_for_non_renewable_resources:
+                for resource in self.problem.non_renewable_resources_list:
+                    self.demand_variables[task][resource] = self._create_var_per_mode(
+                        name=f"demand_{task}_{resource}",
+                        mode2value={
+                            mode: self.problem.get_non_renewable_resource_consumption(
+                                resource=resource, task=task, mode=mode
+                            )
+                            for mode in self.problem.get_task_modes(task=task)
+                        },
+                        task=task,
+                    )
 
     def _create_var_per_mode(
         self,
@@ -656,7 +682,7 @@ class GenericSchedulingAutoCpSatSolver(
                             name=f"is_allocated_{task}_{unary_resource}"
                         )
                     )
-                    if not self.avoid_interval_optional:
+                    if not self.avoid_interval_optional_for_unary_resources:
                         self._create_allocation_interval_on_the_fly(
                             task=task, unary_resource=unary_resource
                         )
@@ -742,7 +768,7 @@ class GenericSchedulingAutoCpSatSolver(
                 )
                 if max_capacity > 1:
                     # cumulative constraint on the new "conso" variable
-                    if self.avoid_interval_optional:
+                    if self.avoid_interval_optional_for_cumulative_resources:
                         intervals_n_consumptions = (
                             self.get_resource_consumption_intervals(resource=resource)
                         )
@@ -1013,21 +1039,82 @@ class GenericSchedulingAutoCpSatSolver(
                 raise NotImplementedError()
         return objective_var
 
-    def get_task_interval(self, task: Task) -> IntervalVar:
-        if self.needs_task_interval:
-            return self.task_interval_variables[task]
-        else:
-            return self.cp_model.new_interval_var(
-                start=self.start_or_end_variables[task, StartOrEnd.START],
-                size=self.duration_variables[task],
-                end=self.start_or_end_variables[task, StartOrEnd.END],
-                name=f"interval_{task}",
+    def _create_duration_variable_on_the_fly(
+        self, task: Task, task_interval_will_exist: Optional[bool] = None
+    ) -> None:
+        mode2duration = {
+            mode: self.problem.get_task_mode_duration(task=task, mode=mode)
+            for mode in self.problem.get_task_modes(task)
+        }
+        # constraint var value enforced by is_present_mode
+        # not needed if intervals optional per mode + intervals constraints also defined
+        if task_interval_will_exist is None:
+            task_interval_will_exist = self.needs_task_intervals
+        create_constraint_with_is_present_mode = (
+            self.avoid_interval_optional_for_cumulative_resources
+            or not task_interval_will_exist
+        )
+        self.duration_variables[task] = self._create_var_per_mode(
+            name=f"duration_{task}",
+            mode2value=mode2duration,
+            task=task,
+            create_constraint_with_is_present_mode=create_constraint_with_is_present_mode,
+        )
+
+    def get_duration_variable(
+        self, task: Task, task_interval_will_exist: Optional[bool] = None
+    ) -> LinearExprT:
+        """Get duration variable for given task
+
+        Args:
+            task:
+            task_interval_will_exist: if you know that the task interval will also be created,
+              set this to True to avoid redundant constraints.
+              Ignored if the duration variable has already been created.
+
+        Returns:
+
+        """
+        if task not in self.duration_variables:
+            if not self.problem.is_task_in_nooverlap_constraint(task):
+                logger.warning(
+                    f"Creating duration variable for task {task},"
+                    f" even though property `self.needs_duration_intervals` is False, "
+                    f"and task {task} is not in `self.problem.get_no_overlap()` "
+                    f"and has no forbidden intervals. "
+                    "Consider overriding/modifying `self.needs_duration_intervals` property."
+                )
+            self._create_duration_variable_on_the_fly(
+                task=task, task_interval_will_exist=task_interval_will_exist
             )
+        return self.duration_variables[task]
+
+    def get_task_interval(self, task: Task) -> IntervalVar:
+        """Get interval variable for given task."""
+        if task not in self.task_interval_variables:
+            if not self.problem.is_task_in_nooverlap_constraint(task):
+                logger.warning(
+                    f"Creating interval for task {task},"
+                    f" even though property `self.needs_task_intervals` is False, "
+                    f"and task {task} is not in `self.problem.get_no_overlap()` "
+                    f"and has no forbidden intervals. "
+                    "Consider overriding/modifying `self.needs_task_intervals` property."
+                )
+            self._create_on_the_fly_task_interval(task=task)
+        return self.task_interval_variables[task]
+
+    def _create_on_the_fly_task_interval(self, task: Task) -> None:
+        self.task_interval_variables[task] = self.cp_model.new_interval_var(
+            start=self.start_or_end_variables[task, StartOrEnd.START],
+            size=self.get_duration_variable(task=task, task_interval_will_exist=True),
+            end=self.start_or_end_variables[task, StartOrEnd.END],
+            name=f"interval_{task}",
+        )
 
     def get_cumulative_resource_demand_variable(
         self, task: Task, resource: CumulativeResource
     ) -> LinearExprT:
-        if self.avoid_interval_optional:
+        if self.avoid_interval_optional_for_cumulative_resources:
             return self.demand_variables[task][resource]
         return super().get_cumulative_resource_demand_variable(
             task=task, resource=resource
@@ -1036,7 +1123,7 @@ class GenericSchedulingAutoCpSatSolver(
     def get_non_renewable_resource_demand_variable(
         self, task: Task, resource: NonRenewableResource
     ) -> LinearExprT:
-        if self.avoid_interval_optional:
+        if self.use_demand_variables_for_non_renewable_resources:
             return self.demand_variables[task][resource]
         return super().get_non_renewable_resource_demand_variable(
             task=task, resource=resource
@@ -1048,10 +1135,10 @@ class GenericSchedulingAutoCpSatSolver(
         try:
             return self.allocation_intervals[task][unary_resource]
         except KeyError as e:
-            if self.avoid_interval_optional:
+            if self.avoid_interval_optional_for_unary_resources:
                 logger.warning(
                     f"Creating optional allocation interval for task {task} and unary_resource {unary_resource},"
-                    " even though `self.avoid_interval_optional` is True."
+                    " even though `self.avoid_interval_optional_for_unary_resources` is True."
                 )
                 self._create_allocation_interval_on_the_fly(
                     task=task, unary_resource=unary_resource
@@ -1087,10 +1174,10 @@ class GenericSchedulingAutoCpSatSolver(
         try:
             return self.modes_intervals[task][mode]
         except KeyError as e:
-            if self.avoid_interval_optional:
+            if self.avoid_interval_optional_for_cumulative_resources:
                 logger.warning(
                     f"Creating optional interval for task {task} and mode {mode},"
-                    " even though `self.avoid_interval_optional` is True."
+                    " even though `self.avoid_interval_optional_for_cumulative_resources` is True."
                 )
                 self._create_mode_interval_on_the_fly(task=task, mode=mode)
                 return self.modes_intervals[task][mode]
@@ -1354,7 +1441,7 @@ class SinglemodeGenericSchedulingAutoCpSatSolver(
 
     def get_task_interval(self, task: Task) -> IntervalVar:
         """Task interval with fixed duration, single mode."""
-        if self.needs_task_interval:
+        if self.needs_task_intervals:
             return super().get_task_interval(task=task)
         else:
             return self.get_task_mode_interval(

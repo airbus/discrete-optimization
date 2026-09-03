@@ -110,6 +110,11 @@ class CPSatAllocSchedulingSolver(
         CategoricalHyperparameter(
             name="optional_activities", choices=[False, True], default=False
         ),
+        CategoricalHyperparameter(
+            name="avoid_interval_optional_for_nooverlap_with_margin_constraint",
+            choices=[False, True],
+            default=False,
+        ),
         EnumHyperparameter(
             name="modelisation_dispersion",
             enum=ModelisationDispersion,
@@ -139,7 +144,8 @@ class CPSatAllocSchedulingSolver(
     problem: AllocSchedulingProblem
     variables: dict[str, dict[Any, Any]]
 
-    avoid_interval_optional = False  # better on benchmarks
+    avoid_interval_optional_for_nooverlap_with_margin_constraint = False
+    """Whether using optional interval or task interval + demand variable"""
     at_most_one_unary_resource_per_task = True
     objective = Objective.NB_UNARY_RESOURCES_USED
 
@@ -278,7 +284,7 @@ class CPSatAllocSchedulingSolver(
                     ):
                         margin = additional_constraints.adding_margin_on_sequence[1]
                         # create just additional interval for the "routing" constraint.
-                        if self.avoid_interval_optional:
+                        if self.avoid_interval_optional_for_nooverlap_with_margin_constraint:
                             intervals = [
                                 self.cp_model.new_fixed_size_interval_var(
                                     start=self.get_task_start_or_end_variable(
