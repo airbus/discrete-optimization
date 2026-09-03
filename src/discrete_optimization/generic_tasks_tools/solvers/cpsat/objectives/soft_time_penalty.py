@@ -16,9 +16,11 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.objectiv
 class SoftTimePenaltyModelerCpSat(ObjectiveModelerCpSat):
     objective_computer: SoftTimePenaltyComputer
     variables: dict
+    initialized_variables: bool = False
 
     def _create_vars(self):
         # LB/UB vars
+        self.variables = {}
         start_lb_violation = {}
         end_lb_violation = {}
         start_ub_violation = {}
@@ -161,6 +163,9 @@ class SoftTimePenaltyModelerCpSat(ObjectiveModelerCpSat):
                                 [0, var2 - (offset - var1)],
                             )
         self.variables["time_lags"] = time_lags
+        self.initialized_variables = True
 
     def get_objective_expr(self) -> LinearExpr:
+        if not self.initialized_variables:
+            self._create_vars()
         return sum([sum(self.variables[k].values()) for k in self.variables])
