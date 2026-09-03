@@ -91,6 +91,35 @@ class RcpspResourceDependentProblem(
     ],
     WithoutAllocationProblem[Task],
 ):
+    """RCPSP with resource-dependent consumption.
+
+    Supports consumption that depends on other tasks' modes.
+
+    **Encoding in mode_details:**
+
+    Fixed consumption (int):
+
+        >>> mode_details = {
+        ...     task_A: {0: {"duration": 5, "electricity": 10}}
+        ... }
+
+    Dependent consumption (dict mapping):
+
+        >>> mode_details = {
+        ...     task_A: {
+        ...         0: {
+        ...             "duration": 5,
+        ...             "electricity": {
+        ...                 frozenset([(task_B, 0)]): 10,  # B in mode 0: use 10
+        ...                 frozenset([(task_B, 1)]): 8,   # B in mode 1: use 8
+        ...             }
+        ...         }
+        ...     }
+        ... }
+
+    See `CumulativeResourceProblem` for full documentation.
+    """
+
     @property
     def non_skill_cumulative_resources_list(self) -> list[Skill]:
         return [r for r in self.resources if r not in self.non_renewable_resources]
@@ -107,7 +136,10 @@ class RcpspResourceDependentProblem(
     def is_cumulative_resource_task_mode_consumption_dependent(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> bool:
-        # To be Overridden in child classes
+        """Check if consumption depends on other tasks' modes.
+
+        Determined by type in mode_details: int → False, dict → True, missing → None.
+        """
         if isinstance(self.mode_details[task][mode].get(resource, 0), int):
             return False
         if isinstance(self.mode_details[task][mode].get(resource, 0), dict):
@@ -117,7 +149,10 @@ class RcpspResourceDependentProblem(
     def get_cumulative_resource_consumption_mapping(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> dict[frozenset[tuple[Task, int]], int]:
-        # To be Overridden in child classes
+        """Get resource consumption mapping from mode_details.
+
+        Returns the dict for dependent tasks, or {frozenset([]): value} for standard tasks.
+        """
         if self.is_cumulative_resource_task_mode_consumption_dependent(
             resource, task, mode
         ):

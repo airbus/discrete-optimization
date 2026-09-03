@@ -131,6 +131,16 @@ class GenericSchedulingImplProblem(
     resource_consumptions: dict[
         Task, dict[int, dict[CumulativeResource | NonRenewableResource, int]]
     ] = field(default_factory=dict)
+    resource_consumptions_dependent: dict[
+            Task,
+            dict[
+                int,
+                dict[
+                    CumulativeResource | NonRenewableResource,
+                    dict[frozenset[tuple[Task, int]], int],
+                ],
+            ],
+        ] = field(default_factory=dict)
     successors: dict[Task, set[Task]] = field(default_factory=dict)
     unary_resources: set[UnaryResource] = field(default_factory=set)
     unary_resources_skills: dict[UnaryResource, dict[Skill, int]] = field(
@@ -232,21 +242,18 @@ class GenericSchedulingImplProblem(
     def is_cumulative_resource_task_mode_consumption_dependent(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> bool:
-        # To be Overridden in child classes
-        if isinstance(self.resource_consumptions[task][mode].get(resource, 0), int):
+        try:
+            return resource in self.resource_consumptions_dependent[task][mode]
+        except KeyError:
             return False
-        if isinstance(self.resource_consumptions[task][mode].get(resource, 0), dict):
-            return True
-        return None
 
     def get_cumulative_resource_consumption_mapping(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> dict[frozenset[tuple[Task, int]], int]:
-        # To be Overridden in child classes
         if self.is_cumulative_resource_task_mode_consumption_dependent(
             resource, task, mode
         ):
-            return self.resource_consumptions[task][mode][resource]
+            return self.resource_consumptions_dependent[task][mode][resource]
         return {
             frozenset([]): self.get_cumulative_resource_consumption(
                 resource, task, mode
@@ -256,21 +263,18 @@ class GenericSchedulingImplProblem(
     def is_non_renewable_resource_task_mode_consumption_dependent(
         self, resource: NonRenewableResource, task: Task, mode: int
     ) -> bool:
-        # To be Overridden in child classes
-        if isinstance(self.resource_consumptions[task][mode].get(resource, 0), int):
+        try:
+            return resource in self.resource_consumptions_dependent[task][mode]
+        except KeyError:
             return False
-        if isinstance(self.resource_consumptions[task][mode].get(resource, 0), dict):
-            return True
-        return None
 
     def get_non_renewable_resource_consumption_mapping(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> dict[frozenset[tuple[Task, int]], int]:
-        # To be Overridden in child classes
         if self.is_non_renewable_resource_task_mode_consumption_dependent(
             resource, task, mode
         ):
-            return self.resource_consumptions[task][mode][resource]
+            return self.resource_consumptions_dependent[task][mode][resource]
         return {
             frozenset([]): self.get_non_renewable_resource_consumption(
                 resource, task, mode
@@ -718,6 +722,7 @@ class GenericSchedulingImplProblem(
             horizon=self.horizon,
             durations_per_mode=new_durations_per_mode,
             resource_consumptions=self.resource_consumptions,
+            resource_consumptions_dependent=self.resource_consumptions_dependent,
             successors=new_successors,
             unary_resources=self.unary_resources,
             unary_resources_skills=self.unary_resources_skills,
