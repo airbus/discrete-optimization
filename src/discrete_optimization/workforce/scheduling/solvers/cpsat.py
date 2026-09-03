@@ -139,6 +139,7 @@ class CPSatAllocSchedulingSolver(
     problem: AllocSchedulingProblem
     variables: dict[str, dict[Any, Any]]
 
+    avoid_interval_optional = False  # better on benchmarks
     at_most_one_unary_resource_per_task = True
     objective = Objective.NB_UNARY_RESOURCES_USED
 
