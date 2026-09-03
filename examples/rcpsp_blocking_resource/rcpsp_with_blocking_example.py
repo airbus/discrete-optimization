@@ -11,6 +11,7 @@ We create three scenarios:
 This shows how blocking constraints affect optimal schedules.
 """
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.cpsat_auto import (
     CpSatAutoRcpspSolver,
@@ -47,7 +48,7 @@ def solve_and_compare():
     sol1 = result1.get_best_solution()
 
     if sol1 is not None:
-        print(f"Makespan: {base_problem.evaluate(sol1)['makespan']}")
+        print(f"Makespan: {base_problem.evaluate(sol1)[Objective.MAKESPAN]}")
         print(f"Feasible: {base_problem.satisfy(sol1)}")
     print()
 
@@ -72,7 +73,7 @@ def solve_and_compare():
         print(f"Makespan: {problem_setup.evaluate(sol2)['makespan']}")
         print(f"Feasible: {problem_setup.satisfy(sol2)}")
         print(
-            f"Makespan increase: {problem_setup.evaluate(sol2)['makespan'] - base_problem.evaluate(sol1)['makespan']}"
+            f"Makespan increase: {problem_setup.evaluate(sol2)[Objective.MAKESPAN] - base_problem.evaluate(sol1)[Objective.MAKESPAN]}"
         )
     print()
 
@@ -94,10 +95,10 @@ def solve_and_compare():
     sol3 = result3.get_best_solution()
 
     if sol3 is not None:
-        print(f"Makespan: {problem_aggressive.evaluate(sol3)['makespan']}")
+        print(f"Makespan: {problem_aggressive.evaluate(sol3)[Objective.MAKESPAN]}")
         print(f"Feasible: {problem_aggressive.satisfy(sol3)}")
         print(
-            f"Makespan increase: {problem_aggressive.evaluate(sol3)['makespan'] - base_problem.evaluate(sol1)['makespan']}"
+            f"Makespan increase: {problem_aggressive.evaluate(sol3)[Objective.MAKESPAN] - base_problem.evaluate(sol1)[Objective.MAKESPAN]}"
         )
     else:
         print(
@@ -123,10 +124,10 @@ def solve_and_compare():
     sol4 = result4.get_best_solution()
 
     if sol4 is not None:
-        print(f"Makespan: {problem_conservative.evaluate(sol4)['makespan']}")
+        print(f"Makespan: {problem_conservative.evaluate(sol4)[Objective.MAKESPAN]}")
         print(f"Feasible: {problem_conservative.satisfy(sol4)}")
         print(
-            f"Makespan increase: {problem_conservative.evaluate(sol4)['makespan'] - base_problem.evaluate(sol1)['makespan']}"
+            f"Makespan increase: {problem_conservative.evaluate(sol4)[Objective.MAKESPAN] - base_problem.evaluate(sol1)[Objective.MAKESPAN]}"
         )
     print()
 

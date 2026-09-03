@@ -1,8 +1,7 @@
 #  Copyright (c) 2022-2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
-
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.lp_tools import ParametersMilp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -33,7 +32,7 @@ def test_rcpsp_sm_lp_mathopt():
         problem=rcpsp_problem, rcpsp_permutation=solution.rcpsp_permutation
     )
     fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    assert fit == -fit_2["makespan"]
+    assert fit == fit_2[Objective.MAKESPAN]
     assert rcpsp_problem.satisfy(solution)
     plot_resource_individual_gantt(rcpsp_problem, solution)
     plot_ressource_view(rcpsp_problem, solution)
@@ -57,7 +56,7 @@ def test_rcpsp_mm_lp_mathopt():
     )
     fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
     assert rcpsp_problem.satisfy(solution)
-    assert fit == -fit_2["makespan"]
+    assert fit == fit_2[Objective.MAKESPAN]
     plot_resource_individual_gantt(rcpsp_problem, solution)
     plot_ressource_view(rcpsp_problem, solution)
 

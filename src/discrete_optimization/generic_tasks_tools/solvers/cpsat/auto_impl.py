@@ -27,8 +27,6 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
-    ObjectiveHandling,
     ParamsObjectiveFunction,
 )
 
@@ -53,6 +51,7 @@ class GenericSchedulingAutoCpSatImplSolver(
         self,
         problem: GenericSchedulingImplProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        objective: Optional[Objective] = None,
         custom_objective_factory: Optional[
             Callable[[GenericSchedulingAutoCpSatImplSolver], LinearExprT]
         ] = None,
@@ -73,6 +72,7 @@ class GenericSchedulingAutoCpSatImplSolver(
             params_objective_function=params_objective_function,
             **kwargs,
         )
+        self.objective = objective
         self.custom_objective_factory = custom_objective_factory
 
     def get_makespan_upper_bound(self) -> int:
@@ -135,55 +135,50 @@ class GenericSchedulingAutoCpSatImplSolver(
             add_redundant_skill_cumulative_constraints=add_redundant_skill_cumulative_constraints,
             **kwargs,
         )
+        if self.objective == Objective.CUSTOM:
+            if self.custom_objective_factory is not None:
+                self.cp_model.minimize(self.custom_objective_factory(self))
 
+        # TODO : adapt to get adapt the objective to the params_objective_function,
+        #  that could be different from the problem spec.
         # use the params_objective_function to define the objective
         # keep only objectives, not penalties
-        indices_obj = []
-        for i, obj in enumerate(self.params_objective_function.objectives):
-            try:
-                Objective(obj)
-            except ValueError:
-                # not an objective (e.g. "time_penalty")
-                pass
-            else:
-                indices_obj.append(i)
-        if len(indices_obj) == 0:
-            raise ValueError(
-                "`self.params_objective_function` does not contain any objective from `Objective` enumeration."
-            )
-        # single obj vs aggregated obj
-        match self.params_objective_function.objective_handling:
-            case ObjectiveHandling.SINGLE:
-                i_obj = indices_obj[0]
-                objective_var = self.params_objective_function.weights[
-                    i_obj
-                ] * self.get_objective_variable(
-                    Objective(self.params_objective_function.objectives[i_obj])
-                )
-            case ObjectiveHandling.AGGREGATE:
-                objective_var = sum(
-                    self.params_objective_function.weights[i]
-                    * self.get_objective_variable(
-                        Objective(self.params_objective_function.objectives[i])
-                    )
-                    for i in indices_obj
-                )
-            case _:
-                raise NotImplementedError()
-        if self.params_objective_function.sense_function == ModeOptim.MAXIMIZATION:
-            self.cp_model.maximize(objective_var)
-        else:
-            self.cp_model.minimize(objective_var)
-
-    def get_objective_variable(self, objective: Objective) -> LinearExprT:
-        if objective == Objective.CUSTOM:
-            if self.custom_objective_factory is None:
-                raise RuntimeError(
-                    "`custom_objective_factory` not defined, so `Objective.CUSTOM` cannot be translated as a cpsat variable."
-                )
-            return self.custom_objective_factory(self)
-        else:
-            return super().get_objective_variable(objective)
+        # indices_obj = []
+        # for i, obj in enumerate(self.params_objective_function.objectives):
+        #     try:
+        #         Objective(obj)
+        #     except ValueError:
+        #         # not an objective (e.g. "time_penalty")
+        #         pass
+        #     else:
+        #         indices_obj.append(i)
+        # if len(indices_obj) == 0:
+        #     raise ValueError(
+        #         "`self.params_objective_function` does not contain any objective from `Objective` enumeration."
+        #     )
+        # # single obj vs aggregated obj
+        # match self.params_objective_function.objective_handling:
+        #     case ObjectiveHandling.SINGLE:
+        #         i_obj = indices_obj[0]
+        #         objective_var = self.params_objective_function.weights[
+        #             i_obj
+        #         ] * self.get_objective_variable(
+        #             Objective(self.params_objective_function.objectives[i_obj])
+        #         )
+        #     case ObjectiveHandling.AGGREGATE:
+        #         objective_var = sum(
+        #             self.params_objective_function.weights[i]
+        #             * self.get_objective_variable(
+        #                 Objective(self.params_objective_function.objectives[i])
+        #             )
+        #             for i in indices_obj
+        #         )
+        #     case _:
+        #         raise NotImplementedError()
+        # if self.params_objective_function.sense_function == ModeOptim.MAXIMIZATION:
+        #     self.cp_model.maximize(objective_var)
+        # else:
+        #     self.cp_model.minimize(objective_var)
 
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, UnaryResource, Skill]

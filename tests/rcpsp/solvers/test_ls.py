@@ -7,6 +7,7 @@ import random
 import numpy as np
 import pytest
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -100,7 +101,7 @@ def test_local_search_mm(random_seed):
         problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
 
-    objectives = ["makespan"]
+    objectives = [Objective.MAKESPAN]
     objective_weights = [-1]
     res = RestartHandlerLimit(200)
     params_objective_function = ParamsObjectiveFunction(
@@ -143,7 +144,7 @@ def test_local_search_sm_multiobj(random_seed):
         problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
     res = RestartHandlerLimit(200)
-    objectives = ["makespan", "mean_resource_reserve"]
+    objectives = [Objective.MAKESPAN, "mean_resource_reserve"]
     objective_weights = [-1, 1]
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.MULTI_OBJ,
@@ -175,7 +176,7 @@ def test_local_search_sm_postpro_multiobj(random_seed):
         problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
     res = RestartHandlerLimit(500)
-    objectives = ["makespan", "mean_resource_reserve"]
+    objectives = [Objective.MAKESPAN, "mean_resource_reserve"]
     objective_weights = [-1, 100]
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.AGGREGATE,
@@ -231,7 +232,7 @@ def test_local_search_mm_multiobj(random_seed):
         problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
     res = RestartHandlerLimit(200)
-    objectives = ["makespan", "mean_resource_reserve"]
+    objectives = [Objective.MAKESPAN, "mean_resource_reserve"]
     objective_weights = [-1, 100]
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.MULTI_OBJ,
@@ -293,7 +294,7 @@ def test_local_search_postpro_multiobj_multimode(random_seed):
         problem=rcpsp_problem, selected_mutations={RcpspMutation}
     )
     res = RestartHandlerLimit(500)
-    objectives = ["makespan", "mean_resource_reserve"]
+    objectives = [Objective.MAKESPAN, "mean_resource_reserve"]
     objective_weights = [-1, 100]
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.AGGREGATE,

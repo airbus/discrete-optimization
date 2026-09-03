@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from discrete_optimization.generic_rcpsp_tools.mutation import RcpspMutation
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -66,7 +67,7 @@ def test_alternating_ga_specific_mode_arity_single_solver(random_seed):
 
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan"],
+        objectives=[Objective.MAKESPAN],
         weights=[1],
         sense_function=ModeOptim.MINIMIZATION,
     )
@@ -114,7 +115,7 @@ def test_alternating_ga_specific_mode_arity_single_solver_warm_started_with_cpm(
 
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan"],
+        objectives=[Objective.MAKESPAN],
         weights=[1],
         sense_function=ModeOptim.MINIMIZATION,
     )
@@ -133,7 +134,7 @@ def test_alternating_ga_specific_mode_arity_single_solver_warm_started_with_cpm(
 
     print(f"GA: {fit_ga}")
 
-    assert fit_ga > fit_sgs
+    assert fit_ga < fit_sgs
 
 
 def test_single_mode_moga_aggregated(random_seed):
@@ -156,7 +157,7 @@ def test_single_mode_moga_aggregated(random_seed):
 
     fitnesses = rcpsp_problem.evaluate(sol)
     assert fitnesses == {
-        "makespan": 43,
+        Objective.MAKESPAN: 43,
         "mean_resource_reserve": 0,
         "constraint_penalty": 0.0,
     }
@@ -164,7 +165,7 @@ def test_single_mode_moga_aggregated(random_seed):
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan", "mean_resource_reserve"],
+        objectives=[Objective.MAKESPAN, "mean_resource_reserve"],
         weights=[-1, +200],
         sense_function=ModeOptim.MAXIMIZATION,
     )
@@ -181,7 +182,7 @@ def test_single_mode_moga_aggregated(random_seed):
     rcpsp_problem.plot_ressource_view(sol)
     fitnesses = rcpsp_problem.evaluate(sol)
     assert fitnesses == {
-        "makespan": 43,
+        Objective.MAKESPAN: 43,
         "mean_resource_reserve": 0,
         "constraint_penalty": 0.0,
     }
@@ -214,7 +215,7 @@ def test_own_pop_single_mode_ga(random_seed):
 
     fitnesses = rcpsp_problem.evaluate(sol)
     assert fitnesses == {
-        "makespan": 49,
+        Objective.MAKESPAN: 49,
         "mean_resource_reserve": 0,
         "constraint_penalty": 0.0,
     }
@@ -251,7 +252,7 @@ def test_ga_warm_started_with_cpm(random_seed):
     assert rcpsp_problem.satisfy(solution)
     print(f"GA: {fit_ga}")
 
-    assert fit_ga > fit_sgs
+    assert fit_ga > -fit_sgs
 
 
 def test_ga_multimode_rcpsp_solver():

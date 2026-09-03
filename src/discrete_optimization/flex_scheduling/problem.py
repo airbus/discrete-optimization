@@ -29,6 +29,12 @@ from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolutio
 from discrete_optimization.generic_tasks_tools.no_overlap import (
     WithoutNoOverlapProblem,
 )
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
     FlexibleGapBlockingConstraint,
@@ -561,6 +567,9 @@ class FlexProblem(
         if start_or_end == StartOrEnd.END:
             return self.min_end_time[self.task_id_to_index[task]]
         return 0
+
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        return [MakespanObjectiveComputer(problem=self, weight_objective=1)]
 
     def get_task_start_or_end_upper_bound(
         self, task: Task, start_or_end: StartOrEnd

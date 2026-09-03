@@ -35,6 +35,21 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
 )
+from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
+    AllocatedTasksObjective,
+)
+from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
+    CumulCostComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used import (
+    UnaryResourcesUsedComputer,
+)
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     WithoutResourceBlockingProblem,
     WithoutResourceBlockingSolution,
@@ -311,6 +326,22 @@ class AllocSchedulingProblem(
 
     def get_solution_type(self) -> type[Solution]:
         return AllocSchedulingSolution
+
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        return [
+            AllocatedTasksObjective(problem=self, weight_objective=100000),
+            CumulCostComputer(
+                problem=self,
+                weight_objective=1,
+                cumul_dimensions=["duration"],
+                value_tasks={
+                    "duration": {t: self.get_task_duration(t) for t in self.tasks_list}
+                },
+                value_tasks_per_mode={},
+            ),
+            UnaryResourcesUsedComputer(problem=self, weight_objective=10000),
+            MakespanObjectiveComputer(problem=self, weight_objective=1),
+        ]
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {

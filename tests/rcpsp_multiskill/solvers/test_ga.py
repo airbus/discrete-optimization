@@ -7,6 +7,7 @@ import random
 import numpy as np
 import pytest
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -186,7 +187,7 @@ def test_alternating_ga(random_seed):
 
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.AGGREGATE,
-        objectives=["makespan"],
+        objectives=[Objective.MAKESPAN],
         weights=[1],
         sense_function=ModeOptim.MINIMIZATION,
     )
@@ -214,4 +215,4 @@ def test_alternating_ga(random_seed):
 
     tmp_sol = ga_solver.solve().get_best_solution()
     assert msrcpsp_problem.satisfy(tmp_sol)
-    assert msrcpsp_problem.evaluate(tmp_sol) == {"makespan": 30}
+    assert msrcpsp_problem.evaluate(tmp_sol) == {Objective.MAKESPAN: 30}

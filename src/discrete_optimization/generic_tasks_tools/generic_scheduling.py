@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
+from abc import abstractmethod
 from collections import defaultdict
 from typing import Generic, Optional
 
@@ -13,10 +14,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 )
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
-from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
-    Objective,
-    Penalty,
-)
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.no_overlap import (
     NoOverlapProblem,
     NoOverlapSolution,
@@ -25,6 +23,9 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
     NonRenewableResourceProblem,
     NonRenewableResourceSolution,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
     PrecedenceSchedulingProblem,
@@ -49,6 +50,13 @@ from discrete_optimization.generic_tasks_tools.timelag import (
 from discrete_optimization.generic_tasks_tools.timewindow import (
     TimewindowProblem,
     TimewindowSolution,
+)
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    ObjectiveDoc,
+    ObjectiveHandling,
+    ObjectiveRegister,
+    TypeObjective,
 )
 
 CumulativeResource = Skill | NonSkillCumulativeResource
@@ -506,122 +514,6 @@ class GenericSchedulingProblem(
         """
         self.update_time_lags()
 
-    def compute_subobjective(
-        self,
-        variable: GenericSchedulingSolution,
-        objective: Objective,
-        resource_weights: Optional[dict[AnyResource, int]] = None,
-    ) -> int:
-        """Compute subobjective from given solution."""
-        match objective:
-            case Objective.MAKESPAN:
-                return variable.get_max_end_time()
-            case Objective.NB_TASKS_DONE:
-                return variable.compute_nb_tasks_done()
-            case Objective.NB_UNARY_RESOURCES_USED:
-                return variable.compute_nb_unary_resources_used()
-            case Objective.NB_RESOURCES_USED:
-                return variable.compute_nb_calendar_resources_used(
-                    weights=resource_weights
-                ) + variable.compute_nb_non_renewable_resources_used(
-                    weights=resource_weights
-                )
-            case Objective.RESOURCES_LEVELS:
-                return variable.compute_aggregated_calendar_resources_levels(
-                    weights=resource_weights
-                ) + variable.compute_aggregated_non_renewable_resources_consumptions(
-                    weights=resource_weights
-                )
-            case Objective.COST:
-                return variable.compute_cost()
-            case Objective.DISPERSION_WORKLOAD:
-                return variable.compute_workload_dispersion()
-            case _:
-                raise NotImplementedError()
-
-    def compute_penalty(
-        self, variable: GenericSchedulingSolution, penalty: Penalty
-    ) -> int:
-        """Compute penalty from given solution."""
-        match penalty:
-            case Penalty.TIME:
-                penalty = 0
-                # time windows
-                for task in self.tasks_list:
-                    start = variable.get_start_time(task)
-                    end = variable.get_end_time(task)
-                    start_lb = self.get_task_start_or_end_lower_bound(
-                        task=task, start_or_end=StartOrEnd.START
-                    )
-                    end_lb = self.get_task_start_or_end_lower_bound(
-                        task=task, start_or_end=StartOrEnd.END
-                    )
-                    start_ub = self.get_task_start_or_end_upper_bound(
-                        task=task, start_or_end=StartOrEnd.START
-                    )
-                    end_ub = self.get_task_start_or_end_upper_bound(
-                        task=task, start_or_end=StartOrEnd.END
-                    )
-                    penalty += max(0, start_lb - start)
-                    penalty += max(0, end_lb - end)
-                    penalty += max(0, start - start_ub)
-                    penalty += max(0, end - end_ub)
-                # time lags
-                for task1_start_or_end in StartOrEnd:
-                    for task2_start_or_end in StartOrEnd:
-                        for min_or_max in MinOrMax:
-                            for task1, task2, offset in self.get_original_time_lags(
-                                task1_start_or_end=task1_start_or_end,
-                                task2_start_or_end=task2_start_or_end,
-                                min_or_max=min_or_max,
-                            ):
-                                t1 = variable.get_start_or_end_time(
-                                    task=task1, start_or_end=task1_start_or_end
-                                )
-                                t2 = variable.get_start_or_end_time(
-                                    task=task2, start_or_end=task2_start_or_end
-                                )
-                                if min_or_max == MinOrMax.MIN:
-                                    penalty += max(0, t1 + offset - t2)
-                                else:
-                                    penalty += max(0, t2 - (t1 + offset))
-
-            case _:
-                raise NotImplementedError()
-
-        return penalty
-
-    def get_mode_cost(self, task: Task, mode: int) -> int:
-        """Get cost of choosing given mode.
-
-        Default to no cost. To be overridden in child classes with actual costs.
-
-        Args:
-            task:
-            mode:
-
-        Returns:
-
-        """
-        return 0
-
-    def get_unary_resource_cost(
-        self, task: Task, mode: int, unary_resource: UnaryResource
-    ) -> int:
-        """Get cost of allocating given unary resource.
-
-        Default to no cost. To be overridden in child classes with actual costs.
-
-        Args:
-            task:
-            mode:
-            unary_resource:
-
-        Returns:
-
-        """
-        return 0
-
     def satisfy(self, variable: "GenericSchedulingSolution") -> bool:
         return self.satisfy_partial(variable=variable)
 
@@ -701,6 +593,46 @@ class GenericSchedulingProblem(
             and (not mode_constraints or variable.check_mode_constraint())
         )
 
+    @abstractmethod
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]: ...
+
+    def get_objective_computer(
+        self, objective: Objective
+    ) -> list[ObjectiveComputer] | None:
+        mapping = {}
+        for obj in self.get_list_objective_computer():
+            if (obj_name := obj.get_objective_name()) not in mapping:
+                mapping[obj_name] = []
+            mapping[obj_name].append(obj)
+        return mapping.get(objective, None)
+
+    def evaluate(self, variable: GenericSchedulingSolution) -> dict[str, float]:
+        dict_eval = {}
+        for objective_computer in self.get_list_objective_computer():
+            key = objective_computer.get_objective_name()
+            if key not in dict_eval:
+                dict_eval[key] = 0
+            dict_eval[key] += objective_computer.compute_objective(variable)
+        return dict_eval
+
+    def get_objective_register(self) -> ObjectiveRegister:
+        if len(self.get_list_objective_computer()) == 1:
+            handling = ObjectiveHandling.SINGLE
+        else:
+            handling = ObjectiveHandling.AGGREGATE
+        dict_objective = {
+            objective_computer.get_objective_name(): ObjectiveDoc(
+                type=TypeObjective.OBJECTIVE,
+                default_weight=objective_computer.weight_objective,
+            )
+            for objective_computer in self.get_list_objective_computer()
+        }
+        return ObjectiveRegister(
+            objective_sense=ModeOptim.MINIMIZATION,
+            objective_handling=handling,
+            dict_objective_to_doc=dict_objective,
+        )
+
 
 class GenericSchedulingSolution(
     ResourceBlockingSolution[Task, CumulativeResource, UnaryResource],
@@ -732,22 +664,6 @@ class GenericSchedulingSolution(
             return super().get_calendar_resource_consumption(
                 resource=resource, task=task
             )
-
-    def compute_cost(self) -> int:
-        return sum(
-            (
-                self.problem.get_mode_cost(
-                    task=task, mode=(mode := self.get_mode(task=task))
-                )
-                + sum(
-                    self.problem.get_unary_resource_cost(
-                        task=task, mode=mode, unary_resource=unary_resource
-                    )
-                    for unary_resource in self.get_task_allocation(task=task)
-                )
-            )
-            for task in self.problem.tasks_list
-        )
 
     def compute_workload_dispersion(self) -> int:
         workload = [0 for i in range(len(self.problem.unary_resources_list))]

@@ -4,6 +4,7 @@
 
 from typing import Union
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.do_mutation import Mutation
 from discrete_optimization.generic_tools.ea.ga import (
     DeapCrossover,
@@ -52,7 +53,7 @@ class ParametersGa:
             selection=DeapSelection.SEL_TOURNAMENT,
             encoding="rcpsp_permutation",
             objective_handling=ObjectiveHandling.AGGREGATE,
-            objectives=["makespan"],
+            objectives=[Objective.MAKESPAN],
             objective_weights=[-1],
             pop_size=100,
             max_evals=10000,
@@ -107,7 +108,7 @@ class ParametersAltGa:
             selections=[DeapSelection.SEL_TOURNAMENT, DeapSelection.SEL_TOURNAMENT],
             encodings=["rcpsp_modes", "rcpsp_permutation"],
             objective_handling=ObjectiveHandling.AGGREGATE,
-            objectives=["makespan"],
+            objectives=[Objective.MAKESPAN],
             objective_weights=[-1],
             pop_size=100,
             max_evals=10000,
@@ -142,7 +143,7 @@ class ParametersAltGa:
                 "priority_worker_per_task_perm",
             ],
             objective_handling=ObjectiveHandling.AGGREGATE,
-            objectives=["makespan"],
+            objectives=[Objective.MAKESPAN],
             objective_weights=[-1],
             pop_size=100,
             max_evals=10000,
