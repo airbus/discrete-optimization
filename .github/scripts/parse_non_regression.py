@@ -68,7 +68,7 @@ def parse_pytest_output(input: TextIO | None = None):
 
     if regression_failures:
         # summary of failures with proper links
-        with open(summary_file, "at") as f:
+        with open(summary_file, "at", encoding="utf-8") as f:
             f.write(f"\n### ⚠️ Regression found in non-regression tests\n\n")
             f.write("| Test id | Jump to Execution Logs |\n")
             f.write("| --- | --- |\n")
@@ -77,7 +77,7 @@ def parse_pytest_output(input: TextIO | None = None):
                     f"| `{fail['test_id']}` | [Go to Log Line]({fail['log_url']}) |\n"
                 )
     if other_failures:
-        with open(summary_file, "at") as f:
+        with open(summary_file, "at", encoding="utf-8") as f:
             f.write(f"\n### ⚠️ Error found in non-regression tests\n\n")
             f.write("| Test id | Jump to Execution Logs |\n")
             f.write("| --- | --- |\n")
@@ -86,7 +86,7 @@ def parse_pytest_output(input: TextIO | None = None):
                     f"| `{fail['test_id']}` | [Go to Log Line]({fail['log_url']}) |\n"
                 )
     if collection_failures:
-        with open(summary_file, "at") as f:
+        with open(summary_file, "at", encoding="utf-8") as f:
             f.write(f"\n### ⚠️ Error found collecting non-regression tests\n\n")
             f.write("| Test id | Jump to Execution Logs |\n")
             f.write("| --- | --- |\n")
