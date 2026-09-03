@@ -74,7 +74,7 @@ def parse_pytest_output(input: TextIO | None = None):
 
     # summary of failures with proper links
     if failures:
-        with open(summary_file, "a") as f:
+        with open(summary_file, "a", encoding="utf-8") as f:
             f.write(f"\n### ⚠️ Failing examples found in docstrings\n\n")
             f.write("| Target File | Line | Jump to Execution Logs | Link to code |\n")
             f.write("| --- | --- | --- | --- |\n")
