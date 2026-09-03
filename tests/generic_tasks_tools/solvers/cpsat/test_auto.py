@@ -399,8 +399,16 @@ def test_problem(caplog):
 
 @pytest.mark.parametrize("objective", Objective)
 @pytest.mark.parametrize(
-    "avoid_interval_optional, duplicate_start_var_per_mode",
+    "avoid_interval_optional_for_cumulative_resources, duplicate_start_var_per_mode",
     [(True, False), (False, False), (False, True)],
+)
+@pytest.mark.parametrize(
+    "avoid_interval_optional_for_unary_resources",
+    [False, True],
+)
+@pytest.mark.parametrize(
+    "use_demand_variables_for_non_renewable_resources",
+    [False, True],
 )
 @pytest.mark.parametrize(
     "use_energy_constraints, keep_only_most_nested_energy_constraints",
@@ -408,7 +416,9 @@ def test_problem(caplog):
 )
 def test_auto(
     objective,
-    avoid_interval_optional,
+    avoid_interval_optional_for_cumulative_resources,
+    avoid_interval_optional_for_unary_resources,
+    use_demand_variables_for_non_renewable_resources,
     duplicate_start_var_per_mode,
     use_energy_constraints,
     keep_only_most_nested_energy_constraints,
@@ -427,7 +437,9 @@ def test_auto(
         solver.exactly_one_unary_resource_per_task = True
     with caplog.at_level(logging.WARNING):
         solver.init_model(
-            avoid_interval_optional=avoid_interval_optional,
+            avoid_interval_optional_for_cumulative_resources=avoid_interval_optional_for_cumulative_resources,
+            avoid_interval_optional_for_unary_resources=avoid_interval_optional_for_unary_resources,
+            use_demand_variables_for_non_renewable_resources=use_demand_variables_for_non_renewable_resources,
             duplicate_start_var_per_mode=duplicate_start_var_per_mode,
             use_energy_constraints=use_energy_constraints,
             keep_only_most_nested_energy_constraints=keep_only_most_nested_energy_constraints,
@@ -438,7 +450,14 @@ def test_auto(
                 - solver.get_nb_tasks_done_variable()
             )
             solver.cp_model.minimize(objective_var)
-    assert "even though `self.avoid_interval_optional` is True." not in caplog.text
+    assert (
+        "even though `self.avoid_interval_optional_for_cumulative_resources` is True."
+        not in caplog.text
+    )
+    assert (
+        "even though `self.avoid_interval_optional_for_unary_resources` is True."
+        not in caplog.text
+    )
 
     # solve
     res = solver.solve()

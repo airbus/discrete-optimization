@@ -83,7 +83,7 @@ solver_configs = {
             time_limit=time_limit,
             parameters_cp=p,
             use_cpm_for_task_bounds=True,
-            avoid_interval_optional=False,
+            avoid_interval_optional_for_cumulative_resources=False,
         ),
     ),
     "cpsat+CPM+energy": SolverConfig(
@@ -93,13 +93,15 @@ solver_configs = {
             parameters_cp=p,
             add_energy_constraints=True,
             use_cpm_for_task_bounds=True,
-            avoid_interval_optional=False,
+            avoid_interval_optional_for_cumulative_resources=False,
         ),
     ),
     "cpsat+no_opt_interval": SolverConfig(
         cls=CpSatRcpspSolver,
         kwargs=dict(
-            time_limit=time_limit, parameters_cp=p, avoid_interval_optional=True
+            time_limit=time_limit,
+            parameters_cp=p,
+            avoid_interval_optional_for_cumulative_resources=True,
         ),
     ),
     "cpsat+no_opt_interval+CPM+energy": SolverConfig(
@@ -109,7 +111,7 @@ solver_configs = {
             parameters_cp=p,
             add_energy_constraints=True,
             use_cpm_for_task_bounds=True,
-            avoid_interval_optional=True,
+            avoid_interval_optional_for_cumulative_resources=True,
         ),
     ),
     "optal": SolverConfig(

@@ -30,14 +30,14 @@ class CumulativeResourceSchedulingCpSatSolver(
 
     problem: CumulativeResourceProblem[Task, CumulativeResource, OtherCalendarResource]
 
-    avoid_interval_optional: bool = False
-    """Whether using task intervals + demand vars instead of optional intervals depending on is_present[mode]."""
+    avoid_interval_optional_for_cumulative_resources: bool = False
+    """Whether using task intervals + demand vars or optional intervals depending on is_present[unary_resource] in cumulative/no_overlap constraints."""
 
     def get_resource_consumption_intervals(
         self, resource: Resource
     ) -> list[tuple[IntervalVar, LinearExprT]]:
         if self.problem.is_cumulative_resource(resource):
-            if self.avoid_interval_optional:
+            if self.avoid_interval_optional_for_cumulative_resources:
                 # no optional interval, use rather demand variables
                 return [
                     (self.get_task_interval(task=task), conso)
@@ -81,7 +81,7 @@ class CumulativeResourceSchedulingCpSatSolver(
         If demand variables are indeed created in the cp_model, this should be overriden to return it
         so that cumulative resource constraints are constraining these variables.
 
-        Needed if `self.avoid_interval_optional` is set to True.
+        Needed if `self.avoid_interval_optional_for_cumulative_resources` is set to True.
 
         Args:
             task:

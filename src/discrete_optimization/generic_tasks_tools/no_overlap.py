@@ -42,6 +42,18 @@ class NoOverlapProblem(SchedulingProblem[Task]):
         """
         return []
 
+    def is_task_in_nooverlap_constraint(self, task: Task) -> bool:
+        """Tell if given task is part of a no overlapping constraint.
+
+        Etiher in a set returned by `self.get_no_overlap()`
+        or with non-empty `self.get_forbidden_intervals(task)`.
+
+        """
+        return len(self.get_forbidden_intervals(task)) > 0 or any(
+            task in no_overlapping_tasks
+            for no_overlapping_tasks in self.get_no_overlap()
+        )
+
 
 class NoOverlapSolution(SchedulingSolution[Task]):
     """Solution for problem with precedence constraints."""

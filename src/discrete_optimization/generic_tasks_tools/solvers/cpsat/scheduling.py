@@ -57,7 +57,8 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
 
         This variable corresponds to the task schedule, whatever the mode.
         This is needed when wanting to avoid using optional interval,
-        i.e. if `self.avoid_interval_optional` is set to True.
+        e.g. if `self.avoid_interval_optional_for_cumulative_resources` or
+        `self.avoid_interval_optional_for_unary_resources` is set to True.
 
         """
         raise NotImplementedError
