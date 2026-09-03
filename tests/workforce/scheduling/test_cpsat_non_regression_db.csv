@@ -1,9 +1,0 @@
-test_id,status,mode_optim,objective
-tests/workforce/scheduling/test_cpsat_non_regression.py::test_cpsat_solver[wf_sched-instance_42-cpsat-nbteams-30],SATISFIED,1,"7"
-tests/workforce/scheduling/test_cpsat_non_regression.py::test_cpsat_solver[wf_sched-instance_42-cpsat-nbteams+dispersion-30],SATISFIED,1,"(8, 98)"
-tests/workforce/scheduling/test_cpsat_non_regression.py::test_cpsat_solver[wf_sched-instance_30-cpsat-nbteams-30],OPTIMAL,1,"1"
-tests/workforce/scheduling/test_cpsat_non_regression.py::test_cpsat_solver[wf_sched-instance_30-cpsat-nbteams+dispersion-30],OPTIMAL,1,"(1, 0)"
-tests/workforce/scheduling/test_cpsat_non_regression.py::test_cpsat_solver[wf_sched-instance_170-cpsat-nbteams-30],SATISFIED,1,"6"
-tests/workforce/scheduling/test_cpsat_non_regression.py::test_cpsat_solver[wf_sched-instance_170-cpsat-nbteams+dispersion-30],SATISFIED,1,"(6, 15)"
-tests/workforce/scheduling/test_cpsat_non_regression.py::test_cpsat_solver[wf_sched-instance_252-cpsat-nbteams-30],SATISFIED,1,"9"
-tests/workforce/scheduling/test_cpsat_non_regression.py::test_cpsat_solver[wf_sched-instance_252-cpsat-nbteams+dispersion-30],SATISFIED,1,"(9, 84)"

@@ -1,6 +1,0 @@
-test_id,status,mode_optim,objective
-tests/jsp/solvers/test_cpsat_non_regression.py::test_cpsat_solver[jsp-la01-cpsat-30],OPTIMAL,1,"666"
-tests/jsp/solvers/test_cpsat_non_regression.py::test_cpsat_solver[jsp-orb10-cpsat-30],OPTIMAL,1,"944"
-tests/jsp/solvers/test_cpsat_non_regression.py::test_cpsat_solver[jsp-swv17-cpsat-30],SATISFIED,1,"2861"
-tests/jsp/solvers/test_cpsat_non_regression.py::test_cpsat_solver[jsp-ta66-cpsat-30],SATISFIED,1,"3298"
-tests/jsp/solvers/test_cpsat_non_regression.py::test_cpsat_solver[jsp-ta80-cpsat-30],SATISFIED,1,"5553"

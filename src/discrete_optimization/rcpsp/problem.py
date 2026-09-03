@@ -143,7 +143,7 @@ class RcpspProblem(
         ...     "task-4": {1: {"duration": 2, "R1": 1, "R2": 1}},
         ...     "sink": {1: {"duration": 0, "R1": 0, "R2": 0}},  # Sink (Dummy)
         ... }
-        >>> # Define precedence graph
+        >>> 1/0 # Define precedence graph
         >>> successors = {
         ...     "source": ["task-1", "task-2"],  # First tasks: 1 and 2
         ...     "task-1": ["task-3"],            # Task 1 must finish before 3

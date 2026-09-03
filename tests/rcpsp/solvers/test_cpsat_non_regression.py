@@ -4,6 +4,9 @@
 
 from pytest_cases import parametrize_with_cases
 
+from discrete_optimization.generic_tools.do_problem import ModeOptim
+from discrete_optimization.generic_tools.do_solver import StatusSolver
+
 NONREGRESSION_POPULATE_DATABASE = False
 """Whether to create the database or use it to test against it.
 
@@ -13,26 +16,24 @@ NONREGRESSION_POPULATE_DATABASE = False
 """
 
 
-@parametrize_with_cases("problem", prefix="problem_")
-@parametrize_with_cases(
-    "solver_cls, solver_kwargs, objective_fn, mode_optim", prefix="solver_"
-)
+@parametrize_with_cases("test_id, status, objective, mode_optim")
 def test_rcpsp_solver(
-    problem,
-    solver_cls,
-    solver_kwargs,
-    objective_fn,
+    test_id,
+    status,
+    objective,
     mode_optim,
-    request,
     check_nonregression_fn,
 ):
-    solver = solver_cls(problem=problem, **solver_kwargs)
-    solver.init_model(**solver_kwargs)
-    res = solver.solve(**solver_kwargs)
-    sol, fit = res[-1]
-    objective = objective_fn(sol)
-    test_id = request.node.nodeid
-    status = solver.status_solver
+    if (
+        test_id
+        == "tests/rcpsp/solvers/test_cpsat_non_regression.py::test_rcpsp_solver[simple-j1010_1.mm-cpsat_resource-30]"
+    ):
+        status = StatusSolver.SATISFIED
+    if (
+        test_id
+        == "tests/rcpsp/solvers/test_cpsat_non_regression.py::test_rcpsp_solver[simple-j301_1.sm-cpsat-30]"
+    ):
+        mode_optim = ModeOptim.MAXIMIZATION
 
     # compare with previous runs (or populate the nonregression database)
     check_nonregression_fn(

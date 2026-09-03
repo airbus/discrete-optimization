@@ -1,0 +1,6 @@
+test_id,status,mode_optim,objective
+0,OPTIMAL,1,"11"
+1,OPTIMAL,1,"(1, 3)"
+2,SATISFIED,1,"(1, 3)"
+3,SATISFIED,0,"(0, 10)"
+4,SATISFIED,0,"18"
