@@ -79,19 +79,6 @@ class WfSchedulingToGenericSchedulingTransformation(
             raw_sol=raw_sol, problem=source_problem
         )
 
-    def get_forward_metadata(self) -> TransformationMetadata:
-        return lossy_transformation(
-            losses=[
-                InformationLoss(
-                    name="same_allocation",
-                    loss_type=LossType.CONSTRAINT,
-                    description="tasks to be performed by same team.",
-                    impact=LossImpact.MAJOR,
-                    reason="not possible with generic scheduling implementation.",
-                ),
-            ]
-        )
-
 
 class GenericSchedulingToWfSchedulingTransformation(
     FromGenericSchedulingImpl[AllocSchedulingProblem, AllocSchedulingSolution]
@@ -238,13 +225,16 @@ class GenericSchedulingToWfSchedulingTransformation(
             for resource in source_problem.non_skill_cumulative_resources_list
         }
 
+        # same allocation
+        same_allocation = source_problem.same_unary_allocation
+
         return AllocSchedulingProblem(
             team_names=team_names,
             calendar_team=calendar_team,
             horizon=horizon,
             tasks_list=tasks_list,
             tasks_data=task_data,
-            same_allocation=[],
+            same_allocation=same_allocation,
             precedence_constraints=precedence_constraints,
             available_team_for_activity=available_team_for_activity,
             start_window=start_window,
