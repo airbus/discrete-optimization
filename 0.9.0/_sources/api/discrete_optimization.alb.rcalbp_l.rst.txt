@@ -1,0 +1,37 @@
+discrete\_optimization.alb.rcalbp\_l package
+============================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.alb.rcalbp_l.solvers
+
+Submodules
+----------
+
+discrete\_optimization.alb.rcalbp\_l.parser module
+--------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.rcalbp_l.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.alb.rcalbp\_l.problem module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.rcalbp_l.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.alb.rcalbp_l
+   :members:
+   :show-inheritance:
+   :undoc-members:

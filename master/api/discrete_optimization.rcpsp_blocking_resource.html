@@ -1,0 +1,375 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp_blocking_resource package &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.rcpsp_multiskill package" href="discrete_optimization.rcpsp_multiskill.html" />
+    <link rel="prev" title="discrete_optimization.rcpsp.transformations package" href="discrete_optimization.rcpsp.transformations.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.alb.html">discrete_optimization.alb package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.flex_scheduling.html">discrete_optimization.flex_scheduling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.lotsizing.html">discrete_optimization.lotsizing package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">discrete_optimization.rcpsp_blocking_resource package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.shop.html">discrete_optimization.shop package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp_blocking_resource package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-rcpsp-blocking-resource-package">
+<h1>discrete_optimization.rcpsp_blocking_resource package<a class="headerlink" href="#discrete-optimization-rcpsp-blocking-resource-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.rcpsp_blocking_resource.blocking_generator">
+<span id="discrete-optimization-rcpsp-blocking-resource-blocking-generator-module"></span><h2>discrete_optimization.rcpsp_blocking_resource.blocking_generator module<a class="headerlink" href="#module-discrete_optimization.rcpsp_blocking_resource.blocking_generator" title="Link to this heading"></a></h2>
+<p>Generator for RCPSP instances with resource blocking constraints.</p>
+<p>This module provides utilities to generate RCPSP problems with blocking constraints
+from standard RCPSP instances. It creates realistic scenarios such as:
+- Setup times between tasks using same resources
+- Changeover periods between task modes
+- Project-level resource reservations</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.rcpsp_blocking_resource.blocking_generator.generate_batch_blocking">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcpsp_blocking_resource.blocking_generator.</span></span><span class="sig-name descname"><span class="pre">generate_batch_blocking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><span class="pre">RcpspProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking_intensity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.2</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking" title="discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking"><span class="pre">RcpspWithResourceBlocking</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcpsp_blocking_resource/blocking_generator.html#generate_batch_blocking"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcpsp_blocking_resource.blocking_generator.generate_batch_blocking" title="Link to this definition"></a></dt>
+<dd><p>Generate RCPSP with span blocking for batch processing.</p>
+<p>Creates span blocking constraints where groups of tasks must reserve
+a portion of resources for their entire execution span. Since blocking is
+ADDITIVE (task + blocking &lt;= capacity), the blocking amount is carefully
+chosen to avoid infeasibilities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_problem</strong> – Original RCPSP problem</p></li>
+<li><p><strong>batch_size</strong> – Number of tasks per batch</p></li>
+<li><p><strong>resource_name</strong> – Resource to block (None = first renewable resource)</p></li>
+<li><p><strong>seed</strong> – Random seed for batch generation</p></li>
+<li><p><strong>blocking_intensity</strong> – Fraction of AVAILABLE capacity to block (default 0.4 = 40%)
+Available capacity = total capacity - max batch task consumption</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>RcpspWithResourceBlocking with span blocking constraints for batches</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_file</span><span class="p">,</span> <span class="n">get_data_available</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">files</span> <span class="o">=</span> <span class="n">get_data_available</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">base_problem</span> <span class="o">=</span> <span class="n">parse_file</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">problem_with_batches</span> <span class="o">=</span> <span class="n">generate_batch_blocking</span><span class="p">(</span><span class="n">base_problem</span><span class="p">,</span> <span class="n">blocking_intensity</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.rcpsp_blocking_resource.blocking_generator.generate_combined_blocking">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcpsp_blocking_resource.blocking_generator.</span></span><span class="sig-name descname"><span class="pre">generate_combined_blocking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><span class="pre">RcpspProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking" title="discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking"><span class="pre">RcpspWithResourceBlocking</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcpsp_blocking_resource/blocking_generator.html#generate_combined_blocking"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcpsp_blocking_resource.blocking_generator.generate_combined_blocking" title="Link to this definition"></a></dt>
+<dd><p>Generate RCPSP with both setup time and batch blocking constraints.</p>
+<p>Combines gap blocking (setup times) and span blocking (batches) to create
+more complex and realistic scheduling scenarios.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_problem</strong> – Original RCPSP problem</p></li>
+<li><p><strong>setup_ratio</strong> – Setup time ratio for gap blocking</p></li>
+<li><p><strong>batch_size</strong> – Batch size for span blocking</p></li>
+<li><p><strong>seed</strong> – Random seed</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>RcpspWithResourceBlocking with both types of blocking constraints</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_file</span><span class="p">,</span> <span class="n">get_data_available</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">files</span> <span class="o">=</span> <span class="n">get_data_available</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">base_problem</span> <span class="o">=</span> <span class="n">parse_file</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">problem</span> <span class="o">=</span> <span class="n">generate_combined_blocking</span><span class="p">(</span><span class="n">base_problem</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.rcpsp_blocking_resource.blocking_generator.generate_setup_time_blocking">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcpsp_blocking_resource.blocking_generator.</span></span><span class="sig-name descname"><span class="pre">generate_setup_time_blocking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><span class="pre">RcpspProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">setup_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resource_subset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocking_intensity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking" title="discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking"><span class="pre">RcpspWithResourceBlocking</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcpsp_blocking_resource/blocking_generator.html#generate_setup_time_blocking"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcpsp_blocking_resource.blocking_generator.generate_setup_time_blocking" title="Link to this definition"></a></dt>
+<dd><p>Generate RCPSP with setup time blocking between consecutive tasks.</p>
+<p>Creates blocking constraints representing setup/changeover times between tasks
+that consume the same resources. Since blocking is ADDITIVE (task + blocking &lt;= capacity),
+the blocking amount is carefully chosen to avoid infeasibilities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_problem</strong> – Original RCPSP problem</p></li>
+<li><p><strong>setup_ratio</strong> – Ratio of setup time to average task duration (default 0.2 = 20%)</p></li>
+<li><p><strong>resource_subset</strong> – Resources affected by setup (None = all renewable resources)</p></li>
+<li><p><strong>seed</strong> – Random seed for reproducibility</p></li>
+<li><p><strong>blocking_intensity</strong> – Fraction of AVAILABLE capacity to block (default 0.5 = 50%)
+Available capacity = total capacity - max task consumption</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>RcpspWithResourceBlocking with gap blocking constraints for setup times</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_file</span><span class="p">,</span> <span class="n">get_data_available</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">files</span> <span class="o">=</span> <span class="n">get_data_available</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">base_problem</span> <span class="o">=</span> <span class="n">parse_file</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">problem_with_setup</span> <span class="o">=</span> <span class="n">generate_setup_time_blocking</span><span class="p">(</span><span class="n">base_problem</span><span class="p">,</span> <span class="n">blocking_intensity</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.rcpsp_blocking_resource.problem_with_blocking">
+<span id="discrete-optimization-rcpsp-blocking-resource-problem-with-blocking-module"></span><h2>discrete_optimization.rcpsp_blocking_resource.problem_with_blocking module<a class="headerlink" href="#module-discrete_optimization.rcpsp_blocking_resource.problem_with_blocking" title="Link to this heading"></a></h2>
+<p>RCPSP with Resource Blocking Constraints.</p>
+<p>This module provides an extension to standard RCPSP that includes resource blocking
+constraints such as setup times, changeover periods, and safety monitoring spans.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.</span></span><span class="sig-name descname"><span class="pre">RcpspWithResourceBlocking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">resources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_renewable_resources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">successors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">horizon</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sink_task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Hashable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name_task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calendar_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">special_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.special_constraints.SpecialConstraintsDescription" title="discrete_optimization.rcpsp.special_constraints.SpecialConstraintsDescription"><span class="pre">SpecialConstraintsDescription</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_permutation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_modes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flexible_gap_blocking_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.SchedulingEntity" title="discrete_optimization.generic_tasks_tools.entities.SchedulingEntity"><span class="pre">SchedulingEntity</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.SchedulingEntity" title="discrete_optimization.generic_tasks_tools.entities.SchedulingEntity"><span class="pre">SchedulingEntity</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.BlockingConstraintMetadata" title="discrete_optimization.generic_tasks_tools.resource_blocking.BlockingConstraintMetadata"><span class="pre">BlockingConstraintMetadata</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">span_blocking_constraints</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.SchedulingEntity" title="discrete_optimization.generic_tasks_tools.entities.SchedulingEntity"><span class="pre">SchedulingEntity</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.BlockingConstraintMetadata" title="discrete_optimization.generic_tasks_tools.resource_blocking.BlockingConstraintMetadata"><span class="pre">BlockingConstraintMetadata</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcpsp_blocking_resource/problem_with_blocking.html#RcpspWithResourceBlocking"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.rcpsp.html#discrete_optimization.rcpsp.problem.RcpspProblem" title="discrete_optimization.rcpsp.problem.RcpspProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">RcpspProblem</span></code></a></p>
+<p>RCPSP with Resource Blocking Constraints.</p>
+<p>Extends standard RCPSP with two types of blocking constraints:
+1. Flexible gap blocking: Resources blocked between two task events</p>
+<blockquote>
+<div><p>(e.g., setup time between task A end and task B start)</p>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>Span blocking: Resources blocked for entire span of task group
+(e.g., project reservation blocking resource from first to last task)</p></li>
+</ol>
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">All</span> <span class="pre">attributes</span> <span class="pre">from</span> <span class="pre">RcpspProblem,</span> <span class="pre">plus</span></span></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking.flexible_gap_blocking_constraints">
+<span class="sig-name descname"><span class="pre">flexible_gap_blocking_constraints</span></span><a class="headerlink" href="#discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking.flexible_gap_blocking_constraints" title="Link to this definition"></a></dt>
+<dd><p>List of gap blocking constraints</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking.span_blocking_constraints">
+<span class="sig-name descname"><span class="pre">span_blocking_constraints</span></span><a class="headerlink" href="#discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking.span_blocking_constraints" title="Link to this definition"></a></dt>
+<dd><p>List of span blocking constraints</p>
+</dd></dl>
+
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.resource_blocking</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="gp">... </span>    <span class="n">BlockingMode</span><span class="p">,</span> <span class="n">BlockingConstraintMetadata</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.entities</span><span class="w"> </span><span class="kn">import</span> <span class="n">TaskEntity</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Define standard RCPSP parameters</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">resources</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"R1"</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mode_details</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="mi">1</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="p">{</span><span class="s2">"duration"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"R1"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}},</span>
+<span class="gp">... </span>    <span class="mi">2</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="p">{</span><span class="s2">"duration"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">"R1"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}},</span>
+<span class="gp">... </span>    <span class="mi">3</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="p">{</span><span class="s2">"duration"</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">"R1"</span><span class="p">:</span> <span class="mi">3</span><span class="p">}},</span>
+<span class="gp">... </span>    <span class="mi">4</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="p">{</span><span class="s2">"duration"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"R1"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}},</span>
+<span class="gp">... </span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">successors</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="mi">2</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="mi">3</span><span class="p">:</span> <span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="mi">4</span><span class="p">:</span> <span class="p">[]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Add setup time blocking between tasks</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">blocking_constraints</span> <span class="o">=</span> <span class="p">[</span>
+<span class="gp">... </span>    <span class="p">(</span>
+<span class="gp">... </span>        <span class="n">TaskEntity</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="n">TaskEntity</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">,</span>
+<span class="gp">... </span>        <span class="p">{</span><span class="s2">"R1"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>  <span class="c1"># 1 unit of R1 blocked during setup</span>
+<span class="gp">... </span>        <span class="n">BlockingConstraintMetadata</span><span class="p">(</span>
+<span class="gp">... </span>            <span class="n">mode</span><span class="o">=</span><span class="n">BlockingMode</span><span class="o">.</span><span class="n">RESERVATION</span><span class="p">,</span>
+<span class="gp">... </span>            <span class="n">description</span><span class="o">=</span><span class="s2">"Setup time between task 2 and 3"</span>
+<span class="gp">... </span>        <span class="p">),</span>
+<span class="gp">... </span>    <span class="p">)</span>
+<span class="gp">... </span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">problem</span> <span class="o">=</span> <span class="n">RcpspWithResourceBlocking</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">resources</span><span class="o">=</span><span class="n">resources</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">non_renewable_resources</span><span class="o">=</span><span class="p">[],</span>
+<span class="gp">... </span>    <span class="n">mode_details</span><span class="o">=</span><span class="n">mode_details</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">successors</span><span class="o">=</span><span class="n">successors</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">horizon</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">flexible_gap_blocking_constraints</span><span class="o">=</span><span class="n">blocking_constraints</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking.get_flexible_gap_blocking_constraints">
+<span class="sig-name descname"><span class="pre">get_flexible_gap_blocking_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.SchedulingEntity" title="discrete_optimization.generic_tasks_tools.entities.SchedulingEntity"><span class="pre">SchedulingEntity</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.SchedulingEntity" title="discrete_optimization.generic_tasks_tools.entities.SchedulingEntity"><span class="pre">SchedulingEntity</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.BlockingConstraintMetadata" title="discrete_optimization.generic_tasks_tools.resource_blocking.BlockingConstraintMetadata"><span class="pre">BlockingConstraintMetadata</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcpsp_blocking_resource/problem_with_blocking.html#RcpspWithResourceBlocking.get_flexible_gap_blocking_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking.get_flexible_gap_blocking_constraints" title="Link to this definition"></a></dt>
+<dd><p>Return flexible gap blocking constraints.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking.get_span_blocking_constraints">
+<span class="sig-name descname"><span class="pre">get_span_blocking_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.SchedulingEntity" title="discrete_optimization.generic_tasks_tools.entities.SchedulingEntity"><span class="pre">SchedulingEntity</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Hashable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.BlockingConstraintMetadata" title="discrete_optimization.generic_tasks_tools.resource_blocking.BlockingConstraintMetadata"><span class="pre">BlockingConstraintMetadata</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcpsp_blocking_resource/problem_with_blocking.html#RcpspWithResourceBlocking.get_span_blocking_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking.get_span_blocking_constraints" title="Link to this definition"></a></dt>
+<dd><p>Return span blocking constraints.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking.satisfy">
+<span class="sig-name descname"><span class="pre">satisfy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcpsp_blocking_resource/problem_with_blocking.html#RcpspWithResourceBlocking.satisfy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcpsp_blocking_resource.problem_with_blocking.RcpspWithResourceBlocking.satisfy" title="Link to this definition"></a></dt>
+<dd><p>Check if solution satisfies all constraints including blocking.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>variable</strong> – The solution to check</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True if solution satisfies all constraints</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.rcpsp_blocking_resource">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.rcpsp_blocking_resource" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.rcpsp.transformations.html" class="btn btn-neutral float-left" title="discrete_optimization.rcpsp.transformations package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.rcpsp_multiskill.html" class="btn btn-neutral float-right" title="discrete_optimization.rcpsp_multiskill package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

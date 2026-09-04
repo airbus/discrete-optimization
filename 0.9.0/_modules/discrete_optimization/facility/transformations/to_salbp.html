@@ -1,0 +1,311 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.facility.transformations.to_salbp &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.facility.transformations.to_salbp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.facility.transformations.to_salbp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;Transformation from Facility Location to SALBP.</span>
+
+<span class="sd">Note: This transformation DISCARDS facility setup costs and distances!</span>
+<span class="sd">Assumes uniform facility costs and no precedence.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.alb.base.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">TaskData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.alb.salbp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">SalbpProblem</span><span class="p">,</span> <span class="n">SalbpSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.facility.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">FacilityProblem</span><span class="p">,</span> <span class="n">FacilitySolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.problem_transformation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.transformation_metadata</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InformationLoss</span><span class="p">,</span>
+    <span class="n">LossImpact</span><span class="p">,</span>
+    <span class="n">LossType</span><span class="p">,</span>
+    <span class="n">TransformationMetadata</span><span class="p">,</span>
+    <span class="n">lossy_transformation</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="FacilityToSalbpTransformation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.transformations.html#discrete_optimization.facility.transformations.to_salbp.FacilityToSalbpTransformation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FacilityToSalbpTransformation</span><span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">[</span>
+        <span class="n">FacilityProblem</span><span class="p">,</span> <span class="n">FacilitySolution</span><span class="p">,</span> <span class="n">SalbpProblem</span><span class="p">,</span> <span class="n">SalbpSolution</span>
+    <span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform Facility Location to SALBP.</span>
+
+<span class="sd">    Mapping:</span>
+<span class="sd">    - Customers (with demands) → Tasks (with processing times)</span>
+<span class="sd">    - Facility capacity → Cycle time</span>
+<span class="sd">    - Facilities → Stations</span>
+<span class="sd">    - Minimize facilities → Minimize stations</span>
+<span class="sd">    - **Setup costs and distances DISCARDED**</span>
+<span class="sd">    - **No precedence constraints** (Facility has none)</span>
+
+<span class="sd">    This transformation is ASYMMETRIC:</span>
+<span class="sd">    - Forward (problem): LOSSY - setup costs and assignment costs lost</span>
+<span class="sd">    - Backward (solution): EXACT - station assignments map to facility assignments</span>
+
+<span class="sd">    Assumptions:</span>
+<span class="sd">        - All facilities have SAME capacity (uses first facility&#39;s capacity)</span>
+<span class="sd">        - Setup costs IGNORED</span>
+<span class="sd">        - Distances/allocation costs IGNORED</span>
+
+<span class="sd">    Use case:</span>
+<span class="sd">        - Facility location viewed as line balancing problem</span>
+<span class="sd">        - Capacitated facility location simplified to SALBP</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="FacilityToSalbpTransformation.get_forward_metadata">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.transformations.html#discrete_optimization.facility.transformations.to_salbp.FacilityToSalbpTransformation.get_forward_metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_forward_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformationMetadata</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Metadata for forward problem transformation (Facility → SALBP).</span>
+
+<span class="sd">        This direction is LOSSY: setup costs and assignment costs lost.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">losses</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">InformationLoss</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;setup_costs&quot;</span><span class="p">,</span>
+                <span class="n">loss_type</span><span class="o">=</span><span class="n">LossType</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Facility setup costs (opening costs)&quot;</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;SALBP has no concept of setup/opening costs - all stations have implicit uniform cost&quot;</span><span class="p">,</span>
+                <span class="n">impact</span><span class="o">=</span><span class="n">LossImpact</span><span class="o">.</span><span class="n">MAJOR</span><span class="p">,</span>
+                <span class="n">workaround</span><span class="o">=</span><span class="s2">&quot;Cannot be modeled in SALBP. Use Facility solvers directly if setup costs matter.&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">InformationLoss</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;assignment_costs&quot;</span><span class="p">,</span>
+                <span class="n">loss_type</span><span class="o">=</span><span class="n">LossType</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Customer-to-facility assignment costs (distances)&quot;</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;SALBP has no concept of assignment costs - tasks have no location/distance&quot;</span><span class="p">,</span>
+                <span class="n">impact</span><span class="o">=</span><span class="n">LossImpact</span><span class="o">.</span><span class="n">MAJOR</span><span class="p">,</span>
+                <span class="n">workaround</span><span class="o">=</span><span class="s2">&quot;Cannot be modeled in SALBP. Use Facility solvers directly if distances matter.&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">InformationLoss</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;heterogeneous_capacities&quot;</span><span class="p">,</span>
+                <span class="n">loss_type</span><span class="o">=</span><span class="n">LossType</span><span class="o">.</span><span class="n">PARAMETER</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Different facility capacities (if facilities have different capacities)&quot;</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="s2">&quot;SALBP assumes uniform cycle time. Transformation uses first facility&#39;s capacity.&quot;</span><span class="p">,</span>
+                <span class="n">impact</span><span class="o">=</span><span class="n">LossImpact</span><span class="o">.</span><span class="n">MODERATE</span><span class="p">,</span>
+                <span class="n">workaround</span><span class="o">=</span><span class="s2">&quot;Verify all facilities have same capacity.&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">lossy_transformation</span><span class="p">(</span>
+            <span class="n">losses</span><span class="o">=</span><span class="n">losses</span><span class="p">,</span>
+            <span class="n">assumptions</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;Setup costs are uniform or negligible&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Assignment costs (distances) are zero or negligible&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;All facilities have same capacity&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">use_cases</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;Facility location problem without distance costs&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;When only capacity allocation matters&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">warnings</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;Solutions may be suboptimal in original Facility problem due to ignored costs&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Verify that setup costs and assignment costs are truly negligible&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FacilityToSalbpTransformation.transform_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.transformations.html#discrete_optimization.facility.transformations.to_salbp.FacilityToSalbpTransformation.transform_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">FacilityProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SalbpProblem</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform Facility Location to SALBP.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_problem: Facility Location problem instance</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent SALBP problem (without distances/costs)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Map customers to tasks with TaskData</span>
+        <span class="n">tasks_data</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">TaskData</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="n">customer</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">customer</span><span class="o">.</span><span class="n">demand</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">customer</span> <span class="ow">in</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">customers</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Use first facility&#39;s capacity as cycle time</span>
+        <span class="n">cycle_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">source_problem</span><span class="o">.</span><span class="n">facilities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">capacity</span><span class="p">)</span>
+
+        <span class="c1"># No precedence constraints (Facility Location has none)</span>
+        <span class="n">precedences</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">return</span> <span class="n">SalbpProblem</span><span class="p">(</span>
+            <span class="n">tasks_data</span><span class="o">=</span><span class="n">tasks_data</span><span class="p">,</span>
+            <span class="n">cycle_time</span><span class="o">=</span><span class="n">cycle_time</span><span class="p">,</span>
+            <span class="n">precedences</span><span class="o">=</span><span class="n">precedences</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FacilityToSalbpTransformation.back_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.transformations.html#discrete_optimization.facility.transformations.to_salbp.FacilityToSalbpTransformation.back_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">back_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SalbpSolution</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">FacilityProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FacilitySolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform SALBP solution back to Facility Location solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: SALBP solution</span>
+<span class="sd">            source_problem: Original Facility Location problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent Facility Location solution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Direct mapping: station allocation → facility allocation</span>
+        <span class="n">facility_for_customers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">FacilitySolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">source_problem</span><span class="p">,</span>
+            <span class="n">facility_for_customers</span><span class="o">=</span><span class="n">facility_for_customers</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FacilityToSalbpTransformation.forward_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.facility.transformations.html#discrete_optimization.facility.transformations.to_salbp.FacilityToSalbpTransformation.forward_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">FacilitySolution</span><span class="p">,</span> <span class="n">target_problem</span><span class="p">:</span> <span class="n">SalbpProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SalbpSolution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform Facility solution to SALBP solution (for warmstart).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: Facility Location solution</span>
+<span class="sd">            target_problem: Target SALBP problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent SALBP solution for warmstart</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Direct mapping: facility allocation → station allocation</span>
+        <span class="n">allocation_to_station</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">facility_for_customers</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">SalbpSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">target_problem</span><span class="p">,</span>
+            <span class="n">allocation_to_station</span><span class="o">=</span><span class="n">allocation_to_station</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

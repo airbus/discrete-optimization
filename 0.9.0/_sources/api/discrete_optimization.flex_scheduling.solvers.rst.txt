@@ -1,0 +1,53 @@
+discrete\_optimization.flex\_scheduling.solvers package
+=======================================================
+
+Submodules
+----------
+
+discrete\_optimization.flex\_scheduling.solvers.cpsat module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.flex_scheduling.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.flex\_scheduling.solvers.cpsat\_preempt module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.flex_scheduling.solvers.cpsat_preempt
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.flex\_scheduling.solvers.heuristic\_solver module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.flex_scheduling.solvers.heuristic_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.flex\_scheduling.solvers.optal module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.flex_scheduling.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.flex\_scheduling.solvers.sequential\_solver module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.flex_scheduling.solvers.sequential_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.flex_scheduling.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

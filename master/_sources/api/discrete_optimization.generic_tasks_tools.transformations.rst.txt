@@ -1,0 +1,21 @@
+discrete\_optimization.generic\_tasks\_tools.transformations package
+====================================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tasks\_tools.transformations.generic\_scheduling\_impl module
+---------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.transformations.generic_scheduling_impl
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

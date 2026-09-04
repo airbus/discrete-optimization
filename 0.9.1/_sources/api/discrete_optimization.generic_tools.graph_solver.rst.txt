@@ -1,0 +1,21 @@
+discrete\_optimization.generic\_tools.graph\_solver package
+===========================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.graph\_solver.solver\_graph module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.graph_solver.solver_graph
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.graph_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:

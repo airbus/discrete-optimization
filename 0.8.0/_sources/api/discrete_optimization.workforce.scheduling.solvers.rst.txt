@@ -1,0 +1,53 @@
+discrete\_optimization.workforce.scheduling.solvers package
+===========================================================
+
+Submodules
+----------
+
+discrete\_optimization.workforce.scheduling.solvers.alloc\_scheduling\_lb module
+--------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.scheduling.solvers.cpsat module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.scheduling.solvers.cpsat\_relaxed module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.solvers.cpsat_relaxed
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.scheduling.solvers.optal module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.scheduling.solvers.tempo module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.solvers.tempo
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

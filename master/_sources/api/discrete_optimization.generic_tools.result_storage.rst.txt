@@ -1,0 +1,37 @@
+discrete\_optimization.generic\_tools.result\_storage package
+=============================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.result\_storage.multiobj\_utils module
+----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.result_storage.multiobj_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.result\_storage.result\_storage module
+----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.result_storage.result_storage
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.result\_storage.resultcomparator module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.result_storage.resultcomparator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.result_storage
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,21 @@
+discrete\_optimization.singlemachine.transformations package
+============================================================
+
+Submodules
+----------
+
+discrete\_optimization.singlemachine.transformations.to\_jsp module
+-------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.singlemachine.transformations.to_jsp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.singlemachine.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

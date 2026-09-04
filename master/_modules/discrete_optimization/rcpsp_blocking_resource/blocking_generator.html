@@ -1,0 +1,436 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp_blocking_resource.blocking_generator &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp_blocking_resource.blocking_generator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp_blocking_resource.blocking_generator</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">"""Generator for RCPSP instances with resource blocking constraints.</span>
+
+<span class="sd">This module provides utilities to generate RCPSP problems with blocking constraints</span>
+<span class="sd">from standard RCPSP instances. It creates realistic scenarios such as:</span>
+<span class="sd">- Setup times between tasks using same resources</span>
+<span class="sd">- Changeover periods between task modes</span>
+<span class="sd">- Project-level resource reservations</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.entities</span><span class="w"> </span><span class="kn">import</span> <span class="n">GroupEntity</span><span class="p">,</span> <span class="n">TaskEntity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.resource_blocking</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BlockingConstraintMetadata</span><span class="p">,</span>
+    <span class="n">BlockingMode</span><span class="p">,</span>
+    <span class="n">FlexibleGapBlockingConstraint</span><span class="p">,</span>
+    <span class="n">SpanBlockingConstraint</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp_blocking_resource.problem_with_blocking</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RcpspWithResourceBlocking</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="generate_setup_time_blocking">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp_blocking_resource.html#discrete_optimization.rcpsp_blocking_resource.blocking_generator.generate_setup_time_blocking">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_setup_time_blocking</span><span class="p">(</span>
+    <span class="n">base_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+    <span class="n">setup_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+    <span class="n">resource_subset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">blocking_intensity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspWithResourceBlocking</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Generate RCPSP with setup time blocking between consecutive tasks.</span>
+
+<span class="sd">    Creates blocking constraints representing setup/changeover times between tasks</span>
+<span class="sd">    that consume the same resources. Since blocking is ADDITIVE (task + blocking &lt;= capacity),</span>
+<span class="sd">    the blocking amount is carefully chosen to avoid infeasibilities.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        base_problem: Original RCPSP problem</span>
+<span class="sd">        setup_ratio: Ratio of setup time to average task duration (default 0.2 = 20%)</span>
+<span class="sd">        resource_subset: Resources affected by setup (None = all renewable resources)</span>
+<span class="sd">        seed: Random seed for reproducibility</span>
+<span class="sd">        blocking_intensity: Fraction of AVAILABLE capacity to block (default 0.5 = 50%)</span>
+<span class="sd">                          Available capacity = total capacity - max task consumption</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        RcpspWithResourceBlocking with gap blocking constraints for setup times</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; from discrete_optimization.rcpsp.parser import parse_file, get_data_available</span>
+<span class="sd">        &gt;&gt;&gt; files = get_data_available()</span>
+<span class="sd">        &gt;&gt;&gt; base_problem = parse_file(files[0])</span>
+<span class="sd">        &gt;&gt;&gt; problem_with_setup = generate_setup_time_blocking(base_problem, blocking_intensity=0.7)</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="c1"># Determine which resources have setup times</span>
+    <span class="k">if</span> <span class="n">resource_subset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">resource_subset</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">r</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">resources_list</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">non_renewable_resources</span>
+        <span class="p">]</span>
+
+    <span class="c1"># Compute max task consumption per resource to avoid infeasibilities</span>
+    <span class="n">max_consumption</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resource_subset</span><span class="p">:</span>
+        <span class="n">max_cons</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">:</span>
+                <span class="n">task_mode</span> <span class="o">=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="n">max_cons</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_cons</span><span class="p">,</span> <span class="n">task_mode</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">max_consumption</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_cons</span>
+
+    <span class="n">blocking_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FlexibleGapBlockingConstraint</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Generate setup constraints for tasks with precedence relationships</span>
+    <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">successors</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">successors</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># Skip dummy tasks</span>
+        <span class="k">if</span> <span class="n">task</span> <span class="o">==</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">source_task</span> <span class="ow">or</span> <span class="n">task</span> <span class="o">==</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="k">for</span> <span class="n">successor</span> <span class="ow">in</span> <span class="n">successors</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">successor</span> <span class="o">==</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Check if tasks share resources</span>
+            <span class="n">task_mode</span> <span class="o">=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Use mode 1</span>
+            <span class="n">succ_mode</span> <span class="o">=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">successor</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">shared_resources</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resource_subset</span><span class="p">:</span>
+                <span class="n">task_usage</span> <span class="o">=</span> <span class="n">task_mode</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">succ_usage</span> <span class="o">=</span> <span class="n">succ_mode</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">task_usage</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">succ_usage</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">capacity</span> <span class="o">=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">capacity</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                        <span class="n">capacity</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">capacity</span><span class="p">)</span>
+
+                    <span class="c1"># ADDITIVE blocking: ensure task + blocking &lt;= capacity</span>
+                    <span class="c1"># Available capacity = total - max task that could run during gap</span>
+                    <span class="n">available</span> <span class="o">=</span> <span class="n">capacity</span> <span class="o">-</span> <span class="n">max_consumption</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">available</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">continue</span>  <span class="c1"># No room for blocking</span>
+
+                    <span class="c1"># Block a fraction of available capacity</span>
+                    <span class="n">setup_amount</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">available</span> <span class="o">*</span> <span class="n">blocking_intensity</span><span class="p">))</span>
+                    <span class="n">shared_resources</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="n">setup_amount</span>
+
+            <span class="k">if</span> <span class="n">shared_resources</span><span class="p">:</span>
+                <span class="c1"># Create gap blocking constraint for setup time</span>
+                <span class="n">constraint</span><span class="p">:</span> <span class="n">FlexibleGapBlockingConstraint</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">TaskEntity</span><span class="p">(</span><span class="n">task</span><span class="p">),</span>
+                    <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">,</span>
+                    <span class="n">TaskEntity</span><span class="p">(</span><span class="n">successor</span><span class="p">),</span>
+                    <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">,</span>
+                    <span class="n">shared_resources</span><span class="p">,</span>
+                    <span class="n">BlockingConstraintMetadata</span><span class="p">(</span>
+                        <span class="n">mode</span><span class="o">=</span><span class="n">BlockingMode</span><span class="o">.</span><span class="n">RESERVATION</span><span class="p">,</span>
+                        <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Setup time between task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">successor</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">blocking_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">RcpspWithResourceBlocking</span><span class="p">(</span>
+        <span class="n">resources</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">,</span>
+        <span class="n">non_renewable_resources</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">,</span>
+        <span class="n">mode_details</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">,</span>
+        <span class="n">successors</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">successors</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span>
+        <span class="n">tasks_list</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">,</span>
+        <span class="n">source_task</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">source_task</span><span class="p">,</span>
+        <span class="n">sink_task</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">,</span>
+        <span class="n">name_task</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">name_task</span><span class="p">,</span>
+        <span class="n">calendar_details</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">calendar_details</span><span class="p">,</span>
+        <span class="n">flexible_gap_blocking_constraints</span><span class="o">=</span><span class="n">blocking_constraints</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="generate_batch_blocking">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp_blocking_resource.html#discrete_optimization.rcpsp_blocking_resource.blocking_generator.generate_batch_blocking">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_batch_blocking</span><span class="p">(</span>
+    <span class="n">base_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">resource_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">blocking_intensity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspWithResourceBlocking</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Generate RCPSP with span blocking for batch processing.</span>
+
+<span class="sd">    Creates span blocking constraints where groups of tasks must reserve</span>
+<span class="sd">    a portion of resources for their entire execution span. Since blocking is</span>
+<span class="sd">    ADDITIVE (task + blocking &lt;= capacity), the blocking amount is carefully</span>
+<span class="sd">    chosen to avoid infeasibilities.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        base_problem: Original RCPSP problem</span>
+<span class="sd">        batch_size: Number of tasks per batch</span>
+<span class="sd">        resource_name: Resource to block (None = first renewable resource)</span>
+<span class="sd">        seed: Random seed for batch generation</span>
+<span class="sd">        blocking_intensity: Fraction of AVAILABLE capacity to block (default 0.4 = 40%)</span>
+<span class="sd">                          Available capacity = total capacity - max batch task consumption</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        RcpspWithResourceBlocking with span blocking constraints for batches</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; from discrete_optimization.rcpsp.parser import parse_file, get_data_available</span>
+<span class="sd">        &gt;&gt;&gt; files = get_data_available()</span>
+<span class="sd">        &gt;&gt;&gt; base_problem = parse_file(files[0])</span>
+<span class="sd">        &gt;&gt;&gt; problem_with_batches = generate_batch_blocking(base_problem, blocking_intensity=0.6)</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="c1"># Select resource for batch blocking</span>
+    <span class="k">if</span> <span class="n">resource_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">renewable_resources</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">r</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">resources_list</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">non_renewable_resources</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">renewable_resources</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No renewable resources available for batch blocking"</span><span class="p">)</span>
+        <span class="n">resource_name</span> <span class="o">=</span> <span class="n">renewable_resources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Get non-dummy tasks</span>
+    <span class="n">non_dummy_tasks</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">t</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">tasks_list</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">!=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">source_task</span> <span class="ow">and</span> <span class="n">t</span> <span class="o">!=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">sink_task</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Create batches</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">non_dummy_tasks</span><span class="p">)</span>
+    <span class="n">batches</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">non_dummy_tasks</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">non_dummy_tasks</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="n">blocking_constraints</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SpanBlockingConstraint</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Get resource capacity</span>
+    <span class="n">capacity</span> <span class="o">=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">resource_name</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">capacity</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">capacity</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">capacity</span><span class="p">)</span>
+
+    <span class="c1"># Create span blocking for each batch</span>
+    <span class="k">for</span> <span class="n">batch_idx</span><span class="p">,</span> <span class="n">batch_tasks</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batches</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_tasks</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">continue</span>  <span class="c1"># Skip single-task batches</span>
+
+        <span class="c1"># Compute max consumption within this batch</span>
+        <span class="n">max_batch_consumption</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">batch_tasks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">:</span>
+                <span class="n">task_mode</span> <span class="o">=</span> <span class="n">base_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="n">max_batch_consumption</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                    <span class="n">max_batch_consumption</span><span class="p">,</span> <span class="n">task_mode</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource_name</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="c1"># ADDITIVE blocking: ensure batch_tasks + blocking &lt;= capacity</span>
+        <span class="c1"># Available capacity = total - max task in batch</span>
+        <span class="n">available</span> <span class="o">=</span> <span class="n">capacity</span> <span class="o">-</span> <span class="n">max_batch_consumption</span>
+        <span class="k">if</span> <span class="n">available</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>  <span class="c1"># No room for blocking</span>
+
+        <span class="c1"># Block a fraction of available capacity</span>
+        <span class="n">blocking_amount</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">available</span> <span class="o">*</span> <span class="n">blocking_intensity</span><span class="p">))</span>
+
+        <span class="n">constraint</span><span class="p">:</span> <span class="n">SpanBlockingConstraint</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">GroupEntity</span><span class="p">(</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">batch_tasks</span><span class="p">)),</span>
+            <span class="p">{</span><span class="n">resource_name</span><span class="p">:</span> <span class="n">blocking_amount</span><span class="p">},</span>
+            <span class="n">BlockingConstraintMetadata</span><span class="p">(</span>
+                <span class="n">mode</span><span class="o">=</span><span class="n">BlockingMode</span><span class="o">.</span><span class="n">RESERVATION</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Batch </span><span class="si">{</span><span class="n">batch_idx</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> reservation for </span><span class="si">{</span><span class="n">resource_name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">blocking_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">RcpspWithResourceBlocking</span><span class="p">(</span>
+        <span class="n">resources</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">,</span>
+        <span class="n">non_renewable_resources</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">,</span>
+        <span class="n">mode_details</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">,</span>
+        <span class="n">successors</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">successors</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span>
+        <span class="n">tasks_list</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">,</span>
+        <span class="n">source_task</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">source_task</span><span class="p">,</span>
+        <span class="n">sink_task</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">,</span>
+        <span class="n">name_task</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">name_task</span><span class="p">,</span>
+        <span class="n">calendar_details</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">calendar_details</span><span class="p">,</span>
+        <span class="n">span_blocking_constraints</span><span class="o">=</span><span class="n">blocking_constraints</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="generate_combined_blocking">
+<a class="viewcode-back" href="../../../api/discrete_optimization.rcpsp_blocking_resource.html#discrete_optimization.rcpsp_blocking_resource.blocking_generator.generate_combined_blocking">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_combined_blocking</span><span class="p">(</span>
+    <span class="n">base_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">,</span>
+    <span class="n">setup_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspWithResourceBlocking</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Generate RCPSP with both setup time and batch blocking constraints.</span>
+
+<span class="sd">    Combines gap blocking (setup times) and span blocking (batches) to create</span>
+<span class="sd">    more complex and realistic scheduling scenarios.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        base_problem: Original RCPSP problem</span>
+<span class="sd">        setup_ratio: Setup time ratio for gap blocking</span>
+<span class="sd">        batch_size: Batch size for span blocking</span>
+<span class="sd">        seed: Random seed</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        RcpspWithResourceBlocking with both types of blocking constraints</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; from discrete_optimization.rcpsp.parser import parse_file, get_data_available</span>
+<span class="sd">        &gt;&gt;&gt; files = get_data_available()</span>
+<span class="sd">        &gt;&gt;&gt; base_problem = parse_file(files[0])</span>
+<span class="sd">        &gt;&gt;&gt; problem = generate_combined_blocking(base_problem)</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="c1"># Generate both types of constraints</span>
+    <span class="n">setup_problem</span> <span class="o">=</span> <span class="n">generate_setup_time_blocking</span><span class="p">(</span><span class="n">base_problem</span><span class="p">,</span> <span class="n">setup_ratio</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">batch_problem</span> <span class="o">=</span> <span class="n">generate_batch_blocking</span><span class="p">(</span><span class="n">base_problem</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">RcpspWithResourceBlocking</span><span class="p">(</span>
+        <span class="n">resources</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">resources</span><span class="p">,</span>
+        <span class="n">non_renewable_resources</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">,</span>
+        <span class="n">mode_details</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">mode_details</span><span class="p">,</span>
+        <span class="n">successors</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">successors</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span>
+        <span class="n">tasks_list</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">,</span>
+        <span class="n">source_task</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">source_task</span><span class="p">,</span>
+        <span class="n">sink_task</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">,</span>
+        <span class="n">name_task</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">name_task</span><span class="p">,</span>
+        <span class="n">calendar_details</span><span class="o">=</span><span class="n">base_problem</span><span class="o">.</span><span class="n">calendar_details</span><span class="p">,</span>
+        <span class="n">flexible_gap_blocking_constraints</span><span class="o">=</span><span class="n">setup_problem</span><span class="o">.</span><span class="n">get_flexible_gap_blocking_constraints</span><span class="p">(),</span>
+        <span class="n">span_blocking_constraints</span><span class="o">=</span><span class="n">batch_problem</span><span class="o">.</span><span class="n">get_span_blocking_constraints</span><span class="p">(),</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

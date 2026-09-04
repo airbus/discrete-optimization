@@ -1,0 +1,704 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcalbp_l.solvers package &mdash; discrete-optimization 0.8.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=486e5634"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.rcpsp package" href="discrete_optimization.rcpsp.html" />
+    <link rel="prev" title="discrete_optimization.rcalbp_l package" href="discrete_optimization.rcalbp_l.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.fjsp.html">discrete_optimization.fjsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.jsp.html">discrete_optimization.jsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.rcalbp_l.html">discrete_optimization.rcalbp_l package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.salbp.html">discrete_optimization.salbp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.rcalbp_l.html">discrete_optimization.rcalbp_l package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcalbp_l.solvers package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-rcalbp-l-solvers-package">
+<h1>discrete_optimization.rcalbp_l.solvers package<a class="headerlink" href="#discrete-optimization-rcalbp-l-solvers-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.rcalbp_l.solvers.cpsat">
+<span id="discrete-optimization-rcalbp-l-solvers-cpsat-module"></span><h2>discrete_optimization.rcalbp_l.solvers.cpsat module<a class="headerlink" href="#module-discrete_optimization.rcalbp_l.solvers.cpsat" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcalbp_l.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">CpSatRCALBPLSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.AllocationCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationCpSatSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver" title="discrete_optimization.generic_tasks_tools.solvers.cpsat.SchedulingCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingCpSatSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]], <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.add_cycle_time_lower_bound">
+<span class="sig-name descname"><span class="pre">add_cycle_time_lower_bound</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower_bound</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.add_cycle_time_lower_bound"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.add_cycle_time_lower_bound" title="Link to this definition"></a></dt>
+<dd><p>Ensures cycle time monotonicity across independent chunk boundaries.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.constraint_only_one_station_allocation">
+<span class="sig-name descname"><span class="pre">constraint_only_one_station_allocation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.constraint_only_one_station_allocation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.constraint_only_one_station_allocation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_cumulative_resource_constraint">
+<span class="sig-name descname"><span class="pre">create_cumulative_resource_constraint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.create_cumulative_resource_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_cumulative_resource_constraint" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_cycle_time_variables">
+<span class="sig-name descname"><span class="pre">create_cycle_time_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.create_cycle_time_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_cycle_time_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_heuristic_target_reached_constraints">
+<span class="sig-name descname"><span class="pre">create_heuristic_target_reached_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">apply_heuristic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.create_heuristic_target_reached_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_heuristic_target_reached_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_main_unfolded_intervals">
+<span class="sig-name descname"><span class="pre">create_main_unfolded_intervals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.create_main_unfolded_intervals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_main_unfolded_intervals" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_precedence_constraints">
+<span class="sig-name descname"><span class="pre">create_precedence_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.create_precedence_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_precedence_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_resource_dispatch">
+<span class="sig-name descname"><span class="pre">create_resource_dispatch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.create_resource_dispatch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_resource_dispatch" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_zone_blocking">
+<span class="sig-name descname"><span class="pre">create_zone_blocking</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.create_zone_blocking"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.create_zone_blocking" title="Link to this definition"></a></dt>
+<dd><p>Be careful on the fact that this constraint only is valid with capa==1 for now</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.fix_allocations">
+<span class="sig-name descname"><span class="pre">fix_allocations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.fix_allocations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.fix_allocations" title="Link to this definition"></a></dt>
+<dd><p>Hard-fixes the allocation variables to a known configuration.
+This transforms the complex ALBP problem into a scheduling problem.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.fix_allocations_and_resources">
+<span class="sig-name descname"><span class="pre">fix_allocations_and_resources</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.fix_allocations_and_resources"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.fix_allocations_and_resources" title="Link to this definition"></a></dt>
+<dd><p>Hard-fixes the allocation and resource variables to a known configuration.
+This transforms the complex ALBP problem into a purely independent scheduling problem.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.get_task_start_or_end_variable">
+<span class="sig-name descname"><span class="pre">get_task_start_or_end_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.jsp.html#discrete_optimization.jsp.problem.Task" title="discrete_optimization.jsp.problem.Task"><span class="pre">Task</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_or_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.enums.StartOrEnd" title="discrete_optimization.generic_tasks_tools.enums.StartOrEnd"><span class="pre">StartOrEnd</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LinearExprT</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.get_task_start_or_end_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.get_task_start_or_end_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the variable storing the start or end time of given task.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong></p></li>
+<li><p><strong>start_or_end</strong></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.get_task_unary_resource_is_present_variable">
+<span class="sig-name descname"><span class="pre">get_task_unary_resource_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.jsp.html#discrete_optimization.jsp.problem.Task" title="discrete_optimization.jsp.problem.Task"><span class="pre">Task</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">WorkStation</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cp.BoolExpr</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.get_task_unary_resource_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.get_task_unary_resource_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Return a 0-1 variable/expression telling if the unary_resource is used for the task.</p>
+<p>NB: sometimes the given resource is never to be used by a task and the variable has not been created.
+The convention is to return 0 in that case.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minimize_used_cycle_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_heuristic_constraint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.objective_value">
+<span class="sig-name descname"><span class="pre">objective_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minimize_used_cycle_time</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.objective_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.objective_value" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLProblem" title="discrete_optimization.rcalbp_l.problem.RCALBPLProblem"><span class="pre">RCALBPLProblem</span></a></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLSolution" title="discrete_optimization.rcalbp_l.problem.RCALBPLSolution"><span class="pre">RCALBPLSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Parses the CP-SAT result back into a native RCALBPLSolution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLSolution" title="discrete_optimization.rcalbp_l.problem.RCALBPLSolution"><span class="pre">RCALBPLSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/cpsat.html#CpSatRCALBPLSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Injects an almost complete model state as a hint to the CP-SAT solver.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.subset_tasks_of_interest">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">subset_tasks_of_interest</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.subset_tasks_of_interest" title="Link to this definition"></a></dt>
+<dd><p>Subset of tasks of interest for the allocation…</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.variables">
+<span class="sig-name descname"><span class="pre">variables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.cpsat.CpSatRCALBPLSolver.variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.rcalbp_l.solvers.meta_solvers">
+<span id="discrete-optimization-rcalbp-l-solvers-meta-solvers-module"></span><h2>discrete_optimization.rcalbp_l.solvers.meta_solvers module<a class="headerlink" href="#module-discrete_optimization.rcalbp_l.solvers.meta_solvers" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcalbp_l.solvers.meta_solvers.</span></span><span class="sig-name descname"><span class="pre">BackwardSequentialRCALBPLSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLProblem" title="discrete_optimization.rcalbp_l.problem.RCALBPLProblem"><span class="pre">RCALBPLProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">future_chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase2_chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit_phase1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">120</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit_phase2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_sgs_warm_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/meta_solvers.html#BackwardSequentialRCALBPLSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<p>Independent Chunk Backward Reasoning Solver with SGS Warm-Starting.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLProblem" title="discrete_optimization.rcalbp_l.problem.RCALBPLProblem"><span class="pre">RCALBPLProblem</span></a></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/meta_solvers.html#BackwardSequentialRCALBPLSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolverSGS">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcalbp_l.solvers.meta_solvers.</span></span><span class="sig-name descname"><span class="pre">BackwardSequentialRCALBPLSolverSGS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLProblem" title="discrete_optimization.rcalbp_l.problem.RCALBPLProblem"><span class="pre">RCALBPLProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">future_chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase2_chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit_phase1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">120</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit_phase2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_sgs_warm_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/meta_solvers.html#BackwardSequentialRCALBPLSolverSGS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolverSGS" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolver" title="discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BackwardSequentialRCALBPLSolver</span></code></a></p>
+<p>Independent Chunk Backward Reasoning Solver with SGS Warm-Starting.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolverSGS.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLProblem" title="discrete_optimization.rcalbp_l.problem.RCALBPLProblem"><span class="pre">RCALBPLProblem</span></a></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolverSGS.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.meta_solvers.BalancedBackwardSequentialRCALBPLSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcalbp_l.solvers.meta_solvers.</span></span><span class="sig-name descname"><span class="pre">BalancedBackwardSequentialRCALBPLSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLProblem" title="discrete_optimization.rcalbp_l.problem.RCALBPLProblem"><span class="pre">RCALBPLProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">future_chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">phase2_chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit_phase1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">120</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit_phase2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_sgs_warm_start</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/meta_solvers.html#BalancedBackwardSequentialRCALBPLSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.meta_solvers.BalancedBackwardSequentialRCALBPLSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolver" title="discrete_optimization.rcalbp_l.solvers.meta_solvers.BackwardSequentialRCALBPLSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BackwardSequentialRCALBPLSolver</span></code></a></p>
+<p>Upgraded Backward Solver using the ‘Two-Period Extremes’ heuristic.
+Phase 1 isolates ONLY the first unstable period and the final steady-state period.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.meta_solvers.BalancedBackwardSequentialRCALBPLSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/meta_solvers.html#BalancedBackwardSequentialRCALBPLSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.meta_solvers.BalancedBackwardSequentialRCALBPLSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.rcalbp_l.solvers.optal">
+<span id="discrete-optimization-rcalbp-l-solvers-optal-module"></span><h2>discrete_optimization.rcalbp_l.solvers.optal module<a class="headerlink" href="#module-discrete_optimization.rcalbp_l.solvers.optal" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcalbp_l.solvers.optal.</span></span><span class="sig-name descname"><span class="pre">OptalRCALBPLSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.AllocationOptalSolver" title="discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.AllocationOptalSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationOptalSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.SchedulingOptalSolver" title="discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.SchedulingOptalSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingOptalSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.constraint_only_one_station_allocation">
+<span class="sig-name descname"><span class="pre">constraint_only_one_station_allocation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.constraint_only_one_station_allocation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.constraint_only_one_station_allocation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_cumulative_resource_constraint">
+<span class="sig-name descname"><span class="pre">create_cumulative_resource_constraint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.create_cumulative_resource_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_cumulative_resource_constraint" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_cycle_time_variables">
+<span class="sig-name descname"><span class="pre">create_cycle_time_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.create_cycle_time_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_cycle_time_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_heuristic_target_reached_constraints">
+<span class="sig-name descname"><span class="pre">create_heuristic_target_reached_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">apply_heuristic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.create_heuristic_target_reached_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_heuristic_target_reached_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_main_unfolded_intervals">
+<span class="sig-name descname"><span class="pre">create_main_unfolded_intervals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.create_main_unfolded_intervals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_main_unfolded_intervals" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_precedence_constraints">
+<span class="sig-name descname"><span class="pre">create_precedence_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.create_precedence_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_precedence_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_resource_dispatch">
+<span class="sig-name descname"><span class="pre">create_resource_dispatch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.create_resource_dispatch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_resource_dispatch" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_zone_blocking">
+<span class="sig-name descname"><span class="pre">create_zone_blocking</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.create_zone_blocking"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.create_zone_blocking" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.get_task_interval_variable">
+<span class="sig-name descname"><span class="pre">get_task_interval_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.jsp.html#discrete_optimization.jsp.problem.Task" title="discrete_optimization.jsp.problem.Task"><span class="pre">Task</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cp.IntervalVar</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.get_task_interval_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.get_task_interval_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the interval variable of given task.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.get_task_unary_resource_is_present_variable">
+<span class="sig-name descname"><span class="pre">get_task_unary_resource_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.jsp.html#discrete_optimization.jsp.problem.Task" title="discrete_optimization.jsp.problem.Task"><span class="pre">Task</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">WorkStation</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cp.BoolExpr</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.get_task_unary_resource_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.get_task_unary_resource_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Return a 0-1 variable/expression telling if the unary_resource is used for the task.</p>
+<p>NB: sometimes the given resource is never to be used by a task and the variable has not been created.
+The convention is to return 0 in that case.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.objective_value">
+<span class="sig-name descname"><span class="pre">objective_value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.objective_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.objective_value" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLProblem" title="discrete_optimization.rcalbp_l.problem.RCALBPLProblem"><span class="pre">RCALBPLProblem</span></a></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cp.SolveResult</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLSolution" title="discrete_optimization.rcalbp_l.problem.RCALBPLSolution"><span class="pre">RCALBPLSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Parses the OptalCP result back into a native RCALBPLSolution, translating
+absolute unfolded times back to relative workstation times.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.variables">
+<span class="sig-name descname"><span class="pre">variables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolver.variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcalbp_l.solvers.optal.</span></span><span class="sig-name descname"><span class="pre">OptalRCALBPLSolverV2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.AllocationOptalSolver" title="discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.AllocationOptalSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">AllocationOptalSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <a class="reference internal" href="discrete_optimization.generic_tasks_tools.solvers.html#discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.SchedulingOptalSolver" title="discrete_optimization.generic_tasks_tools.solvers.optalcp_tasks_solver.SchedulingOptalSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">SchedulingOptalSolver</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_cumulative_resource_constraint">
+<span class="sig-name descname"><span class="pre">create_cumulative_resource_constraint</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.create_cumulative_resource_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_cumulative_resource_constraint" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_cycle_time_variables">
+<span class="sig-name descname"><span class="pre">create_cycle_time_variables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.create_cycle_time_variables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_cycle_time_variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_heuristic_target_reached_constraints">
+<span class="sig-name descname"><span class="pre">create_heuristic_target_reached_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">apply_heuristic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.create_heuristic_target_reached_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_heuristic_target_reached_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_main_unfolded_intervals">
+<span class="sig-name descname"><span class="pre">create_main_unfolded_intervals</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.create_main_unfolded_intervals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_main_unfolded_intervals" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_precedence_constraints">
+<span class="sig-name descname"><span class="pre">create_precedence_constraints</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.create_precedence_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_precedence_constraints" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_resource_dispatch">
+<span class="sig-name descname"><span class="pre">create_resource_dispatch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.create_resource_dispatch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_resource_dispatch" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_zone_blocking">
+<span class="sig-name descname"><span class="pre">create_zone_blocking</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.create_zone_blocking"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.create_zone_blocking" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.get_task_interval_variable">
+<span class="sig-name descname"><span class="pre">get_task_interval_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.jsp.html#discrete_optimization.jsp.problem.Task" title="discrete_optimization.jsp.problem.Task"><span class="pre">Task</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cp.IntervalVar</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.get_task_interval_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.get_task_interval_variable" title="Link to this definition"></a></dt>
+<dd><p>Retrieve the interval variable of given task.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.get_task_unary_resource_is_present_variable">
+<span class="sig-name descname"><span class="pre">get_task_unary_resource_is_present_variable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.jsp.html#discrete_optimization.jsp.problem.Task" title="discrete_optimization.jsp.problem.Task"><span class="pre">Task</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">unary_resource</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">WorkStation</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">cp.BoolExpr</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.get_task_unary_resource_is_present_variable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.get_task_unary_resource_is_present_variable" title="Link to this definition"></a></dt>
+<dd><p>Return a 0-1 variable/expression telling if the unary_resource is used for the task.</p>
+<p>NB: sometimes the given resource is never to be used by a task and the variable has not been created.
+The convention is to return 0 in that case.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.objective_value">
+<span class="sig-name descname"><span class="pre">objective_value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.objective_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.objective_value" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLProblem" title="discrete_optimization.rcalbp_l.problem.RCALBPLProblem"><span class="pre">RCALBPLProblem</span></a></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">cp.SolveResult</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLSolution" title="discrete_optimization.rcalbp_l.problem.RCALBPLSolution"><span class="pre">RCALBPLSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/optal.html#OptalRCALBPLSolverV2.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Parses the OptalCP result back into a native RCALBPLSolution, translating
+absolute unfolded times back to relative workstation times.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.variables">
+<span class="sig-name descname"><span class="pre">variables</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.optal.OptalRCALBPLSolverV2.variables" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.rcalbp_l.solvers.pareto_postprocess">
+<span id="discrete-optimization-rcalbp-l-solvers-pareto-postprocess-module"></span><h2>discrete_optimization.rcalbp_l.solvers.pareto_postprocess module<a class="headerlink" href="#module-discrete_optimization.rcalbp_l.solvers.pareto_postprocess" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.DpRCALBPLPostProSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcalbp_l.solvers.pareto_postprocess.</span></span><span class="sig-name descname"><span class="pre">DpRCALBPLPostProSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/pareto_postprocess.html#DpRCALBPLPostProSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.DpRCALBPLPostProSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.dyn_prog_tools.DpSolver" title="discrete_optimization.generic_tools.dyn_prog_tools.DpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">DpSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.DpRCALBPLPostProSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLSolution" title="discrete_optimization.rcalbp_l.problem.RCALBPLSolution"><span class="pre">RCALBPLSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_nb_adjustments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/pareto_postprocess.html#DpRCALBPLPostProSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.DpRCALBPLPostProSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.DpRCALBPLPostProSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLProblem" title="discrete_optimization.rcalbp_l.problem.RCALBPLProblem"><span class="pre">RCALBPLProblem</span></a></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.DpRCALBPLPostProSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.DpRCALBPLPostProSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLSolution" title="discrete_optimization.rcalbp_l.problem.RCALBPLSolution"><span class="pre">RCALBPLSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/pareto_postprocess.html#DpRCALBPLPostProSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.DpRCALBPLPostProSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.DpRCALBPLPostProSolver.solution">
+<span class="sig-name descname"><span class="pre">solution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLSolution" title="discrete_optimization.rcalbp_l.problem.RCALBPLSolution"><span class="pre">RCALBPLSolution</span></a></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.DpRCALBPLPostProSolver.solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.rcalbp_l.solvers.pareto_postprocess.</span></span><span class="sig-name descname"><span class="pre">RampUpParetoSolverPostpro</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLProblem" title="discrete_optimization.rcalbp_l.problem.RCALBPLProblem"><span class="pre">RCALBPLProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/pareto_postprocess.html#RampUpParetoSolverPostpro"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver" title="discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.add_lexico_constraint">
+<span class="sig-name descname"><span class="pre">add_lexico_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/pareto_postprocess.html#RampUpParetoSolverPostpro.add_lexico_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.add_lexico_constraint" title="Link to this definition"></a></dt>
+<dd><p>Add a constraint on a computed sub-objective</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p></li>
+<li><p><strong>value</strong> – the limiting value.
+If the optimization direction is maximizing, this is a lower bound,
+else this is an upper bound.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the created constraints.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.get_lexico_objective_value">
+<span class="sig-name descname"><span class="pre">get_lexico_objective_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/pareto_postprocess.html#RampUpParetoSolverPostpro.get_lexico_objective_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.get_lexico_objective_value" title="Link to this definition"></a></dt>
+<dd><p>Get best internal model objective value found by last call to <cite>solve()</cite>.</p>
+<p>The default implementation consists in using the fit of the last solution in result_storage.
+This assumes:
+- that the last solution is the best one for the objective considered
+- that no aggregation was performed but rather that the fitness is a TupleFitness</p>
+<blockquote>
+<div><p>with values in the same order as <cite>self.problem.get_objective_names()</cite>.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p></li>
+<li><p><strong>res</strong> – result storage returned by last call to solve().</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.get_lexico_objectives_available">
+<span class="sig-name descname"><span class="pre">get_lexico_objectives_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/pareto_postprocess.html#RampUpParetoSolverPostpro.get_lexico_objectives_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.get_lexico_objectives_available" title="Link to this definition"></a></dt>
+<dd><p>List objectives available for lexico optimization</p>
+<p>It corresponds to the labels accepted for obj argument for
+- <cite>set_lexico_objective()</cite>
+- <cite>add_lexico_constraint()</cite>
+- <cite>get_lexico_objective_value()</cite></p>
+<p>Default to <cite>self.problem.get_objective_names()</cite>.</p>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.implements_lexico_api">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">implements_lexico_api</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/pareto_postprocess.html#RampUpParetoSolverPostpro.implements_lexico_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.implements_lexico_api" title="Link to this definition"></a></dt>
+<dd><p>Tell whether this solver is implementing the api for lexicographic optimization.</p>
+<p>Should return True only if</p>
+<ul class="simple">
+<li><p><cite>set_lexico_objective()</cite></p></li>
+<li><p><cite>add_lexico_constraint()</cite></p></li>
+<li><p><cite>get_lexico_objective_value()</cite></p></li>
+</ul>
+<p>have been really implemented, i.e.
+- calling <cite>set_lexico_objective()</cite> and <cite>add_lexico_constraint()</cite></p>
+<blockquote>
+<div><p>should actually change the next call to <cite>solve()</cite>,</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><cite>get_lexico_objective_value()</cite> should correspond to the internal model objective</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">from_solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLSolution" title="discrete_optimization.rcalbp_l.problem.RCALBPLSolution"><span class="pre">RCALBPLSolution</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/pareto_postprocess.html#RampUpParetoSolverPostpro.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLProblem" title="discrete_optimization.rcalbp_l.problem.RCALBPLProblem"><span class="pre">RCALBPLProblem</span></a></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLSolution" title="discrete_optimization.rcalbp_l.problem.RCALBPLSolution"><span class="pre">RCALBPLSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/pareto_postprocess.html#RampUpParetoSolverPostpro.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Construct a do solution from the cpsat solver internal solution.</p>
+<p>It will be called each time the cpsat solver find a new solution.
+At that point, value of internal variables are accessible via <cite>cpsolvercb.Value(VARIABLE_NAME)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpsolvercb</strong> – the ortools callback called when the cpsat solver finds a new solution.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the intermediate solution, at do format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.set_lexico_objective">
+<span class="sig-name descname"><span class="pre">set_lexico_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/rcalbp_l/solvers/pareto_postprocess.html#RampUpParetoSolverPostpro.set_lexico_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.set_lexico_objective" title="Link to this definition"></a></dt>
+<dd><p>Update internal model objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.solution">
+<span class="sig-name descname"><span class="pre">solution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.rcalbp_l.html#discrete_optimization.rcalbp_l.problem.RCALBPLSolution" title="discrete_optimization.rcalbp_l.problem.RCALBPLSolution"><span class="pre">RCALBPLSolution</span></a></span><a class="headerlink" href="#discrete_optimization.rcalbp_l.solvers.pareto_postprocess.RampUpParetoSolverPostpro.solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.rcalbp_l.solvers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.rcalbp_l.solvers" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.rcalbp_l.html" class="btn btn-neutral float-left" title="discrete_optimization.rcalbp_l package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.rcpsp.html" class="btn btn-neutral float-right" title="discrete_optimization.rcpsp package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.8.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

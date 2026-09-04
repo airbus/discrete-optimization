@@ -1,0 +1,829 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.resource_blocking &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.resource_blocking</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.resource_blocking</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">"""Resource blocking constraints for scheduling problems.</span>
+
+<span class="sd">This module provides mixins for modeling resource blocking during non-execution periods:</span>
+<span class="sd">- Gap blocking: Resources blocked between two entities (e.g., changeover time)</span>
+<span class="sd">- Span blocking: Resources blocked for entire span of task group (e.g., project reservation)</span>
+
+<span class="sd">Key features:</span>
+<span class="sd">- Flexible blocking points: START/END of entities (tasks, groups, conditional)</span>
+<span class="sd">- Calendar awareness: RESERVATION (spans unavailable periods) vs ACTIVE (must be available)</span>
+<span class="sd">- Overlap handling: Strategies to avoid double-counting when tasks overlap with blocking</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.cumulative_resource</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CumulativeResource</span><span class="p">,</span>
+    <span class="n">CumulativeResourceProblem</span><span class="p">,</span>
+    <span class="n">OtherCalendarResource</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.entities</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchedulingEntity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.multimode</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultimodeSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SchedulingSolution</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="BlockingMode">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.BlockingMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BlockingMode</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Mode for resource blocking behavior.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        RESERVATION: Resource slot is reserved but doesn't need to be "ON" or available.</span>
+<span class="sd">            Blocking can span periods when resource is unavailable (nights, weekends).</span>
+<span class="sd">        ACTIVE: Resource must be available/ON during blocking period.</span>
+<span class="sd">            Blocking invalid if resource unavailable during any part of the period.</span>
+<span class="sd">    """</span>
+
+    <span class="n">RESERVATION</span> <span class="o">=</span> <span class="s2">"reservation"</span>
+    <span class="n">ACTIVE</span> <span class="o">=</span> <span class="s2">"active"</span></div>
+
+
+
+<div class="viewcode-block" id="BlockingConstraintMetadata">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.BlockingConstraintMetadata">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BlockingConstraintMetadata</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Metadata for a blocking constraint.</span>
+
+<span class="sd">    Resource blocking intervals are ALWAYS ADDITIVE with task consumption.</span>
+<span class="sd">    The blocking demand is added on top of task consumption during the blocking period.</span>
+<span class="sd">    Users should adjust their blocking demands accordingly:</span>
+<span class="sd">    - If a task uses 2 units and blocking adds 1 unit, total consumption = 3 units</span>
+<span class="sd">    - Ensure resource capacity can accommodate task + blocking consumption</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        mode: Calendar awareness mode controlling interaction with resource availability:</span>
+<span class="sd">            - RESERVATION: Blocking can span unavailable periods (nights, weekends).</span>
+<span class="sd">                          Resource is reserved even when "OFF". Enforced without calendar constraints.</span>
+<span class="sd">            - ACTIVE: Blocking only during available periods. Resource must be "ON".</span>
+<span class="sd">                     Enforced with calendar constraints.</span>
+<span class="sd">        description: Optional human-readable description of the constraint</span>
+<span class="sd">    """</span>
+
+    <span class="n">mode</span><span class="p">:</span> <span class="n">BlockingMode</span> <span class="o">=</span> <span class="n">BlockingMode</span><span class="o">.</span><span class="n">RESERVATION</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span></div>
+
+
+
+<span class="c1"># Type aliases for blocking constraints (defined after BlockingConstraintMetadata)</span>
+<span class="n">FlexibleGapBlockingConstraint</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span>
+    <span class="n">SchedulingEntity</span><span class="p">,</span>
+    <span class="n">StartOrEnd</span><span class="p">,</span>
+    <span class="n">SchedulingEntity</span><span class="p">,</span>
+    <span class="n">StartOrEnd</span><span class="p">,</span>
+    <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>  <span class="c1"># resources</span>
+    <span class="n">BlockingConstraintMetadata</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">SpanBlockingConstraint</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span>
+    <span class="n">SchedulingEntity</span><span class="p">,</span>  <span class="c1"># tasks</span>
+    <span class="nb">dict</span><span class="p">[</span><span class="n">Hashable</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>  <span class="c1"># resources</span>
+    <span class="n">BlockingConstraintMetadata</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="ResourceBlockingProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.ResourceBlockingProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResourceBlockingProblem</span><span class="p">(</span>
+    <span class="n">CumulativeResourceProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">CumulativeResource</span><span class="p">,</span> <span class="n">OtherCalendarResource</span><span class="p">],</span>
+    <span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">CumulativeResource</span><span class="p">,</span> <span class="n">OtherCalendarResource</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Mixin for problems with resource blocking constraints.</span>
+
+<span class="sd">    This mixin adds support for two types of blocking:</span>
+<span class="sd">    1. Flexible gap blocking: Block resources from one entity point to another</span>
+<span class="sd">    2. Span blocking: Block resources for entire span of task group</span>
+
+<span class="sd">    The problem should also inherit from CumulativeResourceProblem to provide</span>
+<span class="sd">    resource definitions and capacity constraints.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="ResourceBlockingProblem.get_flexible_gap_blocking_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.ResourceBlockingProblem.get_flexible_gap_blocking_constraints">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_flexible_gap_blocking_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span>
+        <span class="nb">tuple</span><span class="p">[</span>
+            <span class="n">SchedulingEntity</span><span class="p">,</span>
+            <span class="n">StartOrEnd</span><span class="p">,</span>
+            <span class="n">SchedulingEntity</span><span class="p">,</span>
+            <span class="n">StartOrEnd</span><span class="p">,</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="n">CumulativeResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+            <span class="n">BlockingConstraintMetadata</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return flexible gap blocking constraints.</span>
+
+<span class="sd">        Each constraint blocks resources from one entity point to another entity point.</span>
+<span class="sd">        Supports four patterns based on start/end combinations:</span>
+<span class="sd">        - END → START: Classic gap/changeover (most common)</span>
+<span class="sd">        - START → START: Preparation period</span>
+<span class="sd">        - START → END: Full span coverage</span>
+<span class="sd">        - END → END: Extended cleanup</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of tuples (entity1, point1, entity2, point2, resources, metadata):</span>
+<span class="sd">            - entity1: First entity (task, group, or conditional)</span>
+<span class="sd">            - point1: START or END of first entity</span>
+<span class="sd">            - entity2: Second entity</span>
+<span class="sd">            - point2: START or END of second entity</span>
+<span class="sd">            - resources: Dict mapping resources to consumption amounts</span>
+<span class="sd">            - metadata: Blocking behavior configuration</span>
+<span class="sd">        """</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="ResourceBlockingProblem.get_span_blocking_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.ResourceBlockingProblem.get_span_blocking_constraints">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_span_blocking_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span>
+        <span class="nb">tuple</span><span class="p">[</span>
+            <span class="n">SchedulingEntity</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CumulativeResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">BlockingConstraintMetadata</span>
+        <span class="p">]</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return span blocking constraints.</span>
+
+<span class="sd">        Each constraint blocks resources for the entire span of a task group:</span>
+<span class="sd">        - From: minimum start time of any task in group</span>
+<span class="sd">        - To: maximum end time of any task in group</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of tuples (tasks, resources, metadata):</span>
+<span class="sd">            - tasks: Frozen set of tasks defining the span</span>
+<span class="sd">            - resources: Dict mapping resources to consumption amounts</span>
+<span class="sd">            - metadata: Blocking behavior configuration</span>
+
+<span class="sd">        Examples:</span>
+<span class="sd">        """</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ResourceBlockingSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.ResourceBlockingSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResourceBlockingSolution</span><span class="p">(</span>
+    <span class="n">MultimodeSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">CumulativeResource</span><span class="p">,</span> <span class="n">OtherCalendarResource</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Mixin for solutions to problems with resource blocking constraints.</span>
+
+<span class="sd">    Provides methods to:</span>
+<span class="sd">    - Compute resource consumption from blocking constraints</span>
+<span class="sd">    - Check constraint satisfaction with calendar awareness</span>
+<span class="sd">    - Handle overlap between blocking and task execution</span>
+
+<span class="sd">    Should be mixed with SchedulingSolution subclass.</span>
+<span class="sd">    Inherits from MultimodeSolution to ensure get_mode() is always available.</span>
+<span class="sd">    """</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">ResourceBlockingProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">CumulativeResource</span><span class="p">,</span> <span class="n">OtherCalendarResource</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ResourceBlockingSolution.compute_blocking_consumption">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.ResourceBlockingSolution.compute_blocking_consumption">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_blocking_consumption</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">resource</span><span class="p">:</span> <span class="n">CumulativeResource</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute resource consumption from all blocking constraints.</span>
+
+<span class="sd">        Blocking is always ADDITIVE: consumption from blocking is added to task consumption.</span>
+<span class="sd">        This means total resource usage = task consumption + blocking consumption.</span>
+
+<span class="sd">        This method:</span>
+<span class="sd">        1. Computes blocking periods from flexible gap and span constraints</span>
+<span class="sd">        2. Adds blocking consumption for each period (ADDITIVE behavior)</span>
+<span class="sd">        3. Validates ACTIVE mode constraints against resource calendar</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            horizon: Time horizon for the schedule</span>
+<span class="sd">            resource: The resource to compute consumption for</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Array of length horizon with blocking consumption at each time point.</span>
+<span class="sd">            Note: This is blocking consumption only. Task consumption is computed separately.</span>
+<span class="sd">            Total consumption should be verified: task_consumption + blocking_consumption &lt;= capacity</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If ACTIVE mode blocking spans resource unavailable period</span>
+<span class="sd">        """</span>
+        <span class="n">consumption</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">horizon</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span> <span class="o">=</span> <span class="bp">self</span>  <span class="c1"># type: ignore</span>
+
+        <span class="c1"># Process flexible gap blocking constraints</span>
+        <span class="k">for</span> <span class="p">(</span>
+            <span class="n">entity1</span><span class="p">,</span>
+            <span class="n">point1</span><span class="p">,</span>
+            <span class="n">entity2</span><span class="p">,</span>
+            <span class="n">point2</span><span class="p">,</span>
+            <span class="n">resources</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="p">,</span>
+        <span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_flexible_gap_blocking_constraints</span><span class="p">():</span>
+            <span class="c1"># Skip if resource not in this constraint</span>
+            <span class="k">if</span> <span class="n">resource</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Skip if conditional entity is not active</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">entity1</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">entity2</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Get blocking period</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">entity1</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">point1</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="k">else</span> <span class="n">entity1</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">entity2</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">point2</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="k">else</span> <span class="n">entity2</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Skip if blocking period is empty or negative</span>
+            <span class="k">if</span> <span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">start_time</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Get consumption amount</span>
+            <span class="n">amount</span> <span class="o">=</span> <span class="n">resources</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span>
+
+            <span class="c1"># Validate ACTIVE mode: resource must be available during blocking</span>
+            <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">BlockingMode</span><span class="o">.</span><span class="n">ACTIVE</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_validate_active_blocking</span><span class="p">(</span>
+                    <span class="n">resource</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">entity1</span><span class="p">,</span> <span class="n">entity2</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Apply blocking consumption (ADDITIVE: always adds to consumption)</span>
+            <span class="n">consumption</span><span class="p">[</span><span class="n">start_time</span><span class="p">:</span><span class="n">end_time</span><span class="p">]</span> <span class="o">+=</span> <span class="n">amount</span>
+
+        <span class="c1"># Process span blocking constraints</span>
+        <span class="k">for</span> <span class="n">tasks</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_span_blocking_constraints</span><span class="p">():</span>
+            <span class="c1"># Skip if resource not in this constraint</span>
+            <span class="k">if</span> <span class="n">resource</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Compute span: min start to max end of all tasks</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">start_time</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">start_time</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">amount</span> <span class="o">=</span> <span class="n">resources</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span>
+
+            <span class="c1"># Validate ACTIVE mode</span>
+            <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">BlockingMode</span><span class="o">.</span><span class="n">ACTIVE</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_validate_active_blocking_span</span><span class="p">(</span>
+                    <span class="n">resource</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">tasks</span>
+                <span class="p">)</span>
+
+            <span class="c1"># For span blocking, apply consumption directly</span>
+            <span class="c1"># Overlap handling is less relevant since span covers task execution</span>
+            <span class="n">consumption</span><span class="p">[</span><span class="n">start_time</span><span class="p">:</span><span class="n">end_time</span><span class="p">]</span> <span class="o">+=</span> <span class="n">amount</span>
+
+        <span class="k">return</span> <span class="n">consumption</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_active_blocking</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">resource</span><span class="p">:</span> <span class="n">CumulativeResource</span><span class="p">,</span>
+        <span class="n">start_time</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">end_time</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">entity1</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">,</span>
+        <span class="n">entity2</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validate ACTIVE mode blocking against resource calendar.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource: The resource being blocked</span>
+<span class="sd">            start_time: Start of blocking period</span>
+<span class="sd">            end_time: End of blocking period</span>
+<span class="sd">            entity1: First entity in constraint</span>
+<span class="sd">            entity2: Second entity in constraint</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if valid, False if resource unavailable during blocking period</span>
+<span class="sd">        """</span>
+        <span class="c1"># Get calendar from problem</span>
+        <span class="n">calendar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_resource_calendar</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+
+        <span class="c1"># Check each time point in blocking period</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">calendar</span><span class="p">):</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="n">calendar</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"ACTIVE blocking constraint violated: resource </span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"is unavailable at time </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">, but blocking from </span><span class="si">{</span><span class="n">entity1</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">entity2</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"spans [</span><span class="si">{</span><span class="n">start_time</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">end_time</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_active_blocking_span</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">resource</span><span class="p">:</span> <span class="n">CumulativeResource</span><span class="p">,</span>
+        <span class="n">start_time</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">end_time</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">tasks</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validate ACTIVE mode span blocking against resource calendar.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource: The resource being blocked</span>
+<span class="sd">            start_time: Start of blocking span</span>
+<span class="sd">            end_time: End of blocking span</span>
+<span class="sd">            tasks: Tasks defining the span</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if valid, False if resource unavailable during span</span>
+<span class="sd">        """</span>
+        <span class="c1"># Get calendar from problem</span>
+        <span class="n">calendar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_resource_calendar</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+
+        <span class="c1"># Check each time point in span</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">calendar</span><span class="p">):</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="n">calendar</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"ACTIVE span blocking constraint violated: resource </span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"is unavailable at time </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">, but span of tasks </span><span class="si">{</span><span class="n">tasks</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"covers [</span><span class="si">{</span><span class="n">start_time</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">end_time</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="ResourceBlockingSolution.check_blocking_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.ResourceBlockingSolution.check_blocking_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_blocking_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check if all blocking constraints are satisfied.</span>
+
+<span class="sd">        Mirrors the two-constraint approach from CP-SAT solver:</span>
+
+<span class="sd">        Check 1 (RESERVATION constraint - no calendar):</span>
+<span class="sd">            - Tasks + ALL blocking (RESERVATION + ACTIVE) &lt;= base capacity</span>
+<span class="sd">            - This allows RESERVATION blocking to span unavailable periods</span>
+
+<span class="sd">        Check 2 (ACTIVE constraint - with calendar):</span>
+<span class="sd">            - Tasks + ACTIVE blocking &lt;= calendar capacity at each time</span>
+<span class="sd">            - ACTIVE mode: Validate blocking only occurs during available periods</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if all constraints satisfied, False otherwise</span>
+<span class="sd">        """</span>
+        <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span> <span class="o">=</span> <span class="bp">self</span>  <span class="c1"># type: ignore</span>
+        <span class="n">horizon</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="s2">"horizon"</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
+
+        <span class="c1"># STEP 1: Validate ACTIVE mode calendar constraints</span>
+        <span class="c1"># ACTIVE blocking can only occur when resource is available</span>
+        <span class="k">for</span> <span class="p">(</span>
+            <span class="n">entity1</span><span class="p">,</span>
+            <span class="n">point1</span><span class="p">,</span>
+            <span class="n">entity2</span><span class="p">,</span>
+            <span class="n">point2</span><span class="p">,</span>
+            <span class="n">resources</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="p">,</span>
+        <span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_flexible_gap_blocking_constraints</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">entity1</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">entity2</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">start_time</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">entity1</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">point1</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="k">else</span> <span class="n">entity1</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">entity2</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">point2</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="k">else</span> <span class="n">entity2</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">start_time</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">BlockingMode</span><span class="o">.</span><span class="n">ACTIVE</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_active_blocking</span><span class="p">(</span>
+                        <span class="n">resource</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">entity1</span><span class="p">,</span> <span class="n">entity2</span>
+                    <span class="p">):</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Validate span blocking ACTIVE mode</span>
+        <span class="k">for</span> <span class="n">entity</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_span_blocking_constraints</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">()</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">start_time</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">BlockingMode</span><span class="o">.</span><span class="n">ACTIVE</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_active_blocking_span</span><span class="p">(</span>
+                        <span class="n">resource</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">,</span> <span class="n">tasks</span>
+                    <span class="p">):</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># STEP 2: Validate capacity constraints (mirroring CP-SAT two-constraint approach)</span>
+        <span class="c1"># CP-SAT creates TWO constraints:</span>
+        <span class="c1"># 1. tasks + reservation_blocking + active_blocking &lt;= capacity (no calendar/fake_tasks)</span>
+        <span class="c1"># 2. tasks + active_blocking + fake_tasks &lt;= capacity (with calendar)</span>
+        <span class="c1">#</span>
+        <span class="c1"># Since fake_tasks[t] = capacity - calendar[t], constraint 2 becomes:</span>
+        <span class="c1"># tasks + active_blocking &lt;= calendar[t]</span>
+
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">cumulative_resources_list</span><span class="p">:</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_resource_max_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+            <span class="n">task_consumption</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_task_consumption</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="n">horizon</span><span class="p">)</span>
+
+            <span class="c1"># Compute blocking by mode</span>
+            <span class="n">reservation_blocking</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_blocking_by_mode</span><span class="p">(</span>
+                <span class="n">resource</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="n">BlockingMode</span><span class="o">.</span><span class="n">RESERVATION</span>
+            <span class="p">)</span>
+            <span class="n">active_blocking</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_blocking_by_mode</span><span class="p">(</span>
+                <span class="n">resource</span><span class="p">,</span> <span class="n">horizon</span><span class="p">,</span> <span class="n">BlockingMode</span><span class="o">.</span><span class="n">ACTIVE</span>
+            <span class="p">)</span>
+
+            <span class="c1"># CHECK 1 (mirrors CP-SAT constraint 1):</span>
+            <span class="c1"># Tasks + RESERVATION blocking + ACTIVE blocking &lt;= base capacity</span>
+            <span class="c1"># No calendar/fake_tasks - allows RESERVATION to span unavailable periods</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">horizon</span><span class="p">):</span>
+                <span class="n">total</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">task_consumption</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">reservation_blocking</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">active_blocking</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="n">capacity</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Constraint 1 violated for </span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2"> at time </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">: "</span>
+                        <span class="sa">f</span><span class="s2">"task=</span><span class="si">{</span><span class="n">task_consumption</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="si">}</span><span class="s2"> + reservation=</span><span class="si">{</span><span class="n">reservation_blocking</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="si">}</span><span class="s2"> "</span>
+                        <span class="sa">f</span><span class="s2">"+ active=</span><span class="si">{</span><span class="n">active_blocking</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> &gt; capacity=</span><span class="si">{</span><span class="n">capacity</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="c1"># CHECK 2 (mirrors CP-SAT constraint 2):</span>
+            <span class="c1"># Tasks + ACTIVE blocking + fake_tasks &lt;= capacity</span>
+            <span class="c1"># Equivalent to: Tasks + ACTIVE blocking &lt;= calendar[t]</span>
+            <span class="c1"># This enforces that ACTIVE blocking respects calendar availability</span>
+            <span class="n">calendar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_resource_calendar</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">horizon</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">calendar</span><span class="p">))):</span>
+                <span class="n">calendar_capacity</span> <span class="o">=</span> <span class="n">calendar</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+                <span class="n">total</span> <span class="o">=</span> <span class="n">task_consumption</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">active_blocking</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="n">calendar_capacity</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Constraint 2 violated for </span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2"> at time </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">: "</span>
+                        <span class="sa">f</span><span class="s2">"task=</span><span class="si">{</span><span class="n">task_consumption</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="si">}</span><span class="s2"> + active=</span><span class="si">{</span><span class="n">active_blocking</span><span class="p">[</span><span class="n">t</span><span class="p">]</span><span class="si">}</span><span class="s2"> "</span>
+                        <span class="sa">f</span><span class="s2">"= </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> &gt; calendar_capacity=</span><span class="si">{</span><span class="n">calendar_capacity</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_task_consumption</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">CumulativeResource</span><span class="p">,</span> <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute resource consumption from tasks.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource: The resource to compute consumption for</span>
+<span class="sd">            horizon: Time horizon</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Array of length horizon with task consumption at each time point</span>
+<span class="sd">        """</span>
+        <span class="n">consumption</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">horizon</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+            <span class="c1"># Get consumption amount</span>
+            <span class="n">amount</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_cumulative_resource_consumption</span><span class="p">(</span>
+                <span class="n">resource</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">mode</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">amount</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">start</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">:</span>
+                <span class="n">consumption</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span> <span class="o">+=</span> <span class="n">amount</span>
+
+        <span class="k">return</span> <span class="n">consumption</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_blocking_by_mode</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">CumulativeResource</span><span class="p">,</span> <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="n">BlockingMode</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Compute blocking consumption for a specific mode.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource: The resource to compute consumption for</span>
+<span class="sd">            horizon: Time horizon</span>
+<span class="sd">            mode: The blocking mode to filter by (RESERVATION or ACTIVE)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Array of length horizon with blocking consumption at each time point</span>
+<span class="sd">        """</span>
+        <span class="n">consumption</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">horizon</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span> <span class="o">=</span> <span class="bp">self</span>  <span class="c1"># type: ignore</span>
+
+        <span class="c1"># Process flexible gap blocking constraints</span>
+        <span class="k">for</span> <span class="p">(</span>
+            <span class="n">entity1</span><span class="p">,</span>
+            <span class="n">point1</span><span class="p">,</span>
+            <span class="n">entity2</span><span class="p">,</span>
+            <span class="n">point2</span><span class="p">,</span>
+            <span class="n">resources</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="p">,</span>
+        <span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_flexible_gap_blocking_constraints</span><span class="p">():</span>
+            <span class="c1"># Skip if wrong mode or resource not in constraint</span>
+            <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="n">mode</span> <span class="ow">or</span> <span class="n">resource</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Skip inactive entities</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">entity1</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">entity2</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Get blocking period</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">entity1</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">point1</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="k">else</span> <span class="n">entity1</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">entity2</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">point2</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="k">else</span> <span class="n">entity2</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">start_time</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Add blocking consumption</span>
+            <span class="n">amount</span> <span class="o">=</span> <span class="n">resources</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span>
+            <span class="n">consumption</span><span class="p">[</span><span class="n">start_time</span><span class="p">:</span><span class="n">end_time</span><span class="p">]</span> <span class="o">+=</span> <span class="n">amount</span>
+
+        <span class="c1"># Process span blocking constraints</span>
+        <span class="k">for</span> <span class="n">entity</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_span_blocking_constraints</span><span class="p">():</span>
+            <span class="c1"># Skip if wrong mode or resource not in constraint</span>
+            <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="n">mode</span> <span class="ow">or</span> <span class="n">resource</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Compute span</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">end_time</span> <span class="o">&lt;=</span> <span class="n">start_time</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Add blocking consumption</span>
+            <span class="n">amount</span> <span class="o">=</span> <span class="n">resources</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span>
+            <span class="n">consumption</span><span class="p">[</span><span class="n">start_time</span><span class="p">:</span><span class="n">end_time</span><span class="p">]</span> <span class="o">+=</span> <span class="n">amount</span>
+
+        <span class="k">return</span> <span class="n">consumption</span>
+
+<div class="viewcode-block" id="ResourceBlockingSolution.satisfy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.ResourceBlockingSolution.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check if solution satisfies all constraints including blocking.</span>
+
+<span class="sd">        This extends the base satisfy() method to include blocking constraints.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if all constraints satisfied, False otherwise</span>
+<span class="sd">        """</span>
+        <span class="c1"># Check base constraints if available</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">super</span><span class="p">(),</span> <span class="s2">"satisfy"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">satisfy</span><span class="p">():</span>  <span class="c1"># type: ignore</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Check blocking constraints</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_blocking_constraints</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WithoutResourceBlockingProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.WithoutResourceBlockingProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WithoutResourceBlockingProblem</span><span class="p">(</span>
+    <span class="n">ResourceBlockingProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">CumulativeResource</span><span class="p">,</span> <span class="n">OtherCalendarResource</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Utility mixin for problems without resource blocking constraints.</span>
+
+<span class="sd">    Provides empty implementations of blocking constraint methods.</span>
+<span class="sd">    Use as an additional mixin with GenericSchedulingProblem when no blocking needed.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="WithoutResourceBlockingProblem.get_flexible_gap_blocking_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.WithoutResourceBlockingProblem.get_flexible_gap_blocking_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_flexible_gap_blocking_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span>
+        <span class="nb">tuple</span><span class="p">[</span>
+            <span class="n">SchedulingEntity</span><span class="p">,</span>
+            <span class="n">StartOrEnd</span><span class="p">,</span>
+            <span class="n">SchedulingEntity</span><span class="p">,</span>
+            <span class="n">StartOrEnd</span><span class="p">,</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="n">CumulativeResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+            <span class="n">BlockingConstraintMetadata</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return empty list (no blocking constraints)."""</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="WithoutResourceBlockingProblem.get_span_blocking_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.WithoutResourceBlockingProblem.get_span_blocking_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_span_blocking_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span>
+        <span class="nb">tuple</span><span class="p">[</span>
+            <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CumulativeResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">BlockingConstraintMetadata</span>
+        <span class="p">]</span>
+    <span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return empty list (no blocking constraints)."""</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WithoutResourceBlockingSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.WithoutResourceBlockingSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WithoutResourceBlockingSolution</span><span class="p">(</span>
+    <span class="n">ResourceBlockingSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">CumulativeResource</span><span class="p">,</span> <span class="n">OtherCalendarResource</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Utility mixin for solutions without resource blocking constraints.</span>
+
+<span class="sd">    Provides optimized implementations that skip blocking computation.</span>
+<span class="sd">    Use as an additional mixin when no blocking needed.</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="WithoutResourceBlockingSolution.check_blocking_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.WithoutResourceBlockingSolution.check_blocking_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_blocking_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Always satisfied (no constraints)."""</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="WithoutResourceBlockingSolution.compute_blocking_consumption">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.resource_blocking.WithoutResourceBlockingSolution.compute_blocking_consumption">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_blocking_consumption</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">resource</span><span class="p">:</span> <span class="n">CumulativeResource</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Return zero consumption (no blocking)."""</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">horizon</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
