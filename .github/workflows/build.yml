@@ -280,6 +280,7 @@ jobs:
             --ignore-glob=tests/**/test_*non_regression.py \
             tests
       - name: Test non-regression
+        timeout-minutes: 30
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TARGET_JOB_NAME: ${{ env.JOB_NAME }}
@@ -288,6 +289,7 @@ jobs:
           pytest -v $(python tests/find_non_regression_tests.py) | python -u .github/scripts/parse_non_regression.py || true
 
       - name: Upload nonregression report as artifact
+        timeout-minutes: 5
         uses: actions/upload-artifact@v7
         with:
           name: regressions-${{ matrix.os }}-${{ matrix.python-version }}
