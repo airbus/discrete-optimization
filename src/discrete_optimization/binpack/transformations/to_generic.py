@@ -81,15 +81,9 @@ class BinpackToGenericSchedulingTransformation(
                 horizon=source_problem.nb_items,
                 durations_per_mode={i: {0: 1} for i in range(source_problem.nb_items)},
                 resource_consumptions={
-                    i: {0: {"capacity": source_problem.list_items[i].weight}}
+                    i: {0: {"capacity": int(source_problem.list_items[i].weight)}}
                     for i in range(source_problem.nb_items)
                 },
-                successors={},
-                unary_resources=set(),
-                unary_resources_skills=None,
-                unary_resources_availabilities=None,
-                unary_resources_task_compatibility=None,
-                skills=None,
                 non_skill_cumulative_resources={
                     "capacity": [
                         (
@@ -100,18 +94,10 @@ class BinpackToGenericSchedulingTransformation(
                         for i in range(len(source_problem.list_bin_instances))
                     ]
                 },
-                non_renewable_resources=None,
-                time_windows=None,
-                start_to_start_min_time_lags=None,
-                start_to_end_min_time_lags=None,
-                end_to_start_min_time_lags=None,
-                end_to_end_min_time_lags=None,
-                no_overlap_sets=set(
-                    [
-                        frozenset([item1, item2])
-                        for item1, item2 in source_problem.incompatible_items
-                    ]
-                ),
+                no_overlap_sets={
+                    frozenset([item1, item2])
+                    for item1, item2 in source_problem.incompatible_items
+                },
                 forbidden_intervals={
                     item: [
                         (i, i + 1)
@@ -121,13 +107,9 @@ class BinpackToGenericSchedulingTransformation(
                     ]
                     for item in range(source_problem.nb_items)
                 },
-                flexible_gap_blocking_constraints=None,
-                span_blocking_constraints=None,
-                mode_constraints=None,
-                same_unary_allocation=None,
                 objective=Objective.MAKESPAN,
             )
-        return None
+        raise NotImplementedError()
 
     def back_transform_solution(
         self, solution: GenericSchedulingImplSolution, source_problem: BinPackProblem

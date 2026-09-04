@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Container, Hashable, Iterable
 from copy import deepcopy
+from dataclasses import InitVar, dataclass, field
 from typing import Optional
 
 import numpy as np
@@ -54,6 +55,7 @@ UnaryAvailabilityIntervals = list[tuple[int, int]]  # start, end
 AvailabilityIntervals = list[tuple[int, int, int]]  # start, end, value
 
 
+@dataclass
 class GenericSchedulingImplProblem(
     GenericSchedulingProblem[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
@@ -63,232 +65,133 @@ class GenericSchedulingImplProblem(
 
     It implements the abstract class `GenericSchedulingProblem`.
 
+    Attributes:
+        horizon: max allowed time to finish the tasks
+        durations_per_mode: task -> mode -> duration. Tasks durations, mode by mode.
+            This is used to know all available tasks, all available modes for a given task, and corresponding durations.
+        resource_consumptions: task -> mode -> resource -> conso.
+            Cumulative or non-renewable resource consumption, task by task, mode by mode. The resource can be a skill.
+            Missing key => conso = 0
+        successors: maps a task to its successors in the precedence graph.
+            Each successor task must start after the given task ends.
+            Default to no precedence constraints. Note that a consolidated version of it will
+            be constructed using the time lags constraints.
+        unary_resources: available unary resources.  Default to none.
+        unary_resources_skills: skill values of each unary resource. Missing key => skill value = 0
+        unary_resources_availabilities: availability of unary resources on the form of list of intervals (start, end)
+            Missing key => always available.
+        unary_resources_task_compatibility: maps a task to its compatible unary resources. Missing key => all unary resources allowed.
+        skills: available skills
+        non_skill_cumulative_resources: cumulative resources (excluding skills) availabilities.
+            Format: either int => always available at the given max capacity,
+            or list of intervals + capacity (start, end, value)
+        non_renewable_resources: non-renewable resources max capacities
+        time_windows: maps task to start_lb, end_lb, start_ub, end_ub s.t.
+            start_lb <= start(task) <= start_ub and end_lb <= end(task) <= end_ub
+            missing or none value means 0 (lb) or self.horizon (ub)
+        start_to_start_min_time_lags: min time lags constraints between task starts.
+            task1, task2, offset meaning start(task1) + offset <= start(task2)
+            Note that using negative offset can model start-to-start max time lags.
+        start_to_end_min_time_lags: min time lags constraints first task start and second task end.
+            task1, task2, offset meaning start(task1) + offset <= end(task2)
+            Note that using negative offset can model end-to-start max time lags.
+        end_to_start_min_time_lags: min time lags constraints between first task end and second task start.
+            task1, task2, offset meaning end(task1) + offset <= start(task2)
+            Note that using negative offset can model start-to-end max time lags.
+        end_to_end_min_time_lags: min time lags constraints between task ends.
+            task1, task2, offset meaning end(task1) + offset <= end(task2)
+            Note that using negative offset can model end-to-end max time lags.
+        no_overlap_sets: a set of (set of tasks that should not overlap together)
+        forbidden_intervals: maps task to forbidden intervals that cannot overlap with it. Missing key => no forbidden intervals.
+        flexible_gap_blocking_constraints: list of blocking constraints between entity points.
+            Each constraint is (entity1, point1, entity2, point2, resources, metadata).
+            Default to no blocking constraints.
+        span_blocking_constraints: list of span blocking constraints.
+            Each constraint is (tasks, resources, metadata) where tasks is a frozenset.
+            Default to no blocking constraints.
+        objective: objective for the problem. Default to minimization of makespan.
+            Either an iterable of (objective, weight) so that the problem should *maximize* the aggregated objective
+            resulting from weighted sum of objectives, or a single objective in which case we use the corresponding
+            default weight from
+            `discrete_optimization.generic_tasks_tools.generic_scheduling_utils.OBJECTIVE_DEFAULT_WEIGHTS`
+            and maximize it. For instance the default weight for makespan is -1 so that it will
+            actually minimize the makespan.
+        custom_evaluate_fn: function used to evaluate the "custom" objective (to be maximized).
+        objective_resource_weights: Weights to be used by the objective when summing used resources
+            (`Objective.NB_RESOURCES_USED`) or resources levels (`Objective.RESOURCES_LEVELS`).
+            Default to 1 for resources not mentioned.
+        mode_costs: cost of choosing each mode. Missing key => cost = 0.
+        unary_resource_costs: cost of allocating each unary resource. Missing key => cost = 0.
+        compute_time_penalty: whether to include time penalties in evaluation
+
     """
 
-    def __init__(
-        self,
-        horizon: int,
-        durations_per_mode: dict[Task, dict[int, int]],
-        resource_consumptions: Optional[
-            dict[Task, dict[int, dict[CumulativeResource | NonRenewableResource, int]]]
-        ] = None,
-        successors: Optional[dict[Task, Iterable[Task]]] = None,
-        unary_resources: Optional[set[UnaryResource]] = None,
-        unary_resources_skills: Optional[dict[UnaryResource, dict[Skill, int]]] = None,
-        unary_resources_availabilities: Optional[
-            dict[UnaryResource, UnaryAvailabilityIntervals]
-        ] = None,
-        unary_resources_task_compatibility: Optional[
-            dict[Task, set[UnaryResource]]
-        ] = None,
-        skills: Optional[set[Skill]] = None,
-        non_skill_cumulative_resources: Optional[
-            dict[NonSkillCumulativeResource, int | AvailabilityIntervals]
-        ] = None,
-        non_renewable_resources: Optional[dict[NonRenewableResource, int]] = None,
-        time_windows: Optional[
-            dict[Task, tuple[int | None, int | None, int | None, int | None]]
-        ] = None,
-        start_to_start_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
-        start_to_end_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
-        end_to_start_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
-        end_to_end_min_time_lags: Optional[list[tuple[Task, Task, int]]] = None,
-        no_overlap_sets: Optional[set[frozenset[Task]]] = None,
-        forbidden_intervals: Optional[dict[Task, list[tuple[int, int]]]] = None,
-        flexible_gap_blocking_constraints: Optional[
-            list[FlexibleGapBlockingConstraint]
-        ] = None,
-        span_blocking_constraints: Optional[list[SpanBlockingConstraint]] = None,
-        mode_constraints: Optional[
-            list[tuple[ModeConstraintType, list[tuple[Task, int]]]]
-        ] = None,
-        same_unary_allocation: Optional[list[set[Task]]] = None,
-        objective: Objective | Iterable[tuple[Objective, int]] = Objective.MAKESPAN,
-        custom_evaluate_fn: Optional[
-            Callable[[GenericSchedulingImplSolution], int]
-        ] = None,
-        objective_resource_weights: Optional[dict[AnyResource, int]] = None,
-        mode_costs: Optional[dict[Task, dict[int, int]]] = None,
-        unary_resource_costs: Optional[
-            dict[Task, dict[int, dict[UnaryResource, int]]]
-        ] = None,
-        compute_time_penalty: bool = True,
-    ):
-        """
+    horizon: int
+    durations_per_mode: dict[Task, dict[int, int]]
+    resource_consumptions: dict[
+        Task, dict[int, dict[CumulativeResource | NonRenewableResource, int]]
+    ] = field(default_factory=dict)
+    successors: dict[Task, set[Task]] = field(default_factory=dict)
+    unary_resources: set[UnaryResource] = field(default_factory=set)
+    unary_resources_skills: dict[UnaryResource, dict[Skill, int]] = field(
+        default_factory=dict
+    )
+    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = (
+        field(default_factory=dict)
+    )
+    unary_resources_task_compatibility: dict[Task, set[UnaryResource]] = field(
+        default_factory=dict
+    )
+    skills: set[Skill] = field(default_factory=set)
+    non_skill_cumulative_resources: dict[
+        NonSkillCumulativeResource, int | AvailabilityIntervals
+    ] = field(default_factory=dict)
+    non_renewable_resources: dict[NonRenewableResource, int] = field(
+        default_factory=dict
+    )
+    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = (
+        field(default_factory=dict)
+    )
+    start_to_start_min_time_lags: list[tuple[Task, Task, int]] = field(
+        default_factory=list
+    )
+    start_to_end_min_time_lags: list[tuple[Task, Task, int]] = field(
+        default_factory=list
+    )
+    end_to_start_min_time_lags: list[tuple[Task, Task, int]] = field(
+        default_factory=list
+    )
+    end_to_end_min_time_lags: list[tuple[Task, Task, int]] = field(default_factory=list)
+    no_overlap_sets: set[frozenset[Task]] = field(default_factory=set)
+    forbidden_intervals: dict[Task, list[tuple[int, int]]] = field(default_factory=dict)
+    flexible_gap_blocking_constraints: list[FlexibleGapBlockingConstraint] = field(
+        default_factory=list
+    )
+    span_blocking_constraints: list[SpanBlockingConstraint] = field(
+        default_factory=list
+    )
+    mode_constraints: list[tuple[ModeConstraintType, list[tuple[Task, int]]]] = field(
+        default_factory=list
+    )
+    same_unary_allocation: list[set[Task]] = field(default_factory=list)
+    objective: InitVar[Objective | Iterable[tuple[Objective, int]]] = Objective.MAKESPAN
+    weighted_objectives: tuple[tuple[Objective, int], ...] = field(init=False)
+    custom_evaluate_fn: Optional[Callable[[GenericSchedulingImplSolution], int]] = None
+    objective_resource_weights: Optional[dict[AnyResource, int]] = None
+    mode_costs: dict[Task, dict[int, int]] = field(default_factory=dict)
+    unary_resource_costs: dict[Task, dict[int, dict[UnaryResource, int]]] = field(
+        default_factory=dict
+    )
+    compute_time_penalty: bool = True
 
-        Args:
-            horizon: max allowed time to finish the tasks
-            durations_per_mode: task -> mode -> duration. Tasks durations, mode by mode.
-                This is used to know all available tasks, all available modes for a given task, and corresponding durations.
-            resource_consumptions: task -> mode -> resource -> conso.
-                Cumulative or non-renewable resource consumption, task by task, mode by mode. The resource can be a skill.
-                Missing key => conso = 0
-            successors: maps a task to its successors in the precedence graph.
-                Each successor task must start after the given task ends.
-                Default to no precedence constraints. Note that a consolidated version of it will
-                be constructed using the time lags constraints.
-            unary_resources: available unary resources.  Default to none.
-            unary_resources_skills: skill values of each unary resource. Missing key => skill value = 0
-            unary_resources_availabilities: availability of unary resources on the form of list of intervals (start, end)
-                Missing key => always available.
-            unary_resources_task_compatibility: maps a task to its compatible unary resources. Missing key => all unary resources allowed.
-            skills: available skills
-            non_skill_cumulative_resources: cumulative resources (excluding skills) availabilities.
-                Format: either int => always available at the given max capacity,
-                or list of intervals + capacity (start, end, value)
-            non_renewable_resources: non-renewable resources max capacities
-            time_windows: maps task to start_lb, end_lb, start_ub, end_ub s.t.
-                start_lb <= start(task) <= start_ub and end_lb <= end(task) <= end_ub
-                missing or none value means 0 (lb) or self.horizon (ub)
-            start_to_start_min_time_lags: min time lags constraints between task starts.
-                task1, task2, offset meaning start(task1) + offset <= start(task2)
-                Note that using negative offset can model start-to-start max time lags.
-            start_to_end_min_time_lags: min time lags constraints first task start and second task end.
-                task1, task2, offset meaning start(task1) + offset <= end(task2)
-                Note that using negative offset can model end-to-start max time lags.
-            end_to_start_min_time_lags: min time lags constraints between first task end and second task start.
-                task1, task2, offset meaning end(task1) + offset <= start(task2)
-                Note that using negative offset can model start-to-end max time lags.
-            end_to_end_min_time_lags: min time lags constraints between task ends.
-                task1, task2, offset meaning end(task1) + offset <= end(task2)
-                Note that using negative offset can model end-to-end max time lags.
-            no_overlap_sets: a set of (set of tasks that should not overlap together)
-            forbidden_intervals: maps task to forbidden intervals that cannot overlap with it. Missing key => no forbidden intervals.
-            flexible_gap_blocking_constraints: list of blocking constraints between entity points.
-                Each constraint is (entity1, point1, entity2, point2, resources, metadata).
-                Default to no blocking constraints.
-            span_blocking_constraints: list of span blocking constraints.
-                Each constraint is (tasks, resources, metadata) where tasks is a frozenset.
-                Default to no blocking constraints.
-            objective: objective for the problem. Default to minimization of makespan.
-                Either an iterable of (objective, weight) so that the problem should *maximize* the aggregated objective
-                resulting from weighted sum of objectives, or a single objective in which case we use the corresponding
-                default weight from
-                `discrete_optimization.generic_tasks_tools.generic_scheduling_utils.OBJECTIVE_DEFAULT_WEIGHTS`
-                and maximize it. For instance the default weight for makespan is -1 so that it will
-                actually minimize the makespan.
-            custom_evaluate_fn: function used to evaluate the "custom" objective (to be maximized).
-            objective_resource_weights: Weights to be used by the objective when summing used resources
-                (`Objective.NB_RESOURCES_USED`) or resources levels (`Objective.RESOURCES_LEVELS`).
-                Default to 1 for resources not mentioned.
-            mode_costs: cost of choosing each mode. Missing key => cost = 0.
-            unary_resource_costs: cost of allocating each unary resource. Missing key => cost = 0.
-            compute_time_penalty: whether to include time penalties in evaluation
-
-        """
-        self.horizon = horizon
-        self.durations_per_mode = durations_per_mode
-        # default values
-        if resource_consumptions is None:
-            self.resource_consumptions: dict[
-                Task, dict[int, dict[CumulativeResource | NonRenewableResource, int]]
-            ] = {}
-        else:
-            self.resource_consumptions = resource_consumptions
-        if successors is None:
-            self.successors: dict[Task, Iterable[Task]] = {}
-        else:
-            self.successors = successors
-        if unary_resources is None:
-            self.unary_resources: set[UnaryResource] = set()
-        else:
-            self.unary_resources = unary_resources
-        if unary_resources_skills is None:
-            self.unary_resources_skills: dict[UnaryResource, dict[Skill, int]] = {}
-        else:
-            self.unary_resources_skills = unary_resources_skills
-        if unary_resources_availabilities is None:
-            self.unary_resources_availabilities: dict[
-                UnaryResource, UnaryAvailabilityIntervals
-            ] = {}
-        else:
-            self.unary_resources_availabilities = unary_resources_availabilities
-        if unary_resources_task_compatibility is None:
-            self.unary_resources_task_compatibility: dict[Task, set[UnaryResource]] = {}
-        else:
-            self.unary_resources_task_compatibility = unary_resources_task_compatibility
-        if skills is None:
-            self.skills: set[Skill] = set()
-        else:
-            self.skills = skills
-        if non_skill_cumulative_resources is None:
-            self.non_skill_cumulative_resources: dict[
-                CumulativeResource, int | AvailabilityIntervals
-            ] = {}
-        else:
-            self.non_skill_cumulative_resources = non_skill_cumulative_resources
-        if non_renewable_resources is None:
-            self.non_renewable_resources: dict[NonRenewableResource, int] = {}
-        else:
-            self.non_renewable_resources = non_renewable_resources
-        if time_windows is None:
-            self.time_windows: dict[
-                Task, tuple[int | None, int | None, int | None, int | None]
-            ] = {}
-        else:
-            self.time_windows = time_windows
-        if start_to_start_min_time_lags is None:
-            self.start_to_start_min_time_lags: list[tuple[Task, Task, int]] = []
-        else:
-            self.start_to_start_min_time_lags = start_to_start_min_time_lags
-        if start_to_end_min_time_lags is None:
-            self.start_to_end_min_time_lags: list[tuple[Task, Task, int]] = []
-        else:
-            self.start_to_end_min_time_lags = start_to_end_min_time_lags
-        if end_to_start_min_time_lags is None:
-            self.end_to_start_min_time_lags: list[tuple[Task, Task, int]] = []
-        else:
-            self.end_to_start_min_time_lags = end_to_start_min_time_lags
-        if end_to_end_min_time_lags is None:
-            self.end_to_end_min_time_lags: list[tuple[Task, Task, int]] = []
-        else:
-            self.end_to_end_min_time_lags = end_to_end_min_time_lags
-        if no_overlap_sets is None:
-            self.no_overlap_sets = set()
-        else:
-            self.no_overlap_sets = no_overlap_sets
-        if forbidden_intervals is None:
-            self.forbidden_intervals = {}
-        else:
-            self.forbidden_intervals = forbidden_intervals
-        if flexible_gap_blocking_constraints is None:
-            self.flexible_gap_blocking_constraints: list[
-                FlexibleGapBlockingConstraint
-            ] = []
-        else:
-            self.flexible_gap_blocking_constraints = flexible_gap_blocking_constraints
-        if span_blocking_constraints is None:
-            self.span_blocking_constraints: list[SpanBlockingConstraint] = []
-        else:
-            self.span_blocking_constraints = span_blocking_constraints
-        if mode_constraints is None:
-            self.mode_constraints = []
-        else:
-            self.mode_constraints = mode_constraints
-        if same_unary_allocation is None:
-            self.same_unary_allocation: list[set[Task]] = []
-        else:
-            self.same_unary_allocation = same_unary_allocation
+    def __post_init__(self, objective: Objective | Iterable[tuple[Objective, int]]):
         if isinstance(objective, Objective):
             self.weighted_objectives: tuple[tuple[Objective, int], ...] = (
                 (objective, OBJECTIVE_DEFAULT_WEIGHTS[objective]),
             )
         else:
             self.weighted_objectives = tuple(objective)
-        self.custom_evaluate_fn = custom_evaluate_fn
-        if objective_resource_weights is None:
-            self.objective_resource_weights: dict[AnyResource, int] = {}
-        else:
-            self.objective_resource_weights = objective_resource_weights
-        if mode_costs is None:
-            self.mode_costs = {}
-        else:
-            self.mode_costs = mode_costs
-        if unary_resource_costs is None:
-            self.unary_resource_costs = {}
-        else:
-            self.unary_resource_costs = unary_resource_costs
-        self.compute_time_penalty = compute_time_penalty
+
         self.update_problem()
 
     def update_problem(self):
@@ -602,11 +505,11 @@ class GenericSchedulingImplProblem(
             task: self.durations_per_mode[task] for task in new_tasks_list
         }
         new_successors = {
-            task: [
+            task: {
                 next_task
                 for next_task in next_tasks
                 if next_task not in scheduled_tasks
-            ]
+            }
             for task, next_tasks in self.successors.items()
             if task not in scheduled_tasks
         }

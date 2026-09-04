@@ -14,7 +14,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
 )
-from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
 )
@@ -22,6 +21,7 @@ from discrete_optimization.rcpsp_multiskill.problem import (
     NB_EMPLOYEES_LB,
     CumulativeResource,
     MultiskillRcpspProblem,
+    MultiskillRcpspSolution,
     NonRenewableResource,
     NonSkillCumulativeResource,
     Skill,
@@ -54,7 +54,7 @@ class CpSatMultiskillRcpspSolver(
 
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, UnaryResource, Skill]
-    ) -> Solution:
+    ) -> MultiskillRcpspSolution:
         """Convert solution from autosolver format into do format.
 
         To be used in `self.retrieve_solution()`.

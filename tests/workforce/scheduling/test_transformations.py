@@ -46,10 +46,4 @@ def test_transfo_to_from_generic_scheduling(problem):
     generic_problem_2 = transfo.transform_problem(
         source_problem=back_transfo.transform_problem(source_problem=generic_problem)
     )
-    solver_2 = GenericSchedulingAutoCpSatImplSolver(problem=generic_problem_2)
-    generic_solution_2: GenericSchedulingImplSolution = solver_2.solve(
-        parameters_cp=parameters_cp,
-        callbacks=[NbIterationStopper(nb_iteration_max=1)],
-    ).get_best_solution()
-
-    assert generic_solution_2.raw_sol == generic_solution.raw_sol
+    assert generic_problem == generic_problem_2

@@ -33,14 +33,23 @@ from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
 from discrete_optimization.rcpsp.special_constraints import (
     SpecialConstraintsDescription,
 )
+from discrete_optimization.rcpsp.transformations.generic_scheduling_impl import (
+    RcpspToGenericSchedulingTransformation,
+)
 from discrete_optimization.rcpsp_multiskill.problem import MultiskillRcpspSolution
 from discrete_optimization.rcpsp_multiskill.solvers.cpsat import (
     CpSatMultiskillRcpspSolver,
+)
+from discrete_optimization.rcpsp_multiskill.transformations.generic_scheduling_impl import (
+    MultiskillRcpspToGenericSchedulingTransformation,
 )
 from discrete_optimization.shop.fjsp.problem import FJobShopSolution
 from discrete_optimization.shop.fjsp.solvers.cpsat import CpSatFjspSolver
 from discrete_optimization.shop.jsp.problem import JobShopSolution
 from discrete_optimization.shop.jsp.solvers.cpsat import CpSatJspSolver
+from discrete_optimization.shop.transformations.to_generic_scheduling import (
+    ShopToGenericSchedulingTransformation,
+)
 
 
 @pytest.mark.parametrize(
@@ -80,7 +89,7 @@ def test_auto(
                 },
             },
         },
-        successors={"task-1": ["task-2"]},
+        successors={"task-1": {"task-2"}},
         unary_resources={"worker1", "worker2"},
         unary_resources_availabilities={
             "worker1": [(1, 4)],
@@ -251,11 +260,11 @@ def test_rcpsp_simple():
     }
 
     successors = {
-        1: [2, 3],
-        2: [5],
-        3: [4],
-        4: [5],
-        5: [],
+        1: {2, 3},
+        2: {5},
+        3: {4},
+        4: {5},
+        5: {},
     }
 
     resources = {"R1": 2}
@@ -288,67 +297,8 @@ def test_rcpsp_simple():
     assert solution.get_start_time(2) == solution.get_start_time(3)
 
     # transform to generic problem
-    time_windows = {}
-    windowed_tasks = set()
-    windowed_tasks.update(special_constraints.start_times)
-    windowed_tasks.update(special_constraints.end_times)
-    for task in windowed_tasks:
-        start_lb = start_ub = special_constraints.start_times.get(task, None)
-        end_lb = end_ub = special_constraints.end_times.get(task, None)
-        time_windows[task] = (start_lb, end_lb, start_ub, end_ub)
-
-    start_to_start_min_time_lags = problem.get_start_to_start_min_time_lags() + [
-        (t2, t1, -offset)
-        for t1, t2, offset in problem.get_start_to_start_max_time_lags()
-    ]
-    start_to_end_min_time_lags = problem.get_start_to_end_min_time_lags() + [
-        (t2, t1, -offset) for t1, t2, offset in problem.get_end_to_start_max_time_lags()
-    ]
-    end_to_start_min_time_lags = problem.get_end_to_start_min_time_lags() + [
-        (t2, t1, -offset) for t1, t2, offset in problem.get_start_to_end_max_time_lags()
-    ]
-    end_to_end_min_time_lags = problem.get_end_to_end_min_time_lags() + [
-        (t2, t1, -offset) for t1, t2, offset in problem.get_end_to_end_max_time_lags()
-    ]
-    durations_per_mode = {
-        task: {
-            mode: problem.get_task_mode_duration(task=task, mode=mode)
-            for mode in problem.get_task_modes(task)
-        }
-        for task in problem.tasks_list
-    }
-    resource_consumptions = {
-        task: {
-            mode: {
-                **{
-                    resource: problem.get_cumulative_resource_consumption(
-                        resource=resource, task=task, mode=mode
-                    )
-                    for resource in problem.cumulative_resources_list
-                },
-                **{
-                    resource: problem.get_non_renewable_resource_consumption(
-                        resource=resource, task=task, mode=mode
-                    )
-                    for resource in problem.non_renewable_resources_list
-                },
-            }
-            for mode in problem.get_task_modes(task)
-        }
-        for task in problem.tasks_list
-    }
-    generic_problem = GenericSchedulingImplProblem(
-        horizon=horizon,
-        durations_per_mode=durations_per_mode,
-        resource_consumptions=resource_consumptions,
-        successors=successors,
-        non_skill_cumulative_resources=resources,
-        time_windows=time_windows,
-        start_to_start_min_time_lags=start_to_start_min_time_lags,
-        end_to_start_min_time_lags=end_to_start_min_time_lags,
-        start_to_end_min_time_lags=start_to_end_min_time_lags,
-        end_to_end_min_time_lags=end_to_end_min_time_lags,
-    )
+    transfo = RcpspToGenericSchedulingTransformation()
+    generic_problem = transfo.transform_problem(problem)
     generic_solver = GenericSchedulingAutoCpSatImplSolver(
         problem=generic_problem,
     )
@@ -385,49 +335,8 @@ def test_rcpsp_mm():
     assert problem.satisfy(solution)
 
     # transform to generic problem
-    non_renewable_resources = {
-        resource: problem.get_non_renewable_resource_capacity(resource)
-        for resource in problem.non_renewable_resources_list
-    }
-    non_skill_cumulative_resources = {
-        resource: problem.get_resource_availabilities(resource)
-        for resource in problem.non_skill_cumulative_resources_list
-    }
-    durations_per_mode = {
-        task: {
-            mode: problem.get_task_mode_duration(task=task, mode=mode)
-            for mode in problem.get_task_modes(task)
-        }
-        for task in problem.tasks_list
-    }
-    resource_consumptions = {
-        task: {
-            mode: {
-                **{
-                    resource: problem.get_cumulative_resource_consumption(
-                        resource=resource, task=task, mode=mode
-                    )
-                    for resource in problem.cumulative_resources_list
-                },
-                **{
-                    resource: problem.get_non_renewable_resource_consumption(
-                        resource=resource, task=task, mode=mode
-                    )
-                    for resource in problem.non_renewable_resources_list
-                },
-            }
-            for mode in problem.get_task_modes(task)
-        }
-        for task in problem.tasks_list
-    }
-    generic_problem = GenericSchedulingImplProblem(
-        horizon=problem.horizon,
-        durations_per_mode=durations_per_mode,
-        resource_consumptions=resource_consumptions,
-        successors=problem.successors,
-        non_skill_cumulative_resources=non_skill_cumulative_resources,
-        non_renewable_resources=non_renewable_resources,
-    )
+    transfo = RcpspToGenericSchedulingTransformation()
+    generic_problem = transfo.transform_problem(problem)
 
     generic_solver = GenericSchedulingAutoCpSatImplSolver(
         problem=generic_problem,
@@ -521,71 +430,8 @@ def test_rcpsp_multiskill(
         )
 
     # transform to generic problem
-    non_renewable_resources = {
-        resource: problem.get_non_renewable_resource_capacity(resource)
-        for resource in problem.non_renewable_resources_list
-    }
-    non_skill_cumulative_resources = {
-        resource: problem.get_resource_availabilities(resource)
-        for resource in problem.non_skill_cumulative_resources_list
-    }
-    skills = set(problem.skills_list)
-    unary_resources = set(problem.unary_resources_list)
-    unary_resources_skills = {
-        unary_resource: {
-            skill: detail.skill_value
-            for skill, detail in problem.employees[unary_resource].dict_skill.items()
-        }
-        for unary_resource in unary_resources
-    }
-    unary_resources_availabilities = {
-        unary_resource: [
-            (start, end)
-            for start, end, _ in problem.get_resource_availabilities(
-                resource=unary_resource
-            )
-        ]
-        for unary_resource in unary_resources
-    }
-    durations_per_mode = {
-        task: {
-            mode: problem.get_task_mode_duration(task=task, mode=mode)
-            for mode in problem.get_task_modes(task)
-        }
-        for task in problem.tasks_list
-    }
-    resource_consumptions = {
-        task: {
-            mode: {
-                **{
-                    resource: problem.get_cumulative_resource_consumption(
-                        resource=resource, task=task, mode=mode
-                    )
-                    for resource in problem.cumulative_resources_list
-                },
-                **{
-                    resource: problem.get_non_renewable_resource_consumption(
-                        resource=resource, task=task, mode=mode
-                    )
-                    for resource in problem.non_renewable_resources_list
-                },
-            }
-            for mode in problem.get_task_modes(task)
-        }
-        for task in problem.tasks_list
-    }
-    generic_problem = GenericSchedulingImplProblem(
-        horizon=problem.horizon,
-        durations_per_mode=durations_per_mode,
-        resource_consumptions=resource_consumptions,
-        successors=problem.successors,
-        non_skill_cumulative_resources=non_skill_cumulative_resources,
-        non_renewable_resources=non_renewable_resources,
-        skills=skills,
-        unary_resources=unary_resources,
-        unary_resources_skills=unary_resources_skills,
-        unary_resources_availabilities=unary_resources_availabilities,
-    )
+    transfo = MultiskillRcpspToGenericSchedulingTransformation()
+    generic_problem = transfo.transform_problem(problem)
 
     generic_solver = GenericSchedulingAutoCpSatImplSolver(
         problem=generic_problem,
@@ -653,38 +499,8 @@ def test_jsp():
     assert problem.satisfy(solution)
 
     # transform to generic problem
-    non_skill_cumulative_resources = {
-        resource: problem.get_resource_availabilities(resource)
-        for resource in problem.non_skill_cumulative_resources_list
-    }
-    durations_per_mode = {
-        task: {
-            mode: problem.get_task_mode_duration(task=task, mode=mode)
-            for mode in problem.get_task_modes(task)
-        }
-        for task in problem.tasks_list
-    }
-    resource_consumptions = {
-        task: {
-            mode: {
-                resource: problem.get_cumulative_resource_consumption(
-                    resource=resource, task=task, mode=mode
-                )
-                for resource in problem.cumulative_resources_list
-            }
-            for mode in problem.get_task_modes(task)
-        }
-        for task in problem.tasks_list
-    }
-    successors = problem.get_precedence_constraints()
-    generic_problem = GenericSchedulingImplProblem(
-        horizon=problem.horizon,
-        durations_per_mode=durations_per_mode,
-        resource_consumptions=resource_consumptions,
-        successors=successors,
-        non_skill_cumulative_resources=non_skill_cumulative_resources,
-    )
-
+    transfo = ShopToGenericSchedulingTransformation()
+    generic_problem = transfo.transform_problem(problem)
     generic_solver = GenericSchedulingAutoCpSatImplSolver(
         problem=generic_problem,
     )
@@ -724,37 +540,8 @@ def test_fjsp():
     assert problem.satisfy(solution)
 
     # transform to generic problem
-    non_skill_cumulative_resources = {
-        resource: problem.get_resource_availabilities(resource)
-        for resource in problem.non_skill_cumulative_resources_list
-    }
-    durations_per_mode = {
-        task: {
-            mode: problem.get_task_mode_duration(task=task, mode=mode)
-            for mode in problem.get_task_modes(task)
-        }
-        for task in problem.tasks_list
-    }
-    resource_consumptions = {
-        task: {
-            mode: {
-                resource: problem.get_cumulative_resource_consumption(
-                    resource=resource, task=task, mode=mode
-                )
-                for resource in problem.cumulative_resources_list
-            }
-            for mode in problem.get_task_modes(task)
-        }
-        for task in problem.tasks_list
-    }
-    successors = problem.get_precedence_constraints()
-    generic_problem = GenericSchedulingImplProblem(
-        horizon=problem.horizon,
-        durations_per_mode=durations_per_mode,
-        resource_consumptions=resource_consumptions,
-        successors=successors,
-        non_skill_cumulative_resources=non_skill_cumulative_resources,
-    )
+    transfo = ShopToGenericSchedulingTransformation()
+    generic_problem = transfo.transform_problem(problem)
 
     generic_solver = GenericSchedulingAutoCpSatImplSolver(
         problem=generic_problem,
