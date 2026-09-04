@@ -30,7 +30,7 @@ from discrete_optimization.workforce.scheduling.solvers.cpsat import (
     [
         "instance_42",
         "instance_30",
-        "instance_170",
+        "instance_147",
         "instance_252",
     ],
 )
