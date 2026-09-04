@@ -90,12 +90,15 @@ class BinPackProblemBinType(AllocationProblem[Item, BinPack], SchedulingProblem[
         list_items: list[ItemBinPack],
         list_bin_type: list[BinType],
         list_bin_instances: list[BinInstance],
-        incompatible_items: set[tuple[int, int]] = None,
+        incompatible_items: set[tuple[int, int]] | None = None,
     ):
         self.list_items = list_items
         self.list_bin_type = list_bin_type
         self.list_bin_instances = list_bin_instances
-        self.incompatible_items = incompatible_items
+        if incompatible_items is None:
+            self.incompatible_items = set()
+        else:
+            self.incompatible_items = incompatible_items
         self.nb_items = len(self.list_items)
         self.nb_bins = len(self.list_bin_instances)
         self.nb_bins_type = len(self.list_bin_type)
@@ -178,7 +181,7 @@ class BinPackProblem(BinPackProblemBinType):
         self,
         list_items: list[ItemBinPack],
         capacity_bin: int,
-        incompatible_items: set[tuple[int, int]] = None,
+        incompatible_items: set[tuple[int, int]] | None = None,
     ):
         bin_type = BinType(type="unique_type", capacity=capacity_bin)
         bin_instances = [

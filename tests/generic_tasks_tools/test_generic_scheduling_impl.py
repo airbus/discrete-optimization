@@ -53,7 +53,7 @@ def problem_wo_skills():
                 },
             },
         },
-        successors={"task-1": ["task-2"]},
+        successors={"task-1": {"task-2"}},
         unary_resources={"worker1", "worker2"},
         unary_resources_availabilities={
             "worker1": [(1, 4)],
@@ -356,7 +356,7 @@ def test_subproblem_from_partial_solution(caplog):
                 },
             },
         },
-        successors={"task-1": ["task-2", "task-3"]},
+        successors={"task-1": {"task-2", "task-3"}},
         end_to_end_min_time_lags=[("task-3", "task-2", -1)],
         unary_resources={"worker1", "worker2"},
         unary_resources_availabilities={

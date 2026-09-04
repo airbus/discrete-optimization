@@ -164,9 +164,9 @@ class ToGenericSchedulingImpl(
             }
             for task in source_problem.tasks_list
         }
-        successors: dict[Task, Iterable[Task]] = (
-            source_problem.get_precedence_constraints()
-        )
+        successors: dict[Task, set[Task]] = {
+            k: set(v) for k, v in source_problem.get_precedence_constraints().items()
+        }
         unary_resources: set[UnaryResource] = set(source_problem.unary_resources_list)
         unary_resources_skills: dict[UnaryResource, dict[Skill, int]] = {
             unary_resource: {
