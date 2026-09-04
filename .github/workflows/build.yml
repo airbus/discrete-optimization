@@ -52,6 +52,8 @@ jobs:
 
   test:
     needs: build
+    permissions:
+      pull-requests: write
     strategy:
       fail-fast: false
       matrix:
