@@ -10,6 +10,7 @@ from discrete_optimization.generic_tasks_tools.base import (
     TasksProblem,
     TasksSolution,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 
 class ModeConstraintType(Enum):
@@ -88,6 +89,7 @@ class MultimodeProblem(TasksProblem[Task]):
     def max_number_of_mode(self) -> int:
         return max(len(self.get_task_modes(task)) for task in self.tasks_list)
 
+    @optional_override
     def get_mode_constraints(
         self,
     ) -> list[tuple[ModeConstraintType, list[tuple[Task, int]]]]:

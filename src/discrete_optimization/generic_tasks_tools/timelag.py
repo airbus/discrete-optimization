@@ -13,6 +13,7 @@ from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 class TimelagProblem(SchedulingProblem[Task], Generic[Task]):
     """Class for problem having time lags between tasks."""
 
+    @optional_override
     def get_start_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
         """Get min time lags between tasks starts.
 
@@ -32,6 +34,7 @@ class TimelagProblem(SchedulingProblem[Task], Generic[Task]):
         """
         return []
 
+    @optional_override
     def get_start_to_start_max_time_lags(self) -> list[tuple[Task, Task, int]]:
         """Get max time lags between tasks starts.
 
@@ -44,6 +47,7 @@ class TimelagProblem(SchedulingProblem[Task], Generic[Task]):
         """
         return []
 
+    @optional_override
     def get_end_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
         """Get min time lags between first task end and second task start.
 
@@ -56,6 +60,7 @@ class TimelagProblem(SchedulingProblem[Task], Generic[Task]):
         """
         return []
 
+    @optional_override
     def get_end_to_start_max_time_lags(self) -> list[tuple[Task, Task, int]]:
         """Get max time lags between first task end and second task start.
 
@@ -68,6 +73,7 @@ class TimelagProblem(SchedulingProblem[Task], Generic[Task]):
         """
         return []
 
+    @optional_override
     def get_end_to_end_min_time_lags(self) -> list[tuple[Task, Task, int]]:
         """Get min time lags between task ends.
 
@@ -80,6 +86,7 @@ class TimelagProblem(SchedulingProblem[Task], Generic[Task]):
         """
         return []
 
+    @optional_override
     def get_end_to_end_max_time_lags(self) -> list[tuple[Task, Task, int]]:
         """Get max time lags between task ends.
 
@@ -92,6 +99,7 @@ class TimelagProblem(SchedulingProblem[Task], Generic[Task]):
         """
         return []
 
+    @optional_override
     def get_start_to_end_min_time_lags(self) -> list[tuple[Task, Task, int]]:
         """Get min time lags between first task start and second task end.
 
@@ -104,6 +112,7 @@ class TimelagProblem(SchedulingProblem[Task], Generic[Task]):
         """
         return []
 
+    @optional_override
     def get_start_to_end_max_time_lags(self) -> list[tuple[Task, Task, int]]:
         """Get max time lags between first task start and second task end.
 
