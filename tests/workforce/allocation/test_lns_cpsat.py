@@ -26,7 +26,7 @@ from discrete_optimization.workforce.allocation.parser import (
     parse_to_allocation_problem,
 )
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
-    CpsatTeamAllocationSolver,
+    CpSatTeamAllocationSolver,
     ModelisationAllocationOrtools,
 )
 from discrete_optimization.workforce.scheduling.parser import get_data_available
@@ -60,7 +60,7 @@ def test_lns_cpsat(
     subresources,
     fix_secondary_tasks_mode,
 ):
-    subsolver = CpsatTeamAllocationSolver(
+    subsolver = CpSatTeamAllocationSolver(
         problem=problem,
     )
     subsolver.init_model(modelisation_allocation=modelisation_allocation)
@@ -116,7 +116,7 @@ def test_lns_cpsat(
 )
 @pytest.mark.parametrize("modelisation_allocation", list(ModelisationAllocationOrtools))
 def test_lns_cpsat_subobjective(problem, objective_subproblem, modelisation_allocation):
-    subsolver = CpsatTeamAllocationSolver(
+    subsolver = CpSatTeamAllocationSolver(
         problem=problem,
     )
     subsolver.init_model(modelisation_allocation=modelisation_allocation)

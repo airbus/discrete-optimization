@@ -3,14 +3,14 @@
 #  LICENSE file in the root directory of this source tree.
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.top.parser import get_data_available, parse_file
-from discrete_optimization.top.solvers.cpsat import CpsatTopSolver
+from discrete_optimization.top.solvers.cpsat import CpSatTopSolver
 
 
 def run():
     files, files_dict = get_data_available()
     print(files[0])
     problem = parse_file(files[2])
-    solver = CpsatTopSolver(problem)
+    solver = CpSatTopSolver(problem)
     solver.init_model(scaling=100)
     res = solver.solve(
         parameters_cp=ParametersCp.default_cpsat(),

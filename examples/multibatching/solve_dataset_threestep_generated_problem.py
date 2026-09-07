@@ -12,7 +12,7 @@ from discrete_optimization.multibatching.problem import (
     MultibatchingSolution,
 )
 from discrete_optimization.multibatching.solvers.cpsat import (
-    CpsatMultibatchingSolver,
+    CpSatMultibatchingSolver,
     ModelingMultiBatch,
 )
 from discrete_optimization.multibatching.solvers.lp import (
@@ -55,7 +55,7 @@ def main():
 
     # Configure CPSat flow solver with longer timeout and parallel workers
     flow_solver_config = SubBrick(
-        cls=CpsatMultibatchingSolver,
+        cls=CpSatMultibatchingSolver,
         kwargs={
             "modeling": ModelingMultiBatch.FLOW,
             "add_lb_constraint_nb_trips": False,
@@ -69,12 +69,12 @@ def main():
         },
     )
     from discrete_optimization.multibatching.solvers.packing_subproblem import (
-        CpsatPackingSubproblem,
+        CpSatPackingSubproblem,
     )
 
     # Configure greedy packing solver
     packing_solver_config = SubBrick(
-        cls=CpsatPackingSubproblem,
+        cls=CpSatPackingSubproblem,
         kwargs={
             "parameters_cp": parameters_cp,
             "time_limit": 100,  # 5 minutes timeout

@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 from discrete_optimization.multibatching.solvers.cpsat import (
-    CpsatMultibatchingSolver,
+    CpSatMultibatchingSolver,
     ModelingMultiBatch,
 )
 from discrete_optimization.multibatching.utils import generate_multibatching_problem
@@ -27,7 +27,7 @@ def main():
 
     # Initialize and solve with CPSat
     print("\nSolving with CPSat (Flow modeling)...")
-    solver = CpsatMultibatchingSolver(problem)
+    solver = CpSatMultibatchingSolver(problem)
     solver.init_model(modeling=ModelingMultiBatch.FLOW)
 
     # Solve with time limit

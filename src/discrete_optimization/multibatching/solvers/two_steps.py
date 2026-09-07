@@ -17,7 +17,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 from discrete_optimization.multibatching.problem import MultibatchingProblem
 from discrete_optimization.multibatching.solvers import MultibatchingSolver
 from discrete_optimization.multibatching.solvers.cpsat import (
-    CpsatMultibatchingSolver,
+    CpSatMultibatchingSolver,
     ModelingMultiBatch,
 )
 from discrete_optimization.multibatching.solvers.lp import (
@@ -25,7 +25,7 @@ from discrete_optimization.multibatching.solvers.lp import (
 )
 from discrete_optimization.multibatching.solvers.netx import NetxMultibatchingSolver
 from discrete_optimization.multibatching.solvers.packing_subproblem import (
-    CpsatPackingSubproblem,
+    CpSatPackingSubproblem,
     GreedyPackingForMultibatching,
     PackingSubproblemSolver,
     PackingViaBinPacking,
@@ -39,19 +39,19 @@ class TwoStepMultibatchingSolver(SolverDO):
         SubBrickHyperparameter(
             name="flow_solver",
             choices=[
-                CpsatMultibatchingSolver,
+                CpSatMultibatchingSolver,
                 GurobiMultibatchingSolver,
                 NetxMultibatchingSolver,
             ],
             default=SubBrick(
-                cls=CpsatMultibatchingSolver,
+                cls=CpSatMultibatchingSolver,
                 kwargs={"modeling": ModelingMultiBatch.FLOW},
             ),
         ),
         SubBrickHyperparameter(
             name="packing_solver",
             choices=[
-                CpsatPackingSubproblem,
+                CpSatPackingSubproblem,
                 GreedyPackingForMultibatching,
                 PackingViaBinPacking,
             ],

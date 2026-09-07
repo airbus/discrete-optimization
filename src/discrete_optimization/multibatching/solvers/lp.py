@@ -465,7 +465,7 @@ class _BaseLpMultibatchingSolverUnitFlow(MilpSolver, MultibatchingSolver):
     flow model but can be more computationally expensive due to the large number
     of binary and integer variables.
 
-    This formulation is analogous to the `UNIT_FLOW` model in the Cpsat solver.
+    This formulation is analogous to the `UNIT_FLOW` model in the CpSat solver.
     """
 
     hyperparameters = [

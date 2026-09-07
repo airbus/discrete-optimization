@@ -7,7 +7,7 @@ from discrete_optimization.lotsizing.generic_solver.cpsat.lotsizing_solver_cpsat
 )
 
 
-class InventoryConstraintCpsat(LotSizingCpSatSolver[Item]):
+class InventoryConstraintCpSat(LotSizingCpSatSolver[Item]):
     def create_constraint_inventory(self):
         if self.problem.has_stock_limits():
             for t in range(self.problem.horizon):

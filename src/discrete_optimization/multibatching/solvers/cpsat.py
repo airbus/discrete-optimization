@@ -47,7 +47,7 @@ class ModelingMultiBatch(Enum):
     UNIT_FLOW = 1
 
 
-class CpsatMultibatchingSolver(OrtoolsCpSatSolver, WarmstartMixin):
+class CpSatMultibatchingSolver(OrtoolsCpSatSolver, WarmstartMixin):
     hyperparameters = [
         EnumHyperparameter(
             name="modeling", enum=ModelingMultiBatch, default=ModelingMultiBatch.FLOW

@@ -6,7 +6,7 @@
 import pytest
 
 from discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat import (
-    GenericLotSizingCpsat,
+    GenericLotSizingCpSat,
 )
 from discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver import (
     GenericLotSizingDp,
@@ -89,7 +89,7 @@ def test_generic_dp_small_uncapacitated(small_uncapacitated_problem):
 
 def test_generic_cpsat_tiny_uncapacitated(tiny_uncapacitated_problem):
     """Test generic CP-SAT solver on tiny uncapacitated problem."""
-    solver = GenericLotSizingCpsat(tiny_uncapacitated_problem)
+    solver = GenericLotSizingCpSat(tiny_uncapacitated_problem)
     solver.init_model()
     result = solver.solve(time_limit=5)
 
@@ -100,7 +100,7 @@ def test_generic_cpsat_tiny_uncapacitated(tiny_uncapacitated_problem):
 
 def test_generic_cpsat_small_uncapacitated(small_uncapacitated_problem):
     """Test generic CP-SAT solver on small uncapacitated problem."""
-    solver = GenericLotSizingCpsat(small_uncapacitated_problem)
+    solver = GenericLotSizingCpSat(small_uncapacitated_problem)
     solver.init_model()
     result = solver.solve(time_limit=10)
 
@@ -143,7 +143,7 @@ def test_generic_milp_small_uncapacitated(small_uncapacitated_problem):
 
 def test_uncapacitated_no_backlog(tiny_uncapacitated_problem):
     """Verify solutions have no backlog."""
-    solver = GenericLotSizingCpsat(tiny_uncapacitated_problem)
+    solver = GenericLotSizingCpSat(tiny_uncapacitated_problem)
     solver.init_model()
     result = solver.solve(time_limit=5)
 

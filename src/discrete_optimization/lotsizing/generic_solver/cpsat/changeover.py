@@ -16,7 +16,7 @@ class ChangeoverModel(Enum):
     SHORTEST_PATH_BASED = "shortest_path_based"
 
 
-class ChangeOverConstraintCpsat(LotSizingCpSatSolver[Item]):
+class ChangeOverConstraintCpSat(LotSizingCpSatSolver[Item]):
     changeover_vars: dict
 
     def create_changeover_constraint_and_cost(self, modeling: ChangeoverModel):

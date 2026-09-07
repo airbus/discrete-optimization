@@ -5,7 +5,7 @@ from discrete_optimization.alb.salbp.solvers.cpsat import (
     CpSatSalbp12Solver,
     SalbpProblem_1_2,
 )
-from discrete_optimization.generic_tools.pareto_tools import CpsatParetoSolver
+from discrete_optimization.generic_tools.pareto_tools import CpSatParetoSolver
 
 
 def run_cpsat():
@@ -15,7 +15,7 @@ def run_cpsat():
     problem = SalbpProblem_1_2.from_salbp1(problem)
     solver = CpSatSalbp12Solver(problem)
     solver.init_model()
-    pareto = CpsatParetoSolver(solver, ["nb_stations", "cycle_time"])
+    pareto = CpSatParetoSolver(solver, ["nb_stations", "cycle_time"])
     front = pareto.solve(
         [
             solver.variables["objs"]["nb_stations"],

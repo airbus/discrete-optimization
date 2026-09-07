@@ -48,7 +48,7 @@ from discrete_optimization.workforce.scheduling.solvers.tempo import (
 )
 
 
-class LexicoCpsatPrevStartCallback(Callback):
+class LexicoCpSatPrevStartCallback(Callback):
     def on_step_end(
         self, step: int, res: ResultStorage, solver: LexicoSolver
     ) -> Optional[bool]:
@@ -193,7 +193,7 @@ if __name__ == "__main__":
                     )
                     callbacks = [
                         NbIterationTracker(step_verbosity_level=logging.INFO),
-                        LexicoCpsatPrevStartCallback(),
+                        LexicoCpSatPrevStartCallback(),
                     ]
                     # solve
                     result_store = solver.solve(

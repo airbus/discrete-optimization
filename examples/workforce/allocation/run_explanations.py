@@ -30,7 +30,7 @@ from discrete_optimization.workforce.allocation.solvers.cpmpy import (
     ModelisationAllocationCP,
 )
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
-    CpsatTeamAllocationSolver,
+    CpSatTeamAllocationSolver,
     ModelisationAllocationOrtools,
 )
 from discrete_optimization.workforce.allocation.utils import plot_allocation_solution
@@ -191,7 +191,7 @@ def run_disruption_creation():
     allocation_problem = build_allocation_problem_from_scheduling(
         problem=scheduling_problem
     )
-    solver = CpsatTeamAllocationSolver(allocation_problem)
+    solver = CpSatTeamAllocationSolver(allocation_problem)
     solver.init_model(modelisation_allocation=ModelisationAllocationOrtools.BINARY)
     sol = solver.solve(time_limit=5).get_best_solution()
     nb_teams = allocation_problem.evaluate(sol)["nb_teams"]
@@ -296,7 +296,7 @@ def interactive_solving():
     allocation_problem = build_allocation_problem_from_scheduling(
         problem=scheduling_problem
     )
-    solver = CpsatTeamAllocationSolver(allocation_problem)
+    solver = CpSatTeamAllocationSolver(allocation_problem)
     solver.init_model(modelisation_allocation=ModelisationAllocationOrtools.BINARY)
     sol = solver.solve(time_limit=5).get_best_solution()
     allocation_problem.allocation_additional_constraint.nb_max_teams = 8
@@ -413,7 +413,7 @@ def interactive_solving_mcs():
     allocation_problem = build_allocation_problem_from_scheduling(
         problem=scheduling_problem
     )
-    solver = CpsatTeamAllocationSolver(allocation_problem)
+    solver = CpSatTeamAllocationSolver(allocation_problem)
     solver.init_model(modelisation_allocation=ModelisationAllocationOrtools.BINARY)
     sol = solver.solve(time_limit=5).get_best_solution()
     allocation_problem.allocation_additional_constraint.nb_max_teams = 8
@@ -528,7 +528,7 @@ def interactive_solving_with_interact_obj():
     allocation_problem = build_allocation_problem_from_scheduling(
         problem=scheduling_problem
     )
-    solver = CpsatTeamAllocationSolver(allocation_problem)
+    solver = CpSatTeamAllocationSolver(allocation_problem)
     solver.init_model(modelisation_allocation=ModelisationAllocationOrtools.BINARY)
     sol = solver.solve(time_limit=5).get_best_solution()
     # allocation_problem.allocation_additional_constraint.nb_max_teams = 8

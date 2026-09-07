@@ -15,7 +15,7 @@ from discrete_optimization.generic_tools.sequential_metasolver import (
 )
 from discrete_optimization.generic_tools.study import SolverConfig
 from discrete_optimization.multibatching.solvers.cpsat import (
-    CpsatMultibatchingSolver,
+    CpSatMultibatchingSolver,
     ModelingMultiBatch,
 )
 from discrete_optimization.multibatching.solvers.lp import (
@@ -26,7 +26,7 @@ from discrete_optimization.multibatching.solvers.lp import (
 )
 from discrete_optimization.multibatching.solvers.netx import NetxMultibatchingSolver
 from discrete_optimization.multibatching.solvers.packing_subproblem import (
-    CpsatPackingSubproblem,
+    CpSatPackingSubproblem,
     GreedyPackingForMultibatching,
     PackingViaBinPacking,
 )
@@ -44,7 +44,7 @@ p.nb_process = 8
 def subbricks_packing(timeout, add_asp: bool = True):
     greedy = SubBrick(GreedyPackingForMultibatching, {})
     cpsat = SubBrick(
-        CpsatPackingSubproblem, {"time_limit": int(timeout), "parameters_cp": p}
+        CpSatPackingSubproblem, {"time_limit": int(timeout), "parameters_cp": p}
     )
     cpsat_binpack = SubBrick(
         cls=PackingViaBinPacking,
@@ -80,7 +80,7 @@ def subbricks_flow(timeout):
             },
         ),
         cp=SubBrick(
-            cls=CpsatMultibatchingSolver,
+            cls=CpSatMultibatchingSolver,
             kwargs={
                 "modeling": ModelingMultiBatch.FLOW,
                 "time_limit": int(timeout),
@@ -88,7 +88,7 @@ def subbricks_flow(timeout):
             },
         ),
         cp_short=SubBrick(
-            cls=CpsatMultibatchingSolver,
+            cls=CpSatMultibatchingSolver,
             kwargs={
                 "modeling": ModelingMultiBatch.FLOW,
                 "time_limit": int(timeout),
@@ -131,7 +131,7 @@ def subbricks_flow(timeout):
 def subbricks_third_step(timeout, verbose: bool = False):
     return dict(
         cp_no_delta=SubBrick(
-            CpsatMultibatchingSolver,
+            CpSatMultibatchingSolver,
             kwargs=dict(
                 modeling=ModelingMultiBatch.UNIT_FLOW,
                 time_limit=int(timeout),
@@ -143,7 +143,7 @@ def subbricks_third_step(timeout, verbose: bool = False):
             },
         ),
         cp_delta=SubBrick(
-            CpsatMultibatchingSolver,
+            CpSatMultibatchingSolver,
             dict(
                 modeling=ModelingMultiBatch.UNIT_FLOW,
                 time_limit=int(timeout),
@@ -192,7 +192,7 @@ def configs_direct_solve(timeout):
         GurobiMultibatchingSolverUnitFlow, {"time_limit": timeout}
     )
     c["flow-cpsat"] = SolverConfig(
-        CpsatMultibatchingSolver,
+        CpSatMultibatchingSolver,
         {
             "modeling": ModelingMultiBatch.UNIT_FLOW,
             "time_limit": timeout,

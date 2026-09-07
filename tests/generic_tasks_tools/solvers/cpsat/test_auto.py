@@ -230,7 +230,7 @@ class MyProblem(
         )
 
 
-class MyAutoCpsatSolver(
+class MyAutoCpSatSolver(
     GenericSchedulingAutoCpSatSolver[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ]
@@ -427,7 +427,7 @@ def test_auto(
     problem = MyProblem()
 
     # prepare solver
-    solver = MyAutoCpsatSolver(problem=problem)
+    solver = MyAutoCpSatSolver(problem=problem)
     solver.objective = objective
     if objective in [
         Objective.NB_UNARY_RESOURCES_USED,
@@ -512,7 +512,7 @@ def test_auto(
 
 def test_task_bounds_user():
     problem = MyProblem()
-    solver = MyAutoCpsatSolver(problem=problem)
+    solver = MyAutoCpSatSolver(problem=problem)
     task_bounds = {"task-1": (2, 1, 3, 9), "task-2": (0, 7, 4, 10)}
     solver.init_model(tasks_bounds=task_bounds)
     assert solver.tasks_bounds == task_bounds
@@ -531,7 +531,7 @@ def test_task_bounds_user():
 
 def test_task_bounds_simple():
     problem = MyProblem()
-    solver = MyAutoCpsatSolver(problem=problem, new_horizon=8)
+    solver = MyAutoCpSatSolver(problem=problem, new_horizon=8)
     solver.use_cpm_for_task_bounds = False
     solver.init_model()
     assert solver.tasks_bounds == {"task-1": (0, 1, 7, 8), "task-2": (0, 4, 4, 8)}
@@ -549,7 +549,7 @@ def test_task_bounds_simple():
 
 def test_task_bounds_cpm():
     problem = MyProblem()
-    solver = MyAutoCpsatSolver(problem=problem, new_horizon=8)
+    solver = MyAutoCpSatSolver(problem=problem, new_horizon=8)
     solver.use_cpm_for_task_bounds = True
     solver.init_model()
 

@@ -4,18 +4,18 @@
 """Generic CP-SAT solvers for lot sizing problems.
 
 This module provides two CP-SAT formulations:
-- GenericLotSizingCpsat: Quantity-based formulation (standard MIP-like)
-- GenericLotSizingCpsatScheduling: Scheduling-based formulation (interval variables)
+- GenericLotSizingCpSat: Quantity-based formulation (standard MIP-like)
+- GenericLotSizingCpSatScheduling: Scheduling-based formulation (interval variables)
 """
 
 from discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat import (
-    GenericLotSizingCpsat,
+    GenericLotSizingCpSat,
 )
 from discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling import (
-    GenericLotSizingCpsatScheduling,
+    GenericLotSizingCpSatScheduling,
 )
 
 __all__ = [
-    "GenericLotSizingCpsat",
-    "GenericLotSizingCpsatScheduling",
+    "GenericLotSizingCpSat",
+    "GenericLotSizingCpSatScheduling",
 ]

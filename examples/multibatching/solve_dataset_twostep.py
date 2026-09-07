@@ -11,7 +11,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import S
 from discrete_optimization.generic_tools.lp_tools import mathopt
 from discrete_optimization.multibatching.parser import get_data_available, parse_file
 from discrete_optimization.multibatching.solvers.cpsat import (
-    CpsatMultibatchingSolver,
+    CpSatMultibatchingSolver,
     ModelingMultiBatch,
 )
 from discrete_optimization.multibatching.solvers.lp import (
@@ -78,7 +78,7 @@ def main(first_step: str = "cp"):
     # Configure CPSat flow solver with longer timeout and parallel workers
     if first_step == "cpsat":
         flow_solver_config = SubBrick(
-            cls=CpsatMultibatchingSolver,
+            cls=CpSatMultibatchingSolver,
             kwargs={
                 "modeling": ModelingMultiBatch.FLOW,
                 "add_lb_constraint_nb_trips": True,
@@ -109,12 +109,12 @@ def main(first_step: str = "cp"):
             },
         )
     from discrete_optimization.multibatching.solvers.packing_subproblem import (
-        CpsatPackingSubproblem,
+        CpSatPackingSubproblem,
     )
 
     # Configure greedy packing solver
     packing_solver_config = SubBrick(
-        cls=CpsatPackingSubproblem,
+        cls=CpSatPackingSubproblem,
         kwargs={
             "parameters_cp": parameters_cp,
             "time_limit": 100,  # 5 minutes timeout
@@ -126,7 +126,7 @@ def main(first_step: str = "cp"):
     print("      Flow solver: CPSat (FLOW modeling)")
     print(f"      - Time limit: {flow_solver_config.kwargs['time_limit']}s")
     print(f"      - Workers: {parameters_cp.nb_process}")
-    print("      Packing solver: Cpsat")
+    print("      Packing solver: CpSat")
     # 4. Solve
     print("\n[4/5] Solving...")
     print("      This may take several minutes...")

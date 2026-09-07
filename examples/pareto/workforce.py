@@ -1,22 +1,22 @@
 from matplotlib import pyplot as plt
 
-from discrete_optimization.generic_tools.pareto_tools import CpsatParetoSolver
+from discrete_optimization.generic_tools.pareto_tools import CpSatParetoSolver
 from discrete_optimization.workforce.allocation.parser import (
     get_data_available,
     parse_to_allocation_problem,
 )
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
-    CpsatTeamAllocationSolver,
+    CpSatTeamAllocationSolver,
 )
 
 
 def run_cpsat():
     instance = [p for p in get_data_available() if "instance_64.json" in p][0]
     allocation_problem = parse_to_allocation_problem(instance)
-    solver = CpsatTeamAllocationSolver(allocation_problem)
+    solver = CpSatTeamAllocationSolver(allocation_problem)
     solver.init_model()
 
-    pareto = CpsatParetoSolver(solver, ["nb_teams", "duration"])
+    pareto = CpSatParetoSolver(solver, ["nb_teams", "duration"])
     front = pareto.solve(
         [solver.variables["objs"]["nb_teams"], solver.variables["objs"]["duration"]]
     )

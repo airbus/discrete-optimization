@@ -8,7 +8,7 @@ from discrete_optimization.lotsizing.capacitatedmultiitem.parser import (
     parse_file,
 )
 from discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat import (
-    GenericLotSizingCpsat,
+    GenericLotSizingCpSat,
 )
 from discrete_optimization.lotsizing.utils import (
     plot_inventory_and_costs,
@@ -24,7 +24,7 @@ def main():
     problem = parse_file(file)
     p = ParametersCp.default_cpsat()
     p.nb_process = 12
-    solver = GenericLotSizingCpsat(problem)
+    solver = GenericLotSizingCpSat(problem)
     solver.init_model()
     res = solver.solve(
         parameters_cp=p,

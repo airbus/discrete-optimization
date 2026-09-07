@@ -19,20 +19,20 @@ from discrete_optimization.lotsizing.generic_lotsizing import (
     Item,
 )
 from discrete_optimization.lotsizing.generic_solver.cpsat.backlog import (
-    BacklogConstraintCpsat,
+    BacklogConstraintCpSat,
 )
 from discrete_optimization.lotsizing.generic_solver.cpsat.changeover import (
-    ChangeOverConstraintCpsat,
+    ChangeOverConstraintCpSat,
     ChangeoverModel,
 )
 from discrete_optimization.lotsizing.generic_solver.cpsat.inventory import (
-    InventoryConstraintCpsat,
+    InventoryConstraintCpSat,
 )
 from discrete_optimization.lotsizing.generic_solver.cpsat.parallel_production import (
-    ParallelProductionConstraintCpsat,
+    ParallelProductionConstraintCpSat,
 )
 from discrete_optimization.lotsizing.generic_solver.cpsat.production import (
-    ProductionConstraintCpsat,
+    ProductionConstraintCpSat,
 )
 from discrete_optimization.lotsizing.production_solution import (
     DeliveryDecision,
@@ -43,12 +43,12 @@ from discrete_optimization.lotsizing.production_solution import (
 logger = logging.getLogger(__name__)
 
 
-class GenericLotSizingCpsat(
-    ProductionConstraintCpsat[Item],
-    InventoryConstraintCpsat[Item],
-    BacklogConstraintCpsat[Item],
-    ChangeOverConstraintCpsat[Item],
-    ParallelProductionConstraintCpsat[Item],
+class GenericLotSizingCpSat(
+    ProductionConstraintCpSat[Item],
+    InventoryConstraintCpSat[Item],
+    BacklogConstraintCpSat[Item],
+    ChangeOverConstraintCpSat[Item],
+    ParallelProductionConstraintCpSat[Item],
     WarmstartMixin,
 ):
     hyperparameters = [

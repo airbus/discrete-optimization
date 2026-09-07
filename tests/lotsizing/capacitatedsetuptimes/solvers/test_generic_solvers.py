@@ -10,7 +10,7 @@ from discrete_optimization.lotsizing.capacitatedsetuptimes.problem import (
     CapacitatedSetupTimesLSP,
 )
 from discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat import (
-    GenericLotSizingCpsat,
+    GenericLotSizingCpSat,
 )
 from discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver import (
     GenericLotSizingDp,
@@ -106,7 +106,7 @@ def test_generic_dp_small_setup_times(small_setup_times_problem):
 
 def test_generic_cpsat_tiny_setup_times(tiny_setup_times_problem):
     """Test generic CP-SAT solver on tiny setup times problem."""
-    solver = GenericLotSizingCpsat(tiny_setup_times_problem)
+    solver = GenericLotSizingCpSat(tiny_setup_times_problem)
     solver.init_model()
     result = solver.solve(time_limit=5)
 
@@ -117,7 +117,7 @@ def test_generic_cpsat_tiny_setup_times(tiny_setup_times_problem):
 
 def test_generic_cpsat_small_setup_times(small_setup_times_problem):
     """Test generic CP-SAT solver on small setup times problem."""
-    solver = GenericLotSizingCpsat(small_setup_times_problem)
+    solver = GenericLotSizingCpSat(small_setup_times_problem)
     solver.init_model()
     result = solver.solve(time_limit=10)
 
@@ -160,7 +160,7 @@ def test_generic_milp_small_setup_times(small_setup_times_problem):
 
 def test_setup_times_capacity_constraints(tiny_setup_times_problem):
     """Verify solutions respect capacity including setup times."""
-    solver = GenericLotSizingCpsat(tiny_setup_times_problem)
+    solver = GenericLotSizingCpSat(tiny_setup_times_problem)
     solver.init_model()
     result = solver.solve(time_limit=5)
 
@@ -181,7 +181,7 @@ def test_setup_times_dp_vs_cpsat(tiny_setup_times_problem):
     dp_solver.init_model()
     dp_result = dp_solver.solve(solver="LNBS", time_limit=5)
 
-    cpsat_solver = GenericLotSizingCpsat(tiny_setup_times_problem)
+    cpsat_solver = GenericLotSizingCpSat(tiny_setup_times_problem)
     cpsat_solver.init_model()
     cpsat_result = cpsat_solver.solve(time_limit=5)
 

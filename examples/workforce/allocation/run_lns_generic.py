@@ -23,7 +23,7 @@ from discrete_optimization.workforce.allocation.parser import (
     parse_to_allocation_problem,
 )
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
-    CpsatTeamAllocationSolver,
+    CpSatTeamAllocationSolver,
     ModelisationAllocationOrtools,
 )
 from discrete_optimization.workforce.scheduling.parser import get_data_available
@@ -35,7 +35,7 @@ TIME_LIMIT_SUBSOLVER = 5
 def run_lns_cpsat():
     instance = [p for p in get_data_available() if "instance_68.json" in p][0]
     problem = parse_to_allocation_problem(instance, multiobjective=True)
-    subsolver = CpsatTeamAllocationSolver(
+    subsolver = CpSatTeamAllocationSolver(
         problem=problem,
     )
     subsolver.init_model(modelisation_allocation=ModelisationAllocationOrtools.BINARY)

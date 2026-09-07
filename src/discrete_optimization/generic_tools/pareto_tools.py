@@ -16,7 +16,7 @@ from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSat
 logger = logging.getLogger(__name__)
 
 
-class CpsatParetoSolver(SolverDO):
+class CpSatParetoSolver(SolverDO):
     """
     Finds the Pareto front for N objectives using Iterative Blocking with Lexicographic Tightening.
 

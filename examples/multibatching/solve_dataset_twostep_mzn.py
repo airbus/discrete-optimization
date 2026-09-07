@@ -78,12 +78,12 @@ def main():
         },
     )
     from discrete_optimization.multibatching.solvers.packing_subproblem import (
-        CpsatPackingSubproblem,
+        CpSatPackingSubproblem,
     )
 
     # Configure greedy packing solver
     packing_solver_config = SubBrick(
-        cls=CpsatPackingSubproblem,
+        cls=CpSatPackingSubproblem,
         kwargs={
             "parameters_cp": parameters_cp,
             "time_limit": 100,  # 5 minutes timeout

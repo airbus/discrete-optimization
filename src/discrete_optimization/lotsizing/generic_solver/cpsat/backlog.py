@@ -7,7 +7,7 @@ from discrete_optimization.lotsizing.generic_solver.cpsat.lotsizing_solver_cpsat
 )
 
 
-class BacklogConstraintCpsat(LotSizingCpSatSolver[Item]):
+class BacklogConstraintCpSat(LotSizingCpSatSolver[Item]):
     def create_constraint_backlog(self):
         if not self.problem.is_backlog_allowed():
             for item in self.problem.items_list:

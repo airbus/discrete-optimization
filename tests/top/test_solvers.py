@@ -7,12 +7,12 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.top.parser import get_data_available, parse_file
-from discrete_optimization.top.solvers.cpsat import CpsatTopSolver
+from discrete_optimization.top.solvers.cpsat import CpSatTopSolver
 from discrete_optimization.top.solvers.dp import DpTopSolver
 from discrete_optimization.top.solvers.optal import OptalTopSolver, optalcp_available
 from discrete_optimization.top.solvers.ortools import OrtoolsTopSolver
 
-solvers = [CpsatTopSolver, DpTopSolver, OptalTopSolver, OrtoolsTopSolver]
+solvers = [CpSatTopSolver, DpTopSolver, OptalTopSolver, OrtoolsTopSolver]
 
 
 @pytest.mark.parametrize("solver_class", solvers)

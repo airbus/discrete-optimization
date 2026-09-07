@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat_scheduling import (
-    GenericLotSizingCpsatScheduling,
+    GenericLotSizingCpSatScheduling,
 )
 from discrete_optimization.lotsizing.uncapacitatedsingleitem import (
     generate_random_instance,
@@ -27,7 +27,7 @@ def run_cpsat_generic():
         inventory_cost=3,
         seed=42,
     )
-    solver = GenericLotSizingCpsatScheduling(problem)
+    solver = GenericLotSizingCpSatScheduling(problem)
     solver.init_model()
     res = solver.solve(
         time_limit=30,

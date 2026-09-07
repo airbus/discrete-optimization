@@ -3,7 +3,7 @@ import logging
 from matplotlib import pyplot as plt
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.generic_tools.pareto_tools import CpsatParetoSolver
+from discrete_optimization.generic_tools.pareto_tools import CpSatParetoSolver
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.cpsat import (
     CpSatCumulativeResourceRcpspSolver,
@@ -20,7 +20,7 @@ def run_cpsat():
     problem.update_problem()
     solver = CpSatCumulativeResourceRcpspSolver(problem)
     solver.init_model()
-    pareto = CpsatParetoSolver(
+    pareto = CpSatParetoSolver(
         problem=problem,
         solver=solver,
         objective_names=["used_resource", "makespan"],

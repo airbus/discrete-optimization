@@ -65,7 +65,7 @@ class MultimodeCpSatSolver(OrtoolsCpSatSolver, MultimodeCpSolver[Task]):
 
 
 class SinglemodeCpSatSolver(MultimodeCpSatSolver[Task]):
-    """Cpsat solver mixin for single mode problems."""
+    """CpSat solver mixin for single mode problems."""
 
     problem: SinglemodeProblem[Task]
 

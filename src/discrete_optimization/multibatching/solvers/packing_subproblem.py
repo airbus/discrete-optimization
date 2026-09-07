@@ -88,7 +88,7 @@ class PackingSubproblemSolver(MultibatchingSolver):
         return changes
 
 
-class CpsatPackingSubproblem(OrtoolsCpSatSolver, PackingSubproblemSolver):
+class CpSatPackingSubproblem(OrtoolsCpSatSolver, PackingSubproblemSolver):
     def __init__(self, problem: MultibatchingProblem, **kwargs: Any):
         super().__init__(problem, **kwargs)
         self.variables = {}

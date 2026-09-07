@@ -30,7 +30,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 )
 from discrete_optimization.workforce.allocation.problem import TeamAllocationSolution
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
-    CpsatTeamAllocationSolver,
+    CpSatTeamAllocationSolver,
     ModelisationAllocationOrtools,
 )
 from discrete_optimization.workforce.scheduling.problem import (
@@ -571,7 +571,7 @@ class CPSatAllocSchedulingSolverCumulative(
         allocation_problem = build_allocation_problem_from_scheduling(
             problem=self.problem, solution=sol1
         )
-        allocation_solver = CpsatTeamAllocationSolver(problem=allocation_problem)
+        allocation_solver = CpSatTeamAllocationSolver(problem=allocation_problem)
         allocation_solver.init_model(
             modelisation_allocation=ModelisationAllocationOrtools.BINARY
         )

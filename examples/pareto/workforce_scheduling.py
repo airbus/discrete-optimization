@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import Solution
-from discrete_optimization.generic_tools.pareto_tools import CpsatParetoSolver
+from discrete_optimization.generic_tools.pareto_tools import CpSatParetoSolver
 from discrete_optimization.workforce.generators.resource_scenario import (
     ParamsRandomness,
     generate_scheduling_disruption,
@@ -107,7 +107,7 @@ def run_cpsat_lexico_delta_objective():
         return sol._intern_obj[obj]
 
     dict_function = {obj: partial(get_val, obj=obj) for obj in objectives_realloc_first}
-    pareto = CpsatParetoSolver(
+    pareto = CpSatParetoSolver(
         problem=problem_disrupted,
         solver=solver_realloc,
         objective_names=objectives_realloc_first,
