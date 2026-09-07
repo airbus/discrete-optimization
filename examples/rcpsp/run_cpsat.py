@@ -5,6 +5,10 @@
 import logging
 
 import numpy as np
+from discrete_optimization.rcpsp.solvers.cpsat_auto import (
+    CpSatAutoCumulativeResourceRcpspSolver,
+    CpSatAutoRcpspSolver,
+)
 from matplotlib import pyplot as plt
 
 from discrete_optimization.datasets import get_data_home
@@ -20,10 +24,6 @@ from discrete_optimization.rcpsp.solvers.cpsat import (
     CpSatCumulativeResourceRcpspSolver,
     CpSatRcpspSolver,
     CpSatResourceRcpspSolver,
-)
-from discrete_optimization.rcpsp.solvers.cpsat_auto import (
-    CpSatAutoCumulativeResourceRcpspSolver,
-    CpSatAutoRcpspSolver,
 )
 from discrete_optimization.rcpsp.utils import plot_ressource_view, plot_task_gantt
 

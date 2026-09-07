@@ -132,21 +132,23 @@ class GenericSchedulingImplProblem(
         Task, dict[int, dict[CumulativeResource | NonRenewableResource, int]]
     ] = field(default_factory=dict)
     resource_consumptions_dependent: dict[
-            Task,
+        Task,
+        dict[
+            int,
             dict[
-                int,
-                dict[
-                    CumulativeResource | NonRenewableResource,
-                    dict[frozenset[tuple[Task, int]], int],
-                ],
+                CumulativeResource | NonRenewableResource,
+                dict[frozenset[tuple[Task, int]], int],
             ],
-        ] = field(default_factory=dict)
+        ],
+    ] = field(default_factory=dict)
     successors: dict[Task, set[Task]] = field(default_factory=dict)
     unary_resources: set[UnaryResource] = field(default_factory=set)
     unary_resources_skills: dict[UnaryResource, dict[Skill, int]] = field(
         default_factory=dict
     )
-    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = field(default_factory=dict)
+    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = (
+        field(default_factory=dict)
+    )
     unary_resources_task_compatibility: dict[Task, set[UnaryResource]] = field(
         default_factory=dict
     )
@@ -157,7 +159,9 @@ class GenericSchedulingImplProblem(
     non_renewable_resources: dict[NonRenewableResource, int] = field(
         default_factory=dict
     )
-    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = field(default_factory=dict)
+    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = (
+        field(default_factory=dict)
+    )
     start_to_start_min_time_lags: list[tuple[Task, Task, int]] = field(
         default_factory=list
     )
