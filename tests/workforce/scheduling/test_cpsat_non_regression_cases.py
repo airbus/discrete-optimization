@@ -51,6 +51,8 @@ def solver_cpsat(time_limit, objective):
     parameters_cp = (
         ParametersCp.default()
     )  # only 1 process to avoid discrepancy with github runners
+    # Temporary try
+    parameters_cp.nb_process = 6
     if objective == "nbteams":
         objectives = [ObjectivesEnum.NB_TEAMS]
     else:
