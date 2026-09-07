@@ -15,7 +15,7 @@ from discrete_optimization.workforce.allocation.parser import (
 )
 from discrete_optimization.workforce.allocation.problem import TeamAllocationSolution
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
-    CpsatTeamAllocationSolver,
+    CpSatTeamAllocationSolver,
     ModelisationAllocationOrtools,
     ModelisationDispersion,
 )
@@ -33,7 +33,7 @@ def problem():
 
 
 def test_cpsat_multiobj(problem):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     solver.init_model()
     parameters_cp = ParametersCp.default()  # 1 process for exact iteration stop
     # check solve + callback (1 iteration)
@@ -55,7 +55,7 @@ def test_cpsat_multiobj(problem):
 
 
 def test_cpsat_monoobj(problem):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     solver.init_model()
     sol = solver.solve(
         time_limit=5,
@@ -94,7 +94,7 @@ def test_cpsat_integer_params(
         symmbreak_on_used=symmbreak_on_used,
     )
 
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     solver.init_model(**kwargs)
     sol = solver.solve(
         time_limit=5, callbacks=[NbIterationStopper(nb_iteration_max=1)]
@@ -139,7 +139,7 @@ def test_cpsat_binary_params(
         include_all_binary_vars=include_all_binary_vars,
     )
 
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     solver.init_model(**kwargs)
     sol = solver.solve(
         time_limit=5, callbacks=[NbIterationStopper(nb_iteration_max=1)]
@@ -158,7 +158,7 @@ def test_cpsat_dispersion(problem, modelisation_dispersion):
         modelisation_allocation=ModelisationAllocationOrtools.BINARY,
         modelisation_dispersion=modelisation_dispersion,
     )
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     solver.init_model(**kwargs)
     sol = solver.solve(
         time_limit=5, callbacks=[NbIterationStopper(nb_iteration_max=1)]
@@ -172,13 +172,13 @@ def test_cpsat_warm_start(problem, modelisation_allocation):
     kwargs = dict(
         modelisation_allocation=modelisation_allocation,
     )
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     solver.init_model(**kwargs)
     sol = solver.solve(
         time_limit=5, callbacks=[NbIterationStopper(nb_iteration_max=2)]
     ).get_best_solution()
 
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     solver.init_model(**kwargs)
     solver.set_warm_start(sol)
     sol1 = solver.solve(
@@ -191,7 +191,7 @@ def test_cpsat_warm_start(problem, modelisation_allocation):
 @pytest.mark.parametrize("modelisation_allocation", list(ModelisationAllocationOrtools))
 @pytest.mark.parametrize("multiobjective", [True, False])
 def test_cpsat_additional_constraints(problem, modelisation_allocation, multiobjective):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     sol = solver.solve(
         time_limit=5, callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution()
@@ -214,7 +214,7 @@ def test_cpsat_additional_constraints(problem, modelisation_allocation, multiobj
 
     disrupted_problem = disruption["new_allocation_problem"]
     assert disrupted_problem.allocation_additional_constraint is not None
-    solver = CpsatTeamAllocationSolver(disrupted_problem)
+    solver = CpSatTeamAllocationSolver(disrupted_problem)
     sol = solver.solve(
         time_limit=5,
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
@@ -230,7 +230,7 @@ def test_cpsat_additional_constraints(problem, modelisation_allocation, multiobj
 
 @pytest.mark.parametrize("modelisation_allocation", list(ModelisationAllocationOrtools))
 def test_cpsat_delta(problem, modelisation_allocation):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     base_solution = solver.solve(
         time_limit=5, callbacks=[NbIterationStopper(nb_iteration_max=1)]
     ).get_best_solution()
@@ -251,7 +251,7 @@ def test_cpsat_delta(problem, modelisation_allocation):
 
 
 def test_cpsat_agg_obj(problem):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     solver.init_model()
     solver.set_model_obj_aggregated([("nb_teams", 10), ("duration", 5)])
 
@@ -264,7 +264,7 @@ def test_cpsat_agg_obj(problem):
 
 
 def test_cpsat_lexico(problem):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     objectives = solver.get_lexico_objectives_available()
     for o in objectives:
         assert isinstance(o, str)
@@ -291,7 +291,7 @@ def test_cpsat_lexico(problem):
 
 
 def test_cpsat_solve_n_best_solution(problem):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     res = solver.solve_n_best_solution(
         time_limit=5,
         n_best_solution=3,
@@ -300,7 +300,7 @@ def test_cpsat_solve_n_best_solution(problem):
 
 
 def test_cpsat_solve_n_best_solution_with_priority(problem):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     res = solver.solve_n_best_solution(
         time_limit=5, n_best_solution=3, priority={0: 5, 2: 3}
     )
@@ -308,7 +308,7 @@ def test_cpsat_solve_n_best_solution_with_priority(problem):
 
 
 def test_compute_task_relaxation_alternatives(problem):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     res_final, res_optim = solver.compute_task_relaxation_alternatives(
         time_limit=5,
         time_limit_per_iteration=1,
@@ -318,7 +318,7 @@ def test_compute_task_relaxation_alternatives(problem):
 
 
 def test_compute_sufficient_assumptions(problem):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     solver.compute_sufficient_assumptions(
         time_limit=5,
     )
@@ -328,7 +328,7 @@ def test_compute_sufficient_assumptions(problem):
     "modelisation_allocation", list(ModelisationAllocationOrtools)[::-1]
 )
 def test_constraint_nb_usages(problem, modelisation_allocation):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     solver.init_model(modelisation_allocation=modelisation_allocation)
     sol: TeamAllocationSolution
     nb_usages_total = 0
@@ -400,7 +400,7 @@ def prepare_solver_for_binary_optional(solver):
 
 @pytest.mark.parametrize("modelisation_allocation", list(ModelisationAllocationOrtools))
 def test_constraint_nb_allocation_changes(problem, modelisation_allocation):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     solver.init_model(modelisation_allocation=modelisation_allocation)
     sol: TeamAllocationSolution
     ref: TeamAllocationSolution
@@ -435,7 +435,7 @@ def test_constraint_nb_allocation_changes(problem, modelisation_allocation):
 
 @pytest.mark.parametrize("modelisation_allocation", list(ModelisationAllocationOrtools))
 def test_objective_nb_tasks_done(problem, modelisation_allocation):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     sol: TeamAllocationSolution
     solver.init_model(modelisation_allocation=modelisation_allocation)
     objective = -solver.get_nb_tasks_done_variable()
@@ -452,7 +452,7 @@ def test_objective_nb_tasks_done(problem, modelisation_allocation):
 
 @pytest.mark.parametrize("modelisation_allocation", list(ModelisationAllocationOrtools))
 def test_objective_nb_unary_resources_used(problem, modelisation_allocation):
-    solver = CpsatTeamAllocationSolver(problem)
+    solver = CpSatTeamAllocationSolver(problem)
     sol: TeamAllocationSolution
     solver.init_model(modelisation_allocation=modelisation_allocation)
     objective = solver.get_nb_unary_resources_used_variable()

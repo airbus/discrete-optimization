@@ -15,7 +15,7 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import TrivialInitialSolution
-from discrete_optimization.singlemachine.solvers.cpsat import CpsatWTSolver
+from discrete_optimization.singlemachine.solvers.cpsat import CpSatWTSolver
 
 
 @pytest.mark.parametrize(
@@ -23,7 +23,7 @@ from discrete_optimization.singlemachine.solvers.cpsat import CpsatWTSolver
     SCHEDULING_OBJECTIVES + (ObjectiveSubproblem.INITIAL_OBJECTIVE,),
 )
 def test_lns(objective_subproblem, problem):
-    subsolver = CpsatWTSolver(problem=problem)
+    subsolver = CpSatWTSolver(problem=problem)
     parameters_cp = ParametersCp.default()
     initial_res = subsolver.solve(
         parameters_cp=parameters_cp, callbacks=[NbIterationStopper(nb_iteration_max=1)]

@@ -10,7 +10,7 @@ from discrete_optimization.workforce.allocation.parser import (
     build_allocation_problem_from_scheduling,
 )
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
-    CpsatTeamAllocationSolver,
+    CpSatTeamAllocationSolver,
     ModelisationAllocationOrtools,
 )
 from discrete_optimization.workforce.allocation.utils import plot_allocation_solution
@@ -32,7 +32,7 @@ def run_disruption_creation():
     allocation_problem = build_allocation_problem_from_scheduling(
         problem=scheduling_problem
     )
-    solver = CpsatTeamAllocationSolver(allocation_problem)
+    solver = CpSatTeamAllocationSolver(allocation_problem)
     solver.init_model(modelisation_allocation=ModelisationAllocationOrtools.BINARY)
     sol = solver.solve(time_limit=5).get_best_solution()
     fig = plot_allocation_solution(

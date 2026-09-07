@@ -25,7 +25,7 @@ from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import InitialSolutionFromSolver
 from discrete_optimization.singlemachine.parser import get_data_available, parse_file
-from discrete_optimization.singlemachine.solvers.cpsat import CpsatWTSolver
+from discrete_optimization.singlemachine.solvers.cpsat import CpSatWTSolver
 from discrete_optimization.singlemachine.solvers.greedy import GreedySingleMachineWSPT
 
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +35,7 @@ def run_lns():
     problems = parse_file(get_data_available()[0])
     print(len(problems), " problems in the file")
     problem = parse_file(get_data_available()[0])[1]
-    subsolver = CpsatWTSolver(problem)
+    subsolver = CpSatWTSolver(problem)
     parameters_cp = ParametersCp.default_cpsat()
     parameters_cp.nb_process = 16
     initial_solution = InitialSolutionFromSolver(GreedySingleMachineWSPT(problem))

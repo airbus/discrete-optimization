@@ -1,7 +1,7 @@
 #  Copyright (c) 2024-2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-"""Example using OPTUNA to tune hyperparameters of Cpsat solver for coloring.
+"""Example using OPTUNA to tune hyperparameters of CpSat solver for coloring.
 
 Results can be viewed on optuna-dashboard with:
 

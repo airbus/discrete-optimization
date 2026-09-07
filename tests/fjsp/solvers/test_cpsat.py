@@ -31,7 +31,7 @@ from discrete_optimization.shop.jsp.problem import JobShopProblem
 logging.basicConfig(level=logging.INFO)
 
 
-class StatsCpsatCallback(Callback):
+class StatsCpSatCallback(Callback):
     def __init__(self):
         self.starting_time: int = None
         self.end_time: int = None
@@ -318,7 +318,7 @@ def test_cpsat_retrieve_stats_via_clb():
     problem = fjsp_parser.parse_file(file)
     solver = CpSatFjspSolver(problem=problem)
     p = ParametersCp.default()
-    stats_clb = StatsCpsatCallback()
+    stats_clb = StatsCpSatCallback()
     res = solver.solve(
         callbacks=[stats_clb, NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=p,

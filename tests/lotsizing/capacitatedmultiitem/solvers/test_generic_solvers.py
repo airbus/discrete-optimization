@@ -14,7 +14,7 @@ from discrete_optimization.lotsizing.capacitatedmultiitem.problem import (
     CapacitatedMultiItemLSP,
 )
 from discrete_optimization.lotsizing.generic_solver.cpsat.generic_lotsizing_cpsat import (
-    GenericLotSizingCpsat,
+    GenericLotSizingCpSat,
 )
 from discrete_optimization.lotsizing.generic_solver.dp.generic_dp_solver import (
     GenericLotSizingDp,
@@ -106,7 +106,7 @@ def test_generic_dp_pigment20a(pigment20a_instance):
 
 def test_generic_cpsat_tiny(tiny_problem):
     """Test generic CP-SAT solver on tiny problem."""
-    solver = GenericLotSizingCpsat(tiny_problem)
+    solver = GenericLotSizingCpSat(tiny_problem)
     solver.init_model()
     result = solver.solve(time_limit=5)
 
@@ -120,7 +120,7 @@ def test_generic_cpsat_pigment20a(pigment20a_instance):
     if pigment20a_instance is None:
         pytest.skip("pigment20a instance not available")
 
-    solver = GenericLotSizingCpsat(pigment20a_instance)
+    solver = GenericLotSizingCpSat(pigment20a_instance)
     solver.init_model()
     result = solver.solve(time_limit=10)
 

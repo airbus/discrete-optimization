@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from discrete_optimization.generic_rcpsp_tools.solvers.ls import LsGenericRcpspSolver
 from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
     BasicStatsCallback,
-    StatsCpsatCallback,
+    StatsCpSatCallback,
 )
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
@@ -33,7 +33,7 @@ def test_basic_stats_callback():
 def test_cpsat_callback():
     file = [f for f in get_data_available() if "j1201_5.sm" in f][0]
     problem = parse_file(file)
-    callback = StatsCpsatCallback()
+    callback = StatsCpSatCallback()
     solver = CpSatRcpspSolver(problem=problem)
     res = solver.solve(callbacks=[callback], time_limit=20)
     fig, ax = plt.subplots(1)

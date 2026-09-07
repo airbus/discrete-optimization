@@ -105,7 +105,7 @@ def main():
     print("      Flow solver: CPSat (FLOW modeling)")
     print(f"      - Time limit: {flow_solver_config.kwargs['time_limit']}s")
     print(f"      - Workers: {parameters_cp.nb_process}")
-    print("      Packing solver: Cpsat")
+    print("      Packing solver: CpSat")
     # 4. Solve
     print("\n[4/5] Solving...")
     print("      This may take several minutes...")

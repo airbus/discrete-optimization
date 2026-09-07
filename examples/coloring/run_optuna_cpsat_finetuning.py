@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     # finetuning hyperparameters for ortools-cpsat
 
-    class OrtoolsCpsatSolverKwargs(Hyperparametrizable):
+    class OrtoolsCpSatSolverKwargs(Hyperparametrizable):
         hyperparameters = [
             CategoricalHyperparameter(name="optimize_with_core", choices=[True, False]),
             CategoricalHyperparameter(
@@ -167,7 +167,7 @@ if __name__ == "__main__":
             CpSatColoringSolver: [
                 SubBrickKwargsHyperparameter(
                     name="ortools_cpsat_solver_kwargs",
-                    subbrick_cls=OrtoolsCpsatSolverKwargs,
+                    subbrick_cls=OrtoolsCpSatSolverKwargs,
                 )
             ]
         },

@@ -225,7 +225,7 @@ def run_cpsat_lexico_delta_objective():
         base_solution=sol_original,
     )
 
-    class LexicoCpsatPrevStartCallback(Callback):
+    class LexicoCpSatPrevStartCallback(Callback):
         def on_step_end(
             self, step: int, res: ResultStorage, solver: LexicoSolver
         ) -> Optional[bool]:
@@ -234,7 +234,7 @@ def run_cpsat_lexico_delta_objective():
 
     lexico_solver = LexicoSolver(subsolver=solver_realloc, problem=problem_disrupted)
     retrieve_sub_res = RetrieveSubRes()
-    lexico_cpsat_warm_start = LexicoCpsatPrevStartCallback()
+    lexico_cpsat_warm_start = LexicoCpSatPrevStartCallback()
     cbs = [retrieve_sub_res, lexico_cpsat_warm_start]
     parameters_cp = ParametersCp.default_cpsat()
     parameters_cp.nb_process = 16

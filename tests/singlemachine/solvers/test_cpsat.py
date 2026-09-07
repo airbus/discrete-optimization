@@ -9,11 +9,11 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
 from discrete_optimization.singlemachine.problem import WTSolution
-from discrete_optimization.singlemachine.solvers.cpsat import CpsatWTSolver
+from discrete_optimization.singlemachine.solvers.cpsat import CpSatWTSolver
 
 
 def test_cpsat(problem):
-    solver = CpsatWTSolver(problem)
+    solver = CpSatWTSolver(problem)
     res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
     sol = res.get_best_solution()
     assert problem.satisfy(sol)
@@ -72,7 +72,7 @@ def test_cpsat(problem):
     ],
 )
 def test_task_constraint(problem, task, start_or_end, sign, time, antisign):
-    solver = CpsatWTSolver(problem)
+    solver = CpSatWTSolver(problem)
     parameters_cp = ParametersCp.default()
     sol: WTSolution = solver.solve(
         parameters_cp=parameters_cp, callbacks=[NbIterationStopper(nb_iteration_max=1)]
@@ -105,7 +105,7 @@ def test_task_constraint(problem, task, start_or_end, sign, time, antisign):
 
 
 def test_chaining_tasks_constraint(problem):
-    solver = CpsatWTSolver(problem=problem)
+    solver = CpSatWTSolver(problem=problem)
     parameters_cp = ParametersCp.default()
     task1 = 1
     task2 = 0

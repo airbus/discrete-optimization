@@ -6,14 +6,14 @@ import logging
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.singlemachine.parser import get_data_available, parse_file
-from discrete_optimization.singlemachine.solvers.cpsat import CpsatWTSolver, WTSolution
+from discrete_optimization.singlemachine.solvers.cpsat import CpSatWTSolver, WTSolution
 
 logging.basicConfig(level=logging.INFO)
 
 
 def run_cpsat():
     problem = parse_file(get_data_available()[0])[0]
-    solver = CpsatWTSolver(problem)
+    solver = CpSatWTSolver(problem)
     solver.init_model()
     res = solver.solve(
         time_limit=10,

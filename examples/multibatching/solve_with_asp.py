@@ -10,7 +10,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import S
 from discrete_optimization.multibatching.parser import get_data_available, parse_file
 from discrete_optimization.multibatching.solvers.asp import ClingconMultibatchingSolver
 from discrete_optimization.multibatching.solvers.packing_subproblem import (
-    CpsatPackingSubproblem,
+    CpSatPackingSubproblem,
 )
 from discrete_optimization.multibatching.solvers.two_steps import (
     GreedyPackingForMultibatching,
@@ -121,7 +121,7 @@ def script():
         print("total costs CP RbR : ", value, f"({value:.2e})")
         print(problem.satisfy(sol_))
 
-        pack = CpsatPackingSubproblem(problem)
+        pack = CpSatPackingSubproblem(problem)
         pack.init_from_solution(best_sol_for_postpro)
         res = pack.solve(parameters_cp=p, time_limit=100)
         sol_ = res.get_best_solution()

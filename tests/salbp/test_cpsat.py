@@ -1,7 +1,7 @@
 from discrete_optimization.alb.salbp.parser import get_data_available, parse_alb_file
 from discrete_optimization.alb.salbp.solvers.cpsat import (
     CpSatSalbpSolver,
-    ModelingCpsatSalbp,
+    ModelingCpSatSalbp,
 )
 from discrete_optimization.alb.salbp.solvers.greedy import GreedySalbpSolver
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
@@ -12,7 +12,7 @@ def test_cpsat():
     file = [f for f in files if "instance_n=20_10" in f][0]
     problem = parse_alb_file(file)
     solver = CpSatSalbpSolver(problem)
-    solver.init_model(modeling=ModelingCpsatSalbp.SCHEDULING, use_lb=True)
+    solver.init_model(modeling=ModelingCpSatSalbp.SCHEDULING, use_lb=True)
     greedy = GreedySalbpSolver(problem)
     sol = greedy.solve()[-1][0]
     solver.set_warm_start(sol)

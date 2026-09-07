@@ -56,7 +56,7 @@ class GenericLotSizingMilp(
     """Generic MILP solver for lot sizing problems.
 
     This solver combines all constraint mixins to handle the full range of
-    lot sizing problem variants. It mirrors the functionality of GenericLotSizingCpsat
+    lot sizing problem variants. It mirrors the functionality of GenericLotSizingCpSat
     but uses MILP instead of CP-SAT.
 
     Features:

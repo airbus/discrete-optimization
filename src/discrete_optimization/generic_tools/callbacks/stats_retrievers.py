@@ -79,7 +79,7 @@ class StatsWithBoundsCallback(BasicStatsCallback):
         )
 
 
-class StatsCpsatCallback(StatsWithBoundsCallback):
+class StatsCpSatCallback(StatsWithBoundsCallback):
     """
     This callback is specific to cpsat solver.
     """

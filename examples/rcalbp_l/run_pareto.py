@@ -14,7 +14,7 @@ from discrete_optimization.alb.rcalbp_l.solvers.pareto_postprocess import (
     RampUpParetoSolverPostpro,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.generic_tools.pareto_tools import CpsatParetoSolver
+from discrete_optimization.generic_tools.pareto_tools import CpSatParetoSolver
 
 logging.basicConfig(level=logging.INFO)
 
@@ -134,7 +134,7 @@ def main_pareto(instance="187_2_26_2880.json"):
 
     postpro_solver = RampUpParetoSolverPostpro(problem=problem)
     postpro_solver.init_model(from_solution=sol)
-    pareto_solver = CpsatParetoSolver(
+    pareto_solver = CpSatParetoSolver(
         problem=problem,
         solver=postpro_solver,
         objective_names=["change_cost", "ramp_up_cost"],

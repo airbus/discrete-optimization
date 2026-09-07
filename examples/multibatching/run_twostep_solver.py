@@ -4,7 +4,7 @@
 
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.multibatching.solvers.cpsat import (
-    CpsatMultibatchingSolver,
+    CpSatMultibatchingSolver,
     ModelingMultiBatch,
 )
 from discrete_optimization.multibatching.solvers.packing_subproblem import (
@@ -41,7 +41,7 @@ def main():
 
     # Configure the two steps
     flow_solver_config = SubBrick(
-        cls=CpsatMultibatchingSolver,
+        cls=CpSatMultibatchingSolver,
         kwargs={"modeling": ModelingMultiBatch.FLOW, "time_limit": 30},
     )
 

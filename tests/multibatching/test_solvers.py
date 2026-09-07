@@ -14,7 +14,7 @@ import pytest
 
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import SubBrick
 from discrete_optimization.multibatching.solvers.cpsat import (
-    CpsatMultibatchingSolver,
+    CpSatMultibatchingSolver,
     ModelingMultiBatch,
 )
 from discrete_optimization.multibatching.solvers.netx import NetxMultibatchingSolver
@@ -121,7 +121,7 @@ class TestCPSatSolver:
 
     def test_cpsat_flow_modeling(self, small_problem):
         """Test CPSat with FLOW modeling."""
-        solver = CpsatMultibatchingSolver(small_problem)
+        solver = CpSatMultibatchingSolver(small_problem)
         solver.init_model(modeling=ModelingMultiBatch.FLOW)
         result_storage = solver.solve(time_limit=30)
 
@@ -147,7 +147,7 @@ class TestCPSatSolver:
 
     def test_cpsat_flow_with_shortest_path_heuristic(self, small_problem):
         """Test CPSat with FLOW modeling and shortest path heuristic."""
-        solver = CpsatMultibatchingSolver(small_problem)
+        solver = CpSatMultibatchingSolver(small_problem)
         solver.init_model(
             modeling=ModelingMultiBatch.FLOW,
             restrict_to_shortest_paths=True,
@@ -229,7 +229,7 @@ class TestTwoStepSolver:
         solver = TwoStepMultibatchingSolver(small_problem)
 
         flow_solver_config = SubBrick(
-            cls=CpsatMultibatchingSolver,
+            cls=CpSatMultibatchingSolver,
             kwargs={"modeling": ModelingMultiBatch.FLOW, "time_limit": 30},
         )
 

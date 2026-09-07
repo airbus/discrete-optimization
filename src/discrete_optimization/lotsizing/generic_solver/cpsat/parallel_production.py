@@ -7,7 +7,7 @@ from discrete_optimization.lotsizing.generic_solver.cpsat.lotsizing_solver_cpsat
 )
 
 
-class ParallelProductionConstraintCpsat(LotSizingCpSatSolver[Item]):
+class ParallelProductionConstraintCpSat(LotSizingCpSatSolver[Item]):
     def create_constraint_parallel_production(self):
         if not self.problem.allows_parallel_production():
             for t in range(self.problem.horizon):

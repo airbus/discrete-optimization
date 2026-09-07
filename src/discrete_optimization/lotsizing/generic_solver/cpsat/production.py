@@ -7,7 +7,7 @@ from discrete_optimization.lotsizing.generic_solver.cpsat.lotsizing_solver_cpsat
 )
 
 
-class ProductionConstraintCpsat(LotSizingCpSatSolver[Item]):
+class ProductionConstraintCpSat(LotSizingCpSatSolver[Item]):
     def create_constraint_production(self):
         # Cumul - kind of constraint
         if self.problem.has_capacity_limits():

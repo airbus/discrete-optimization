@@ -16,7 +16,7 @@ from discrete_optimization.vrp.utils import compute_length_matrix
 logger = logging.getLogger(__name__)
 
 
-class CpsatTopSolver(OrtoolsCpSatSolver, WarmstartMixin):
+class CpSatTopSolver(OrtoolsCpSatSolver, WarmstartMixin):
     problem: TeamOrienteeringProblem
 
     def __init__(

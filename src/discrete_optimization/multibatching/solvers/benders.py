@@ -23,23 +23,23 @@ from discrete_optimization.multibatching.problem import (
     TransportLink,
 )
 from discrete_optimization.multibatching.solvers.cpsat import (
-    CpsatMultibatchingSolver,
+    CpSatMultibatchingSolver,
     ModelingMultiBatch,
 )
 from discrete_optimization.multibatching.solvers.packing_subproblem import (
-    CpsatPackingSubproblem,
+    CpSatPackingSubproblem,
     GreedyPackingForMultibatching,
     PackingSubproblemSolver,
     PackingViaBinPacking,
 )
 
 
-class CpsatBendersMultibatchingSolver(SolverDO):
+class CpSatBendersMultibatchingSolver(SolverDO):
     hyperparameters = [
         SubBrickHyperparameter(
             name="packing_solver",
             choices=[
-                CpsatPackingSubproblem,
+                CpSatPackingSubproblem,
                 GreedyPackingForMultibatching,
                 PackingViaBinPacking,
             ],
@@ -53,13 +53,13 @@ class CpsatBendersMultibatchingSolver(SolverDO):
         self.variables = {}
         # self.modeling: ModelingMultiBatch = None
         self.base_solution = None
-        self.solver_master: CpsatMultibatchingSolver = None
+        self.solver_master: CpSatMultibatchingSolver = None
         self.solver_subproblem: PackingSubproblemSolver = None
         self.scaling_factor = kwargs.get("scaling_factor", 1)
         self.nb_cuts = 0
 
     def init_model(self, **kwargs: Any) -> None:
-        self.solver_master = CpsatMultibatchingSolver(
+        self.solver_master = CpSatMultibatchingSolver(
             problem=self.problem, scaling_factor=self.scaling_factor
         )
         self.solver_master.init_model(modeling=ModelingMultiBatch.FLOW, **kwargs)

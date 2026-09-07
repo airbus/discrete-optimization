@@ -33,7 +33,7 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
 )
 
 
-class ModelingCpsatSalbp(Enum):
+class ModelingCpSatSalbp(Enum):
     SCHEDULING = 0
     BINARY = 1
 
@@ -45,8 +45,8 @@ class CpSatSalbpSolver(
     hyperparameters = [
         EnumHyperparameter(
             name="modeling",
-            enum=ModelingCpsatSalbp,
-            default=ModelingCpsatSalbp.SCHEDULING,
+            enum=ModelingCpSatSalbp,
+            default=ModelingCpSatSalbp.SCHEDULING,
         ),
         CategoricalHyperparameter("use_lb", choices=[True, False], default=True),
     ]
@@ -59,15 +59,15 @@ class CpSatSalbpSolver(
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.variables = {}
-        self.modeling: ModelingCpsatSalbp = None
+        self.modeling: ModelingCpSatSalbp = None
 
     def init_model(self, **kwargs: Any) -> None:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         super().init_model(**kwargs)
         self.modeling = kwargs["modeling"]
-        if self.modeling == ModelingCpsatSalbp.SCHEDULING:
+        if self.modeling == ModelingCpSatSalbp.SCHEDULING:
             self.init_model_scheduling(**kwargs)
-        if self.modeling == ModelingCpsatSalbp.BINARY:
+        if self.modeling == ModelingCpSatSalbp.BINARY:
             self.init_model_binary(**kwargs)
 
     def init_model_scheduling(self, **kwargs: Any) -> None:
@@ -144,12 +144,12 @@ class CpSatSalbpSolver(
     def set_warm_start(self, solution: SalbpSolution) -> None:
         self.cp_model.clear_hints()
         for t in self.problem.tasks_list:
-            if self.modeling == ModelingCpsatSalbp.SCHEDULING:
+            if self.modeling == ModelingCpSatSalbp.SCHEDULING:
                 self.cp_model.add_hint(
                     self.get_task_start_or_end_variable(t, StartOrEnd.START),
                     solution.get_start_time(t),
                 )
-            if self.modeling == ModelingCpsatSalbp.BINARY:
+            if self.modeling == ModelingCpSatSalbp.BINARY:
                 start = solution.get_start_time(t)
                 keys = [keys for keys in self.variables["binary_alloc"] if keys[1] == t]
                 for key in keys:
@@ -161,21 +161,21 @@ class CpSatSalbpSolver(
     def get_task_unary_resource_is_present_variable(
         self, task: Task, unary_resource: UnaryResource
     ) -> LinearExprT:
-        if self.modeling == ModelingCpsatSalbp.SCHEDULING:
+        if self.modeling == ModelingCpSatSalbp.SCHEDULING:
             raise NotImplementedError
-        if self.modeling == ModelingCpsatSalbp.BINARY:
+        if self.modeling == ModelingCpSatSalbp.BINARY:
             return self.variables["binary_alloc"][(unary_resource, task)]
         return None
 
     def get_task_start_or_end_variable(
         self, task: Task, start_or_end: StartOrEnd
     ) -> LinearExprT:
-        if self.modeling == ModelingCpsatSalbp.SCHEDULING:
+        if self.modeling == ModelingCpSatSalbp.SCHEDULING:
             if start_or_end == StartOrEnd.START:
                 return self.variables["starts"][task]
             else:
                 return self.variables["starts"][task] + 1
-        if self.modeling == ModelingCpsatSalbp.BINARY:
+        if self.modeling == ModelingCpSatSalbp.BINARY:
             if start_or_end == StartOrEnd.START:
                 return self.variables["stations"][task]
             else:
@@ -203,8 +203,8 @@ class CpSatSalbp12Solver(
     hyperparameters = [
         EnumHyperparameter(
             name="modeling",
-            enum=ModelingCpsatSalbp,
-            default=ModelingCpsatSalbp.SCHEDULING,
+            enum=ModelingCpSatSalbp,
+            default=ModelingCpSatSalbp.SCHEDULING,
         )
     ]
 
@@ -216,16 +216,16 @@ class CpSatSalbp12Solver(
     ):
         super().__init__(problem, params_objective_function, **kwargs)
         self.variables = {}
-        self.modeling: ModelingCpsatSalbp = None
+        self.modeling: ModelingCpSatSalbp = None
 
     def init_model(self, **kwargs: Any) -> None:
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         super().init_model(**kwargs)
         self.modeling = kwargs["modeling"]
         self.init_model_scheduling(**kwargs)
-        self.modeling = ModelingCpsatSalbp.SCHEDULING
-        # if self.modeling == ModelingCpsatSalbp.SCHEDULING:
-        # if self.modeling == ModelingCpsatSalbp.BINARY:
+        self.modeling = ModelingCpSatSalbp.SCHEDULING
+        # if self.modeling == ModelingCpSatSalbp.SCHEDULING:
+        # if self.modeling == ModelingCpSatSalbp.BINARY:
         #    self.init_model_binary(**kwargs)
 
     def init_model_scheduling(self, **kwargs: Any) -> None:
@@ -307,12 +307,12 @@ class CpSatSalbp12Solver(
     def set_warm_start(self, solution: SalbpSolution) -> None:
         self.cp_model.clear_hints()
         for t in self.problem.tasks_list:
-            if self.modeling == ModelingCpsatSalbp.SCHEDULING:
+            if self.modeling == ModelingCpSatSalbp.SCHEDULING:
                 self.cp_model.add_hint(
                     self.get_task_start_or_end_variable(t, StartOrEnd.START),
                     solution.get_start_time(t),
                 )
-            if self.modeling == ModelingCpsatSalbp.BINARY:
+            if self.modeling == ModelingCpSatSalbp.BINARY:
                 start = solution.get_start_time(t)
                 keys = [keys for keys in self.variables["binary_alloc"] if keys[1] == t]
                 for key in keys:
@@ -324,21 +324,21 @@ class CpSatSalbp12Solver(
     def get_task_unary_resource_is_present_variable(
         self, task: Task, unary_resource: UnaryResource
     ) -> LinearExprT:
-        if self.modeling == ModelingCpsatSalbp.SCHEDULING:
+        if self.modeling == ModelingCpSatSalbp.SCHEDULING:
             raise NotImplementedError
-        if self.modeling == ModelingCpsatSalbp.BINARY:
+        if self.modeling == ModelingCpSatSalbp.BINARY:
             return self.variables["binary_alloc"][(unary_resource, task)]
         return None
 
     def get_task_start_or_end_variable(
         self, task: Task, start_or_end: StartOrEnd
     ) -> LinearExprT:
-        if self.modeling == ModelingCpsatSalbp.SCHEDULING:
+        if self.modeling == ModelingCpSatSalbp.SCHEDULING:
             if start_or_end == StartOrEnd.START:
                 return self.variables["starts"][task]
             else:
                 return self.variables["starts"][task] + 1
-        if self.modeling == ModelingCpsatSalbp.BINARY:
+        if self.modeling == ModelingCpSatSalbp.BINARY:
             if start_or_end == StartOrEnd.START:
                 return self.variables["stations"][task]
             else:

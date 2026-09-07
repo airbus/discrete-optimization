@@ -7,7 +7,7 @@ from discrete_optimization.generic_tools.callbacks.sequential_solvers_callback i
     RetrieveSubRes,
 )
 from discrete_optimization.generic_tools.callbacks.stats_retrievers import (
-    StatsCpsatCallback,
+    StatsCpSatCallback,
 )
 from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
 from discrete_optimization.workforce.allocation.parser import (
@@ -15,7 +15,7 @@ from discrete_optimization.workforce.allocation.parser import (
     parse_to_allocation_problem,
 )
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
-    CpsatTeamAllocationSolver,
+    CpSatTeamAllocationSolver,
     ModelisationAllocationOrtools,
     ModelisationDispersion,
 )
@@ -27,7 +27,7 @@ from discrete_optimization.workforce.scheduling.parser import (
 def run_cpsat():
     instance = [p for p in get_data_available() if "instance_64.json" in p][0]
     allocation_problem = parse_to_allocation_problem(instance)
-    solver = CpsatTeamAllocationSolver(allocation_problem)
+    solver = CpSatTeamAllocationSolver(allocation_problem)
     solver.init_model(modelisation_allocation=ModelisationAllocationOrtools.BINARY)
     sol = solver.solve(
         time_limit=5, ortools_cpsat_solver_kwargs={"log_search_progress": True}
@@ -38,7 +38,7 @@ def run_cpsat():
 def run_lexico():
     instance = [p for p in get_data_available() if "instance_64.json" in p][0]
     allocation_problem = parse_to_allocation_problem(instance)
-    solver = CpsatTeamAllocationSolver(allocation_problem)
+    solver = CpSatTeamAllocationSolver(allocation_problem)
     solver.init_model(
         modelisation_allocation=ModelisationAllocationOrtools.BINARY,
         modelisation_dispersion=ModelisationDispersion.EXACT_MODELING_WITH_IMPLICATION,
@@ -46,7 +46,7 @@ def run_lexico():
     lexico = LexicoSolver(subsolver=solver, problem=allocation_problem)
 
     retrieve_sub_res = RetrieveSubRes()
-    stats_cb = StatsCpsatCallback()
+    stats_cb = StatsCpSatCallback()
     res = lexico.solve(
         callbacks=[retrieve_sub_res],
         objectives=["nb_teams", "duration"],

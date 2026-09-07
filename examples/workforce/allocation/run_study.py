@@ -32,7 +32,7 @@ from discrete_optimization.workforce.allocation.solvers.cpmpy import (
     CPMpyTeamAllocationSolver,
 )
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
-    CpsatTeamAllocationSolver,
+    CpSatTeamAllocationSolver,
     ModelisationAllocationOrtools,
 )
 from discrete_optimization.workforce.allocation.solvers.dp import DpAllocationSolver
@@ -72,7 +72,7 @@ if __name__ == "__main__":
             },
         ),
         "cpsat-10": SolverConfig(
-            cls=CpsatTeamAllocationSolver,
+            cls=CpSatTeamAllocationSolver,
             kwargs={
                 "parameters_cp": p,
                 "time_limit": 5,
@@ -80,7 +80,7 @@ if __name__ == "__main__":
             },
         ),
         "cpsat-10-integer": SolverConfig(
-            cls=CpsatTeamAllocationSolver,
+            cls=CpSatTeamAllocationSolver,
             kwargs={
                 "parameters_cp": p,
                 "time_limit": 5,

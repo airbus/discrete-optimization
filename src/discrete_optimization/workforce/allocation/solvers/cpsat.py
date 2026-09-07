@@ -81,7 +81,7 @@ class ModelisationDispersionOrtools(Enum):
 logger = logging.getLogger(__name__)
 
 
-class CpsatTeamAllocationSolver(
+class CpSatTeamAllocationSolver(
     AllocationBinaryOrIntegerModellingCpSatSolver[Task, UnaryResource],
     TeamAllocationSolver,
     WarmstartMixin,

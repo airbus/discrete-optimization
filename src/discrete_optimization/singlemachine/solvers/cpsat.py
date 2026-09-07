@@ -25,7 +25,7 @@ from discrete_optimization.singlemachine.problem import (
 logger = logging.getLogger(__name__)
 
 
-class CpsatWTSolver(SchedulingCpSatSolver[Task], WarmstartMixin):
+class CpSatWTSolver(SchedulingCpSatSolver[Task], WarmstartMixin):
     problem: WeightedTardinessProblem
     variables: dict
 

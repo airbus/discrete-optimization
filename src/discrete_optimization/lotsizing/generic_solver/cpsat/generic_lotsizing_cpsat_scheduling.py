@@ -43,12 +43,12 @@ from discrete_optimization.lotsizing.production_solution import (
 logger = logging.getLogger(__name__)
 
 
-class GenericLotSizingCpsatScheduling(LotSizingCpSatSolver[Item]):
+class GenericLotSizingCpSatScheduling(LotSizingCpSatSolver[Item]):
     """Generic CP-SAT scheduling solver for lot sizing.
 
     This solver models lot sizing as a scheduling problem where each demand
     is an event to be scheduled. This contrasts with the quantity-based
-    formulation in GenericLotSizingCpsat.
+    formulation in GenericLotSizingCpSat.
 
     Model structure:
     - For each demand occurrence (item, period, quantity), create demand events
