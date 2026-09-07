@@ -11,6 +11,7 @@ from discrete_optimization.generic_tasks_tools.base import (
     TasksSolution,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 from discrete_optimization.generic_tools.cp_tools import SignEnum
 
 
@@ -21,6 +22,7 @@ class SchedulingProblem(TasksProblem[Task]):
 
     """
 
+    @optional_override
     def get_last_tasks(self) -> list[Task]:
         """Get a sublist of tasks that are candidate to be the last one scheduled.
 
@@ -29,6 +31,7 @@ class SchedulingProblem(TasksProblem[Task]):
         """
         return self.tasks_list
 
+    @optional_override
     def get_makespan_lower_bound(self) -> int:
         """Get a lower bound on global makespan.
 

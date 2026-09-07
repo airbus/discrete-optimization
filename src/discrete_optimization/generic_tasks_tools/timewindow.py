@@ -10,6 +10,7 @@ from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class TimewindowProblem(SchedulingProblem[Task], Generic[Task]):
                 task=task, start_or_end=start_or_end
             )
 
+    @optional_override
     def get_task_start_or_end_lower_bound(
         self, task: Task, start_or_end: StartOrEnd
     ) -> int:
@@ -58,6 +60,7 @@ class TimewindowProblem(SchedulingProblem[Task], Generic[Task]):
         """
         return 0
 
+    @optional_override
     def get_task_start_or_end_upper_bound(
         self, task: Task, start_or_end: StartOrEnd
     ) -> int:

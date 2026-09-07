@@ -11,6 +11,7 @@ from discrete_optimization.generic_tasks_tools.base import (
     TasksProblem,
     TasksSolution,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 from discrete_optimization.generic_tools.cp_tools import SignEnum
 
 logger = logging.getLogger(__name__)
@@ -179,6 +180,7 @@ class AllocationProblem(TasksProblem[Task], Generic[Task, UnaryResource]):
             }
         return self._map_unary_resource_to_index[unary_resource]
 
+    @optional_override
     def is_compatible_task_unary_resource(
         self, task: Task, unary_resource: UnaryResource
     ) -> bool:
@@ -198,6 +200,7 @@ class AllocationProblem(TasksProblem[Task], Generic[Task, UnaryResource]):
             if self.is_compatible_task_unary_resource(task, ur)
         }
 
+    @optional_override
     def get_same_unary_allocation(self) -> list[set[Task]]:
         """
         a element (t1, t2, t3..) of this means corresponds to task for which we want the same resource to

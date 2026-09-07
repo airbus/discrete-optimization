@@ -50,6 +50,7 @@ from discrete_optimization.generic_tasks_tools.timewindow import (
     TimewindowProblem,
     TimewindowSolution,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 CumulativeResource = Skill | NonSkillCumulativeResource
 Resource = CumulativeResource | UnaryResource
@@ -591,6 +592,7 @@ class GenericSchedulingProblem(
 
         return penalty
 
+    @optional_override
     def get_mode_cost(self, task: Task, mode: int) -> int:
         """Get cost of choosing given mode.
 
@@ -605,6 +607,7 @@ class GenericSchedulingProblem(
         """
         return 0
 
+    @optional_override
     def get_unary_resource_cost(
         self, task: Task, mode: int, unary_resource: UnaryResource
     ) -> int:
