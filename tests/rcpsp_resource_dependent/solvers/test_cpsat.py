@@ -1,6 +1,8 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import pytest
+
 from discrete_optimization.rcpsp_resource_dependent.problem import (
     RcpspResourceDependentProblem,
     RcpspResourceDependentSolution,
@@ -10,7 +12,9 @@ from discrete_optimization.rcpsp_resource_dependent.solvers.cpsat import (
 )
 
 
-def create_toy_model():
+@pytest.fixture
+def toy_problem():
+    """Fixture providing a toy RCPSP resource-dependent problem instance."""
     resources = {"R1": 5, "R2": 8, "R3": 10, "N1": 20, "N2": 20}
     mode_details = {
         "source": {1: {"duration": 0}},
@@ -58,7 +62,7 @@ def create_toy_model():
         "6": ["sink"],
         "sink": [],
     }
-    problem = RcpspResourceDependentProblem(
+    return RcpspResourceDependentProblem(
         resources=resources,
         non_renewable_resources=["N1", "N2"],
         mode_details=mode_details,
@@ -67,48 +71,59 @@ def create_toy_model():
         source_task="source",
         sink_task="sink",
     )
-    solver = CpSatRcpspResourceDependentSolver(problem)
-    solver.init_model(avoid_interval_optional=False)
-    res = solver.solve(
-        time_limit=10, ortools_cpsat_solver_kwargs={"log_search_progress": True}
+
+
+@pytest.mark.parametrize(
+    "avoid_interval_optional_for_unary_resources",
+    [True, False],
+)
+@pytest.mark.parametrize(
+    "avoid_interval_optional_for_cumulative_resources",
+    [True, False],
+)
+@pytest.mark.parametrize(
+    "use_demand_variables_for_non_renewable_resources",
+    [True, False],
+)
+def test_cpsat_with_different_model_options(
+    toy_problem,
+    avoid_interval_optional_for_unary_resources,
+    avoid_interval_optional_for_cumulative_resources,
+    use_demand_variables_for_non_renewable_resources,
+):
+    """Test CP-SAT solver with different model configuration options."""
+    solver = CpSatRcpspResourceDependentSolver(toy_problem)
+    solver.init_model(
+        avoid_interval_optional_for_unary_resources=avoid_interval_optional_for_unary_resources,
+        avoid_interval_optional_for_cumulative_resources=avoid_interval_optional_for_cumulative_resources,
+        use_demand_variables_for_non_renewable_resources=use_demand_variables_for_non_renewable_resources,
     )
+
+    res = solver.solve(time_limit=10)
     sol: RcpspResourceDependentSolution = res[-1][0]
+
+    # Verify resource consumption matches solver variables
     resource_consumption = {}
-    total_conso_nr = {r: 0 for r in problem.non_renewable_resources}
-    for t in problem.tasks_list:
-        for r in problem.cumulative_resources_list:
+    total_conso_nr = {r: 0 for r in toy_problem.non_renewable_resources}
+
+    for t in toy_problem.tasks_list:
+        for r in toy_problem.cumulative_resources_list:
             resource_consumption[(t, r)] = sol.get_calendar_resource_consumption(r, t)
-        for r in problem.non_renewable_resources_list:
-            resource_consumption[(t, r)] = sol.get_non_renewable_resource_consumption(
-                r, t
-            )
-            total_conso_nr[r] += resource_consumption[(t, r)]
+        for r in toy_problem.non_renewable_resources_list:
+            consumption = sol.get_non_renewable_resource_consumption(r, t)
+            resource_consumption[(t, r)] = consumption
+            total_conso_nr[r] += consumption
+
+    # Verify cumulative resource demands match solver variables
     for t, r in solver.demands_cumulative_resource_vars:
-        assert (
-            solver.solver.Value(solver.demands_cumulative_resource_vars[t, r])
-            == resource_consumption[(t, r)]
+        solver_value = solver.solver.Value(
+            solver.demands_cumulative_resource_vars[t, r]
         )
-    for r in problem.non_renewable_resources_list:
-        assert total_conso_nr[r] <= problem.get_resource_max_capacity(r)
-    for t in problem.tasks_list:
-        for r in (
-            problem.cumulative_resources_list + problem.non_renewable_resources_list
-        ):
-            print(t, r, ":", resource_consumption[(t, r)])
-    print(total_conso_nr)
-    print(sol.schedule, "\n", sol.modes)
-    print(problem.evaluate(sol), problem.satisfy(sol))
-    assert problem.satisfy(sol)
-    from discrete_optimization.generic_tasks_tools.plot_utils import (
-        plot_ressource_view,
-        plot_task_gantt,
-        plt,
-    )
+        assert solver_value == resource_consumption[(t, r)]
 
-    plot_task_gantt(problem, sol)
-    plot_ressource_view(problem, sol)
-    plt.show()
+    # Verify non-renewable resource constraints
+    for r in toy_problem.non_renewable_resources_list:
+        assert total_conso_nr[r] <= toy_problem.get_resource_max_capacity(r)
 
-
-if __name__ == "__main__":
-    create_toy_model()
+    # Verify solution satisfies all constraints
+    assert toy_problem.satisfy(sol)
