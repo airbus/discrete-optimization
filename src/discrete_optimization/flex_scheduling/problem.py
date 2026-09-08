@@ -26,9 +26,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolution
-from discrete_optimization.generic_tasks_tools.no_overlap import (
-    WithoutNoOverlapProblem,
-)
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
     FlexibleGapBlockingConstraint,
@@ -343,7 +340,6 @@ class FlexProblem(
     GenericSchedulingProblem[
         Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
     ],
-    WithoutNoOverlapProblem[Task],
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],

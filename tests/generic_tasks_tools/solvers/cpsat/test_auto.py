@@ -6,7 +6,6 @@ from __future__ import annotations
 import copy
 import logging
 import re
-from abc import ABC
 from copy import deepcopy
 from typing import Any, Iterable, Optional
 
@@ -21,13 +20,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     Objective,
     RawSolution,
     TaskVariable,
-)
-from discrete_optimization.generic_tasks_tools.no_overlap import (
-    WithoutNoOverlapProblem,
-)
-from discrete_optimization.generic_tasks_tools.resource_blocking import (
-    WithoutResourceBlockingProblem,
-    WithoutResourceBlockingSolution,
 )
 from discrete_optimization.generic_tasks_tools.skill import (
     NoSkill,
@@ -68,8 +60,6 @@ class MySolution(
     WithoutSkillSolution[
         Task, UnaryResource, NonSkillCumulativeResource, UnaryResource
     ],
-    WithoutResourceBlockingSolution[Task, NonRenewableResource, UnaryResource],
-    ABC,
 ):
     problem: MyProblem
 
@@ -101,9 +91,7 @@ class MyProblem(
     GenericSchedulingProblem[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
-    WithoutNoOverlapProblem[Task],
     WithoutSkillProblem[Task, UnaryResource, NonSkillCumulativeResource, UnaryResource],
-    WithoutResourceBlockingProblem[Task, NonRenewableResource, UnaryResource],
 ):
     horizon = 10
     non_renewable_resources = ["non_renewable_resource"]

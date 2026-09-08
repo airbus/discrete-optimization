@@ -16,7 +16,6 @@ Key features:
 from __future__ import annotations
 
 import logging
-from abc import abstractmethod
 from collections.abc import Hashable
 from dataclasses import dataclass
 from enum import Enum
@@ -38,6 +37,7 @@ from discrete_optimization.generic_tasks_tools.multimode import (
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingSolution,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +110,7 @@ class ResourceBlockingProblem(
     resource definitions and capacity constraints.
     """
 
-    @abstractmethod
+    @optional_override
     def get_flexible_gap_blocking_constraints(
         self,
     ) -> list[
@@ -140,10 +140,13 @@ class ResourceBlockingProblem(
             - point2: START or END of second entity
             - resources: Dict mapping resources to consumption amounts
             - metadata: Blocking behavior configuration
-        """
-        ...
 
-    @abstractmethod
+        Default to no flexible gap blocking constraints.
+
+        """
+        return []
+
+    @optional_override
     def get_span_blocking_constraints(
         self,
     ) -> list[
@@ -163,9 +166,9 @@ class ResourceBlockingProblem(
             - resources: Dict mapping resources to consumption amounts
             - metadata: Blocking behavior configuration
 
-        Examples:
+        Default to no span blocking constraints.
         """
-        ...
+        return []
 
 
 class ResourceBlockingSolution(
@@ -604,60 +607,3 @@ class ResourceBlockingSolution(
 
         # Check blocking constraints
         return self.check_blocking_constraints()
-
-
-class WithoutResourceBlockingProblem(
-    ResourceBlockingProblem[Task, CumulativeResource, OtherCalendarResource]
-):
-    """Utility mixin for problems without resource blocking constraints.
-
-    Provides empty implementations of blocking constraint methods.
-    Use as an additional mixin with GenericSchedulingProblem when no blocking needed.
-    """
-
-    def get_flexible_gap_blocking_constraints(
-        self,
-    ) -> list[
-        tuple[
-            SchedulingEntity,
-            StartOrEnd,
-            SchedulingEntity,
-            StartOrEnd,
-            dict[CumulativeResource, int],
-            BlockingConstraintMetadata,
-        ]
-    ]:
-        """Return empty list (no blocking constraints)."""
-        return []
-
-    def get_span_blocking_constraints(
-        self,
-    ) -> list[
-        tuple[
-            frozenset[Task], dict[CumulativeResource, int], BlockingConstraintMetadata
-        ]
-    ]:
-        """Return empty list (no blocking constraints)."""
-        return []
-
-
-class WithoutResourceBlockingSolution(
-    ResourceBlockingSolution[Task, CumulativeResource, OtherCalendarResource]
-):
-    """Utility mixin for solutions without resource blocking constraints.
-
-    Provides optimized implementations that skip blocking computation.
-    Use as an additional mixin when no blocking needed.
-    """
-
-    def check_blocking_constraints(self) -> bool:
-        """Always satisfied (no constraints)."""
-        return True
-
-    def compute_blocking_consumption(
-        self,
-        horizon: int,
-        resource: CumulativeResource,
-    ) -> np.ndarray:
-        """Return zero consumption (no blocking)."""
-        return np.zeros(horizon, dtype=int)
