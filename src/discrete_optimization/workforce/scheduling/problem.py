@@ -27,17 +27,10 @@ from discrete_optimization.generic_tasks_tools.multimode import (
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     SinglemodeSchedulingProblem,
 )
-from discrete_optimization.generic_tasks_tools.no_overlap import (
-    WithoutNoOverlapProblem,
-)
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NoNonRenewableResource,
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
-)
-from discrete_optimization.generic_tasks_tools.resource_blocking import (
-    WithoutResourceBlockingProblem,
-    WithoutResourceBlockingSolution,
 )
 from discrete_optimization.generic_tasks_tools.skill import (
     NoSkill,
@@ -77,7 +70,6 @@ class AllocSchedulingSolution(
         Task, UnaryResource, NonSkillCumulativeResource, UnaryResource
     ],
     WithoutNonRenewableResourceSolution[Task],
-    WithoutResourceBlockingSolution[Task, NonSkillCumulativeResource, UnaryResource],
     SinglemodeSolution[Task],
 ):
     problem: AllocSchedulingProblem
@@ -131,8 +123,6 @@ class AllocSchedulingProblem(
     ],
     WithoutSkillProblem[Task, UnaryResource, NonSkillCumulativeResource, UnaryResource],
     WithoutNonRenewableResourceProblem[Task],
-    WithoutNoOverlapProblem[Task],
-    WithoutResourceBlockingProblem[Task, NonSkillCumulativeResource, UnaryResource],
     SinglemodeSchedulingProblem[Task],
     WithoutModeConstraintSingleModeProblem[Task],
 ):

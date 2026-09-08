@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from abc import abstractmethod
 
 import numpy as np
 
@@ -10,6 +9,7 @@ from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingSolution,
     Task,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +20,16 @@ class NoOverlapProblem(SchedulingProblem[Task]):
     is arbitrary, but still no overlap.
     """
 
-    @abstractmethod
+    @optional_override
     def get_no_overlap(self) -> set[frozenset[Task]]:
         """
         An object in this returned set is a (frozen) set of task,
-        where no task should overlap with another one in this set
+        where no task should overlap with another one in this set.
+
+        Default to no such sets.
+
         """
-        ...
+        return set()
 
     def get_forbidden_intervals(self, task: Task) -> list[tuple[int, int]]:
         """Get fixed intervals that should not overlap with given task.
@@ -118,8 +121,3 @@ class WithoutNoOverlapProblem(NoOverlapProblem[Task]):
 
     def get_no_overlap(self) -> set[frozenset[Task]]:
         return set()
-
-
-class WithoutNoOverlapSolution(NoOverlapSolution[Task]):
-    def check_no_overlap(self) -> bool:
-        return True
