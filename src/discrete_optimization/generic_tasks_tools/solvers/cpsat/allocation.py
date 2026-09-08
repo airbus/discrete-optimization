@@ -15,15 +15,17 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
+)
 from discrete_optimization.generic_tasks_tools.solvers.utils import is_a_trivial_zero
 from discrete_optimization.generic_tools.cp_tools import SignEnum
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 
 logger = logging.getLogger(__name__)
 
 
 class AllocationCpSatSolver(
-    OrtoolsCpSatSolver,
+    TasksCpSatSolver[Task],
     AllocationCpSolver[Task, UnaryResource],
 ):
     """Base class for allocation cp-sat solvers using a binary modelling.
@@ -99,6 +101,11 @@ class AllocationCpSatSolver(
         self, task: Task, unary_resource: UnaryResource
     ) -> LinearExprT:
         """Return a 0-1 variable/expression telling if the unary_resource is used for the task.
+
+        This variable should be 0 whenever an optional task is absent.
+        For instance via a constraint like
+        `cp_model.add(task_unary_resource_is_present = 0).only_enforce_if(~task_is_present)`.
+        or `cp_model.add(task_unary_resource_is_present<=task_is_present)`
 
         NB: sometimes the given resource is never to be used by a task and the variable has not been created.
         The convention is to return 0 in that case.
@@ -217,7 +224,7 @@ class AllocationCpSatSolver(
             for unary_resource in self.subset_unaryresources_allowed:
                 used = self.cp_model.new_bool_var(f"used_{unary_resource}")
                 self.used_variables[unary_resource] = used
-                list_is_present_variables = [
+                list_is_allocated_variables = [
                     is_present
                     for task in self.subset_tasks_of_interest
                     # filter out trivial 0's corresponding to incompatible (task, resource)
@@ -230,8 +237,8 @@ class AllocationCpSatSolver(
                         )
                     )
                 ]
-                if len(list_is_present_variables) > 0:
-                    self.cp_model.add_max_equality(used, list_is_present_variables)
+                if len(list_is_allocated_variables) > 0:
+                    self.cp_model.add_max_equality(used, list_is_allocated_variables)
                 else:
                     self.cp_model.add(used == 0)
             self.used_variables_created = True
@@ -242,7 +249,7 @@ class AllocationCpSatSolver(
             for task in self.subset_tasks_of_interest:
                 allocated = self.cp_model.new_bool_var(f"{task}_allocated")
                 self.task_allocated_variables[task] = allocated
-                list_is_present_variables = [
+                list_is_allocated_variables = [
                     is_present
                     for unary_resource in self.subset_unaryresources_allowed
                     # filter out trivial 0's corresponding to incompatible (task, resource)
@@ -255,9 +262,9 @@ class AllocationCpSatSolver(
                         )
                     )
                 ]
-                if len(list_is_present_variables) > 0:
+                if len(list_is_allocated_variables) > 0:
                     if self.at_most_one_unary_resource_per_task:
-                        nb_teams_allocated_to_task = sum(list_is_present_variables)
+                        nb_teams_allocated_to_task = sum(list_is_allocated_variables)
                         self.cp_model.add(
                             nb_teams_allocated_to_task == 1
                         ).only_enforce_if(allocated)
@@ -266,7 +273,7 @@ class AllocationCpSatSolver(
                         ).only_enforce_if(~allocated)
                     else:
                         self.cp_model.add_max_equality(
-                            allocated, list_is_present_variables
+                            allocated, list_is_allocated_variables
                         )
                 else:
                     self.cp_model.add(allocated == 0)
@@ -292,7 +299,7 @@ class AllocationCpSatSolver(
             or self.at_most_one_unary_resource_per_task
         ):
             for task in self.subset_tasks_of_interest:
-                list_is_present_variables = [
+                list_is_allocated_variables = [
                     is_present
                     for unary_resource in self.subset_unaryresources_allowed
                     # filter out trivial 0's corresponding to incompatible (task, resource)
@@ -306,15 +313,23 @@ class AllocationCpSatSolver(
                     )
                 ]
                 if (
-                    len(list_is_present_variables) > 0
+                    len(list_is_allocated_variables) > 0
                     and self.exactly_one_unary_resource_per_task
                 ):
-                    self.cp_model.add_exactly_one(list_is_present_variables)
+                    if self.problem.is_optional(task):
+                        # enforce exactly one allocation only if task is not absent
+                        # NB: only_enforce_if does not work with `add_exactly_one`constraint, so use sum()==1 instead
+                        # see https://groups.google.com/g/or-tools-discuss/c/2G4Y7AArZks
+                        self.cp_model.add(
+                            sum(list_is_allocated_variables) == 1
+                        ).only_enforce_if(self.get_task_is_present_variable(task))
+                    else:
+                        self.cp_model.add_exactly_one(list_is_allocated_variables)
                 elif (
-                    len(list_is_present_variables) > 1
+                    len(list_is_allocated_variables) > 1
                     and self.at_most_one_unary_resource_per_task
                 ):
-                    self.cp_model.add_at_most_one(list_is_present_variables)
+                    self.cp_model.add_at_most_one(list_is_allocated_variables)
 
     def add_same_unary_allocation_constraints(self):
         for set_tasks in self.problem.get_same_unary_allocation():

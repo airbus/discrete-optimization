@@ -35,6 +35,9 @@ class MultimodeSchedulingCpSatSolver(
         Needs to be created if avoid_interval_optional_for_cumulative_resources is False.
         Not necessary else.
 
+        The interval should be optional with the is_present variable being false
+        whenever the task is optional and absent.
+
         """
         ...
 

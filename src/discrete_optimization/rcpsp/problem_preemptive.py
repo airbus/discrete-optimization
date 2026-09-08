@@ -40,6 +40,7 @@ from discrete_optimization.rcpsp.fast_function import (
     sgs_fast_preemptive,
     sgs_fast_preemptive_minduration,
 )
+from discrete_optimization.rcpsp.utils import TOO_BIG_TIME
 
 logger = logging.getLogger(__name__)
 
@@ -257,8 +258,8 @@ class PreemptiveRcpspSolution(Solution):
                 self.rcpsp_schedule_feasible = not unfeasible
                 self.rcpsp_schedule = {
                     self.problem.sink_task: {
-                        "starts": [99999999],
-                        "ends": [99999999],
+                        "starts": [TOO_BIG_TIME],
+                        "ends": [TOO_BIG_TIME],
                     }
                 }
             for k in starts_dict:
@@ -926,8 +927,8 @@ def generate_schedule_from_permutation_serial_sgs(
         last_act_id = rcpsp_problem.sink_task
         if last_act_id not in rcpsp_schedule:
             rcpsp_schedule[last_act_id] = {}
-            rcpsp_schedule[last_act_id]["starts"] = [9999999]
-            rcpsp_schedule[last_act_id]["ends"] = [9999999]
+            rcpsp_schedule[last_act_id]["starts"] = [TOO_BIG_TIME]
+            rcpsp_schedule[last_act_id]["ends"] = [TOO_BIG_TIME]
     else:
         rcpsp_schedule_feasible = True
     return rcpsp_schedule, rcpsp_schedule_feasible
@@ -1120,8 +1121,8 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
         last_act_id = rcpsp_problem.sink_task
         if last_act_id not in rcpsp_schedule:
             rcpsp_schedule[last_act_id] = {}
-            rcpsp_schedule[last_act_id]["starts"] = [99999999]
-            rcpsp_schedule[last_act_id]["ends"] = [9999999]
+            rcpsp_schedule[last_act_id]["starts"] = [TOO_BIG_TIME]
+            rcpsp_schedule[last_act_id]["ends"] = [TOO_BIG_TIME]
     else:
         rcpsp_schedule_feasible = True
     return rcpsp_schedule, rcpsp_schedule_feasible

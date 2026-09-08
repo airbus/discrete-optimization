@@ -10,6 +10,7 @@ from discrete_optimization.generic_tasks_tools.base import (
     TasksProblem,
     TasksSolution,
 )
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 
@@ -29,16 +30,23 @@ class MultimodeSolution(TasksSolution[Task]):
     problem: MultimodeProblem[Task]
 
     @abstractmethod
-    def get_mode(self, task: Task) -> int:
+    def get_mode(self, task: Task) -> int | AbsentValue:
         """Retrieve mode found for given task.
+
+        Hypothesis:
+            The returned mode can have AbsentValue.ABSENT only if `self.is_present(task) is False`.
 
         Args:
             task:
 
         Returns:
 
+
         """
         ...
+
+    def is_present(self, task: Task) -> bool:
+        return self.has_a_mode(task)
 
     def check_mode_constraint(self) -> bool:
         if len(self.problem.get_mode_constraints()) == 0:
@@ -64,6 +72,9 @@ class MultimodeSolution(TasksSolution[Task]):
                 if not b:
                     logger.debug(f"Mode constraint not satisfied, {list_task_mode}")
         return True
+
+    def has_a_mode(self, task: Task) -> bool:
+        return self.get_mode(task) is not AbsentValue.ABSENT
 
 
 class MultimodeProblem(TasksProblem[Task]):
@@ -110,13 +121,6 @@ class MultimodeProblem(TasksProblem[Task]):
         return []
 
 
-class WithoutModeConstraintMultimodeProblem(MultimodeProblem[Task]):
-    def get_mode_constraints(
-        self,
-    ) -> list[tuple[ModeConstraintType, list[tuple[Task, int]]]]:
-        return []
-
-
 class SinglemodeProblem(MultimodeProblem[Task]):
     @property
     def default_mode(self):
@@ -137,12 +141,6 @@ class SinglemodeProblem(MultimodeProblem[Task]):
     @property
     def max_number_of_mode(self) -> int:
         return 1
-
-
-class WithoutModeConstraintSingleModeProblem(
-    SinglemodeProblem[Task], WithoutModeConstraintMultimodeProblem[Task]
-):
-    pass
 
 
 class SinglemodeSolution(MultimodeSolution[Task]):

@@ -6,6 +6,7 @@
 
 from typing import Optional
 
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
 )
@@ -146,8 +147,13 @@ class FjspToRcpspTransformation(
 
         """
         # Build FJSP schedule from RCPSP schedule
-        fjsp_schedule = [[None] * len(job.subjobs) for job in source_problem.list_jobs]
-        machine_index = [[None] * len(job.subjobs) for job in source_problem.list_jobs]
+        fjsp_schedule = [
+            [(AbsentValue.ABSENT, AbsentValue.ABSENT)] * len(job.subjobs)
+            for job in source_problem.list_jobs
+        ]
+        machine_index = [
+            [AbsentValue.ABSENT] * len(job.subjobs) for job in source_problem.list_jobs
+        ]
         for task_name, task_details in solution.rcpsp_schedule.items():
             if task_name in ["source", "sink"]:
                 continue

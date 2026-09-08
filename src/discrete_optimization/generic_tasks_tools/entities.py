@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from typing import Generic
 
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
 
 
@@ -65,7 +66,7 @@ class SchedulingEntity(Generic[Task]):
     """
 
     @abstractmethod
-    def get_start_time(self, solution: SchedulingSolution) -> int:
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue:
         """Get the start time of this entity in the given solution.
 
         For tasks: the task's start time
@@ -85,7 +86,7 @@ class SchedulingEntity(Generic[Task]):
         ...
 
     @abstractmethod
-    def get_end_time(self, solution: SchedulingSolution) -> int:
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue:
         """Get the end time of this entity in the given solution.
 
         For tasks: the task's end time
@@ -180,15 +181,14 @@ class TaskEntity(SchedulingEntity[Task]):
 
     task: Task
 
-    def get_start_time(self, solution: SchedulingSolution) -> int:
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue:
         return solution.get_start_time(self.task)
 
-    def get_end_time(self, solution: SchedulingSolution) -> int:
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue:
         return solution.get_end_time(self.task)
 
     def is_active(self, solution: SchedulingSolution) -> bool:
-        # Task entities are always active (task is always scheduled)
-        return True
+        return solution.is_present(self.task)
 
     def get_tasks(self) -> frozenset[Task]:
         return frozenset({self.task})
@@ -233,16 +233,23 @@ class GroupEntity(SchedulingEntity[Task]):
         if len(self.tasks) == 0:
             raise ValueError("GroupEntity must contain at least one task")
 
-    def get_start_time(self, solution: SchedulingSolution) -> int:
-        return min(solution.get_start_time(task) for task in self.tasks)
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        active_tasks = [task for task in self.tasks if solution.is_present(task)]
+        if len(active_tasks) == 0:
+            return AbsentValue.ABSENT
+        else:
+            return min(solution.get_start_time(task) for task in self.tasks)
 
-    def get_end_time(self, solution: SchedulingSolution) -> int:
-        return max(solution.get_end_time(task) for task in self.tasks)
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        active_tasks = [task for task in self.tasks if solution.is_present(task)]
+        if len(active_tasks) == 0:
+            return AbsentValue.ABSENT
+        else:
+            return max(solution.get_end_time(task) for task in self.tasks)
 
     def is_active(self, solution: SchedulingSolution) -> bool:
         # Group is active if any task is scheduled
-        # (In practice, all tasks should be scheduled)
-        return True
+        return any(task for task in self.tasks if solution.is_present(task))
 
     def get_tasks(self) -> frozenset[Task]:
         return self.tasks
@@ -287,20 +294,14 @@ class TaskModeEntity(SchedulingEntity[Task]):
     task: Task
     mode: int
 
-    def get_start_time(self, solution: SchedulingSolution) -> int:
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue.ABSENT:
         if not self.is_active(solution):
-            raise ValueError(
-                f"TaskModeEntity({self.task}, mode={self.mode}) is not active in solution "
-                f"(task is in mode {solution.get_mode(self.task)})"
-            )
+            return AbsentValue.ABSENT
         return solution.get_start_time(self.task)
 
-    def get_end_time(self, solution: SchedulingSolution) -> int:
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue.ABSENT:
         if not self.is_active(solution):
-            raise ValueError(
-                f"TaskModeEntity({self.task}, mode={self.mode}) is not active in solution "
-                f"(task is in mode {solution.get_mode(self.task)})"
-            )
+            return AbsentValue.ABSENT
         return solution.get_end_time(self.task)
 
     def is_active(self, solution: SchedulingSolution) -> bool:
@@ -312,13 +313,13 @@ class TaskModeEntity(SchedulingEntity[Task]):
         if not isinstance(solution, MultimodeSolution):
             # Solution doesn't support modes
             return False
-
         try:
             actual_mode = solution.get_mode(self.task)
-            return actual_mode == self.mode
         except (KeyError, AttributeError):
             # Task doesn't have mode information
             return False
+        else:
+            return actual_mode == self.mode and solution.is_present(self.task)
 
     def get_tasks(self) -> frozenset[Task]:
         return frozenset({self.task})
@@ -380,20 +381,16 @@ class CompositeEntity(SchedulingEntity[Task]):
         if len(self.entities) == 0:
             raise ValueError("CompositeEntity must contain at least one entity")
 
-    def get_start_time(self, solution: SchedulingSolution) -> int:
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue.ABSENT:
         active_entities = [e for e in self.entities if e.is_active(solution)]
         if not active_entities:
-            raise ValueError(
-                f"CompositeEntity({self.composite_id}) has no active children in solution"
-            )
+            return AbsentValue.ABSENT
         return min(e.get_start_time(solution) for e in active_entities)
 
-    def get_end_time(self, solution: SchedulingSolution) -> int:
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue.ABSENT:
         active_entities = [e for e in self.entities if e.is_active(solution)]
         if not active_entities:
-            raise ValueError(
-                f"CompositeEntity({self.composite_id}) has no active children in solution"
-            )
+            return AbsentValue.ABSENT
         return max(e.get_end_time(solution) for e in active_entities)
 
     def is_active(self, solution: SchedulingSolution) -> bool:

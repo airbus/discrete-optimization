@@ -258,22 +258,25 @@ class CumulativeResourceSolution(
         Raises:
             NotImplementedError: If resource is not cumulative
         """
-        if self.problem.is_cumulative_resource(resource):
-            if not self.problem.is_cumulative_resource_task_mode_consumption_dependent(
-                resource, task, self.get_mode(task)
-            ):
-                return self.problem.get_cumulative_resource_consumption(
-                    resource=resource, task=task, mode=self.get_mode(task)
-                )
-            else:
-                return self.get_calendar_resource_consumption_from_mapping(
-                    resource=resource, task=task
-                )
+        if self.is_present(task):
+            if self.problem.is_cumulative_resource(resource):
+                if not self.problem.is_cumulative_resource_task_mode_consumption_dependent(
+                    resource, task, self.get_mode(task)
+                ):
+                    return self.problem.get_cumulative_resource_consumption(
+                        resource=resource, task=task, mode=self.get_mode(task)
+                    )
+                else:
+                    return self.get_calendar_resource_consumption_from_mapping(
+                        resource=resource, task=task
+                    )
 
+            else:
+                raise NotImplementedError(
+                    f"{resource} is not a cumulative resource whose consumption depends only on task mode."
+                )
         else:
-            raise NotImplementedError(
-                f"{resource} is not a cumulative resource whose consumption depends only on task mode."
-            )
+            return 0
 
 
 NoCumulativeResource = None

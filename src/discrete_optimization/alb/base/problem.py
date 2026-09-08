@@ -152,6 +152,16 @@ class BaseALBSolution(
         """
         raise NotImplementedError("Subclass must implement get_station_index()")
 
+    # AllocationSolution interface
+    def is_allocated(self, task: Task, unary_resource: Station) -> bool:
+        """Check if a task is allocated to a given station."""
+        station_idx = self.get_station_index(task)
+        return self.problem.stations[station_idx] == unary_resource
+
+    def is_present(self, task: Task) -> bool:
+        station_idx = self.get_station_index(task)
+        return 0 <= station_idx < self.problem.nb_stations
+
     def get_start_time_in_cycle(self, task: Task) -> int:
         """
         Get the start time of a task within its cycle.

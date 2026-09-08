@@ -217,7 +217,7 @@ class AllocationOptalSolver(
             for unary_resource in self.subset_unaryresources_allowed:
                 used = self.cp_model.bool_var(f"used_{unary_resource}")
                 self.used_variables[unary_resource] = used
-                list_is_present_variables = [
+                list_is_allocated_variables = [
                     is_present
                     for task in self.subset_tasks_of_interest
                     # filter out trivial 0's corresponding to incompatible (task, resource)
@@ -230,9 +230,9 @@ class AllocationOptalSolver(
                         )
                     )
                 ]
-                if len(list_is_present_variables) > 0:
+                if len(list_is_allocated_variables) > 0:
                     self.cp_model.enforce(
-                        used == self.cp_model.max(list_is_present_variables)
+                        used == self.cp_model.max(list_is_allocated_variables)
                     )
                 else:
                     self.cp_model.enforce(used == 0)
@@ -244,7 +244,7 @@ class AllocationOptalSolver(
             for task in self.subset_tasks_of_interest:
                 allocated = self.cp_model.bool_var(f"{task}_allocated")
                 self.task_allocated_variables[task] = allocated
-                list_is_present_variables = [
+                list_is_allocated_variables = [
                     is_present
                     for unary_resource in self.subset_unaryresources_allowed
                     # filter out trivial 0's corresponding to incompatible (task, resource)
@@ -257,9 +257,9 @@ class AllocationOptalSolver(
                         )
                     )
                 ]
-                if len(list_is_present_variables) > 0:
+                if len(list_is_allocated_variables) > 0:
                     self.cp_model.enforce(
-                        allocated == self.cp_model.max(list_is_present_variables)
+                        allocated == self.cp_model.max(list_is_allocated_variables)
                     )
                 else:
                     self.cp_model.enforce(allocated == 0)

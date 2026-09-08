@@ -16,7 +16,7 @@ Task = str
 
 
 class MyNonRenewableResourceProblem(
-    NonRenewableResourceProblem[Task, NonRenewableResource]
+    NonRenewableResourceProblem[Task, NonRenewableResource],
 ):
     resource_capacities = {"R0": 2, "R1": 5}
     mode_details = {
@@ -61,7 +61,7 @@ class MyNonRenewableResourceProblem(
 
 
 class MyNonRenewableResourceSolution(
-    NonRenewableResourceSolution[Task, NonRenewableResource]
+    NonRenewableResourceSolution[Task, NonRenewableResource],
 ):
     problem: MyNonRenewableResourceProblem
 

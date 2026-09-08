@@ -37,6 +37,15 @@ class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
         """
         ...
 
+    def is_present(self, task: Task) -> bool:
+        """Tell whether the task is present in the solution.
+
+        For allocation problem, default to "at least one unary resource has been allocated to the task".
+        To be overriden in child classes for problem having tasks present without allocation.
+
+        """
+        return len(self.get_task_allocation(task)) > 0
+
     def get_task_allocation(self, task: Task) -> set[UnaryResource]:
         return {
             unary_resource
@@ -53,11 +62,10 @@ class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
 
     def compute_nb_unary_resource_usages(
         self,
-        tasks: Optional[Iterable[Task]] = None,
         unary_resources: Optional[Iterable[UnaryResource]] = None,
     ):
         tasks, unary_resources = self.get_default_tasks_n_unary_resources(
-            tasks, unary_resources
+            self.get_present_tasks(), unary_resources
         )
         return sum(
             self.is_allocated(task=task, unary_resource=unary_resource)
@@ -93,7 +101,7 @@ class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
                 self.is_allocated(task=task, unary_resource=unary_resource)
                 for unary_resource in self.problem.unary_resources_list
             )
-            for task in self.problem.tasks_list
+            for task in self.get_present_tasks()
         )
 
     def compute_nb_unary_resources_used(self) -> int:
@@ -101,7 +109,7 @@ class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
         return sum(
             any(
                 self.is_allocated(task=task, unary_resource=unary_resource)
-                for task in self.problem.tasks_list
+                for task in self.get_present_tasks()
             )
             for unary_resource in self.problem.unary_resources_list
         )

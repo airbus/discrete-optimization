@@ -7,6 +7,7 @@ from typing import List, Optional
 
 import numpy as np
 
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
@@ -34,19 +35,26 @@ class WTSolution(SchedulingSolution[Task]):
     def __init__(
         self,
         problem: WeightedTardinessProblem,
-        schedule: list[tuple[int, int]] = None,
-        permutation: list[int] = None,
+        schedule: list[tuple[int | AbsentValue.ABSENT, int | AbsentValue.ABSENT]]
+        | None = None,
+        permutation: list[int] | None = None,
     ):
         super().__init__(problem=problem)
         self.schedule = schedule
         self.permutation = permutation
         self.compute_schedule_from_permutation()
 
+    def is_present(self, task: Task) -> bool:
+        return self.schedule[task][0] is not None
+
     def compute_schedule_from_permutation(self):
         if self.schedule is None:
             assert self.permutation is not None
             current_time = 0
-            schedule = [None for i in range(self.problem.num_jobs)]
+            schedule = [
+                (AbsentValue.ABSENT, AbsentValue.ABSENT)
+                for i in range(self.problem.num_jobs)
+            ]
             for j in self.permutation:
                 schedule[j] = (
                     current_time,
@@ -65,10 +73,10 @@ class WTSolution(SchedulingSolution[Task]):
     def copy(self) -> "Solution":
         return self.lazy_copy()
 
-    def get_end_time(self, task: Task) -> int:
+    def get_end_time(self, task: Task) -> int | AbsentValue:
         return self.schedule[task][1]
 
-    def get_start_time(self, task: Task) -> int:
+    def get_start_time(self, task: Task) -> int | AbsentValue:
         return self.schedule[task][0]
 
     def change_problem(self, new_problem: Problem) -> None:
@@ -108,6 +116,9 @@ class WeightedTardinessProblem(SchedulingProblem[Task]):
     @property
     def tasks_list(self) -> list[Task]:
         return list(range(self.num_jobs))
+
+    def is_optional(self, task: Task) -> bool:
+        return False
 
     def __repr__(self):
         return (

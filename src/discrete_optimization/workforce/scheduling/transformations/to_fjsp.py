@@ -231,6 +231,8 @@ class WorkforceSchedulingToFjspTransformation(
         """
         # Build FJSP schedule
         schedule = []
+        machine_index = []
+        recipe_index = []
         for task_idx, task in enumerate(solution.problem.tasks_list):
             start = int(solution.schedule[task_idx, 0])
             end = int(solution.schedule[task_idx, 1])
@@ -247,8 +249,12 @@ class WorkforceSchedulingToFjspTransformation(
                 == machine_id
             )
             # Create operation schedule
-            schedule.append([(start, end, machine_id, option)])
+            schedule.append([(start, end)])
+            machine_index.append([machine_id])
+            recipe_index.append([option])
         return FJobShopSolution(
             problem=target_problem,
             schedule=schedule,
+            machine_index=machine_index,
+            recipe_index=recipe_index,
         )

@@ -84,6 +84,10 @@ class CalendarResourceCpSatSolver(SchedulingCpSatSolver[Task], Generic[Task, Res
     ) -> list[tuple[IntervalVar, LinearExprT]]:
         """Get all intervals where a given resource is consumed by a task, and related consumption value.
 
+        To take into account optional tasks;
+        - either the resource returned should constrainted to 0 when the task is absent,
+        - or the interval should be optional with the corresponding is_present variable being 0 when the task is absent.
+
         Args:
             resource:
 

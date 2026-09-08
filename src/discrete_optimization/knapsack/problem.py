@@ -15,6 +15,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tools.do_problem import (
     MethodAggregating,
     ModeOptim,
@@ -69,10 +70,13 @@ class KnapsackSolution(AllocationSolution[Item, Knapsack]):
         self.weight = weight
         self.list_taken = list_taken
 
+    def is_present(self, task: Item) -> bool:
+        i_item = self.problem.item_to_index_list[task]
+        return self.list_taken[i_item] > 0
+
     def is_allocated(self, task: Item, unary_resource: Knapsack) -> bool:
         if unary_resource == KNAPSACK_RESOURCE:
-            i_item = self.problem.item_to_index_list[task]
-            return self.list_taken[i_item] > 0
+            return self.is_present(task)
         else:
             return False
 
@@ -141,6 +145,9 @@ class KnapsackProblem(AllocationProblem[Item, Knapsack]):
         }
         self.item_to_index_list = {item: i for i, item in enumerate(self.list_items)}
         self.force_recompute_values = force_recompute_values
+
+    def is_optional(self, task: Task) -> bool:
+        return True
 
     @property
     def unary_resources_list(self) -> list[Knapsack]:

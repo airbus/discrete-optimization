@@ -67,8 +67,10 @@ class NoOverlapSolution(SchedulingSolution[Task]):
         # Doesnt work perfectly for zero duration tasks,
         # this is more equivalent to cumulative with capacity 1.
         for tasks in self.problem.get_no_overlap():
-            min_start = min([self.get_start_time(t) for t in tasks])
-            max_end = max([self.get_end_time(t) for t in tasks])
+            # remove absent optional tasks
+            tasks = frozenset(task for task in tasks if self.is_present(task))
+            min_start = min(self.get_start_time(t) for t in tasks)
+            max_end = max(self.get_end_time(t) for t in tasks)
             cumul_use = np.zeros((max_end - min_start))
             for task in tasks:
                 st, end = self.get_start_time(task), self.get_end_time(task)
@@ -81,7 +83,7 @@ class NoOverlapSolution(SchedulingSolution[Task]):
         return True
 
     def check_forbidden_intervals(self) -> bool:
-        for task in self.problem.tasks_list:
+        for task in self.get_present_tasks():
             intervals = self.problem.get_forbidden_intervals(task)
             if len(intervals) > 0:
                 start1 = self.get_start_time(task)
@@ -110,14 +112,3 @@ def _check_intervals_intersect(start1: int, end1: int, start2: int, end2: int) -
 
     """
     return not ((end1 <= start2) or (end2 <= start1))
-
-
-class WithoutNoOverlapProblem(NoOverlapProblem[Task]):
-    """Utility mixin for problem w/o precedence constraints.
-
-    To be used has an additional mixin with generic `GenericSchedulingProblem`.
-
-    """
-
-    def get_no_overlap(self) -> set[frozenset[Task]]:
-        return set()

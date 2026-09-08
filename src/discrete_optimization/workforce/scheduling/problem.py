@@ -15,14 +15,13 @@ import numpy as np
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
     convert_calendar_to_availability_intervals,
 )
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.multimode import (
     SinglemodeSolution,
-    WithoutModeConstraintSingleModeProblem,
 )
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     SinglemodeSchedulingProblem,
@@ -91,18 +90,35 @@ class AllocSchedulingSolution(
             allocation=np.copy(self.allocation),
         )
 
-    def get_end_time(self, task: Task) -> int:
+    def get_end_time(self, task: Task) -> int | AbsentValue.ABSENT:
         i_task = self.problem.tasks_to_index[task]
-        return int(self.schedule[i_task, 1])
+        time = int(self.schedule[i_task, 1])
+        try:
+            return int(time)
+        except (TypeError, ValueError):
+            return AbsentValue.ABSENT
 
-    def get_start_time(self, task: Task) -> int:
+    def get_start_time(self, task: Task) -> int | AbsentValue.ABSENT:
         i_task = self.problem.tasks_to_index[task]
-        return int(self.schedule[i_task, 0])
+        time = self.schedule[i_task, 0]
+        try:
+            return int(time)
+        except (TypeError, ValueError):
+            return AbsentValue.ABSENT
 
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
         i_task = self.problem.tasks_to_index[task]
         i_team = self.problem.teams_to_index[unary_resource]
         return int(self.allocation[i_task]) == i_team
+
+    def is_present(self, task: Task) -> bool:
+        i_task = self.problem.tasks_to_index[task]
+        i_team_tmp = self.allocation[i_task]
+        try:
+            i_team = int(i_team_tmp)
+        except (TypeError, ValueError):
+            return False
+        return super().is_present(task) and 0 <= i_team < self.problem.number_teams
 
 
 class TasksDescription:
@@ -124,7 +140,6 @@ class AllocSchedulingProblem(
     WithoutSkillProblem[Task, UnaryResource, NonSkillCumulativeResource, UnaryResource],
     WithoutNonRenewableResourceProblem[Task],
     SinglemodeSchedulingProblem[Task],
-    WithoutModeConstraintSingleModeProblem[Task],
 ):
     def __init__(
         self,
@@ -187,6 +202,9 @@ class AllocSchedulingProblem(
     def get_same_unary_allocation(self) -> list[set[Task]]:
         """Overridden from base AllocationProblem class"""
         return self.same_allocation
+
+    def is_optional(self, task: Task) -> bool:
+        return False
 
     @property
     def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:

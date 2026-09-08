@@ -119,7 +119,7 @@ class GreedyBinPackSolver(SolverDO):
         item_indices = self._sort_items(sorting_strategy)
 
         # Initialize data structures
-        allocation = [None] * nb_items
+        allocation = [-1] * nb_items
         bin_weights = []
         bin_items = []
 

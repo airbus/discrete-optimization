@@ -11,7 +11,7 @@ from typing import Any, Generic
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
 from discrete_optimization.generic_tasks_tools.skill import Skill
 
 
@@ -19,9 +19,10 @@ from discrete_optimization.generic_tasks_tools.skill import Skill
 class TaskVariable(Generic[UnaryResource, Skill]):
     """Task characteristics found in a generic scheduling solution."""
 
-    start: int  # start time of the task
-    end: int  # end time of the task
-    mode: int  # chosen mode for the task
+    start: int | AbsentValue  # start time of the task
+    end: int | AbsentValue  # end time of the task
+    mode: int | AbsentValue  # chosen mode for the task
+    is_present: bool = True
     allocated: dict[UnaryResource, set[Skill]] = field(
         default_factory=dict
     )  # resources allocated to the task
@@ -29,7 +30,14 @@ class TaskVariable(Generic[UnaryResource, Skill]):
         default_factory=dict
     )  # additional information if needed
 
-    def get_start_or_end(self, start_or_end: StartOrEnd) -> int:
+    def __post_init__(self):
+        assert self.is_present == (
+            not isinstance(self.start, AbsentValue)
+            and not isinstance(self.end, AbsentValue)
+            and not isinstance(self.mode, AbsentValue)
+        )
+
+    def get_start_or_end(self, start_or_end: StartOrEnd) -> int | AbsentValue:
         if start_or_end == StartOrEnd.START:
             return self.start
         else:

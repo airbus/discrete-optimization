@@ -12,6 +12,7 @@ from discrete_optimization.datasets import get_data_home
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.solution import RcpspSolution, TaskDetails
+from discrete_optimization.rcpsp.utils import TOO_BIG_TIME
 
 files_rcpsp = get_data_available()
 single_modes_files = [f for f in files_rcpsp if "sm" in f]
@@ -73,7 +74,7 @@ def test_unfeasible_modes_solution():
     assert not rcpsp_problem.satisfy(rcpsp_sol)
     evaluation = rcpsp_problem.evaluate(rcpsp_sol)
     assert evaluation == {
-        "makespan": 99999999,
+        "makespan": TOO_BIG_TIME,
         "mean_resource_reserve": 0,
         "constraint_penalty": 0.0,
     }

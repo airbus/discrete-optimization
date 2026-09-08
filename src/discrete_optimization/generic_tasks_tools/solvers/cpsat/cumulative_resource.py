@@ -122,16 +122,12 @@ class CumulativeResourceSchedulingCpSatSolver(
                         )
                         for m in self.problem.get_task_modes(task)
                     }
-                    mode2var = {
-                        m: self.get_task_mode_is_present_variable(task=task, mode=m)
-                        for m in self.problem.get_task_modes(task)
-                    }
                     self.demands_cumulative_resource_vars[task, resource] = (
                         create_variable_function_of_mode_on_solver(
                             solver=self,
                             name=f"conso_{task}_{resource}",
                             mode2value=mode2value,
-                            mode2var=mode2var,
+                            task=task,
                             modeling=self.demand_cumulative_modeling,
                         )
                     )

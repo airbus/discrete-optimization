@@ -80,12 +80,15 @@ class PrecedenceSolution(TasksSolution[Task]):
 
         """
         for task1, successors in self.problem.get_precedence_constraints().items():
-            for task2 in successors:
-                if not self.check_tasks_order(task1, task2):
-                    logger.debug(
-                        f"Precedence relationship broken: {task1} ends after {task2} starts."
-                    )
-                    return False
+            if self.is_present(task1):
+                for task2 in successors:
+                    if self.is_present(task2) and not self.check_tasks_order(
+                        task1, task2
+                    ):
+                        logger.debug(
+                            f"Precedence relationship broken: {task1} ends after {task2} starts."
+                        )
+                        return False
 
         return True
 
