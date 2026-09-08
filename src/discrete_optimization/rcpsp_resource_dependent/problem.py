@@ -19,6 +19,7 @@ from discrete_optimization.generic_tasks_tools.calendar_resource import (
 )
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     CumulativeResource,
+    OtherCalendarResource,
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
@@ -27,6 +28,10 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
+)
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    WithoutResourceBlockingProblem,
+    WithoutResourceBlockingSolution,
 )
 from discrete_optimization.generic_tasks_tools.skill import (
     NonSkillCumulativeResource,
@@ -53,6 +58,7 @@ class RcpspResourceDependentSolution(
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
     WithoutAllocationSolution[Task],
+    WithoutResourceBlockingSolution[Task, CumulativeResource, OtherCalendarResource],
 ):
     def get_end_time(self, task: Task) -> int:
         return self.schedule[task][1]
@@ -90,6 +96,7 @@ class RcpspResourceDependentProblem(
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
     WithoutAllocationProblem[Task],
+    WithoutResourceBlockingProblem[Task, CumulativeResource, OtherCalendarResource],
 ):
     """RCPSP with resource-dependent consumption.
 
