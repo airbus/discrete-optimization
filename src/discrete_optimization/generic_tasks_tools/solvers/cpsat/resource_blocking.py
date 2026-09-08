@@ -4,10 +4,11 @@
 
 from typing import Any, Generic
 
-from ortools.sat.python.cp_model import IntervalVar, IntVar
+from ortools.sat.python.cp_model import IntervalVar, IntVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.entities import (
+    CompositeEntity,
     GroupEntity,
     SchedulingEntity,
     TaskEntity,
@@ -66,6 +67,7 @@ class ResourceBlockingCpSatSolver(
             CumulativeResource,
             list[tuple[IntervalVar, int, BlockingConstraintMetadata]],
         ] = {}
+        self._entity_active: dict[SchedulingEntity[Task], LinearExprT] = {}
 
     def constrain_group_entity_times(self, entity: GroupEntity) -> None:
         """Add constraints for group entity start/end times.
@@ -179,7 +181,7 @@ class ResourceBlockingCpSatSolver(
         self._starts_entity = {}
         self._ends_entity = {}
         self._durations_entity = {}
-        self._intervals_entity = {}
+        self._intervals_entity: dict[SchedulingEntity[Task], IntervalVar] = {}
         all_entities = []
         for (
             entity_1,
@@ -248,12 +250,82 @@ class ResourceBlockingCpSatSolver(
                         ub=max(0, max_ub_end - min_lb_start),
                         name=f"duration_{entity.tasks}",
                     )
-                    self._intervals_entity[entity] = self.cp_model.NewIntervalVar(
-                        start=self._starts_entity[entity],
-                        end=self._ends_entity[entity],
-                        size=self._durations_entity[entity],
-                        name=f"interval_{entity.tasks}",
+                    is_present = self._get_entity_is_active_var(entity)
+                    if isinstance(is_present, int) and is_present == 1:
+                        self._intervals_entity[entity] = self.cp_model.NewIntervalVar(
+                            start=self._starts_entity[entity],
+                            end=self._ends_entity[entity],
+                            size=self._durations_entity[entity],
+                            name=f"interval_{entity.tasks}",
+                        )
+                    else:
+                        self._intervals_entity[entity] = (
+                            self.cp_model.new_optional_interval_var(
+                                start=self._starts_entity[entity],
+                                end=self._ends_entity[entity],
+                                size=self._durations_entity[entity],
+                                is_present=is_present,
+                                name=f"interval_{entity.tasks}",
+                            )
+                        )
+
+    def _get_entity_is_active_var(self, entity: SchedulingEntity[Task]) -> LinearExprT:
+        if entity not in self._entity_active:
+            match entity:
+                case TaskEntity():
+                    if self.problem.is_optional(entity.task):
+                        self._entity_active[entity] = self.get_task_is_present_variable(
+                            task=entity.task
+                        )
+                    else:
+                        self._entity_active[entity] = 1
+                case GroupEntity():
+                    optional_tasks_in_group = [
+                        task for task in entity.tasks if self.problem.is_optional(task)
+                    ]
+                    if len(optional_tasks_in_group) > 0:
+                        # active if at least one task is active
+                        var = self.cp_model.new_bool_var(
+                            name=f"is_active_{entity.entity_id}"
+                        )
+                        self.cp_model.add_max_equality(var, optional_tasks_in_group)
+                        self._entity_active[entity] = var
+                    else:
+                        self._entity_active[entity] = 1
+                case TaskModeEntity():
+                    self._entity_active[entity] = (
+                        self.get_task_mode_is_present_variable(
+                            task=entity.task, mode=entity.mode
+                        )
                     )
+                case CompositeEntity():
+                    is_active_subentity_list = [
+                        is_active_subentity
+                        for subentity in entity.entities
+                        # discard always active subentities
+                        if not (
+                            isinstance(
+                                (
+                                    is_active_subentity
+                                    := self._get_entity_is_active_var(subentity)
+                                ),
+                                int,
+                            )
+                            and is_active_subentity == 1
+                        )
+                    ]
+                    if len(is_active_subentity_list) > 0:
+                        # active if at least one subentity is active
+                        var = self.cp_model.new_bool_var(
+                            name=f"is_active_{entity.entity_id}"
+                        )
+                        self.cp_model.add_max_equality(var, is_active_subentity_list)
+                        self._entity_active[entity] = var
+                    else:
+                        self._entity_active[entity] = 1
+                case _:
+                    raise NotImplementedError()
+        return self._entity_active[entity]
 
     def create_flexible_gap_blocking_intervals(self) -> None:
         """Create interval variables for flexible gap blocking constraints.
@@ -306,23 +378,30 @@ class ResourceBlockingCpSatSolver(
                 is_present=gap_is_present,
                 name=f"blocking_gap_{entity1.entity_id}_{ref1}_to_{entity2.entity_id}_{ref2}",
             )
-            if not isinstance(entity1, TaskModeEntity) and not isinstance(
-                entity2, TaskModeEntity
-            ):
-                self.cp_model.Add(gap_is_present == 1)
-
-            # For TaskModeEntity, only block when task is in the specified mode
-            if isinstance(entity1, TaskModeEntity):
-                mode_present = self.get_task_mode_is_present_variable(
-                    task=entity1.task, mode=entity1.mode
+            is_active_entity_list = [
+                is_active_entity
+                for entity in (entity1, entity2)
+                # discard always active entities
+                if not (
+                    isinstance(
+                        (is_active_entity := self._get_entity_is_active_var(entity)),
+                        int,
+                    )
+                    and is_active_entity == 1
                 )
-                self.cp_model.AddImplication(mode_present, gap_is_present)
-
-            if isinstance(entity2, TaskModeEntity):
-                mode_present = self.get_task_mode_is_present_variable(
-                    task=entity2.task, mode=entity2.mode
+            ]
+            if len(is_active_entity_list) > 0:
+                # gap present <=> all entities are active
+                self.cp_model.add(gap_is_present == 1).only_enforce_if(
+                    *is_active_entity_list
                 )
-                self.cp_model.AddImplication(mode_present, gap_is_present)
+                self.cp_model.add(gap_is_present == 0).only_enforce_if(
+                    sum(~is_active_var for is_active_var in is_active_entity_list) >= 1
+                )
+            else:
+                # both entities always active
+                self.cp_model.add(gap_is_present == 1)
+
             # Store blocking intervals per resource with metadata and involved tasks
             for resource, demand in resources.items():
                 if resource not in self._blocking_intervals:

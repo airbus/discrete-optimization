@@ -503,7 +503,7 @@ class ResourceBlockingSolution(
         """
         consumption = np.zeros(horizon, dtype=int)
 
-        for task in self.problem.tasks_list:
+        for task in self.get_present_tasks():
             start = self.get_start_time(task)
             end = self.get_end_time(task)
             mode = self.get_mode(task)

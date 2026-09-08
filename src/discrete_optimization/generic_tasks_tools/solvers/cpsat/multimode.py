@@ -13,13 +13,20 @@ from discrete_optimization.generic_tasks_tools.multimode import (
     MultimodeCpSolver,
     SinglemodeProblem,
 )
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
+)
 
 
-class MultimodeCpSatSolver(OrtoolsCpSatSolver, MultimodeCpSolver[Task]):
+class MultimodeCpSatSolver(TasksCpSatSolver[Task], MultimodeCpSolver[Task]):
     @abstractmethod
     def get_task_mode_is_present_variable(self, task: Task, mode: int) -> LinearExprT:
         """Retrieve the 0-1 variable/expression telling if the mode is used for the task.
+
+        The variable value should be 0 when the task is optional and absent.
+        For instance via a constraint like
+        `cp_model.add(task_mode_is_present = 0).only_enforce_if(~task_is_present)`.
+
 
         Args:
             task:

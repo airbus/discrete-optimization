@@ -333,49 +333,81 @@ class TimelagSolution(SchedulingSolution[Task], Generic[Task]):
     def check_time_lags(self) -> bool:
         """check whether time lags are respected."""
         for task1, task2, offset in self.problem.get_start_to_start_min_time_lags():
-            if self.get_start_time(task2) < self.get_start_time(task1) + offset:
+            if (
+                self.is_present(task1)
+                and self.is_present(task2)
+                and self.get_start_time(task2) < self.get_start_time(task1) + offset
+            ):
                 logger.debug(
                     f"Min time lag ({offset}) not respected between {task1} start and {task2} start."
                 )
                 return False
         for task1, task2, offset in self.problem.get_start_to_start_max_time_lags():
-            if self.get_start_time(task2) > self.get_start_time(task1) + offset:
+            if (
+                self.is_present(task1)
+                and self.is_present(task2)
+                and self.get_start_time(task2) > self.get_start_time(task1) + offset
+            ):
                 logger.debug(
                     f"Max time lag ({offset}) not respected between {task1} start and {task2} start."
                 )
                 return False
         for task1, task2, offset in self.problem.get_end_to_start_min_time_lags():
-            if self.get_start_time(task2) < self.get_end_time(task1) + offset:
+            if (
+                self.is_present(task1)
+                and self.is_present(task2)
+                and self.get_start_time(task2) < self.get_end_time(task1) + offset
+            ):
                 logger.debug(
                     f"Min time lag ({offset}) not respected between {task1} end and {task2} start."
                 )
                 return False
         for task1, task2, offset in self.problem.get_end_to_start_max_time_lags():
-            if self.get_start_time(task2) > self.get_end_time(task1) + offset:
+            if (
+                self.is_present(task1)
+                and self.is_present(task2)
+                and self.get_start_time(task2) > self.get_end_time(task1) + offset
+            ):
                 logger.debug(
                     f"Max time lag ({offset}) not respected between {task1} end and {task2} start."
                 )
                 return False
         for task1, task2, offset in self.problem.get_end_to_end_min_time_lags():
-            if self.get_end_time(task2) < self.get_end_time(task1) + offset:
+            if (
+                self.is_present(task1)
+                and self.is_present(task2)
+                and self.get_end_time(task2) < self.get_end_time(task1) + offset
+            ):
                 logger.debug(
                     f"Min time lag ({offset}) not respected between {task1} end and {task2} end."
                 )
                 return False
         for task1, task2, offset in self.problem.get_end_to_end_max_time_lags():
-            if self.get_end_time(task2) > self.get_end_time(task1) + offset:
+            if (
+                self.is_present(task1)
+                and self.is_present(task2)
+                and self.get_end_time(task2) > self.get_end_time(task1) + offset
+            ):
                 logger.debug(
                     f"Max time lag ({offset}) not respected between {task1} end and {task2} end."
                 )
                 return False
         for task1, task2, offset in self.problem.get_start_to_end_min_time_lags():
-            if self.get_end_time(task2) < self.get_start_time(task1) + offset:
+            if (
+                self.is_present(task1)
+                and self.is_present(task2)
+                and self.get_end_time(task2) < self.get_start_time(task1) + offset
+            ):
                 logger.debug(
                     f"Min time lag ({offset}) not respected between {task1} start and {task2} end."
                 )
                 return False
         for task1, task2, offset in self.problem.get_start_to_end_max_time_lags():
-            if self.get_end_time(task2) > self.get_start_time(task1) + offset:
+            if (
+                self.is_present(task1)
+                and self.is_present(task2)
+                and self.get_end_time(task2) > self.get_start_time(task1) + offset
+            ):
                 logger.debug(
                     f"Max time lag ({offset}) not respected between {task1} start and {task2} end."
                 )

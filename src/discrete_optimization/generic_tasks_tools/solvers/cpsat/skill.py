@@ -55,7 +55,13 @@ class SkillSchedulingCpSatSolver(
     def get_skill_variable(
         self, task: Task, unary_resource: UnaryResource, skill: Skill
     ) -> LinearExprT:
-        """Get skill boolean variable telling if given skill is used by given unary resource for given task."""
+        """Get skill boolean variable telling if given skill is used by given unary resource for given task.
+
+        This variable should be 0 whenever an optional task is absent.
+        For instance via a constraint like
+        `cp_model.add(task_unary_resource_skill_used = 0).only_enforce_if(~task_is_present)`.
+
+        """
         ...
 
     def create_fine_skill_constraints(self):

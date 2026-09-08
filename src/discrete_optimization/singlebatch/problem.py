@@ -79,6 +79,9 @@ class BatchProcessingSolution(SchedulingSolution[Task]):
 class SingleBatchProcessingProblem(SchedulingProblem[Task]):
     """The Single Batch-Processing Machine Scheduling Problem."""
 
+    def is_optional(self, task: Task) -> bool:
+        return False
+
     def get_makespan_upper_bound(self) -> int:
         return sum([j.processing_time for j in self.jobs])
 

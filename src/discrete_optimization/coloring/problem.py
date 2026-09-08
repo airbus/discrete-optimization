@@ -19,6 +19,9 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.base import (
+    Task,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -172,6 +175,10 @@ class ColoringSolution(AllocationSolution[Node, Color]):
     def is_allocated(self, task: Node, unary_resource: Color) -> bool:
         i_task = self.problem.index_nodes_name[task]
         return self.colors[i_task] == unary_resource
+
+    def is_present(self, task: Task) -> bool:
+        i_task = self.problem.index_nodes_name[task]
+        return 0 <= self.colors[i_task] < self.problem.number_of_nodes
 
 
 def transform_color_values_to_value_precede(color_vector: list[int]) -> list[int]:

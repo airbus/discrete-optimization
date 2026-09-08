@@ -15,7 +15,11 @@ from discrete_optimization.generic_tasks_tools.calendar_resource import (
     convert_availability_intervals_to_calendar,
     convert_calendar_to_availability_intervals,
 )
-from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import (
+    AbsentValue,
+    MinOrMax,
+    StartOrEnd,
+)
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -193,6 +197,7 @@ class GenericSchedulingImplProblem(
         default_factory=dict
     )
     compute_time_penalty: bool = True
+    optional_tasks: set[Task] = field(default_factory=set)
 
     def __post_init__(self, objective: Objective | Iterable[tuple[Objective, int]]):
         if isinstance(objective, Objective):
@@ -212,7 +217,6 @@ class GenericSchedulingImplProblem(
         )
         self._non_renewable_resources_list = list(self.non_renewable_resources)
         self._unary_resources_list = list(self.unary_resources)
-
         self.check_resources_lists()
         self.update_tasks_list()
         self.update_skills()
@@ -442,6 +446,9 @@ class GenericSchedulingImplProblem(
     def tasks_list(self) -> list[Task]:
         return self._tasks_list
 
+    def is_optional(self, task: Task) -> bool:
+        return task in self.optional_tasks
+
     def get_solution_type(self) -> type[Solution]:
         return GenericSchedulingImplSolution
 
@@ -540,7 +547,11 @@ class GenericSchedulingImplProblem(
         - Transform no_overlap constraints into forbidden intervals constraints
 
         """
-        scheduled_tasks = partial_solution.task_variables
+        scheduled_tasks = {
+            task: task_variable
+            for task, task_variable in partial_solution.task_variables.items()
+            if task_variable.is_present
+        }
 
         # restrict tasks list
         new_tasks_list = [
@@ -784,19 +795,34 @@ class GenericSchedulingImplSolution(
         except KeyError:
             return False
 
-    def get_end_time(self, task: Task) -> int:
+    def get_end_time(self, task: Task) -> int | AbsentValue:
+        if task not in self.raw_sol.task_variables:
+            return AbsentValue.ABSENT
         return self.raw_sol.task_variables[task].end
 
-    def get_start_time(self, task: Task) -> int:
+    def get_start_time(self, task: Task) -> int | AbsentValue:
+        if task not in self.raw_sol.task_variables:
+            return AbsentValue.ABSENT
         return self.raw_sol.task_variables[task].start
 
-    def get_mode(self, task: Task) -> int:
+    def get_mode(self, task: Task) -> int | AbsentValue:
+        if task not in self.raw_sol.task_variables:
+            return AbsentValue.ABSENT
         return self.raw_sol.task_variables[task].mode
 
+    def is_present(self, task: Task) -> bool:
+        if task not in self.raw_sol.task_variables:
+            return False
+        return self.raw_sol.task_variables[task].is_present
+
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
+        if task not in self.raw_sol.task_variables:
+            return False
         return unary_resource in self.raw_sol.task_variables[task].allocated
 
     def get_task_allocation(self, task: Task) -> set[UnaryResource]:
+        if task not in self.raw_sol.task_variables:
+            return set()
         return set(self.raw_sol.task_variables[task].allocated)
 
     def copy(self) -> Solution:

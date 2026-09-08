@@ -11,6 +11,7 @@ from discrete_optimization.generic_tasks_tools.entities import (
     TaskEntity,
     TaskModeEntity,
 )
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolution
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
 
@@ -34,7 +35,10 @@ class MockTask:
         return f"Task({self.id})"
 
 
-class MockSchedulingSolution(SchedulingSolution):
+Task = MockTask
+
+
+class MockSchedulingSolution(SchedulingSolution[Task]):
     """Mock solution for testing entity queries."""
 
     def __init__(self, task_times, task_modes=None):
@@ -59,7 +63,7 @@ class MockSchedulingSolution(SchedulingSolution):
         )
 
 
-class MockMultimodeSolution(MultimodeSolution):
+class MockMultimodeSolution(MultimodeSolution[Task]):
     """Mock multimode solution for testing mode-aware entities."""
 
     def __init__(self, task_times, task_modes):
@@ -191,12 +195,9 @@ def test_task_mode_entity_inactive():
     # Entity is inactive
     assert not entity.is_active(solution)
 
-    # Querying times should raise
-    with pytest.raises(ValueError, match="not active"):
-        entity.get_start_time(solution)
-
-    with pytest.raises(ValueError, match="not active"):
-        entity.get_end_time(solution)
+    # Querying times should return absent value
+    assert entity.get_start_time(solution) is AbsentValue.ABSENT
+    assert entity.get_end_time(solution) is AbsentValue.ABSENT
 
 
 def test_task_mode_entity_no_mode_support():
@@ -348,12 +349,9 @@ def test_composite_entity_all_inactive():
     # All children inactive -> composite is inactive
     assert not composite.is_active(solution)
 
-    # Querying times should raise
-    with pytest.raises(ValueError, match="no active children"):
-        composite.get_start_time(solution)
-
-    with pytest.raises(ValueError, match="no active children"):
-        composite.get_end_time(solution)
+    # Querying times should return absent value
+    assert composite.get_start_time(solution) is AbsentValue.ABSENT
+    assert composite.get_end_time(solution) is AbsentValue.ABSENT
 
 
 def test_composite_entity_empty_raises():

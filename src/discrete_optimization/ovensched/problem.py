@@ -11,6 +11,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
@@ -48,7 +49,8 @@ class ScheduleInfo:
 
 
 class OvenSchedulingSolution(
-    SchedulingSolution[Task], AllocationSolution[Task, UnaryResource]
+    SchedulingSolution[Task],
+    AllocationSolution[Task, UnaryResource],
 ):
     """
     Represents a solution to the Oven Scheduling Problem.
@@ -77,11 +79,17 @@ class OvenSchedulingSolution(
         """Creates a deep copy of the solution."""
         return OvenSchedulingSolution(self.problem, deepcopy(self.schedule_per_machine))
 
-    def get_end_time(self, task: Task) -> int:
-        return self.schedule_per_task[task][1]
+    def get_end_time(self, task: Task) -> int | AbsentValue:
+        if self.is_present(task):
+            return self.schedule_per_task[task][1]
+        else:
+            return AbsentValue.ABSENT
 
-    def get_start_time(self, task: Task) -> int:
-        return self.schedule_per_task[task][0]
+    def get_start_time(self, task: Task) -> int | AbsentValue:
+        if self.is_present(task):
+            return self.schedule_per_task[task][0]
+        else:
+            return AbsentValue.ABSENT
 
     def get_summary_string(self) -> str:
         """Generate a human-readable summary of the solution.
@@ -171,6 +179,9 @@ class OvenSchedulingSolution(
             for m in range(self.problem.n_machines)
         )
 
+    def is_present(self, task: Task) -> bool:
+        return task in self.schedule_per_task
+
 
 @dataclass
 class TaskData:
@@ -191,7 +202,8 @@ class MachineData:
 
 
 class OvenSchedulingProblem(
-    SchedulingProblem[Task], AllocationProblem[Task, UnaryResource]
+    SchedulingProblem[Task],
+    AllocationProblem[Task, UnaryResource],
 ):
     """Defines an instance of the Oven Scheduling Problem (OSP) and its evaluation logic."""
 

@@ -182,6 +182,11 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
         self.cp_model = CpModel()
 
     def add_bound_constraint(self, var: Any, sign: SignEnum, value: int) -> list[Any]:
+        return [self.add_bound_constraint_cpsat(var=var, sign=sign, value=value)]
+
+    def add_bound_constraint_cpsat(
+        self, var: Any, sign: SignEnum, value: int
+    ) -> Constraint:
         if sign == SignEnum.LEQ:
             cstr_tmp = var <= value
         elif sign == SignEnum.UEQ:
@@ -194,8 +199,7 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
             cstr_tmp = var > value
         else:
             raise NotImplementedError(sign)
-        cstr = self.cp_model.add(cstr_tmp)
-        return [cstr]
+        return self.cp_model.add(cstr_tmp)
 
     def minimize_variable(self, var: Any) -> None:
         self.cp_model.minimize(var)

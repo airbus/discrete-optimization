@@ -242,8 +242,8 @@ class SgsWithoutArray:
             last_act_id = rcpsp_problem.sink_task
             if last_act_id not in rcpsp_schedule:
                 rcpsp_schedule[last_act_id] = {}
-                rcpsp_schedule[last_act_id]["start_time"] = 99999999
-                rcpsp_schedule[last_act_id]["end_time"] = 9999999
+                rcpsp_schedule[last_act_id]["start_time"] = TOO_BIG_TIME
+                rcpsp_schedule[last_act_id]["end_time"] = TOO_BIG_TIME
         else:
             rcpsp_schedule_feasible = True
         return rcpsp_schedule, rcpsp_schedule_feasible, resource_avail_in_time

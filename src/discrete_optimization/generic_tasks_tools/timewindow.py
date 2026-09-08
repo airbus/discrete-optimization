@@ -101,7 +101,7 @@ class TimewindowSolution(SchedulingSolution[Task], Generic[Task]):
 
     def check_time_windows(self) -> bool:
         """check whether time windows are respected."""
-        for task in self.problem.tasks_list:
+        for task in self.get_present_tasks():
             start = self.get_start_time(task)
             if start < self.problem.get_task_start_or_end_lower_bound(
                 task=task, start_or_end=StartOrEnd.START

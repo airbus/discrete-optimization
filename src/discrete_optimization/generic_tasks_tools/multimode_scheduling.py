@@ -62,7 +62,7 @@ class SinglemodeSchedulingProblem(
 
     @abstractmethod
     def get_task_duration(self, task: Task) -> int:
-        """Get task duration according to mode.
+        """Get task duration.
 
         Args:
             task:
@@ -93,10 +93,10 @@ class MultimodeSchedulingSolution(
     def check_duration_constraints(self) -> bool:
         check = all(
             self.check_task_duration_constraint(task=task)
-            for task in self.problem.tasks_list
+            for task in self.get_present_tasks()
         )
         if not check:
-            for task in self.problem.tasks_list:
+            for task in self.get_present_tasks():
                 if not self.check_task_duration_constraint(task=task):
                     logger.debug(
                         f"Duration of task {task} not consistent with the mode choice."

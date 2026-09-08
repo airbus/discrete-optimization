@@ -122,9 +122,10 @@ class BinpackToGenericSchedulingTransformation(
         """
         # Extract bin assignment from start times
         # Tasks scheduled at time t are assigned to bin t
-        allocation = [0] * source_problem.nb_items
+        allocation = [-1] * source_problem.nb_items
 
         for i, item in enumerate(source_problem.list_items):
             task_name = f"item_{item.index}"
-            allocation[i] = solution.get_start_time(i)
+            if solution.is_present(i):
+                allocation[i] = solution.get_start_time(i)
         return BinPackSolution(problem=source_problem, allocation=allocation)

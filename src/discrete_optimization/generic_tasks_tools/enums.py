@@ -21,3 +21,7 @@ class MinOrMax(Enum):
             return MinOrMax.MAX
         else:
             return MinOrMax.MIN
+
+
+class AbsentValue(Enum):
+    ABSENT = "absent"

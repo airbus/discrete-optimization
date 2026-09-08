@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict
 
 from ortools.math_opt.python import mathopt
 
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.lp_tools import (
     GurobiMilpSolver,
@@ -129,7 +130,10 @@ class _BaseLpSingleMachineSolver(MilpSolver):
             A WTSolution object representing the schedule.
             :param **kwargs:
         """
-        schedule = [() for _ in range(self.problem.num_jobs)]
+        schedule = [
+            (AbsentValue.ABSENT, AbsentValue.ABSENT)
+            for _ in range(self.problem.num_jobs)
+        ]
         for i in range(self.problem.num_jobs):
             completion_time = get_var_value_for_current_solution(self.variables["c"][i])
             start_time = completion_time - self.problem.processing_times[i]

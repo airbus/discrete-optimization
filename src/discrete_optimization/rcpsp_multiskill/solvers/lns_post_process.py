@@ -431,8 +431,6 @@ def shift_left_method(
     duration_done = {t: 0 for t in problem.tasks_list}
 
     new_proposed_schedule = {}
-    task_that_be_shifted_left = []
-    new_proposed_schedule = {}
     resource_avail_in_time = {}
     modes_dict = solution.modes
     new_horizon = min(solution.get_end_time(problem.sink_task), problem.horizon)

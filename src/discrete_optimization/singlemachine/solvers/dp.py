@@ -6,6 +6,7 @@ from typing import Any, Optional
 
 import didppy as dp
 
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
     Solution,
@@ -115,7 +116,10 @@ class DpWTSolver(DpSolver, WarmstartMixin):
         self.model = model
 
     def retrieve_solution(self, sol: dp.Solution) -> Solution:
-        schedule = [None for i in range(self.problem.num_jobs)]
+        schedule = [
+            (AbsentValue.ABSENT, AbsentValue.ABSENT)
+            for i in range(self.problem.num_jobs)
+        ]
         state = self.model.target_state
         for t in sol.transitions:
             current_time = self.variables["current_time"].eval(state, self.model)

@@ -17,6 +17,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
     WithoutAllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
 )
@@ -25,6 +26,7 @@ from discrete_optimization.generic_tasks_tools.skill import (
     WithoutSkillSolution,
 )
 from discrete_optimization.generic_tools.do_problem import RobustProblem
+from discrete_optimization.rcpsp.utils import TOO_BIG_TIME
 
 if TYPE_CHECKING:  # avoid circular imports due to annotations
     from discrete_optimization.rcpsp.problem import RcpspProblem
@@ -276,7 +278,8 @@ class RcpspSolution(
         sorted_task = [
             self.problem.index_task_non_dummy[i]
             for i in sorted(
-                self.rcpsp_schedule, key=lambda x: self.rcpsp_schedule[x]["start_time"]
+                [t for t in self.problem.tasks_list if self.is_present(t)],
+                key=lambda x: self.rcpsp_schedule[x]["start_time"],
             )
             if i in self.problem.index_task_non_dummy
         ]
@@ -348,8 +351,8 @@ class RcpspSolution(
                     }
                 if self.problem.sink_task not in self.rcpsp_schedule:
                     self.rcpsp_schedule[self.problem.sink_task] = {
-                        "start_time": 99999999,
-                        "end_time": 99999999,
+                        "start_time": TOO_BIG_TIME,
+                        "end_time": TOO_BIG_TIME,
                     }
             else:
                 (
@@ -416,8 +419,8 @@ class RcpspSolution(
                 }
             if self.problem.sink_task not in self.rcpsp_schedule:
                 self.rcpsp_schedule[self.problem.sink_task] = {
-                    "start_time": 999999999,
-                    "end_time": 999999999,
+                    "start_time": TOO_BIG_TIME,
+                    "end_time": TOO_BIG_TIME,
                 }
             self.rcpsp_schedule_feasible = not unfeasible
             self._schedule_to_recompute = False
@@ -449,20 +452,35 @@ class RcpspSolution(
     def get_max_end_time(self) -> int:
         return self.rcpsp_schedule[self.problem.sink_task]["end_time"]
 
-    def get_start_time(self, task: Hashable) -> int:
-        return self.rcpsp_schedule[task]["start_time"]
+    def get_start_time(self, task: Hashable) -> int | AbsentValue:
+        if task in self.rcpsp_schedule:
+            time = self.rcpsp_schedule[task]["start_time"]
+            if time != TOO_BIG_TIME:
+                return time
+            else:
+                return AbsentValue.ABSENT
+        return AbsentValue.ABSENT
 
-    def get_end_time(self, task: Hashable) -> int:
-        return self.rcpsp_schedule[task]["end_time"]
+    def get_end_time(self, task: Hashable) -> int | AbsentValue:
+        if task in self.rcpsp_schedule:
+            time = self.rcpsp_schedule[task]["end_time"]
+            if time != TOO_BIG_TIME:
+                return time
+            else:
+                return AbsentValue.ABSENT
+        return AbsentValue.ABSENT
 
-    def get_start_times_list(self, task: Hashable) -> list[int]:
+    def get_start_times_list(self, task: Hashable) -> list[int | AbsentValue]:
         return [self.get_start_time(task)]
 
-    def get_end_times_list(self, task: Hashable) -> list[int]:
+    def get_end_times_list(self, task: Hashable) -> list[int | AbsentValue]:
         return [self.get_end_time(task)]
 
     def get_active_time(self, task: Hashable) -> list[int]:
-        return list(range(self.get_start_time(task), self.get_end_time(task)))
+        if self.is_present(task):
+            return list(range(self.get_start_time(task), self.get_end_time(task)))
+        else:
+            return []
 
     def get_mode(self, task: Hashable) -> int:
         if task in (self.problem.source_task, self.problem.sink_task):
@@ -914,8 +932,8 @@ def generate_schedule_from_permutation_iterative_sgs_unblocking(
         # Add dummy end task if missing
         if rcpsp_problem.sink_task not in rcpsp_schedule:
             rcpsp_schedule[rcpsp_problem.sink_task] = {
-                "start_time": 99999999,
-                "end_time": 99999999,
+                "start_time": TOO_BIG_TIME,
+                "end_time": TOO_BIG_TIME,
             }
     else:
         rcpsp_schedule_feasible = True
@@ -1040,8 +1058,8 @@ def generate_schedule_from_permutation_serial_sgs(
         last_act_id = rcpsp_problem.sink_task
         if last_act_id not in rcpsp_schedule:
             rcpsp_schedule[last_act_id] = {}
-            rcpsp_schedule[last_act_id]["start_time"] = 99999999
-            rcpsp_schedule[last_act_id]["end_time"] = 9999999
+            rcpsp_schedule[last_act_id]["start_time"] = TOO_BIG_TIME
+            rcpsp_schedule[last_act_id]["end_time"] = TOO_BIG_TIME
     else:
         rcpsp_schedule_feasible = True
     return rcpsp_schedule, rcpsp_schedule_feasible
@@ -1267,8 +1285,8 @@ def generate_schedule_from_permutation_serial_sgs_special_constraints(
         last_act_id = rcpsp_problem.sink_task
         if last_act_id not in rcpsp_schedule:
             rcpsp_schedule[last_act_id] = {}
-            rcpsp_schedule[last_act_id]["start_time"] = 99999999
-            rcpsp_schedule[last_act_id]["end_time"] = 9999999
+            rcpsp_schedule[last_act_id]["start_time"] = TOO_BIG_TIME
+            rcpsp_schedule[last_act_id]["end_time"] = TOO_BIG_TIME
     else:
         rcpsp_schedule_feasible = True
     return rcpsp_schedule, rcpsp_schedule_feasible
@@ -1413,8 +1431,8 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule(
         last_act_id = rcpsp_problem.sink_task
         if last_act_id not in rcpsp_schedule:
             rcpsp_schedule[last_act_id] = {}
-            rcpsp_schedule[last_act_id]["start_time"] = 99999999
-            rcpsp_schedule[last_act_id]["end_time"] = 9999999
+            rcpsp_schedule[last_act_id]["start_time"] = TOO_BIG_TIME
+            rcpsp_schedule[last_act_id]["end_time"] = TOO_BIG_TIME
     else:
         rcpsp_schedule_feasible = True
     return rcpsp_schedule, rcpsp_schedule_feasible
@@ -1670,8 +1688,8 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_specialized_c
         last_act_id = rcpsp_problem.sink_task
         if last_act_id not in rcpsp_schedule:
             rcpsp_schedule[last_act_id] = {}
-            rcpsp_schedule[last_act_id]["start_time"] = 99999999
-            rcpsp_schedule[last_act_id]["end_time"] = 9999999
+            rcpsp_schedule[last_act_id]["start_time"] = TOO_BIG_TIME
+            rcpsp_schedule[last_act_id]["end_time"] = TOO_BIG_TIME
     else:
         rcpsp_schedule_feasible = True
     return rcpsp_schedule, rcpsp_schedule_feasible

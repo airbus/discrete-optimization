@@ -62,9 +62,6 @@ from discrete_optimization.alb.base.problem import (
     BaseALBSolution,
     ResourceTaskData,
 )
-from discrete_optimization.generic_tasks_tools.allocation import (
-    UnaryResource,
-)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -385,13 +382,6 @@ class RCALBPSolution(
     def get_end_time(self, task: Task) -> int:
         """Return the end time of a task within cycle."""
         return self.get_end_time_in_cycle(task)
-
-    # AllocationSolution interface
-    def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
-        """Check if a task is allocated to a given station."""
-        task_idx = self.problem.tasks_to_index[task]
-        station_idx = self.allocation_to_station[task_idx]
-        return self.problem.stations[station_idx] == unary_resource
 
     def copy(self) -> "RCALBPSolution":
         """Create a deep copy of the solution."""

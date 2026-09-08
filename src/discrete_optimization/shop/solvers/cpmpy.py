@@ -5,6 +5,7 @@ from typing import Any
 
 import cpmpy as cp
 
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tools.cpmpy_tools import CpmpySolver
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -141,11 +142,11 @@ class CpmpyShopSolver(CpmpySolver):
             for i in range(self.problem.n_jobs)
         ]
         machine_index = [
-            [None for _ in range(self.problem.nb_subjob_per_job[i])]
+            [AbsentValue.ABSENT for _ in range(self.problem.nb_subjob_per_job[i])]
             for i in range(self.problem.n_jobs)
         ]
         recipe_index = [
-            [None for _ in range(self.problem.nb_subjob_per_job[i])]
+            [AbsentValue.ABSENT for _ in range(self.problem.nb_subjob_per_job[i])]
             for i in range(self.problem.n_jobs)
         ]
         for t, m in self.variables["modes"]:

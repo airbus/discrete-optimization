@@ -9,7 +9,7 @@ from __future__ import annotations
 import itertools
 from collections.abc import Hashable
 
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     GenericSchedulingImplProblem,
     Skill,
@@ -43,7 +43,7 @@ def transform_solution_from_raw_generic_to_rcpsp(
     """Convert generic solution to RCPSP solution.
 
     Args:
-        solution:
+        raw_sol:
         problem:
 
     Returns:
@@ -52,15 +52,24 @@ def transform_solution_from_raw_generic_to_rcpsp(
     schedule = {}
     modes_dict = {}
     for task, task_variable in raw_sol.task_variables.items():
-        schedule[task] = {
-            "start_time": task_variable.start,
-            "end_time": task_variable.end,
-        }
-        modes_dict[task] = task_variable.mode
+        if task_variable.is_present:
+            schedule[task] = {
+                "start_time": task_variable.start,
+                "end_time": task_variable.end,
+            }
+            modes_dict[task] = task_variable.mode
+        else:
+            schedule[task] = {
+                "start_time": AbsentValue.ABSENT,
+                "end_time": AbsentValue.ABSENT,
+            }
+            modes_dict[task] = AbsentValue.ABSENT
     return RcpspSolution(
         problem=problem,
         rcpsp_schedule=schedule,
-        rcpsp_modes=[modes_dict[t] for t in problem.tasks_list_non_dummy],
+        rcpsp_modes=[
+            modes_dict.get(t, AbsentValue.ABSENT) for t in problem.tasks_list_non_dummy
+        ],
     )
 
 
