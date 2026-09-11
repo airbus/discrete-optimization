@@ -1,0 +1,37 @@
+discrete\_optimization.lotsizing.capacitatedmultiitem package
+=============================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.lotsizing.capacitatedmultiitem.solvers
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.parser module
+-------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.problem module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,39 @@
+discrete\_optimization.generic\_tasks\_tools.solvers package
+============================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.generic_tasks_tools.solvers.cpsat
+   discrete_optimization.generic_tasks_tools.solvers.lns_cp
+   discrete_optimization.generic_tasks_tools.solvers.optalcp
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cpm module
+---------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cpm
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.utils module
+-----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

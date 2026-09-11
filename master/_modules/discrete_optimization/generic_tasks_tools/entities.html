@@ -1,0 +1,615 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.entities &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.entities</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.entities</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">"""Entity abstraction for scheduling constraints.</span>
+
+<span class="sd">This module provides a unified abstraction for scheduling entities that can participate</span>
+<span class="sd">in various types of constraints (precedence, time lags, resource blocking, etc.).</span>
+
+<span class="sd">An entity represents any schedulable object with start and end times:</span>
+<span class="sd">- Individual tasks (TaskEntity)</span>
+<span class="sd">- Groups of tasks (GroupEntity)</span>
+<span class="sd">- Tasks in specific modes (TaskModeEntity)</span>
+<span class="sd">- Hierarchical compositions of entities (CompositeEntity)</span>
+
+<span class="sd">The abstraction is recursive: CompositeEntity can contain any other entities (including</span>
+<span class="sd">other CompositeEntity instances), enabling arbitrary hierarchical structures for</span>
+<span class="sd">constraint modeling (e.g., projects → phases → tasks).</span>
+
+<span class="sd">Entities are immutable (frozen dataclasses) so they can be used as dict keys.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchedulingSolution</span>
+
+
+<div class="viewcode-block" id="SchedulingEntity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.SchedulingEntity">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SchedulingEntity</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""Abstract representation of a scheduling entity that has start and end times.</span>
+
+<span class="sd">    An entity represents any schedulable object that can participate in constraints:</span>
+<span class="sd">    - Individual tasks (TaskEntity)</span>
+<span class="sd">    - Groups of tasks (GroupEntity)</span>
+<span class="sd">    - Tasks in specific execution modes (TaskModeEntity)</span>
+<span class="sd">    - Hierarchical compositions of entities (CompositeEntity)</span>
+<span class="sd">    - Other aggregations (resources, shifts, projects, etc.)</span>
+
+<span class="sd">    Entities are immutable (frozen dataclass) so they can be used as dict keys.</span>
+
+<span class="sd">    The entity abstraction is recursive: CompositeEntity can contain other entities,</span>
+<span class="sd">    enabling hierarchical constraint modeling (e.g., projects → phases → tasks).</span>
+
+<span class="sd">    The entity abstraction allows expressing complex constraints naturally:</span>
+<span class="sd">    - "Group of tasks must finish before another task starts" (precedence)</span>
+<span class="sd">    - "Resource blocked from end of group to start of task" (resource blocking)</span>
+<span class="sd">    - "If task is in mode 2, then block resource X" (conditional blocking)</span>
+<span class="sd">    - "All phases of a project must respect a resource limit" (hierarchical constraints)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; from discrete_optimization.generic_tasks_tools.entities import TaskEntity, GroupEntity</span>
+<span class="sd">        &gt;&gt;&gt; # Individual task</span>
+<span class="sd">        &gt;&gt;&gt; task_ent = TaskEntity("paint")</span>
+<span class="sd">        &gt;&gt;&gt; # Group of tasks</span>
+<span class="sd">        &gt;&gt;&gt; group_ent = GroupEntity(frozenset({"prep", "paint", "dry"}), "painting_job")</span>
+<span class="sd">        &gt;&gt;&gt; # Query in solution</span>
+<span class="sd">        &gt;&gt;&gt; start = task_ent.get_start_time(solution) # doctest: +SKIP</span>
+<span class="sd">        &gt;&gt;&gt; group_start = group_ent.get_start_time(solution)  # min of task starts # doctest: +SKIP</span>
+
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="SchedulingEntity.get_start_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.SchedulingEntity.get_start_time">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get the start time of this entity in the given solution.</span>
+
+<span class="sd">        For tasks: the task's start time</span>
+<span class="sd">        For groups: minimum start time of tasks in group</span>
+<span class="sd">        For conditional entities: start time if active, else raises error</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: The scheduling solution to query</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Start time (integer)</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If entity is not active/present in solution (e.g., TaskModeEntity</span>
+<span class="sd">                        when task is not in the specified mode)</span>
+<span class="sd">        """</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="SchedulingEntity.get_end_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.SchedulingEntity.get_end_time">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get the end time of this entity in the given solution.</span>
+
+<span class="sd">        For tasks: the task's end time</span>
+<span class="sd">        For groups: maximum end time of tasks in group</span>
+<span class="sd">        For conditional entities: end time if active, else raises error</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: The scheduling solution to query</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            End time (integer)</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If entity is not active/present in solution</span>
+<span class="sd">        """</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="SchedulingEntity.is_active">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.SchedulingEntity.is_active">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_active</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check if this entity is active/present in the solution.</span>
+
+<span class="sd">        For tasks: always True (task is always scheduled)</span>
+<span class="sd">        For groups: True if any task in group is scheduled</span>
+<span class="sd">        For conditional entities: True if the condition is satisfied</span>
+<span class="sd">            (e.g., TaskModeEntity is active only if task is in specified mode)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: The scheduling solution to query</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if entity is active, False otherwise</span>
+<span class="sd">        """</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="SchedulingEntity.get_tasks">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.SchedulingEntity.get_tasks">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get all tasks that compose this entity.</span>
+
+<span class="sd">        For single tasks: {task}</span>
+<span class="sd">        For groups: all tasks in the group</span>
+<span class="sd">        For conditional entities: {task}</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Frozen set of tasks</span>
+<span class="sd">        """</span>
+        <span class="o">...</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entity_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hashable</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Unique identifier for this entity.</span>
+
+<span class="sd">        Used for hashing, equality, and display.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Hashable identifier (str, int, tuple, etc.)</span>
+<span class="sd">        """</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Entities are hashable (needed for dict keys)."""</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entity_id</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Entities are comparable by their ID."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">SchedulingEntity</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">entity_id</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">entity_id</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""String representation for debugging."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">)"</span></div>
+
+
+
+<div class="viewcode-block" id="TaskEntity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.TaskEntity">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TaskEntity</span><span class="p">(</span><span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""Entity representing a single task.</span>
+
+<span class="sd">    This is the most common entity type, wrapping a Task reference.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        task: The task this entity represents</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; entity = TaskEntity(task="assembly")</span>
+<span class="sd">        &gt;&gt;&gt; entity.get_start_time(solution) # doctest: +SKIP</span>
+<span class="sd">        &gt;&gt;&gt; entity.get_end_time(solution) # doctest: +SKIP</span>
+<span class="sd">        &gt;&gt;&gt; entity.get_tasks()</span>
+<span class="sd">        frozenset({'assembly'})</span>
+<span class="sd">        &gt;&gt;&gt; entity.is_active(solution) # doctest: +SKIP</span>
+<span class="sd">    """</span>
+
+    <span class="n">task</span><span class="p">:</span> <span class="n">Task</span>
+
+<div class="viewcode-block" id="TaskEntity.get_start_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.TaskEntity.get_start_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TaskEntity.get_end_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.TaskEntity.get_end_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TaskEntity.is_active">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.TaskEntity.is_active">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_active</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="c1"># Task entities are always active (task is always scheduled)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="TaskEntity.get_tasks">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.TaskEntity.get_tasks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">})</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entity_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hashable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">"task"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="GroupEntity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.GroupEntity">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">GroupEntity</span><span class="p">(</span><span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""Entity representing a group/batch of tasks.</span>
+
+<span class="sd">    The group's start time is the minimum start of its tasks.</span>
+<span class="sd">    The group's end time is the maximum end of its tasks.</span>
+
+<span class="sd">    This is useful for:</span>
+<span class="sd">    - Representing projects with multiple tasks</span>
+<span class="sd">    - Modeling batches that must stay together</span>
+<span class="sd">    - Defining spans that consume resources</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        tasks: Set of tasks in the group (must be non-empty)</span>
+<span class="sd">        group_id: Optional identifier for the group (for display/debugging)</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; entity = GroupEntity(</span>
+<span class="sd">        ...     tasks=frozenset({"prep", "main", "cleanup"}),</span>
+<span class="sd">        ...     group_id="maintenance_job_1"</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; entity.get_start_time(solution)  # min(start of prep, main, cleanup)  # doctest: +SKIP</span>
+<span class="sd">        &gt;&gt;&gt; entity.get_end_time(solution)    # max(end of prep, main, cleanup) # doctest: +SKIP</span>
+<span class="sd">        &gt;&gt;&gt; entity.get_tasks()  # doctest: +SKIP</span>
+<span class="sd">        frozenset({'prep', 'main', 'cleanup'})</span>
+
+<span class="sd">    """</span>
+
+    <span class="n">tasks</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+    <span class="n">group_id</span><span class="p">:</span> <span class="n">Hashable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"GroupEntity must contain at least one task"</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GroupEntity.get_start_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.GroupEntity.get_start_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GroupEntity.get_end_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.GroupEntity.get_end_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GroupEntity.is_active">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.GroupEntity.is_active">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_active</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="c1"># Group is active if any task is scheduled</span>
+        <span class="c1"># (In practice, all tasks should be scheduled)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="GroupEntity.get_tasks">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.GroupEntity.get_tasks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entity_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hashable</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="s2">"group"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use sorted tuple of tasks for deterministic ID</span>
+            <span class="k">return</span> <span class="p">(</span><span class="s2">"group"</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="TaskModeEntity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.TaskModeEntity">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TaskModeEntity</span><span class="p">(</span><span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""Entity representing a task in a specific execution mode.</span>
+
+<span class="sd">    This entity is only "active" if the task is executed in the specified mode.</span>
+<span class="sd">    Useful for mode-dependent constraints:</span>
+<span class="sd">    - "If task A is in mode 1, then block resource X"</span>
+<span class="sd">    - "Task B can only start after task A in mode 2 completes"</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        task: The task</span>
+<span class="sd">        mode: The specific mode (integer)</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        &gt;&gt;&gt; entity = TaskModeEntity(task="painting", mode=2)</span>
+<span class="sd">        &gt;&gt;&gt; entity.is_active(solution)  # True only if painting is in mode 2 # doctest: +SKIP</span>
+<span class="sd">        False  # (if painting is in mode 1)</span>
+<span class="sd">        &gt;&gt;&gt; # If active:</span>
+<span class="sd">        &gt;&gt;&gt; entity.get_start_time(solution) # doctest: +SKIP</span>
+<span class="sd">        10</span>
+<span class="sd">        &gt;&gt;&gt; entity.get_tasks()</span>
+<span class="sd">        frozenset({'painting'})</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: When calling get_start_time() or get_end_time() on an inactive entity</span>
+
+<span class="sd">    """</span>
+
+    <span class="n">task</span><span class="p">:</span> <span class="n">Task</span>
+    <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span>
+
+<div class="viewcode-block" id="TaskModeEntity.get_start_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.TaskModeEntity.get_start_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"TaskModeEntity(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="si">}</span><span class="s2">, mode=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="si">}</span><span class="s2">) is not active in solution "</span>
+                <span class="sa">f</span><span class="s2">"(task is in mode </span><span class="si">{</span><span class="n">solution</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TaskModeEntity.get_end_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.TaskModeEntity.get_end_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"TaskModeEntity(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="si">}</span><span class="s2">, mode=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="si">}</span><span class="s2">) is not active in solution "</span>
+                <span class="sa">f</span><span class="s2">"(task is in mode </span><span class="si">{</span><span class="n">solution</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TaskModeEntity.is_active">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.TaskModeEntity.is_active">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_active</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check if the task is executed in the specified mode."""</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.multimode</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">MultimodeSolution</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">MultimodeSolution</span><span class="p">):</span>
+            <span class="c1"># Solution doesn't support modes</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">actual_mode</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_mode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">actual_mode</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
+            <span class="c1"># Task doesn't have mode information</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="TaskModeEntity.get_tasks">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.TaskModeEntity.get_tasks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">})</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entity_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hashable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">"task_mode"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CompositeEntity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.CompositeEntity">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CompositeEntity</span><span class="p">(</span><span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""Entity representing a hierarchical composition of other entities.</span>
+
+<span class="sd">    This enables recursive entity structures for hierarchical constraint modeling:</span>
+<span class="sd">    - Groups of groups (e.g., projects containing sub-projects)</span>
+<span class="sd">    - Mixed collections of tasks, groups, and mode-specific entities</span>
+<span class="sd">    - Arbitrarily nested entity hierarchies (e.g., departments → teams → tasks)</span>
+
+<span class="sd">    The composite's start time is the minimum start of its active children.</span>
+<span class="sd">    The composite's end time is the maximum end of its active children.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        # Hierarchy: Project → Phases → Tasks</span>
+<span class="sd">        phase1 = CompositeEntity(</span>
+<span class="sd">            entities=frozenset({TaskEntity(t1), TaskEntity(t2)}),</span>
+<span class="sd">            composite_id="phase1"</span>
+<span class="sd">        )</span>
+<span class="sd">        phase2 = CompositeEntity(</span>
+<span class="sd">            entities=frozenset({TaskEntity(t3), TaskEntity(t4)}),</span>
+<span class="sd">            composite_id="phase2"</span>
+<span class="sd">        )</span>
+<span class="sd">        project = CompositeEntity(</span>
+<span class="sd">            entities=frozenset({phase1, phase2}),</span>
+<span class="sd">            composite_id="project_alpha"</span>
+<span class="sd">        )</span>
+
+<span class="sd">        # Mixed: combining different entity types</span>
+<span class="sd">        mixed = CompositeEntity(</span>
+<span class="sd">            entities=frozenset({</span>
+<span class="sd">                TaskEntity(t1),</span>
+<span class="sd">                GroupEntity(tasks=frozenset({t2, t3})),</span>
+<span class="sd">                TaskModeEntity(task=t4, mode=2)</span>
+<span class="sd">            })</span>
+<span class="sd">        )</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        entities: Set of child entities (must be non-empty)</span>
+<span class="sd">        composite_id: Optional identifier for display/debugging</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If entities set is empty, or if all children are inactive when</span>
+<span class="sd">                   querying start/end times</span>
+<span class="sd">    """</span>
+
+    <span class="n">entities</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">]</span>
+    <span class="n">composite_id</span><span class="p">:</span> <span class="n">Hashable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"CompositeEntity must contain at least one entity"</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CompositeEntity.get_start_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.CompositeEntity.get_start_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">active_entities</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">active_entities</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"CompositeEntity(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">composite_id</span><span class="si">}</span><span class="s2">) has no active children in solution"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">active_entities</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CompositeEntity.get_end_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.CompositeEntity.get_end_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">active_entities</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">active_entities</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"CompositeEntity(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">composite_id</span><span class="si">}</span><span class="s2">) has no active children in solution"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">active_entities</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CompositeEntity.is_active">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.CompositeEntity.is_active">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_active</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">SchedulingSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="c1"># Composite is active if at least one child is active</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CompositeEntity.get_tasks">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.entities.CompositeEntity.get_tasks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+        <span class="c1"># Recursively collect all tasks from children</span>
+        <span class="n">all_tasks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+            <span class="n">all_tasks</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">all_tasks</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entity_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hashable</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">composite_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="s2">"composite"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">composite_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use sorted tuple of child entity IDs for deterministic ID</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="s2">"composite"</span><span class="p">,</span>
+                <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">((</span><span class="n">e</span><span class="o">.</span><span class="n">entity_id</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="p">)),</span>
+            <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

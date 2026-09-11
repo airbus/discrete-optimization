@@ -1,0 +1,1141 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.multibatching.solvers.lp &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../solvers.html">discrete_optimization.multibatching.solvers</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.multibatching.solvers.lp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.multibatching.solvers.lp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.callback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callback</span><span class="p">,</span>
+    <span class="n">CallbackList</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParametersCp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+    <span class="n">FloatHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.lp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GurobiMilpSolver</span><span class="p">,</span>
+    <span class="n">MilpSolver</span><span class="p">,</span>
+    <span class="n">OrtoolsMathOptMilpSolver</span><span class="p">,</span>
+    <span class="n">ParametersMilp</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.multibatching.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultibatchingProblem</span><span class="p">,</span>
+    <span class="n">MultibatchingSolution</span><span class="p">,</span>
+    <span class="n">PackingTransport</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.multibatching.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultibatchingSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.multibatching.solvers.solver_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">precompute_valid_links</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">gurobipy</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">gurobi_available</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">gurobi_available</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_BaseLpMultibatchingSolver</span><span class="p">(</span><span class="n">MilpSolver</span><span class="p">,</span> <span class="n">MultibatchingSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Multibatching LP solvers.</span>
+
+<span class="sd">    This solver supports two main modeling variants:</span>
+<span class="sd">    1.  **Standard Flow Model**: Allows multiple different products to be packed</span>
+<span class="sd">        into the same transport (multi-batching).</span>
+<span class="sd">    2.  **Single Batching Flow Model**: A more constrained version where each transport</span>
+<span class="sd">        can only carry a single type of product.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        problem (MultibatchingProblem): The multibatching problem instance to solve.</span>
+<span class="sd">        variables (Dict): A dictionary to store variables created for the model.</span>
+<span class="sd">        single_batching (bool): Flag indicating which model variant to use.</span>
+<span class="sd">        scaling_factor (int): A factor to scale floating-point costs into integers for the model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">MultibatchingProblem</span>
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;add_lb_constraint_nb_trips&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;restrict_to_shortest_paths&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="n">FloatHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;shortest_path_tolerance&quot;</span><span class="p">,</span>
+            <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">high</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;restrict_to_shortest_paths&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">MultibatchingProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">single_batching</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaling_factor</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;scaling_factor&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_batching</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the model by dispatching to the appropriate</span>
+<span class="sd">        model-building method based on the `single_batching` flag.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">single_batching</span> <span class="o">=</span> <span class="n">single_batching</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_batching</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_model_flows_single_batching</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_model_flows_multi_batching</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_model_flows_multi_batching</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Builds the standard flow model where multiple products can share a transport.&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">use_shortest_path</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;restrict_to_shortest_paths&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">sp_tolerance</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;shortest_path_tolerance&quot;</span><span class="p">,</span> <span class="mf">0.2</span>
+        <span class="p">)</span>  <span class="c1"># 0.0 = Strict, 0.2 = +20% length allowed</span>
+
+        <span class="c1"># Option B: No incoming flow at producers</span>
+        <span class="n">no_incoming_at_source</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;prevent_incoming_at_source&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">valid_links_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">use_shortest_path</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Computing valid links (Shortest Path Heuristic, tol=</span><span class="si">{</span><span class="n">sp_tolerance</span><span class="si">}</span><span class="s2">)...&quot;</span>
+            <span class="p">)</span>
+            <span class="n">valid_links_map</span> <span class="o">=</span> <span class="n">precompute_valid_links</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="n">sp_tolerance</span>
+            <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing model (Multi-Batching Flow)...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_empty_model</span><span class="p">(</span><span class="s2">&quot;multibatching-flow&quot;</span><span class="p">)</span>
+
+        <span class="c1"># --- Pre-computation ---</span>
+        <span class="n">supply_per_product</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">p</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_total_supply</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span>
+        <span class="p">}</span>
+
+        <span class="c1"># --- Variables ---</span>
+        <span class="n">nb_trips</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_transport_links</span><span class="p">):</span>
+            <span class="n">nb_trips</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_integer_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;nb_trips_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">flows</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">):</span>
+            <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="c1"># 1. Transport Compatibility &amp; Capacity</span>
+                    <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">valid_transports</span>
+                    <span class="ow">and</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span> <span class="o">&gt;</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span>
+                    <span class="c1"># 2. Heuristic A: Restrict to Valid Paths (Shortest Path logic)</span>
+                    <span class="ow">and</span> <span class="p">(</span>
+                        <span class="n">valid_links_map</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">valid_links_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+                    <span class="p">)</span>
+                    <span class="c1"># 3. Heuristic B: Prevent Incoming Flow at Producers (No U-turns to factory)</span>
+                    <span class="ow">and</span> <span class="p">(</span>
+                        <span class="ow">not</span> <span class="n">no_incoming_at_source</span>
+                        <span class="ow">or</span> <span class="n">tl</span><span class="o">.</span><span class="n">location_l2</span><span class="o">.</span><span class="n">net_supply</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-6</span>
+                    <span class="p">)</span>
+                <span class="p">):</span>
+                    <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_integer_variable</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;flow_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">p_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">supply_per_product</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># --- Constraints ---</span>
+        <span class="c1"># Capacity Constraint</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">):</span>
+            <span class="n">total_volume</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span>
+                <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                <span class="n">total_volume</span> <span class="o">&lt;=</span> <span class="n">nb_trips</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Flow Conservation</span>
+        <span class="k">for</span> <span class="n">loc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">):</span>
+                <span class="n">in_flow</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">tl</span><span class="o">.</span><span class="n">location_l2</span> <span class="o">==</span> <span class="n">loc</span> <span class="ow">and</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">out_flow</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">tl</span><span class="o">.</span><span class="n">location_l1</span> <span class="o">==</span> <span class="n">loc</span> <span class="ow">and</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                    <span class="n">in_flow</span> <span class="o">+</span> <span class="n">loc</span><span class="o">.</span><span class="n">net_supply</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">out_flow</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;add_lb_constraint_nb_trips&quot;</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_advanced_capacity_constraints</span><span class="p">(</span>
+                <span class="n">flows_variables</span><span class="o">=</span><span class="n">flows</span><span class="p">,</span>
+                <span class="n">nb_trips_per_link</span><span class="o">=</span><span class="n">nb_trips</span><span class="p">,</span>
+                <span class="n">max_k</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># --- Objective ---</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_objective</span><span class="p">(</span><span class="n">nb_trips</span><span class="p">,</span> <span class="n">flows</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;nb_trips&quot;</span><span class="p">:</span> <span class="n">nb_trips</span><span class="p">,</span> <span class="s2">&quot;flows&quot;</span><span class="p">:</span> <span class="n">flows</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_model_flows_single_batching</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Builds the constrained flow model where only one product type is allowed per transport.&quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing model (Single-Batching Flow)...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_empty_model</span><span class="p">(</span><span class="s2">&quot;multibatching-single-flow&quot;</span><span class="p">)</span>
+
+        <span class="c1"># --- Pre-computation ---</span>
+        <span class="n">supply_per_product</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">p</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_total_supply</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span>
+        <span class="p">}</span>
+
+        <span class="c1"># --- Variables ---</span>
+        <span class="n">nb_trips</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_transport_links</span><span class="p">):</span>
+            <span class="n">nb_trips</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_integer_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;nb_trips_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">flows</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">):</span>
+            <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">valid_transports</span>
+                    <span class="ow">and</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span> <span class="o">&gt;</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span>
+                <span class="p">):</span>
+                    <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_integer_variable</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;flow_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">p_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">supply_per_product</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># Trips dedicated to a specific product on a specific link</span>
+        <span class="n">nb_trips_per_product</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_transport_links</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="n">nb_trips_per_product</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">p_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_integer_variable</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;nb_trips_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">p_idx</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+        <span class="c1"># --- Constraints ---</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">):</span>
+            <span class="c1"># Total trips on a link is the sum of product-dedicated trips</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="n">nb_trips_per_product</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">p_idx</span><span class="p">)]</span> <span class="k">for</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="o">==</span> <span class="n">nb_trips</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="c1"># Capacity constraint for single-product trips</span>
+                    <span class="n">products_per_trip</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span> <span class="o">//</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">products_per_trip</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                            <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span>
+                            <span class="o">&lt;=</span> <span class="n">nb_trips_per_product</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">p_idx</span><span class="p">)]</span> <span class="o">*</span> <span class="n">products_per_trip</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>  <span class="c1"># Cannot transport this product</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span><span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Flow conservation (same as multi-batching)</span>
+        <span class="k">for</span> <span class="n">loc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">):</span>
+                <span class="n">in_flow</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">tl</span><span class="o">.</span><span class="n">location_l2</span> <span class="o">==</span> <span class="n">loc</span> <span class="ow">and</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">out_flow</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">tl</span><span class="o">.</span><span class="n">location_l1</span> <span class="o">==</span> <span class="n">loc</span> <span class="ow">and</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                    <span class="n">in_flow</span> <span class="o">+</span> <span class="n">loc</span><span class="o">.</span><span class="n">net_supply</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">out_flow</span>
+                <span class="p">)</span>
+
+        <span class="c1"># --- Objective ---</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_objective</span><span class="p">(</span><span class="n">nb_trips</span><span class="p">,</span> <span class="n">flows</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;nb_trips&quot;</span><span class="p">:</span> <span class="n">nb_trips</span><span class="p">,</span>
+            <span class="s2">&quot;flows&quot;</span><span class="p">:</span> <span class="n">flows</span><span class="p">,</span>
+            <span class="s2">&quot;nb_trips_per_product&quot;</span><span class="p">:</span> <span class="n">nb_trips_per_product</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_advanced_capacity_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">flows_variables</span><span class="p">,</span> <span class="n">nb_trips_per_link</span><span class="p">,</span> <span class="n">max_k</span><span class="o">=</span><span class="mi">30</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds generalized lower bound constraints on the number of trips.</span>
+<span class="sd">        For each k in [2..max_k], we consider items with size &gt; Capacity/k.</span>
+<span class="sd">        Since at most k-1 such items fit in one vehicle, we add the cut:</span>
+<span class="sd">            (k-1) * NbTrips &gt;= Sum(Flows of these items)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">index_tl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_transport_links</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">index_tl</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nb_trips_per_link</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">tl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">[</span><span class="n">index_tl</span><span class="p">]</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span>
+            <span class="k">if</span> <span class="n">capacity</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">nb_trips_var</span> <span class="o">=</span> <span class="n">nb_trips_per_link</span><span class="p">[</span><span class="n">index_tl</span><span class="p">]</span>
+            <span class="n">current_flow_vars</span> <span class="o">=</span> <span class="n">flows_variables</span><span class="p">[</span><span class="n">index_tl</span><span class="p">]</span>
+
+            <span class="c1"># Iterate k from 2 up to max_k (e.g., items &gt; C/2, &gt; C/3, ..., &gt; C/10)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">relevant_flows</span> <span class="o">=</span> <span class="p">[]</span>
+
+                <span class="k">for</span> <span class="n">index_product</span><span class="p">,</span> <span class="n">flow_var</span> <span class="ow">in</span> <span class="n">current_flow_vars</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">product</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">[</span><span class="n">index_product</span><span class="p">]</span>
+                    <span class="c1"># Check condition: size &gt; Capacity / k  &lt;==&gt;  size * k &gt; Capacity</span>
+                    <span class="k">if</span> <span class="n">product</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="n">capacity</span><span class="p">:</span>
+                        <span class="n">relevant_flows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow_var</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">relevant_flows</span><span class="p">:</span>
+                    <span class="c1"># Constraint: (k-1) * NbTrips &gt;= Sum(Relevant Flows)</span>
+                    <span class="n">lhs</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">nb_trips_var</span>
+                    <span class="n">rhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span><span class="n">relevant_flows</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span><span class="n">lhs</span> <span class="o">&gt;=</span> <span class="n">rhs</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_set_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nb_trips</span><span class="p">,</span> <span class="n">flows</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Helper function to build and set the objective expression.&quot;&quot;&quot;</span>
+        <span class="n">transport_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+            <span class="n">nb_trips</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">distance</span> <span class="o">*</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">cost</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling_factor</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">emission_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+            <span class="n">nb_trips</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">distance</span> <span class="o">*</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">emissions</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling_factor</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_model_objective</span><span class="p">(</span><span class="n">transport_cost</span> <span class="o">+</span> <span class="n">emission_cost</span><span class="p">,</span> <span class="n">minimize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_current_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">get_var_value_for_current_solution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">get_obj_value_for_current_solution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Converts a solution into a `MultibatchingSolution`.</span>
+<span class="sd">        If `single_batching` is used, it reconstructs the exact packings. Otherwise, it creates</span>
+<span class="sd">        an &quot;average&quot; packing for multi-batch flows.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">list_flows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">nb_trips_vals</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="n">get_var_value_for_current_solution</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;nb_trips&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">nb_trips_vals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_batching</span><span class="p">:</span>
+                    <span class="c1"># Reconstruct exact packings for single-batching</span>
+                    <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">p_idx</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;nb_trips_per_product&quot;</span><span class="p">]:</span>
+                            <span class="n">flow_val</span> <span class="o">=</span> <span class="n">get_var_value_for_current_solution</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;flows&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span>
+                            <span class="p">)</span>
+                            <span class="k">if</span> <span class="n">flow_val</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+                                <span class="n">products_per_trip</span> <span class="o">=</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span> <span class="o">//</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span>
+                                <span class="n">num_full_trips</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">flow_val</span> <span class="o">//</span> <span class="n">products_per_trip</span><span class="p">)</span>
+                                <span class="n">remainder</span> <span class="o">=</span> <span class="n">flow_val</span> <span class="o">%</span> <span class="n">products_per_trip</span>
+
+                                <span class="k">if</span> <span class="n">num_full_trips</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                                    <span class="n">list_flows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="n">PackingTransport</span><span class="p">(</span>
+                                            <span class="n">transport_link</span><span class="o">=</span><span class="n">tl</span><span class="p">,</span>
+                                            <span class="n">product_packing</span><span class="o">=</span><span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">products_per_trip</span><span class="p">},</span>
+                                            <span class="n">nb_packing</span><span class="o">=</span><span class="n">num_full_trips</span><span class="p">,</span>
+                                        <span class="p">)</span>
+                                    <span class="p">)</span>
+                                <span class="k">if</span> <span class="n">remainder</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+                                    <span class="n">list_flows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                        <span class="n">PackingTransport</span><span class="p">(</span>
+                                            <span class="n">transport_link</span><span class="o">=</span><span class="n">tl</span><span class="p">,</span>
+                                            <span class="n">product_packing</span><span class="o">=</span><span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">remainder</span><span class="p">},</span>
+                                            <span class="n">nb_packing</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                        <span class="p">)</span>
+                                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Create average packing for multi-batching</span>
+                    <span class="n">product_packing</span> <span class="o">=</span> <span class="p">{}</span>
+                    <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;flows&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">]:</span>
+                            <span class="n">flow_val</span> <span class="o">=</span> <span class="n">get_var_value_for_current_solution</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;flows&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span>
+                            <span class="p">)</span>
+                            <span class="k">if</span> <span class="n">flow_val</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+                                <span class="n">product_packing</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">flow_val</span> <span class="o">/</span> <span class="n">nb_trips_vals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">product_packing</span><span class="p">:</span>
+                        <span class="n">list_flows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">PackingTransport</span><span class="p">(</span>
+                                <span class="n">transport_link</span><span class="o">=</span><span class="n">tl</span><span class="p">,</span>
+                                <span class="n">product_packing</span><span class="o">=</span><span class="n">product_packing</span><span class="p">,</span>
+                                <span class="n">nb_packing</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">nb_trips_vals</span><span class="p">[</span><span class="n">i</span><span class="p">])),</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultibatchingSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">list_flows</span><span class="o">=</span><span class="n">list_flows</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">MultibatchingSolution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Converts a `MultibatchingSolution` to a dictionary of variable values for warm start.&quot;&quot;&quot;</span>
+        <span class="n">variable_values</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Aggregate flows and trips from the solution</span>
+        <span class="n">agg_flows</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">float</span><span class="p">))</span>
+        <span class="n">agg_trips</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">agg_trips_per_product</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">list_flows</span><span class="p">:</span>
+            <span class="n">link_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links_to_index</span><span class="p">[</span><span class="n">flow</span><span class="o">.</span><span class="n">transport_link</span><span class="p">]</span>
+            <span class="n">agg_trips</span><span class="p">[</span><span class="n">link_idx</span><span class="p">]</span> <span class="o">+=</span> <span class="n">flow</span><span class="o">.</span><span class="n">nb_packing</span>
+            <span class="k">for</span> <span class="n">product</span><span class="p">,</span> <span class="n">units</span> <span class="ow">in</span> <span class="n">flow</span><span class="o">.</span><span class="n">product_packing</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">prod_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">product_to_index</span><span class="p">[</span><span class="n">product</span><span class="p">]</span>
+                <span class="n">agg_flows</span><span class="p">[</span><span class="n">link_idx</span><span class="p">][</span><span class="n">prod_idx</span><span class="p">]</span> <span class="o">+=</span> <span class="n">units</span> <span class="o">*</span> <span class="n">flow</span><span class="o">.</span><span class="n">nb_packing</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_batching</span><span class="p">:</span>
+                    <span class="n">agg_trips_per_product</span><span class="p">[(</span><span class="n">link_idx</span><span class="p">,</span> <span class="n">prod_idx</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">flow</span><span class="o">.</span><span class="n">nb_packing</span>
+
+        <span class="c1"># Map aggregated values to variables</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;nb_trips&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">variable_values</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">agg_trips</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">flow_map</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;flows&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">flow_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">variable_values</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">agg_flows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_batching</span><span class="p">:</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">p_idx</span><span class="p">),</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;nb_trips_per_product&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">variable_values</span><span class="p">[</span><span class="n">var</span><span class="p">]</span> <span class="o">=</span> <span class="n">agg_trips_per_product</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">p_idx</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">variable_values</span>
+
+
+<div class="viewcode-block" id="GurobiMultibatchingSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GurobiMultibatchingSolver</span><span class="p">(</span><span class="n">GurobiMilpSolver</span><span class="p">,</span> <span class="n">_BaseLpMultibatchingSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gurobi solver for the Multibatching problem, based on a flow formulation.&quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="n">_BaseLpMultibatchingSolver</span><span class="o">.</span><span class="n">hyperparameters</span>
+
+<div class="viewcode-block" id="GurobiMultibatchingSolver.convert_to_variable_values">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver.convert_to_variable_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="s2">&quot;gurobipy.Var&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">_BaseLpMultibatchingSolver</span><span class="o">.</span><span class="n">convert_to_variable_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMultibatchingSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_batching</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_BaseLpMultibatchingSolver</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">single_batching</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MathOptMultibatchingSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MathOptMultibatchingSolver</span><span class="p">(</span><span class="n">OrtoolsMathOptMilpSolver</span><span class="p">,</span> <span class="n">_BaseLpMultibatchingSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MathOpt solver for the Multibatching problem, based on a flow formulation.&quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">OrtoolsMathOptMilpSolver</span><span class="o">.</span><span class="n">hyperparameters</span>
+        <span class="o">+</span> <span class="n">_BaseLpMultibatchingSolver</span><span class="o">.</span><span class="n">hyperparameters</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="MathOptMultibatchingSolver.convert_to_variable_values">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolver.convert_to_variable_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="s2">&quot;gurobipy.Var&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">_BaseLpMultibatchingSolver</span><span class="o">.</span><span class="n">convert_to_variable_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># Unit Flow Solver</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_BaseLpMultibatchingSolverUnitFlow</span><span class="p">(</span><span class="n">MilpSolver</span><span class="p">,</span> <span class="n">MultibatchingSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for Multibatching LP solvers using a detailed &quot;unit flow&quot; formulation.</span>
+
+<span class="sd">    This model creates variables for each potential trip on each transport link and</span>
+<span class="sd">    decides the exact content of each trip. It is more precise than an aggregated</span>
+<span class="sd">    flow model but can be more computationally expensive due to the large number</span>
+<span class="sd">    of binary and integer variables.</span>
+
+<span class="sd">    This formulation is analogous to the `UNIT_FLOW` model in the Cpsat solver.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="s2">&quot;restrict_to_shortest_paths&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">),</span>
+        <span class="n">FloatHyperparameter</span><span class="p">(</span>
+            <span class="s2">&quot;shortest_path_tolerance&quot;</span><span class="p">,</span>
+            <span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">high</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;restrict_to_shortest_paths&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)],</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">MultibatchingProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">MultibatchingProblem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaling_factor</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;scaling_factor&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_trips_per_link</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Builds the Gurobi model based on a detailed, per-trip (&quot;unit flow&quot;) formulation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            max_trips_per_link (int): A hard upper bound on the number of trips that can be</span>
+<span class="sd">                                      used on any single transport link. This is necessary</span>
+<span class="sd">                                      to define the variable space.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing model (Unit Flow)...&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Max trips : </span><span class="si">{</span><span class="n">max_trips_per_link</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">use_shortest_path</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;restrict_to_shortest_paths&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">sp_tolerance</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s2">&quot;shortest_path_tolerance&quot;</span><span class="p">,</span> <span class="mf">0.0</span>
+        <span class="p">)</span>  <span class="c1"># 0.0 = Strict, 0.2 = +20% length allowed</span>
+        <span class="c1"># Option B: No incoming flow at producers</span>
+        <span class="n">no_incoming_at_source</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;prevent_incoming_at_source&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">valid_links_map</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">use_shortest_path</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Computing valid links (Shortest Path Heuristic, tol=</span><span class="si">{</span><span class="n">sp_tolerance</span><span class="si">}</span><span class="s2">)...&quot;</span>
+            <span class="p">)</span>
+            <span class="n">valid_links_map</span> <span class="o">=</span> <span class="n">precompute_valid_links</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="n">sp_tolerance</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_empty_model</span><span class="p">(</span><span class="s2">&quot;multibatching-unit-flow&quot;</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">sol</span><span class="p">:</span> <span class="n">MultibatchingSolution</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;solution&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">delta</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;delta_to_solution&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">max_nb_trip_per_transport_link</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">i</span><span class="p">:</span> <span class="n">max_trips_per_link</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_transport_links</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">sol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">max_nb_trip_per_transport_link</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">delta</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">sol</span><span class="o">.</span><span class="n">list_flows</span><span class="p">:</span>
+                <span class="n">id_tl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links_to_index</span><span class="p">[</span><span class="n">pt</span><span class="o">.</span><span class="n">transport_link</span><span class="p">]</span>
+                <span class="n">max_nb_trip_per_transport_link</span><span class="p">[</span><span class="n">id_tl</span><span class="p">]</span> <span class="o">+=</span> <span class="n">pt</span><span class="o">.</span><span class="n">nb_packing</span>
+        <span class="c1"># Create binary variables for whether a trip is used</span>
+        <span class="n">used_trips</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_transport_links</span><span class="p">):</span>
+            <span class="n">used_trips</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_nb_trip_per_transport_link</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                <span class="n">used_trips</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_binary_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;used_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># `trip_contents[link_idx][trip_idx][prod_idx]` = quantity of a product on a specific trip</span>
+        <span class="n">trip_contents</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">):</span>
+            <span class="n">trip_contents</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_nb_trip_per_transport_link</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                <span class="n">trip_contents</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="c1"># 1. Transport Compatibility &amp; Capacity</span>
+                        <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">valid_transports</span>
+                        <span class="ow">and</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span> <span class="o">&gt;</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span>
+                        <span class="c1"># 2. Heuristic A: Restrict to Valid Paths (Shortest Path logic)</span>
+                        <span class="ow">and</span> <span class="p">(</span>
+                            <span class="n">valid_links_map</span> <span class="ow">is</span> <span class="kc">None</span>
+                            <span class="ow">or</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">valid_links_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+                        <span class="p">)</span>
+                        <span class="c1"># 3. Heuristic B: Prevent Incoming Flow at Producers (No U-turns to factory)</span>
+                        <span class="ow">and</span> <span class="p">(</span>
+                            <span class="ow">not</span> <span class="n">no_incoming_at_source</span>
+                            <span class="ow">or</span> <span class="n">tl</span><span class="o">.</span><span class="n">location_l2</span><span class="o">.</span><span class="n">net_supply</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-6</span>
+                        <span class="p">)</span>
+                    <span class="p">):</span>
+                        <span class="n">ub_val</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="nb">int</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span> <span class="o">/</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                            <span class="k">else</span> <span class="mi">0</span>
+                        <span class="p">)</span>
+                        <span class="n">trip_contents</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_integer_variable</span><span class="p">(</span>
+                            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;cont_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">p_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub_val</span>
+                        <span class="p">)</span>
+
+        <span class="c1"># --- Constraints ---</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_nb_trip_per_transport_link</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                <span class="c1"># Capacity constraint for each individual trip</span>
+                <span class="n">trip_volume</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="n">trip_contents</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span>
+                    <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">trip_contents</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span><span class="n">trip_volume</span> <span class="o">&lt;=</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span><span class="p">)</span>
+
+                <span class="c1"># Link `used_trips` to trip contents using big-M formulation</span>
+                <span class="c1"># IF used_trips[i][j] is 1, THEN total_items &gt;= 1</span>
+                <span class="c1"># IF used_trips[i][j] is 0, THEN total_items == 0</span>
+                <span class="n">total_items_in_trip</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="n">trip_contents</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">trip_contents</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                <span class="p">)</span>
+
+                <span class="c1"># Big-M upper bound: compute maximum possible items in this trip</span>
+                <span class="n">M</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span> <span class="o">/</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+                    <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">trip_contents</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">M</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">M</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Safety for empty trips</span>
+
+                <span class="c1"># Constraint 1: total_items &gt;= used_trips (enforces items &gt;= 1 when used=1)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span><span class="n">total_items_in_trip</span> <span class="o">&gt;=</span> <span class="n">used_trips</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">])</span>
+
+                <span class="c1"># Constraint 2: total_items &lt;= M * used_trips (enforces items = 0 when used=0)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span><span class="n">total_items_in_trip</span> <span class="o">&lt;=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">used_trips</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">])</span>
+
+        <span class="c1"># Aggregate expressions for total flow, linking trip contents to flow conservation</span>
+        <span class="n">total_flows</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_transport_links</span><span class="p">):</span>
+            <span class="n">total_flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">):</span>
+                <span class="c1"># Check if this product can be on any trip on this link</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+                    <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">trip_contents</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_nb_trip_per_transport_link</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="p">):</span>
+                    <span class="n">total_flows</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                        <span class="n">trip_contents</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_nb_trip_per_transport_link</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                        <span class="k">if</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">trip_contents</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># Flow conservation constraints (using the aggregated total_flows)</span>
+        <span class="k">for</span> <span class="n">loc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">):</span>
+                <span class="n">in_flow</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="n">total_flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">tl</span><span class="o">.</span><span class="n">location_l2</span> <span class="o">==</span> <span class="n">loc</span> <span class="ow">and</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">total_flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">out_flow</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                    <span class="n">total_flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p_idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">tl</span><span class="o">.</span><span class="n">location_l1</span> <span class="o">==</span> <span class="n">loc</span> <span class="ow">and</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="n">total_flows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+                    <span class="n">in_flow</span> <span class="o">+</span> <span class="n">loc</span><span class="o">.</span><span class="n">net_supply</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">out_flow</span>
+                <span class="p">)</span>
+
+        <span class="c1"># --- Objective Function ---</span>
+        <span class="n">nb_trips_per_link</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_transport_links</span><span class="p">):</span>
+            <span class="n">nb_trips_per_link</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+                <span class="n">used_trips</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_nb_trip_per_transport_link</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="p">)</span>
+
+        <span class="n">transport_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+            <span class="n">nb_trips_per_link</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">distance</span> <span class="o">*</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">cost</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling_factor</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">emission_cost</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_linear_sum</span><span class="p">(</span>
+            <span class="n">nb_trips_per_link</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">distance</span> <span class="o">*</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">emissions</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling_factor</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tl</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_model_objective</span><span class="p">(</span><span class="n">transport_cost</span> <span class="o">+</span> <span class="n">emission_cost</span><span class="p">,</span> <span class="n">minimize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;used_trips&quot;</span><span class="p">:</span> <span class="n">used_trips</span><span class="p">,</span>
+            <span class="s2">&quot;trip_contents&quot;</span><span class="p">:</span> <span class="n">trip_contents</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_current_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">get_var_value_for_current_solution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">get_obj_value_for_current_solution</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="nb">float</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieves the solution by reconstructing packings from the detailed trip variables.</span>
+<span class="sd">        It groups identical packings to create a concise solution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">list_flows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">link</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">):</span>
+            <span class="n">packings_on_link</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;used_trips&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">])):</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">get_var_value_for_current_solution</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;used_trips&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="o">&gt;</span> <span class="mf">0.5</span>
+                <span class="p">):</span>
+                    <span class="n">current_packing</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">[</span><span class="n">p_idx</span><span class="p">]:</span> <span class="nb">round</span><span class="p">(</span>
+                            <span class="n">get_var_value_for_current_solution</span><span class="p">(</span><span class="n">content_var</span><span class="p">)</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">content_var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;trip_contents&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">][</span>
+                            <span class="n">j</span>
+                        <span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">get_var_value_for_current_solution</span><span class="p">(</span><span class="n">content_var</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.5</span>
+                    <span class="p">}</span>
+                    <span class="k">if</span> <span class="n">current_packing</span><span class="p">:</span>
+                        <span class="c1"># Use a frozenset of items for a hashable representation of the packing</span>
+                        <span class="n">packings_on_link</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">current_packing</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+
+            <span class="k">if</span> <span class="n">packings_on_link</span><span class="p">:</span>
+                <span class="c1"># Count occurrences of each unique packing configuration</span>
+                <span class="k">for</span> <span class="n">unique_packing_items</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">Counter</span><span class="p">(</span><span class="n">packings_on_link</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">list_flows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">PackingTransport</span><span class="p">(</span>
+                            <span class="n">transport_link</span><span class="o">=</span><span class="n">link</span><span class="p">,</span>
+                            <span class="n">product_packing</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">unique_packing_items</span><span class="p">),</span>
+                            <span class="n">nb_packing</span><span class="o">=</span><span class="n">count</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultibatchingSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">list_flows</span><span class="o">=</span><span class="n">list_flows</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">MultibatchingSolution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="n">used_trips</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;used_trips&quot;</span><span class="p">]</span>
+        <span class="n">trip_contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;trip_contents&quot;</span><span class="p">]</span>
+        <span class="n">trips_per_link</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="n">dict_vars</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">list_flows</span><span class="p">:</span>
+            <span class="n">index_tl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links_to_index</span><span class="p">[</span><span class="n">flow</span><span class="o">.</span><span class="n">transport_link</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">nb_packing</span><span class="p">):</span>
+                <span class="n">trips_per_link</span><span class="p">[</span><span class="n">index_tl</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">product_packing</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">index_tl</span> <span class="ow">in</span> <span class="n">trips_per_link</span><span class="p">:</span>
+            <span class="n">nb_trips</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">trips_per_link</span><span class="p">[</span><span class="n">index_tl</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_trips</span><span class="p">):</span>
+                <span class="n">dict_vars</span><span class="p">[</span><span class="n">used_trips</span><span class="p">[</span><span class="n">index_tl</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">used_trips</span><span class="p">[</span><span class="n">index_tl</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="n">nb_trips</span><span class="p">:</span>
+                    <span class="n">dict_vars</span><span class="p">[</span><span class="n">used_trips</span><span class="p">[</span><span class="n">index_tl</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_trips</span><span class="p">):</span>
+                <span class="n">pack</span> <span class="o">=</span> <span class="n">trips_per_link</span><span class="p">[</span><span class="n">index_tl</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">p_index</span> <span class="ow">in</span> <span class="n">trip_contents</span><span class="p">[</span><span class="n">index_tl</span><span class="p">][</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">[</span><span class="n">p_index</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pack</span><span class="p">:</span>
+                        <span class="n">dict_vars</span><span class="p">[</span><span class="n">trip_contents</span><span class="p">[</span><span class="n">index_tl</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="n">p_index</span><span class="p">]]</span> <span class="o">=</span> <span class="n">pack</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">dict_vars</span><span class="p">[</span><span class="n">trip_contents</span><span class="p">[</span><span class="n">index_tl</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="n">p_index</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">trip_contents</span><span class="p">[</span><span class="n">index_tl</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="n">nb_trips</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">p_index</span> <span class="ow">in</span> <span class="n">trip_contents</span><span class="p">[</span><span class="n">index_tl</span><span class="p">][</span><span class="n">i</span><span class="p">]:</span>
+                        <span class="n">dict_vars</span><span class="p">[</span><span class="n">trip_contents</span><span class="p">[</span><span class="n">index_tl</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="n">p_index</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">index_tl</span> <span class="ow">in</span> <span class="n">used_trips</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">index_tl</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">trips_per_link</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">used_trips</span><span class="p">[</span><span class="n">index_tl</span><span class="p">]:</span>
+                    <span class="n">dict_vars</span><span class="p">[</span><span class="n">used_trips</span><span class="p">[</span><span class="n">index_tl</span><span class="p">][</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">trip_contents</span><span class="p">[</span><span class="n">index_tl</span><span class="p">]:</span>
+                    <span class="k">for</span> <span class="n">p_index</span> <span class="ow">in</span> <span class="n">trip_contents</span><span class="p">[</span><span class="n">index_tl</span><span class="p">][</span><span class="n">i</span><span class="p">]:</span>
+                        <span class="n">dict_vars</span><span class="p">[</span><span class="n">trip_contents</span><span class="p">[</span><span class="n">index_tl</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="n">p_index</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">dict_vars</span>
+
+
+<div class="viewcode-block" id="GurobiMultibatchingSolverUnitFlow">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverUnitFlow">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GurobiMultibatchingSolverUnitFlow</span><span class="p">(</span>
+    <span class="n">GurobiMilpSolver</span><span class="p">,</span> <span class="n">_BaseLpMultibatchingSolverUnitFlow</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gurobi solver for the Multibatching problem using unit flow formulation.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GurobiMultibatchingSolverUnitFlow.convert_to_variable_values">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverUnitFlow.convert_to_variable_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">MultibatchingSolution</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_BaseLpMultibatchingSolverUnitFlow</span><span class="o">.</span><span class="n">convert_to_variable_values</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMultibatchingSolverUnitFlow.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverUnitFlow.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_trips_per_link</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_BaseLpMultibatchingSolverUnitFlow</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">max_trips_per_link</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MathOptMultibatchingSolverUnitFlow">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolverUnitFlow">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MathOptMultibatchingSolverUnitFlow</span><span class="p">(</span>
+    <span class="n">OrtoolsMathOptMilpSolver</span><span class="p">,</span> <span class="n">_BaseLpMultibatchingSolverUnitFlow</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MathOpt solver for the Multibatching problem using unit flow formulation.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MathOptMultibatchingSolverUnitFlow.convert_to_variable_values">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolverUnitFlow.convert_to_variable_values">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_to_variable_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">MultibatchingSolution</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_BaseLpMultibatchingSolverUnitFlow</span><span class="o">.</span><span class="n">convert_to_variable_values</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># Lazy constraint variants (Gurobi-specific)</span>
+<div class="viewcode-block" id="GurobiMultibatchingSolverWithLazyConstraint">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverWithLazyConstraint">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GurobiMultibatchingSolverWithLazyConstraint</span><span class="p">(</span><span class="n">GurobiMultibatchingSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Gurobi solver for the multi-batching problem that uses lazy constraints</span>
+<span class="sd">    to iteratively refine the packing model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GurobiMultibatchingSolverWithLazyConstraint.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverWithLazyConstraint.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the standard multi-batching flow model and enables lazy constraints.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># We only apply this logic to the multi-batching case</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="n">single_batching</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># Tell Gurobi to enable lazy constraints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">setParam</span><span class="p">(</span><span class="s2">&quot;LazyConstraints&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Gurobi model with Lazy Constraints enabled.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GurobiMultibatchingSolverWithLazyConstraint.solve">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverWithLazyConstraint.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">parameters_milp</span><span class="p">:</span> <span class="n">ParametersMilp</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overrides the default solve method to use a custom callback for generating</span>
+<span class="sd">        lazy constraints.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">callbacks_list</span> <span class="o">=</span> <span class="n">CallbackList</span><span class="p">(</span><span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">)</span>
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_start</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1"># Use our specialized callback for lazy constraints</span>
+        <span class="n">gurobi_lazy_callback</span> <span class="o">=</span> <span class="n">GurobiLazyCallback</span><span class="p">(</span>
+            <span class="n">do_solver</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="n">callbacks_list</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimize_model</span><span class="p">(</span>
+            <span class="n">parameters_milp</span><span class="o">=</span><span class="n">parameters_milp</span><span class="p">,</span>
+            <span class="n">time_limit</span><span class="o">=</span><span class="n">time_limit</span><span class="p">,</span>
+            <span class="n">gurobi_callback</span><span class="o">=</span><span class="n">gurobi_lazy_callback</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;ObjVal&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ObjVal</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;ObjBound&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current_internal_objective_best_bound</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">ObjBound</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="n">gurobi_lazy_callback</span><span class="o">.</span><span class="n">res</span>
+        <span class="n">callbacks_list</span><span class="o">.</span><span class="n">on_solve_end</span><span class="p">(</span><span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">res</span></div>
+</div>
+
+
+
+<span class="c1"># Import lazy callback helpers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.binpack.solvers.cpsat</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpSatBinPackSolver</span><span class="p">,</span>
+    <span class="n">ModelingBinPack</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.multibatching.solvers.packing_subproblem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PackingViaBinPacking</span><span class="p">,</span>
+    <span class="n">SubBrick</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="GurobiLazyCallback">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.lp.GurobiLazyCallback">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GurobiLazyCallback</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Custom Gurobi callback to generate valid, flow-dependent cuts for the multibatching problem.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">do_solver</span><span class="p">:</span> <span class="n">GurobiMultibatchingSolver</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span> <span class="o">=</span> <span class="n">do_solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_cuts_added</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">packing_solver</span> <span class="o">=</span> <span class="n">PackingViaBinPacking</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="s2">&quot;gurobipy.Model&quot;</span><span class="p">,</span> <span class="n">where</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">where</span> <span class="o">==</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Callback</span><span class="o">.</span><span class="n">MIPSOL</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># 1. Retrieve the candidate solution from the MILP</span>
+                <span class="n">candidate_solution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">retrieve_current_solution</span><span class="p">(</span>
+                    <span class="n">get_var_value_for_current_solution</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">cbGetSolution</span><span class="p">,</span>
+                    <span class="n">get_obj_value_for_current_solution</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">model</span><span class="o">.</span><span class="n">cbGet</span><span class="p">(</span>
+                        <span class="n">gurobipy</span><span class="o">.</span><span class="n">GRB</span><span class="o">.</span><span class="n">Callback</span><span class="o">.</span><span class="n">MIPSOL_OBJ</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+
+                <span class="c1"># 2. Run the greedy packing subproblem to get the &quot;true&quot; number of trips</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">packing_solver</span><span class="o">.</span><span class="n">init_from_solution</span><span class="p">(</span><span class="n">solution</span><span class="o">=</span><span class="n">candidate_solution</span><span class="p">)</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">ParametersCp</span><span class="o">.</span><span class="n">default_cpsat</span><span class="p">()</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">nb_process</span> <span class="o">=</span> <span class="mi">16</span>
+                <span class="n">packing_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">packing_solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                    <span class="n">time_limit_per_link</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                    <span class="n">bin_packing_solver</span><span class="o">=</span><span class="n">SubBrick</span><span class="p">(</span>
+                        <span class="bp">cls</span><span class="o">=</span><span class="n">CpSatBinPackSolver</span><span class="p">,</span>
+                        <span class="n">kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                            <span class="n">modeling</span><span class="o">=</span><span class="n">ModelingBinPack</span><span class="o">.</span><span class="n">SCHEDULING</span><span class="p">,</span> <span class="n">parameters_cp</span><span class="o">=</span><span class="n">p</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;fit packing </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">packing_result</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;sat packing </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="n">packing_result</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">packing_result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">return</span>
+
+                <span class="n">packed_solution</span> <span class="o">=</span> <span class="n">packing_result</span><span class="o">.</span><span class="n">get_best_solution_fit</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="c1"># 3. Check for violations and add valid, flow-dependent lazy constraints</span>
+                <span class="n">milp_trips</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">candidate_solution</span><span class="o">.</span><span class="n">list_flows</span><span class="p">:</span>
+                    <span class="n">milp_trips</span><span class="p">[</span><span class="n">flow</span><span class="o">.</span><span class="n">transport_link</span><span class="p">]</span> <span class="o">+=</span> <span class="n">flow</span><span class="o">.</span><span class="n">nb_packing</span>
+
+                <span class="n">greedy_trips</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">packed_solution</span><span class="o">.</span><span class="n">list_flows</span><span class="p">:</span>
+                    <span class="n">greedy_trips</span><span class="p">[</span><span class="n">flow</span><span class="o">.</span><span class="n">transport_link</span><span class="p">]</span> <span class="o">+=</span> <span class="n">flow</span><span class="o">.</span><span class="n">nb_packing</span>
+
+                <span class="n">violation_found</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="n">link</span><span class="p">,</span> <span class="n">milp_trip_count_float</span> <span class="ow">in</span> <span class="n">milp_trips</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">milp_trip_count</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">milp_trip_count_float</span><span class="p">)</span>
+                    <span class="n">greedy_trip_count</span> <span class="o">=</span> <span class="n">greedy_trips</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">link</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">greedy_trip_count</span> <span class="o">&gt;</span> <span class="n">milp_trip_count</span><span class="p">:</span>
+                        <span class="n">flows_product_in_this_link</span> <span class="o">=</span> <span class="p">{}</span>
+                        <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">candidate_solution</span><span class="o">.</span><span class="n">list_flows</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">flow</span><span class="o">.</span><span class="n">transport_link</span> <span class="o">==</span> <span class="n">link</span><span class="p">:</span>
+                                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">flow</span><span class="o">.</span><span class="n">product_packing</span><span class="p">:</span>
+                                    <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">flows_product_in_this_link</span><span class="p">:</span>
+                                        <span class="n">flows_product_in_this_link</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                                    <span class="n">flows_product_in_this_link</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">round</span><span class="p">(</span>
+                                        <span class="n">flow</span><span class="o">.</span><span class="n">product_packing</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">*</span> <span class="n">flow</span><span class="o">.</span><span class="n">nb_packing</span>
+                                    <span class="p">)</span>
+                        <span class="n">violation_found</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">nb_cuts_added</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">link_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links_to_index</span><span class="p">[</span><span class="n">link</span><span class="p">]</span>
+                        <span class="n">nb_trips_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;nb_trips&quot;</span><span class="p">][</span><span class="n">link_idx</span><span class="p">]</span>
+                        <span class="c1"># Calculate the total volume in the candidate solution for this link</span>
+                        <span class="n">candidate_volume</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                            <span class="n">p</span><span class="o">.</span><span class="n">size</span>
+                            <span class="o">*</span> <span class="nb">round</span><span class="p">(</span><span class="n">flow</span><span class="o">.</span><span class="n">product_packing</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">flow</span><span class="o">.</span><span class="n">nb_packing</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span>
+                            <span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="n">candidate_solution</span><span class="o">.</span><span class="n">list_flows</span>
+                            <span class="k">if</span> <span class="n">flow</span><span class="o">.</span><span class="n">transport_link</span> <span class="o">==</span> <span class="n">link</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="n">candidate_volume</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+                            <span class="k">continue</span>  <span class="c1"># Avoid division by zero</span>
+
+                        <span class="c1"># Define the total_volume_var as a Gurobi linear expression</span>
+                        <span class="n">total_volume_var</span> <span class="o">=</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">quicksum</span><span class="p">(</span>
+                            <span class="n">p</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;flows&quot;</span><span class="p">][</span><span class="n">link_idx</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span>
+                            <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;flows&quot;</span><span class="p">][</span><span class="n">link_idx</span><span class="p">]</span>
+                            <span class="ow">and</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">flows_product_in_this_link</span>
+                        <span class="p">)</span>
+                        <span class="c1"># Add the valid, flow-dependent cut</span>
+                        <span class="c1"># nb_trips &gt;= (N_greedy / V_candidate) * total_volume_var</span>
+                        <span class="n">cut_coefficient</span> <span class="o">=</span> <span class="n">greedy_trip_count</span> <span class="o">/</span> <span class="n">candidate_volume</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">cbLazy</span><span class="p">(</span><span class="n">nb_trips_var</span> <span class="o">&gt;=</span> <span class="n">cut_coefficient</span> <span class="o">*</span> <span class="n">total_volume_var</span><span class="p">)</span>
+                        <span class="n">other_link</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="n">index_link</span>
+                            <span class="k">for</span> <span class="n">index_link</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_transport_links</span>
+                            <span class="p">)</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">[</span>
+                                <span class="n">index_link</span>
+                            <span class="p">]</span><span class="o">.</span><span class="n">transport_type</span>
+                            <span class="o">==</span> <span class="n">link</span><span class="o">.</span><span class="n">transport_type</span>
+                        <span class="p">]</span>
+                        <span class="k">for</span> <span class="n">ot</span> <span class="ow">in</span> <span class="n">other_link</span><span class="p">:</span>
+                            <span class="n">total_volume_var</span> <span class="o">=</span> <span class="n">gurobipy</span><span class="o">.</span><span class="n">quicksum</span><span class="p">(</span>
+                                <span class="n">p</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;flows&quot;</span><span class="p">][</span><span class="n">ot</span><span class="p">][</span><span class="n">p_idx</span><span class="p">]</span>
+                                <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span>
+                                <span class="p">)</span>
+                                <span class="k">if</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;flows&quot;</span><span class="p">][</span><span class="n">ot</span><span class="p">]</span>
+                                <span class="ow">and</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">flows_product_in_this_link</span>
+                            <span class="p">)</span>
+                            <span class="n">nb_trips_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="s2">&quot;nb_trips&quot;</span><span class="p">][</span><span class="n">ot</span><span class="p">]</span>
+                            <span class="n">model</span><span class="o">.</span><span class="n">cbLazy</span><span class="p">(</span>
+                                <span class="n">nb_trips_var</span> <span class="o">&gt;=</span> <span class="n">cut_coefficient</span> <span class="o">*</span> <span class="n">total_volume_var</span>
+                            <span class="p">)</span>
+
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;CUT #</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_cuts_added</span><span class="si">}</span><span class="s2"> on link </span><span class="si">{</span><span class="n">link</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">: &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;MILP trips=</span><span class="si">{</span><span class="n">milp_trip_count</span><span class="si">}</span><span class="s2">, Greedy trips=</span><span class="si">{</span><span class="n">greedy_trip_count</span><span class="si">}</span><span class="s2">,&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; Volume=</span><span class="si">{</span><span class="n">candidate_volume</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">. &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;Adding lazy cut.&quot;</span>
+                        <span class="p">)</span>
+                <span class="c1"># 4. If no violation was found, the solution is valid from a packing perspective.</span>
+                <span class="k">if</span> <span class="kc">True</span><span class="p">:</span>
+                    <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">packed_solution</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">packed_solution</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">stopping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span>
+                        <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">stopping</span><span class="p">:</span>
+                        <span class="n">model</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in Gurobi lazy callback: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exc_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="n">e</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

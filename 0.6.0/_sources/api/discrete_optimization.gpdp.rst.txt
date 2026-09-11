@@ -1,0 +1,38 @@
+discrete\_optimization.gpdp package
+===================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.gpdp.builders
+   discrete_optimization.gpdp.solvers
+
+Submodules
+----------
+
+discrete\_optimization.gpdp.plot module
+---------------------------------------
+
+.. automodule:: discrete_optimization.gpdp.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.gpdp.problem module
+------------------------------------------
+
+.. automodule:: discrete_optimization.gpdp.problem
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.gpdp
+   :members:
+   :undoc-members:
+   :show-inheritance:

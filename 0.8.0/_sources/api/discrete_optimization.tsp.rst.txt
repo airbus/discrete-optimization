@@ -1,0 +1,69 @@
+discrete\_optimization.tsp package
+==================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.tsp.solvers
+
+Submodules
+----------
+
+discrete\_optimization.tsp.mutation module
+------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.mutation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.parser module
+----------------------------------------
+
+.. automodule:: discrete_optimization.tsp.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.plot module
+--------------------------------------
+
+.. automodule:: discrete_optimization.tsp.plot
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.problem module
+-----------------------------------------
+
+.. automodule:: discrete_optimization.tsp.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.solvers\_map module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers_map
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.utils module
+---------------------------------------
+
+.. automodule:: discrete_optimization.tsp.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.tsp
+   :members:
+   :show-inheritance:
+   :undoc-members:

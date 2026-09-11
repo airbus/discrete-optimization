@@ -1,0 +1,29 @@
+discrete\_optimization.shop.osp package
+=======================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.shop.osp.solvers
+
+Submodules
+----------
+
+discrete\_optimization.shop.osp.problem module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.shop.osp.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.shop.osp
+   :members:
+   :show-inheritance:
+   :undoc-members:

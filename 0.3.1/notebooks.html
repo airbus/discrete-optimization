@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notebooks &mdash; discrete-optimization 0.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=4621528c"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script src="_static/versions.js?v=dd1a30db"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api/modules.html" />
+    <link rel="prev" title="Getting started" href="getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.3.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Notebooks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#knapsack-problem">Knapsack problem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rcpsp-tutorials">RCPSP tutorials</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction-to-rcpsp">Introduction to RCPSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solving-rcpsp-with-heuristics">Solving RCPSP with heuristics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solving-rcpsp-with-local-search-metaheuristics-genetic-algorithm">Solving RCPSP with local search/metaheuristics/genetic algorithm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solve-rcpsp-by-linear-programming-milp">Solve RCPSP by linear programming: MILP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solve-rcpsp-by-constraint-programming">Solve RCPSP by constraint programming</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#large-neighborhood-search-cp-to-solve-rcpsp">Large neighborhood search + CP to solve RCPSP</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced">Advanced</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#callbacks-usage">Callbacks usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tuning-hyperparameters-with-optuna">Tuning hyperparameters with Optuna</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Notebooks</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section class="tex2jax_ignore mathjax_ignore" id="notebooks">
+<h1>Notebooks<a class="headerlink" href="#notebooks" title="Link to this heading"></a></h1>
+<p>We present here a curated list of notebooks recommended to start with discrete-optimization,
+available in the <code class="docutils literal notranslate"><span class="pre">notebooks/</span></code> folder of the repository.</p>
+<nav class="contents local" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#knapsack-problem" id="id1">Knapsack problem</a></p></li>
+<li><p><a class="reference internal" href="#rcpsp-tutorials" id="id2">RCPSP tutorials</a></p>
+<ul>
+<li><p><a class="reference internal" href="#introduction-to-rcpsp" id="id3">Introduction to RCPSP</a></p></li>
+<li><p><a class="reference internal" href="#solving-rcpsp-with-heuristics" id="id4">Solving RCPSP with heuristics</a></p></li>
+<li><p><a class="reference internal" href="#solving-rcpsp-with-local-search-metaheuristics-genetic-algorithm" id="id5">Solving RCPSP with local search/metaheuristics/genetic algorithm</a></p></li>
+<li><p><a class="reference internal" href="#solve-rcpsp-by-linear-programming-milp" id="id6">Solve RCPSP by linear programming: MILP</a></p></li>
+<li><p><a class="reference internal" href="#solve-rcpsp-by-constraint-programming" id="id7">Solve RCPSP by constraint programming</a></p></li>
+<li><p><a class="reference internal" href="#large-neighborhood-search-cp-to-solve-rcpsp" id="id8">Large neighborhood search + CP to solve RCPSP</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#advanced" id="id9">Advanced</a></p>
+<ul>
+<li><p><a class="reference internal" href="#callbacks-usage" id="id10">Callbacks usage</a></p></li>
+<li><p><a class="reference internal" href="#tuning-hyperparameters-with-optuna" id="id11">Tuning hyperparameters with Optuna</a></p></li>
+</ul>
+</li>
+</ul>
+</nav>
+<section id="knapsack-problem">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Knapsack problem</a><a class="headerlink" href="#knapsack-problem" title="Link to this heading"></a></h2>
+<p><a class="reference external" href="https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/Knapsack%20tutorial.ipynb"><img alt="Github" src="https://img.shields.io/badge/see-Github-579aca?logo=github" /></a>
+<a class="reference external" href="https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/Knapsack%20tutorial.ipynb"><img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="reference external" href="https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.1?labpath=notebooks%2FKnapsack+tutorial.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
+<p>This is a very common combinatorial optimization problem where you are given a knapsack of a given weight capacity <span class="math notranslate nohighlight">\(C\)</span> and a bunch of items with values and weight. The goal is to fill the knapsack with the best aggregated value, respecting the weight constraint.</p>
+<p><img alt="knapsack problem illustration" src="https://upload.wikimedia.org/wikipedia/commons/f/fd/Knapsack.svg" />.</p>
+<p>We handle here the <em>0-1 knapsack problem</em> where each item can only be taken once.</p>
+<p>Many different optimization approach can be tested on the combinatorial problem, we’ll see a few during the notebook:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#Greedy-heuristic"><span class="xref myst">Greedy heuristic methods</span></a></p></li>
+<li><p><a class="reference internal" href="#Mixed-integer-linear-programming"><span class="xref myst">Mixed Integer Linear Programming (MILP)</span></a></p></li>
+<li><p><a class="reference internal" href="#Constraint-Programming"><span class="xref myst">Constraint Programming (CP)</span></a></p></li>
+<li><p><a class="reference internal" href="#Large-neighborhood-search"><span class="xref myst">Large neighborhood search (LNS)</span></a>, a metaheuristic on top of CP or MILP</p></li>
+</ul>
+</section>
+<section id="rcpsp-tutorials">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">RCPSP tutorials</a><a class="headerlink" href="#rcpsp-tutorials" title="Link to this heading"></a></h2>
+<section id="introduction-to-rcpsp">
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">Introduction to RCPSP</a><a class="headerlink" href="#introduction-to-rcpsp" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-1%20Introduction.ipynb"><img alt="Github" src="https://img.shields.io/badge/see-Github-579aca?logo=github" /></a>
+<a class="reference external" href="https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-1%20Introduction.ipynb"><img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="reference external" href="https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.1?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-1+Introduction.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
+<p>What is RCPSP ? (Resource Constrained Project Scheduling Problem)</p>
+<ul>
+<li><p><span class="math notranslate nohighlight">\(M\)</span> activities or tasks in a project (instance)</p></li>
+<li><p>Precedence constraints:</p>
+<blockquote>
+<div><p>If activity <span class="math notranslate nohighlight">\(j\in[1,M]\)</span> is a successor of activity <span class="math notranslate nohighlight">\(i\in[1,M]\)</span>, then activity <span class="math notranslate nohighlight">\(i\)</span> must be completed before activity <span class="math notranslate nohighlight">\(j\)</span> can be started</p>
+</div></blockquote>
+</li>
+<li><p>Resource constraints:</p>
+<blockquote>
+<div><p>Each project is assigned a set of K renewable resources where each resource <span class="math notranslate nohighlight">\(k\)</span> is available in <span class="math notranslate nohighlight">\(R_{k}\)</span> units for the entire duration of the project. Each activity may require one or more of these resources to be completed. While scheduling the activities, the daily resource usage for resource <span class="math notranslate nohighlight">\(k\)</span> can not exceed <span class="math notranslate nohighlight">\(R_{k}\)</span> units.</p>
+</div></blockquote>
+</li>
+<li><p>Each activity <span class="math notranslate nohighlight">\(j\)</span> takes <span class="math notranslate nohighlight">\(d_{j}\)</span> time units to complete.</p></li>
+<li><p>The overall goal of the problem is usually to minimize the makespan.</p></li>
+</ul>
+<p>Here we focus on <em>single mode RCPSP with renewable resources</em>, but there exists also variants of the problem</p>
+<ul class="simple">
+<li><p>multi-mode: a task can be performed in several ways (modes), with specific duration and resources needs. The choice of the mode is in this case part of the solution.</p></li>
+<li><p>mix of renewable and non-renewable resources.</p></li>
+</ul>
+</section>
+<section id="solving-rcpsp-with-heuristics">
+<h3><a class="toc-backref" href="#id4" role="doc-backlink">Solving RCPSP with heuristics</a><a class="headerlink" href="#solving-rcpsp-with-heuristics" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-2%20Heuristics%20Solving.ipynb"><img alt="Github" src="https://img.shields.io/badge/see-Github-579aca?logo=github" /></a>
+<a class="reference external" href="https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-2%20Heuristics%20Solving.ipynb"><img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="reference external" href="https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.1?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-2+Heuristics+Solving.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
+<p>We admit that you followed the following <a class="reference internal" href="#RCPSP%20%231%20Introduction.ipynb"><span class="xref myst">notebook</span></a> that introduced you all the basics for RCPSP Problems, in this notebook we will test two greedy heuristics that builds feasible solution.</p>
+</section>
+<section id="solving-rcpsp-with-local-search-metaheuristics-genetic-algorithm">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Solving RCPSP with local search/metaheuristics/genetic algorithm</a><a class="headerlink" href="#solving-rcpsp-with-local-search-metaheuristics-genetic-algorithm" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-3%20Local%20search.ipynb"><img alt="Github" src="https://img.shields.io/badge/see-Github-579aca?logo=github" /></a>
+<a class="reference external" href="https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-3%20Local%20search.ipynb"><img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="reference external" href="https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.1?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-3+Local+search.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
+<p>One big family of combinatorial optimisation solver is local search. We include all metaheuristics and genetic algorithm into this simple terminology.</p>
+<p>In general, a local search algorithm explore the solution space by applying local changes to the current set of solutions.</p>
+<p>In the case of RCPSP, we have seen in <a class="reference internal" href="#RCPSP%20%231%20Introduction.ipynb"><span class="xref myst">the first notebook</span></a> that we can represent a solution with a priority list of tasks (equivalent to a permutation).
+Therefore local search algorithms are available on the search space being the ensemble of all permutation of tasks. We can imagine many kind of local changes possible to explore the permutation set.</p>
+<p>Local search (LS) algorithms are anytime algorithm, we have access to the current best solution whenever we want to stop the optimisation process. LS can’t prove that a solution is optimal but it is rarely an issue in real world applications.</p>
+</section>
+<section id="solve-rcpsp-by-linear-programming-milp">
+<h3><a class="toc-backref" href="#id6" role="doc-backlink">Solve RCPSP by linear programming: MILP</a><a class="headerlink" href="#solve-rcpsp-by-linear-programming-milp" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-4%20Linear%20programming.ipynb"><img alt="Github" src="https://img.shields.io/badge/see-Github-579aca?logo=github" /></a>
+<a class="reference external" href="https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-4%20Linear%20programming.ipynb"><img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="reference external" href="https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.1?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-4+Linear+programming.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
+<p>We admit that you followed the <a class="reference internal" href="#RCPSP%20%231%20Introduction.ipynb"><span class="xref myst">first notebook</span></a> that introduced you all the basics for RCPSP Problems, on which we will apply here linear programming.</p>
+<p>Linear programming is a paradigm to model optimisation problem where the objective function and constraints are linear in terms of the variables :</p>
+<p><span class="math notranslate nohighlight">\( y = max_{x}(c^t.x) \)</span>
+such that <span class="math notranslate nohighlight">\(A.x \leq b \)</span></p>
+<p><span class="math notranslate nohighlight">\(x\)</span> can be either floating or integer values, which explains the Mixed Integer Linear Programming denomination.</p>
+</section>
+<section id="solve-rcpsp-by-constraint-programming">
+<h3><a class="toc-backref" href="#id7" role="doc-backlink">Solve RCPSP by constraint programming</a><a class="headerlink" href="#solve-rcpsp-by-constraint-programming" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-5%20Constraint%20Programming.ipynb"><img alt="Github" src="https://img.shields.io/badge/see-Github-579aca?logo=github" /></a>
+<a class="reference external" href="https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-5%20Constraint%20Programming.ipynb"><img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="reference external" href="https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.1?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-5+Constraint+Programming.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
+<p>One of the main class of methods to solve discrete optimization problem is Constraint programming <a class="reference external" href="https://en.wikipedia.org/wiki/Constraint_programming">(CP)</a>. CP solvers explore the state variables and propagate constraints in a clever way. Using constraint programming, users declaratively state the constraints on the feasible solutions for a set of decision variables. Constraints specify the properties of a solution to be found.
+In discrete-optimization library, <a class="reference external" href="https://www.minizinc.org/">minizinc</a> declarative language and its <a class="reference external" href="https://minizinc-python.readthedocs.io/en/latest/">python api</a> is used extensively. However it is quite easy to use other modeling library such as <a class="reference external" href="https://github.com/CPMpy/cpmpy/tree/master/cpmpy">Cpmpy</a> in the future.
+Some constraint programming models are stored in discrete_optimization/knapsack/minizinc folder.</p>
+<p>In this notebook, we’ll use the <a class="reference external" href="https://github.com/chuffed/chuffed#description">chuffed</a> solver which is a state of the art lazy clause solver.</p>
+<p>We assume that you have already been introduced to RCPSP problems thanks to this <a class="reference internal" href="#RCPSP%20%231%20Introduction.ipynb"><span class="xref myst">notebook</span></a>.</p>
+</section>
+<section id="large-neighborhood-search-cp-to-solve-rcpsp">
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">Large neighborhood search + CP to solve RCPSP</a><a class="headerlink" href="#large-neighborhood-search-cp-to-solve-rcpsp" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-6%20Large%20Neighbourhood%20Search%20.ipynb"><img alt="Github" src="https://img.shields.io/badge/see-Github-579aca?logo=github" /></a>
+<a class="reference external" href="https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/RCPSP%20tutorials/RCPSP-6%20Large%20Neighbourhood%20Search%20.ipynb"><img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="reference external" href="https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.1?labpath=notebooks%2FRCPSP+tutorials%2FRCPSP-6+Large+Neighbourhood+Search+.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
+<p>LNS is an iterative heuristic method consisting in freezing randomly part of the solutions and optimize the remaining part. Full solution is then rebuilt and hopefully, repeating the process lead to a good solution to the original problem.</p>
+</section>
+</section>
+<section id="advanced">
+<h2><a class="toc-backref" href="#id9" role="doc-backlink">Advanced</a><a class="headerlink" href="#advanced" title="Link to this heading"></a></h2>
+<section id="callbacks-usage">
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">Callbacks usage</a><a class="headerlink" href="#callbacks-usage" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/z_Advanced/callbacks.ipynb"><img alt="Github" src="https://img.shields.io/badge/see-Github-579aca?logo=github" /></a>
+<a class="reference external" href="https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/z_Advanced/callbacks.ipynb"><img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="reference external" href="https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.1?labpath=notebooks%2Fz_Advanced%2Fcallbacks.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
+<p>When using discrete-optimization to solve a problem,
+it is possible to execute your own code at various stage of the solving process.</p>
+<p>To achieve that, you have to</p>
+<ul class="simple">
+<li><p>either create your own callback by inheriting from <a class="reference external" href="https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback">Callback</a> base class,
+and implementing the hooks you need</p></li>
+<li><p>or directly use one of the already implemented ones available in discrete_optimization.generic_tools.callbacks submodules
+(like
+<a class="reference external" href="https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#module-discrete_optimization.generic_tools.callbacks.loggers">loggers</a>,
+<a class="reference external" href="https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#module-discrete_optimization.generic_tools.callbacks.early_stoppers">early_stoppers</a>,
+or <a class="reference external" href="https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.callbacks.html#module-discrete_optimization.generic_tools.callbacks.optuna">optuna</a>
+)</p></li>
+<li><p>and put them in <code class="docutils literal notranslate"><span class="pre">callbacks</span></code> argument of <code class="docutils literal notranslate"><span class="pre">SolverDO.solve()</span></code>, as shown in the <a class="reference external" href="https://airbus.github.io/discrete-optimization/master/api/discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO.solve">API doc</a>.</p></li>
+</ul>
+<p>The main usecases for using a callback are</p>
+<ul class="simple">
+<li><p>Logging: you need to display more information about what happens during the solving process;</p></li>
+<li><p>Backuping: you need to store a model at an intermediate stage;</p></li>
+<li><p>Early stopping: you want to stop the solving process under your own specific condition, not available in the solver api;</p></li>
+<li><p><a class="reference internal" href="#./optuna.ipynb"><span class="xref myst">Tuning hyperparameters with Optuna</span></a>: you want let Optuna having access to intermediate results so that it can decide whether to drop the current trial.
+(See dedicated notebook.)</p></li>
+</ul>
+</section>
+<section id="tuning-hyperparameters-with-optuna">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Tuning hyperparameters with Optuna</a><a class="headerlink" href="#tuning-hyperparameters-with-optuna" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://github.com/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/z_Advanced/optuna.ipynb"><img alt="Github" src="https://img.shields.io/badge/see-Github-579aca?logo=github" /></a>
+<a class="reference external" href="https://colab.research.google.com/github/airbus/discrete-optimization/blob/notebooks-v0.3.1/notebooks/z_Advanced/optuna.ipynb"><img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a>
+<a class="reference external" href="https://mybinder.org/v2/gh/airbus/discrete-optimization/notebooks-v0.3.1?labpath=notebooks%2Fz_Advanced%2Foptuna.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
+<p>All our solvers have got a lot of hyperparameters.
+And of course, the optimization result can change significantly according to them.</p>
+<p>In this notebook, we will see how we can make use of <a class="reference external" href="https://optuna.readthedocs.io/en/stable/">Optuna</a> to tune them for a given problem (or family of problems).</p>
+<p>Some work has been done in the library to ease this tuning:</p>
+<ul class="simple">
+<li><p>main hyperparameters of each solver have been identified, with default values and possible ranges registered;</p></li>
+<li><p>some utility methods have been coded to get default hyperparameters and to make use of optuna hyperparameters auto-suggestion with as little work as possible from the user.</p></li>
+</ul>
+<p>After applying this to tune hyperparameters of a solver, further examples will show you that</p>
+<ul class="simple">
+<li><p>we can also use optuna to select the solver class itself as another meta-hyperparameter;</p></li>
+<li><p>some solvers are meta-solvers having themselves subsolvers as hyperparameters with their own set of hyperparameters, that can also be tuned.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting_started.html" class="btn btn-neutral float-left" title="Getting started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api/modules.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.3.1
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

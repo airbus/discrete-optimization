@@ -1,0 +1,93 @@
+discrete\_optimization.lotsizing.capacitatedmultiitem.solvers package
+=====================================================================
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat\_scheduling module
+--------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.solvers.cpsat_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.solvers.dp module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.solvers.greedy module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.solvers.greedy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.solvers.lp module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.solvers.lp\_milp module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.solvers.lp_milp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.solvers.ls module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.solvers.ls
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.solvers.mutation module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.solvers.mutation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.solvers.sa\_fast module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.solvers.sa_fast
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedmultiitem.solvers.toulbar module
+----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.solvers.toulbar
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedmultiitem.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

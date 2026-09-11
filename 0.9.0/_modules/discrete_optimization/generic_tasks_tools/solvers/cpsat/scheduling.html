@@ -1,0 +1,308 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntervalVar</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">,</span> <span class="n">LinearExprT</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchedulingCpSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">SignEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.ortools_cpsat_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrtoolsCpSatSolver</span>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling.SchedulingCpSatSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SchedulingCpSatSolver</span><span class="p">(</span><span class="n">OrtoolsCpSatSolver</span><span class="p">,</span> <span class="n">SchedulingCpSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for most ortools/cpsat solvers handling scheduling problems.</span>
+
+<span class="sd">    Allows to have common code.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_makespan</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IntVar</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Internal variable use to define the global makespan.&quot;&quot;&quot;</span>
+
+    <span class="n">_subtasks_makespan</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">IntVar</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Internal variable use to define the partial makespan.&quot;&quot;&quot;</span>
+
+    <span class="n">constraints_on_makespan</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Constraints on partial makespan so that it can be considered as the objective.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.init_model">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling.SchedulingCpSatSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Init cp model and reset stored variables if any.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_makespan</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subtasks_makespan</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_on_makespan</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.get_task_start_or_end_variable">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling.SchedulingCpSatSolver.get_task_start_or_end_variable">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_start_or_end_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Retrieve the variable storing the start or end time of given task.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task:</span>
+<span class="sd">            start_or_end:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.get_task_interval">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling.SchedulingCpSatSolver.get_task_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntervalVar</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return interval variable for the task.</span>
+
+<span class="sd">        This variable corresponds to the task schedule, whatever the mode.</span>
+<span class="sd">        This is needed when wanting to avoid using optional interval,</span>
+<span class="sd">        i.e. if `self.avoid_interval_optional` is set to True.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.add_constraint_on_task">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling.SchedulingCpSatSolver.add_constraint_on_task">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_on_task</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span><span class="p">,</span> <span class="n">sign</span><span class="p">:</span> <span class="n">SignEnum</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">start_or_end</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_bound_constraint</span><span class="p">(</span><span class="n">var</span><span class="o">=</span><span class="n">var</span><span class="p">,</span> <span class="n">sign</span><span class="o">=</span><span class="n">sign</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">time</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.add_constraint_chaining_tasks">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling.SchedulingCpSatSolver.add_constraint_chaining_tasks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_constraint_chaining_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task1</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">task2</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="n">var1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span>
+            <span class="n">task</span><span class="o">=</span><span class="n">task1</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+        <span class="p">)</span>
+        <span class="n">var2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span>
+            <span class="n">task</span><span class="o">=</span><span class="n">task2</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">var1</span> <span class="o">==</span> <span class="n">var2</span><span class="p">)]</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_makespan_var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntVar</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the makespan variable used to track global makespan.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_makespan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_makespan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_lower_bound</span><span class="p">(),</span>
+                <span class="n">ub</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_upper_bound</span><span class="p">(),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;makespan&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_makespan</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_subtasks_makespan_var</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntVar</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the makespan variable used to track subtasks makespan.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subtasks_makespan</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_subtasks_makespan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># lower bound for any tasks subset</span>
+                <span class="n">ub</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_upper_bound</span><span class="p">(),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;subtasks_makespan&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subtasks_makespan</span>
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.remove_constraints_on_objective">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling.SchedulingCpSatSolver.remove_constraints_on_objective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_constraints_on_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints_on_makespan</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remove_constraints</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints_on_makespan</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.get_global_makespan_variable">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling.SchedulingCpSatSolver.get_global_makespan_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_global_makespan_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+        <span class="c1"># remove previous constraints on makespan variable from cp model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_constraints_on_objective</span><span class="p">()</span>
+        <span class="c1"># get makespan variable</span>
+        <span class="n">makespan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_makespan_var</span><span class="p">()</span>
+        <span class="c1"># update those constraints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_on_makespan</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span>
+                <span class="n">makespan</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_last_tasks</span><span class="p">()</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">makespan</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.get_subtasks_makespan_variable">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling.SchedulingCpSatSolver.get_subtasks_makespan_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_subtasks_makespan_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subtasks</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+        <span class="c1"># remove previous constraints on makespan variable from cp model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_constraints_on_objective</span><span class="p">()</span>
+        <span class="c1"># get makespan variable</span>
+        <span class="n">makespan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_subtasks_makespan_var</span><span class="p">()</span>
+        <span class="c1"># update those constraints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints_on_makespan</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span>
+                <span class="n">makespan</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">subtasks</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">makespan</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.get_subtasks_sum_end_time_variable">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling.SchedulingCpSatSolver.get_subtasks_sum_end_time_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_subtasks_sum_end_time_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">subtasks</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_constraints_on_objective</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">subtasks</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SchedulingCpSatSolver.get_subtasks_sum_start_time_variable">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling.SchedulingCpSatSolver.get_subtasks_sum_start_time_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_subtasks_sum_start_time_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">subtasks</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExprT</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_constraints_on_objective</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">subtasks</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

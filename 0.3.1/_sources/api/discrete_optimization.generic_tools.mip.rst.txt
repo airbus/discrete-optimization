@@ -1,0 +1,21 @@
+discrete\_optimization.generic\_tools.mip package
+=================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.mip.pymip\_tools module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.mip.pymip_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.mip
+   :members:
+   :undoc-members:
+   :show-inheritance:

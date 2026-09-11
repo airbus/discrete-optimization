@@ -1,0 +1,45 @@
+discrete\_optimization.workforce.scheduling package
+===================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.workforce.scheduling.solvers
+
+Submodules
+----------
+
+discrete\_optimization.workforce.scheduling.parser module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.scheduling.problem module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.scheduling.utils module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.workforce.scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:

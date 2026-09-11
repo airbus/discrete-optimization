@@ -1,0 +1,37 @@
+discrete\_optimization.top package
+==================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.top.solvers
+
+Submodules
+----------
+
+discrete\_optimization.top.parser module
+----------------------------------------
+
+.. automodule:: discrete_optimization.top.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.top.problem module
+-----------------------------------------
+
+.. automodule:: discrete_optimization.top.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.top
+   :members:
+   :show-inheritance:
+   :undoc-members:

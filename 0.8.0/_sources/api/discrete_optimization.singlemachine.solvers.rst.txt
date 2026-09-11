@@ -1,0 +1,61 @@
+discrete\_optimization.singlemachine.solvers package
+====================================================
+
+Submodules
+----------
+
+discrete\_optimization.singlemachine.solvers.cpmpy\_solver module
+-----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.singlemachine.solvers.cpmpy_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.singlemachine.solvers.cpsat module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.singlemachine.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.singlemachine.solvers.dp module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.singlemachine.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.singlemachine.solvers.greedy module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.singlemachine.solvers.greedy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.singlemachine.solvers.lp module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.singlemachine.solvers.lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.singlemachine.solvers.optal module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.singlemachine.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.singlemachine.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,53 @@
+discrete\_optimization.lotsizing.uncapacitatedsingleitem.solvers package
+========================================================================
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp\_wagner module
+----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.dp_wagner
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.uncapacitatedsingleitem.solvers.lp module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.uncapacitatedsingleitem.solvers.toulbar module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers.toulbar
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:
