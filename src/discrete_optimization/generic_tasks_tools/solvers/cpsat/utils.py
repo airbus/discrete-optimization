@@ -94,7 +94,7 @@ def create_resource_dependent_variable(
     name_var: str,
     task: Task,
     task_mode_var: dict[tuple[Task, int], LinearExprT],
-    mode2mapping: dict[int, dict[frozenset[tuple[Task, int]], int]],
+    mode2mapping: dict[int, dict[frozenset[tuple[Task, int]], int] | None],
     possible_values: set[int] = None,
 ):
     if possible_values is None:

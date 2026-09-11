@@ -38,7 +38,8 @@ class CumulativeResourceProblem(
 
     2. **Resource-dependent**: Task consumption depends on other tasks' modes.
        Modeled via a consumption mapping.
-       If the task/mode dont depend on any other task, returns None.
+       If the task/mode dont depend on any other task, returns empty condition
+       with the static resource need.
 
     **Resource-Dependent Example:**
 
@@ -95,7 +96,11 @@ class CumulativeResourceProblem(
             >>> # {frozenset([(task_B, 0)]): 100, frozenset([(task_B, 1)]): 80}
         """
         # To be overridden in child classes
-        return None
+        return {
+            frozenset(): self.get_cumulative_resource_consumption(
+                resource=resource, task=task, mode=mode
+            )
+        }
 
     def get_possible_cumulative_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
