@@ -31,7 +31,7 @@ class NonRenewableCpSatSolver(
     demands_non_renewable_resource_vars: dict[
         tuple[Task, NonRenewableResource], LinearExprT
     ]
-    demand_non_renewable_modeling: ModeToValueModeling = ModeToValueModeling.ENFORCE_IF
+    demand_non_renewable_modeling: ModeToValueModeling
 
     def initialize_non_renewable_resource_demand_vars(self):
         """

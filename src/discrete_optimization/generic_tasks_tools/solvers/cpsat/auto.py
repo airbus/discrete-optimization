@@ -45,12 +45,16 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.generic_scheduling 
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode_scheduling import (
     SinglemodeSchedulingCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.utils import (
+    ModeToValueModeling,
+)
 from discrete_optimization.generic_tools.do_problem import (
     Solution,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
+    EnumHyperparameter,
 )
 
 logger = logging.getLogger(__name__)
@@ -117,6 +121,16 @@ class GenericSchedulingAutoCpSatSolver(
             default=True,
             depends_on=("use_energy_constraints", [True]),
         ),
+        EnumHyperparameter(
+            name="demand_non_renewable_modeling",
+            enum=ModeToValueModeling,
+            default=ModeToValueModeling.ENFORCE_IF,
+        ),
+        EnumHyperparameter(
+            name="demand_cumulative_modeling",
+            enum=ModeToValueModeling,
+            default=ModeToValueModeling.ENFORCE_IF,
+        ),
     ]
 
     # objective settings
@@ -182,9 +196,9 @@ class GenericSchedulingAutoCpSatSolver(
     """Variables tracking level (capacity needed) of each (unary, cumulative, or non-renewable) resource."""
     resource_level_variables_created = False
     """Flag telling whether 'resource_level_variables' have been created"""
-    use_enforce_if_instead_of_sum = False
-    """For demand variable, use enforce if instead of sum of mode boolean*conso.
-    Solver advantage with this param still to be checked."""
+    demand_cumulative_modeling: ModeToValueModeling = ModeToValueModeling.ENFORCE_IF
+    demand_non_renewable_modeling: ModeToValueModeling = ModeToValueModeling.ENFORCE_IF
+    """Specify how the demand vars are defined with the modes"""
 
     @property
     def needs_duration_variables(self) -> bool:
@@ -317,6 +331,8 @@ class GenericSchedulingAutoCpSatSolver(
         use_energy_constraints: Optional[bool] = None,
         keep_only_most_nested_energy_constraints: Optional[bool] = None,
         add_redundant_skill_cumulative_constraints: Optional[bool] = None,
+        demand_cumulative_modeling: Optional[ModeToValueModeling] = None,
+        demand_non_renewable_modeling: Optional[ModeToValueModeling] = None,
         **kwargs: Any,
     ) -> None:
         """Init cp model and reset stored variables if any."""
@@ -349,6 +365,10 @@ class GenericSchedulingAutoCpSatSolver(
             )
         if duplicate_start_var_per_mode is not None:
             self.duplicate_start_var_per_mode = duplicate_start_var_per_mode
+        if demand_cumulative_modeling is not None:
+            self.demand_cumulative_modeling = demand_cumulative_modeling
+        if demand_non_renewable_modeling is not None:
+            self.demand_non_renewable_modeling = demand_non_renewable_modeling
         # pre-compute tasks start/end bounds ?
         if tasks_bounds is None:
             self.compute_task_bounds()
