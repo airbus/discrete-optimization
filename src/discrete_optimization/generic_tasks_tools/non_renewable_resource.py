@@ -14,6 +14,7 @@ from discrete_optimization.generic_tasks_tools.multimode import (
     MultimodeProblem,
     MultimodeSolution,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +25,14 @@ class NonRenewableResourceProblem(
     MultimodeProblem[Task], Generic[Task, NonRenewableResource]
 ):
     """Base class for problems dealing with non-renewable resources consumed by tasks.
+    Just like CumulativeResourceProblem, it supports two consumption modes:
 
-    The task consumption of these non-renewable resources is supposed to be determined entirely determined
-    by the task mode.
+    1. **Standard**: Task consumption is fixed by task mode.
+       Example: Task A in mode 1 always consumes 5 units.
+
+    2. **Resource-dependent**: Task consumption depends on other tasks' modes.
+       Modeled via a consumption mapping.
+       If the task/mode dont depend on any other task, returns None.
 
     """
 
@@ -69,12 +75,11 @@ class NonRenewableResourceProblem(
         """
         ...
 
+    @optional_override
     def get_non_renewable_resource_consumption_mapping(
         self, resource: NonRenewableResource, task: Task, mode: int
-    ) -> dict[frozenset[tuple[Task, int]], int]:
-        # To be Overridden in child classes
-
-        return {}
+    ) -> dict[frozenset[tuple[Task, int]], int] | None:
+        return None
 
     def get_possible_non_renewable_resource_consumption(
         self, resource: NonRenewableResource, task: Task, mode: int
@@ -106,10 +111,10 @@ class NonRenewableResourceProblem(
             set(),
         )
 
+    @optional_override
     def is_non_renewable_resource_task_mode_consumption_dependent(
         self, resource: NonRenewableResource, task: Task, mode: int
     ) -> bool:
-        # To be Overridden in child classes
         return False
 
     def is_non_renewable_resource_task_consumption_dependent(
@@ -123,7 +128,6 @@ class NonRenewableResourceProblem(
         )
 
     def is_task_non_renewable_consumption_dependent(self, task: Task):
-        # To be Overridden in child classes
         return any(
             self.is_non_renewable_resource_task_consumption_dependent(
                 resource=resource, task=task
@@ -161,8 +165,8 @@ class NonRenewableResourceSolution(
             None,
         )
         if value is None:
-            logging.info(f"No found mapping")
-            return None
+            logger.info(f"No found mapping on resource {resource} and task {task}")
+            return 0
         return value
 
     def get_non_renewable_resource_consumption(

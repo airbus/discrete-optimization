@@ -4,7 +4,7 @@
 
 from typing import Generic
 
-from ortools.sat.python.cp_model import Domain, IntervalVar, LinearExprT
+from ortools.sat.python.cp_model import IntervalVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
@@ -18,6 +18,11 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.calendar_resource i
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode_scheduling import (
     MultimodeSchedulingCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.utils import (
+    ModeToValueModeling,
+    create_resource_dependent_variable,
+    create_variable_function_of_mode_on_solver,
 )
 
 
@@ -35,6 +40,7 @@ class CumulativeResourceSchedulingCpSatSolver(
     demands_resource_task: dict[tuple[CumulativeResource, Task], LinearExprT]
     demand_cumulative_resource_task_initialized: bool = False
     demands_cumulative_resource_vars: dict[tuple[CumulativeResource, Task], LinearExprT]
+    demand_cumulative_modeling: ModeToValueModeling = ModeToValueModeling.ENFORCE_IF
 
     def get_resource_consumption_intervals(
         self, resource: Resource
@@ -78,95 +84,57 @@ class CumulativeResourceSchedulingCpSatSolver(
                 f"{resource} is not a cumulative resource whose consumption depends only on task mode."
             )
 
-    def initialize_cumulative_resource_demand_vars(
-        self, use_enforce_if_instead_of_sum: bool = True
-    ):
+    def initialize_cumulative_resource_demand_vars(self):
         """
         Build either expression or variable array for resource demand.
         For task for which resource demand only depends on its own mode, this is a simple expression,
         While for dependent consumption based of other task mode, additional variable is added.
         """
         self.demands_cumulative_resource_vars = {}
+        task_mode_var = {
+            (t, m): self.get_task_mode_is_present_variable(task=t, mode=m)
+            for t in self.problem.tasks_list
+            for m in self.problem.get_task_modes(t)
+        }
         for task in self.problem.tasks_list:
             for resource in self.problem.cumulative_resources_list:
                 if self.problem.is_cumulative_resource_task_consumption_dependent(
                     resource=resource, task=task
                 ):
-                    possible_values = self.problem.get_possible_cumulative_resource_consumption_all_modes(
-                        task=task, resource=resource
-                    )
                     self.demands_cumulative_resource_vars[task, resource] = (
-                        self.cp_model.new_int_var_from_domain(
-                            domain=Domain.FromValues(list(possible_values)),
-                            name=f"conso_{task}_{resource}",
-                        )
-                    )
-                    for mode in self.problem.get_task_modes(task=task):
-                        mapping = (
-                            self.problem.get_cumulative_resource_consumption_mapping(
-                                resource=resource, task=task, mode=mode
-                            )
-                        )
-                        for set_task_mode in mapping:
-                            value = mapping[set_task_mode]
-                            modes_var = [
-                                self.get_task_mode_is_present_variable(task=tt, mode=mm)
-                                for tt, mm in set_task_mode
-                            ]
-                            (
-                                self.cp_model.add(
-                                    self.demands_cumulative_resource_vars[
-                                        task, resource
-                                    ]
-                                    == value
-                                ).only_enforce_if(
-                                    *(
-                                        [
-                                            self.get_task_mode_is_present_variable(
-                                                task=task, mode=mode
-                                            )
-                                        ]
-                                        + modes_var
-                                    )
-                                )
-                            )
-                else:
-                    if not use_enforce_if_instead_of_sum:
-                        # Just an expression
-                        self.demands_cumulative_resource_vars[task, resource] = sum(
-                            self.get_task_mode_is_present_variable(task=task, mode=mode)
-                            * conso
-                            for mode in self.problem.get_task_modes(task)
-                            if (
-                                conso
-                                := self.problem.get_cumulative_resource_consumption(
+                        create_resource_dependent_variable(
+                            cp_model=self.cp_model,
+                            name_var=f"conso_{task}_{resource}",
+                            task=task,
+                            task_mode_var=task_mode_var,
+                            mode2mapping={
+                                mode: self.problem.get_cumulative_resource_consumption_mapping(
                                     resource=resource, task=task, mode=mode
                                 )
-                            )
-                            > 0
+                                for mode in self.problem.get_task_modes(task=task)
+                            },
                         )
-                    else:
-                        possible_values = self.problem.get_possible_cumulative_resource_consumption_all_modes(
-                            resource=resource, task=task
+                    )
+                else:
+                    mode2value = {
+                        m: self.problem.get_cumulative_resource_consumption(
+                            resource=resource, task=task, mode=m
                         )
-                        self.demands_cumulative_resource_vars[task, resource] = (
-                            self.cp_model.new_int_var_from_domain(
-                                domain=Domain.FromValues(list(possible_values)),
-                                name=f"conso_{task}_{resource}",
-                            )
+                        for m in self.problem.get_task_modes(task)
+                    }
+                    mode2var = {
+                        m: self.get_task_mode_is_present_variable(task=task, mode=m)
+                        for m in self.problem.get_task_modes(task)
+                    }
+                    self.demands_cumulative_resource_vars[task, resource] = (
+                        create_variable_function_of_mode_on_solver(
+                            solver=self,
+                            name=f"conso_{task}_{resource}",
+                            mode2value=mode2value,
+                            mode2var=mode2var,
+                            modeling=self.demand_cumulative_modeling,
                         )
-                        for mode in self.problem.get_task_modes(task=task):
-                            value = self.problem.get_cumulative_resource_consumption(
-                                resource=resource, task=task, mode=mode
-                            )
-                            self.cp_model.add(
-                                self.demands_cumulative_resource_vars[task, resource]
-                                == value
-                            ).only_enforce_if(
-                                self.get_task_mode_is_present_variable(
-                                    task=task, mode=mode
-                                )
-                            )
+                    )
         self.demand_cumulative_resource_task_initialized = True
 
     def get_cumulative_resource_demand_variable(
