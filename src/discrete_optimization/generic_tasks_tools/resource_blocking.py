@@ -27,6 +27,7 @@ from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     CumulativeResource,
     CumulativeResourceProblem,
+    CumulativeResourceSolution,
     OtherCalendarResource,
 )
 from discrete_optimization.generic_tasks_tools.entities import SchedulingEntity
@@ -172,7 +173,9 @@ class ResourceBlockingProblem(
 
 
 class ResourceBlockingSolution(
-    MultimodeSolution[Task], Generic[Task, CumulativeResource, OtherCalendarResource]
+    CumulativeResourceSolution[Task, CumulativeResource, OtherCalendarResource],
+    MultimodeSolution[Task],
+    Generic[Task, CumulativeResource, OtherCalendarResource],
 ):
     """
     Mixin for solutions to problems with resource blocking constraints.
@@ -509,9 +512,7 @@ class ResourceBlockingSolution(
             mode = self.get_mode(task)
 
             # Get consumption amount
-            amount = self.problem.get_cumulative_resource_consumption(
-                resource, task, mode
-            )
+            amount = self.get_calendar_resource_consumption(resource, task)
 
             if amount > 0 and start < end:
                 consumption[start:end] += amount

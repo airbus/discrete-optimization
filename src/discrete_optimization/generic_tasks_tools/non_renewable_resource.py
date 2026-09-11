@@ -32,7 +32,8 @@ class NonRenewableResourceProblem(
 
     2. **Resource-dependent**: Task consumption depends on other tasks' modes.
        Modeled via a consumption mapping.
-       If the task/mode dont depend on any other task, returns None.
+       If the task/mode dont depend on any other task, returns empty condition
+       with the static resource need.
 
     """
 
@@ -78,8 +79,12 @@ class NonRenewableResourceProblem(
     @optional_override
     def get_non_renewable_resource_consumption_mapping(
         self, resource: NonRenewableResource, task: Task, mode: int
-    ) -> dict[frozenset[tuple[Task, int]], int] | None:
-        return None
+    ) -> dict[frozenset[tuple[Task, int]], int]:
+        return {
+            frozenset(): self.get_non_renewable_resource_consumption(
+                resource, task, mode
+            )
+        }
 
     def get_possible_non_renewable_resource_consumption(
         self, resource: NonRenewableResource, task: Task, mode: int
