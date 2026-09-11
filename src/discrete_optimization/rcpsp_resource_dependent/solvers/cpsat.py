@@ -37,9 +37,6 @@ class CpSatRcpspResourceDependentSolver(
 ):
     problem: RcpspResourceDependentProblem
 
-    def needs_duration_variables(self) -> bool:
-        return True
-
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, UnaryResource, Skill]
     ) -> GenericSchedulingSolution[

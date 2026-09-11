@@ -258,11 +258,7 @@ class GenericSchedulingImplProblem(
             resource, task, mode
         ):
             return self.resource_consumptions_dependent[task][mode][resource]
-        return {
-            frozenset([]): self.get_cumulative_resource_consumption(
-                resource, task, mode
-            )
-        }
+        return super().get_cumulative_resource_consumption_mapping(resource, task, mode)
 
     def is_non_renewable_resource_task_mode_consumption_dependent(
         self, resource: NonRenewableResource, task: Task, mode: int
@@ -279,11 +275,9 @@ class GenericSchedulingImplProblem(
             resource, task, mode
         ):
             return self.resource_consumptions_dependent[task][mode][resource]
-        return {
-            frozenset([]): self.get_non_renewable_resource_consumption(
-                resource, task, mode
-            )
-        }
+        return super().get_non_renewable_resource_consumption_mapping(
+            resource, task, mode
+        )
 
     @property
     def skills_list(self) -> list[Skill]:

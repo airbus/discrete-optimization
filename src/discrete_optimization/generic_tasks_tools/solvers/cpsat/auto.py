@@ -182,8 +182,9 @@ class GenericSchedulingAutoCpSatSolver(
     """Variables tracking level (capacity needed) of each (unary, cumulative, or non-renewable) resource."""
     resource_level_variables_created = False
     """Flag telling whether 'resource_level_variables' have been created"""
-    use_enforce_if_instead_of_sum = True
-    """For demand variable, use enforce if instead of sum of mode boolean*conso"""
+    use_enforce_if_instead_of_sum = False
+    """For demand variable, use enforce if instead of sum of mode boolean*conso.
+    Solver advantage with this param still to be checked."""
 
     @property
     def needs_duration_variables(self) -> bool:
@@ -316,7 +317,6 @@ class GenericSchedulingAutoCpSatSolver(
         use_energy_constraints: Optional[bool] = None,
         keep_only_most_nested_energy_constraints: Optional[bool] = None,
         add_redundant_skill_cumulative_constraints: Optional[bool] = None,
-        use_enforce_if_instead_of_sum: Optional[bool] = None,
         **kwargs: Any,
     ) -> None:
         """Init cp model and reset stored variables if any."""
@@ -349,8 +349,6 @@ class GenericSchedulingAutoCpSatSolver(
             )
         if duplicate_start_var_per_mode is not None:
             self.duplicate_start_var_per_mode = duplicate_start_var_per_mode
-        if use_enforce_if_instead_of_sum is not None:
-            self.use_enforce_if_instead_of_sum = use_enforce_if_instead_of_sum
         # pre-compute tasks start/end bounds ?
         if tasks_bounds is None:
             self.compute_task_bounds()
@@ -580,18 +578,14 @@ class GenericSchedulingAutoCpSatSolver(
             if self.avoid_interval_optional_for_cumulative_resources:
                 for resource in self.problem.cumulative_resources_list:
                     if not self.demand_cumulative_resource_task_initialized:
-                        self.initialize_cumulative_resource_demand_vars(
-                            use_enforce_if_instead_of_sum=self.use_enforce_if_instead_of_sum
-                        )
+                        self.initialize_cumulative_resource_demand_vars()
                     self.demand_variables[task][resource] = (
                         self.demands_cumulative_resource_vars[task, resource]
                     )
             if self.use_demand_variables_for_non_renewable_resources:
                 for resource in self.problem.non_renewable_resources_list:
                     if not self.demands_non_renewable_resource_initialized:
-                        self.initialize_non_renewable_resource_demand_vars(
-                            use_enforce_if_instead_of_sum=self.use_enforce_if_instead_of_sum
-                        )
+                        self.initialize_non_renewable_resource_demand_vars()
                     self.demand_variables[task][resource] = (
                         self.demands_non_renewable_resource_vars[task, resource]
                     )
@@ -1116,27 +1110,6 @@ class GenericSchedulingAutoCpSatSolver(
             size=self.get_duration_variable(task=task, task_interval_will_exist=True),
             end=self.start_or_end_variables[task, StartOrEnd.END],
             name=f"interval_{task}",
-        )
-
-    def get_cumulative_resource_demand_variable(
-        self, task: Task, resource: CumulativeResource
-    ) -> LinearExprT:
-        # TODO : FIX THIS BEHAVIOUR WHEN RESOURCE DEPENDENT.
-        if self.avoid_interval_optional_for_cumulative_resources:
-            return self.demand_variables[task][resource]
-        # if self.avoid_interval_optional:
-        #    return self.demand_variables[task][resource]
-        return super().get_cumulative_resource_demand_variable(
-            task=task, resource=resource
-        )
-
-    def get_non_renewable_resource_demand_variable(
-        self, task: Task, resource: NonRenewableResource
-    ) -> LinearExprT:
-        if self.use_demand_variables_for_non_renewable_resources:
-            return self.demand_variables[task][resource]
-        return super().get_non_renewable_resource_demand_variable(
-            task=task, resource=resource
         )
 
     def get_task_unary_resource_interval(

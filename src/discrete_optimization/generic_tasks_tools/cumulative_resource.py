@@ -17,6 +17,7 @@ from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     MultimodeSchedulingProblem,
     MultimodeSchedulingSolution,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 CumulativeResource = TypeVar("CumulativeResource", bound=Hashable)
 OtherCalendarResource = TypeVar("OtherCalendarResource", bound=Hashable)
@@ -37,6 +38,7 @@ class CumulativeResourceProblem(
 
     2. **Resource-dependent**: Task consumption depends on other tasks' modes.
        Modeled via a consumption mapping.
+       If the task/mode dont depend on any other task, returns None.
 
     **Resource-Dependent Example:**
 
@@ -62,17 +64,18 @@ class CumulativeResourceProblem(
         ...             resource, task, mode
         ...         ):
         ...             return self.mode_details[task][mode][resource]
-        ...         return {frozenset([]): self.get_cumulative_resource_consumption(
-        ...             resource, task, mode
-        ...         )}
+        ...         return None
+        ...
+        ...
 
     See `src/discrete_optimization/rcpsp_resource_dependent/problem.py` for a complete implementation.
 
     """
 
+    @optional_override
     def get_cumulative_resource_consumption_mapping(
         self, resource: CumulativeResource, task: Task, mode: int
-    ) -> dict[frozenset[tuple[Task, int]], int]:
+    ) -> dict[frozenset[tuple[Task, int]], int] | None:
         """Get resource consumption mapping for resource-dependent tasks.
 
         Args:
@@ -83,7 +86,7 @@ class CumulativeResourceProblem(
         Returns:
             Mapping from task/mode configurations to consumption values.
             Keys are frozensets of (task, mode) tuples.
-            Returns {} if task has standard (non-dependent) consumption.
+            Returns None if task has standard (non-dependent) consumption.
 
         Example:
             >>> mapping = problem.get_cumulative_resource_consumption_mapping(
@@ -92,7 +95,7 @@ class CumulativeResourceProblem(
             >>> # {frozenset([(task_B, 0)]): 100, frozenset([(task_B, 1)]): 80}
         """
         # To be overridden in child classes
-        return {}
+        return None
 
     def get_possible_cumulative_resource_consumption(
         self, resource: CumulativeResource, task: Task, mode: int
@@ -100,6 +103,7 @@ class CumulativeResourceProblem(
         if self.is_cumulative_resource_task_mode_consumption_dependent(
             resource=resource, task=task, mode=mode
         ):
+            # this will never be None
             return set(
                 self.get_cumulative_resource_consumption_mapping(
                     resource=resource, task=task, mode=mode
@@ -124,6 +128,7 @@ class CumulativeResourceProblem(
             set(),
         )
 
+    @optional_override
     def is_cumulative_resource_task_mode_consumption_dependent(
         self, resource: CumulativeResource, task: Task, mode: int
     ) -> bool:
@@ -141,7 +146,6 @@ class CumulativeResourceProblem(
         )
 
     def is_task_cumulative_consumption_dependent(self, task: Task):
-        # To be Overridden in child classes
         return any(
             self.is_cumulative_resource_task_consumption_dependent(
                 resource=resource, task=task
@@ -228,8 +232,8 @@ class CumulativeResourceSolution(
             None,
         )
         if value is None:
-            logging.info(f"No found mapping")
-            return None
+            logging.debug(f"No found mapping for resource {resource} and task {task}")
+            return 0
         return value
 
     def get_calendar_resource_consumption(self, resource: Resource, task: Task) -> int:

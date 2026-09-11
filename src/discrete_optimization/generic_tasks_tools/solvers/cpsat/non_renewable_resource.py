@@ -5,7 +5,6 @@
 from typing import Generic
 
 from ortools.linear_solver.python.model_builder import LinearExprT
-from ortools.sat.python.cp_model import Domain
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
@@ -14,6 +13,11 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode import (
     MultimodeCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.utils import (
+    ModeToValueModeling,
+    create_resource_dependent_variable,
+    create_variable_function_of_mode_on_solver,
 )
 
 
@@ -27,95 +31,59 @@ class NonRenewableCpSatSolver(
     demands_non_renewable_resource_vars: dict[
         tuple[Task, NonRenewableResource], LinearExprT
     ]
+    demand_non_renewable_modeling: ModeToValueModeling = ModeToValueModeling.ENFORCE_IF
 
-    def initialize_non_renewable_resource_demand_vars(
-        self, use_enforce_if_instead_of_sum: bool = True
-    ):
+    def initialize_non_renewable_resource_demand_vars(self):
         """
         Build either expression or variable array for resource demand.
         For task for which resource demand only depends on its own mode, this is a simple expression,
         While for dependent consumption based of other task mode, additional variable is added.
         """
         self.demands_non_renewable_resource_vars = {}
+        task_mode_var = {
+            (t, m): self.get_task_mode_is_present_variable(task=t, mode=m)
+            for t in self.problem.tasks_list
+            for m in self.problem.get_task_modes(t)
+        }
         for task in self.problem.tasks_list:
             for resource in self.problem.non_renewable_resources_list:
                 if self.problem.is_non_renewable_resource_task_consumption_dependent(
                     resource=resource, task=task
                 ):
-                    possible_values = self.problem.get_possible_non_renewable_resource_consumption_all_modes(
-                        task=task, resource=resource
-                    )
                     self.demands_non_renewable_resource_vars[task, resource] = (
-                        self.cp_model.new_int_var_from_domain(
-                            domain=Domain.FromValues(list(possible_values)),
-                            name=f"conso_{task}_{resource}",
-                        )
-                    )
-                    for mode in self.problem.get_task_modes(task=task):
-                        mapping = (
-                            self.problem.get_non_renewable_resource_consumption_mapping(
-                                resource=resource, task=task, mode=mode
-                            )
-                        )
-                        for set_task_mode in mapping:
-                            value = mapping[set_task_mode]
-                            modes_var = [
-                                self.get_task_mode_is_present_variable(task=tt, mode=mm)
-                                for tt, mm in set_task_mode
-                            ]
-                            (
-                                self.cp_model.add(
-                                    self.demands_non_renewable_resource_vars[
-                                        task, resource
-                                    ]
-                                    == value
-                                ).only_enforce_if(
-                                    *(
-                                        [
-                                            self.get_task_mode_is_present_variable(
-                                                task=task, mode=mode
-                                            )
-                                        ]
-                                        + modes_var
-                                    )
-                                )
-                            )
-                else:
-                    if not use_enforce_if_instead_of_sum:
-                        self.demands_non_renewable_resource_vars[task, resource] = sum(
-                            self.get_task_mode_is_present_variable(task=task, mode=mode)
-                            * conso
-                            for mode in self.problem.get_task_modes(task)
-                            if (
-                                conso
-                                := self.problem.get_non_renewable_resource_consumption(
+                        create_resource_dependent_variable(
+                            cp_model=self.cp_model,
+                            name_var=f"conso_{task}_{resource}",
+                            task=task,
+                            task_mode_var=task_mode_var,
+                            mode2mapping={
+                                mode: self.problem.get_non_renewable_resource_consumption_mapping(
                                     resource=resource, task=task, mode=mode
                                 )
-                            )
-                            > 0
+                                for mode in self.problem.get_task_modes(task=task)
+                            },
                         )
-                    else:
-                        possible_values = self.problem.get_possible_non_renewable_resource_consumption_all_modes(
-                            resource=resource, task=task
+                    )
+                else:
+                    mode2value = {
+                        m: self.problem.get_non_renewable_resource_consumption(
+                            resource=resource, task=task, mode=m
                         )
-                        self.demands_non_renewable_resource_vars[task, resource] = (
-                            self.cp_model.new_int_var_from_domain(
-                                domain=Domain.FromValues(list(possible_values)),
-                                name=f"conso_{task}_{resource}",
-                            )
+                        for m in self.problem.get_task_modes(task)
+                    }
+                    mode2var = {
+                        m: self.get_task_mode_is_present_variable(task=task, mode=m)
+                        for m in self.problem.get_task_modes(task)
+                    }
+                    self.demands_non_renewable_resource_vars[task, resource] = (
+                        create_variable_function_of_mode_on_solver(
+                            solver=self,
+                            name=f"conso_{task}_{resource}",
+                            mode2value=mode2value,
+                            mode2var=mode2var,
+                            modeling=self.demand_non_renewable_modeling,
                         )
-                        for mode in self.problem.get_task_modes(task=task):
-                            value = self.problem.get_non_renewable_resource_consumption(
-                                resource=resource, task=task, mode=mode
-                            )
-                            self.cp_model.add(
-                                self.demands_non_renewable_resource_vars[task, resource]
-                                == value
-                            ).only_enforce_if(
-                                self.get_task_mode_is_present_variable(
-                                    task=task, mode=mode
-                                )
-                            )
+                    )
         self.demands_non_renewable_resource_initialized = True
 
     def get_non_renewable_resource_demand_variable(
@@ -125,9 +93,9 @@ class NonRenewableCpSatSolver(
 
         Default to a linear expression using consumption per mode and is_present variables.
         If demand variables are indeed created in the cp_model, this should be overriden to return it
-        so that cumulative resource constraints are constraining these variables.
+        so that non renewable resource constraints are constraining these variables.
 
-        Needed if `self.avoid_interval_optional` is set to True.
+        Needed if `self.use_demand_variables_for_non_renewable_resources` is set to True.
 
         Args:
             task:
