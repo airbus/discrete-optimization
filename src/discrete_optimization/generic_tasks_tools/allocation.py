@@ -86,7 +86,7 @@ class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
             for unary_resource in unary_resources
         )
 
-    def compute_nb_tasks_done(self) -> int:
+    def compute_nb_tasks_allocated(self) -> int:
         """Compute number of tasks with at least a resource allocated."""
         return sum(
             any(
@@ -298,7 +298,7 @@ class AllocationCpSolver(TasksCpSolver[Task], Generic[Task, UnaryResource]):
         return constraints
 
     @abstractmethod
-    def get_nb_tasks_done_variable(self) -> Any:
+    def get_nb_tasks_allocated_variable(self) -> Any:
         """Construct and get the variable tracking number of tasks with at least a resource allocated.
 
         Returns:

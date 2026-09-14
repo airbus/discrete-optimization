@@ -362,7 +362,7 @@ def test_constraint_nb_usages(problem, modelisation_allocation):
         ).get_best_solution()
         assert sol is None
     else:
-        print(solver.solver.value(solver.get_nb_tasks_done_variable()))
+        print(solver.solver.value(solver.get_nb_tasks_allocated_variable()))
         target = nb_usages_total - 5
         constraints = solver.add_constraint_on_total_nb_usages(
             sign=SignEnum.LESS, target=target
@@ -434,11 +434,11 @@ def test_constraint_nb_allocation_changes(problem, modelisation_allocation):
 
 
 @pytest.mark.parametrize("modelisation_allocation", list(ModelisationAllocationOrtools))
-def test_objective_nb_tasks_done(problem, modelisation_allocation):
+def test_objective_nb_tasks_allocated(problem, modelisation_allocation):
     solver = CpSatTeamAllocationSolver(problem)
     sol: TeamAllocationSolution
     solver.init_model(modelisation_allocation=modelisation_allocation)
-    objective = -solver.get_nb_tasks_done_variable()
+    objective = -solver.get_nb_tasks_allocated_variable()
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
     assert solver.solver.ObjectiveValue() == -sum(

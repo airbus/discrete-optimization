@@ -327,7 +327,7 @@ class OptalAllocSchedulingSolver(
         return objs
 
     def create_actually_done_variables(self) -> dict[int, "cp.IntExpr"]:
-        if not self.done_variables_created:
+        if not self.task_allocated_variables_created:
             self.done_variables = {}
             for t in self.problem.tasks_list:
                 index_task = self.problem.tasks_to_index[t]
@@ -607,7 +607,7 @@ class OptalAllocSchedulingSolver(
         if ObjectivesEnum.NB_DONE_AC in objectives and optional_activities:
             self.variables["objectives"][
                 ObjectivesEnum.NB_DONE_AC
-            ] = -self.get_nb_tasks_done_variable()
+            ] = -self.get_nb_tasks_allocated_variable()
         used = self.create_used_variables()
         self.variables["used"] = used
         if args["symmbreak_on_used"]:

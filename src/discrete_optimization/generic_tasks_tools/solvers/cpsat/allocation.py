@@ -50,9 +50,9 @@ class AllocationCpSatSolver(
     """Flag telling whether 'used variables' have been created"""
     used_variables: dict[UnaryResource, IntVar]
     """Variables tracking whether a unary resource has been used at least once."""
-    done_variables_created = False
-    """Flag telling whether 'done variables' have been created"""
-    done_variables: dict[Task, IntVar]
+    task_allocated_variables_created = False
+    """Flag telling whether 'task_allocated_variables' have been created"""
+    task_allocated_variables: dict[Task, IntVar]
     """Variables tracking whether a task has at least one unary resource allocated."""
 
     @property
@@ -91,8 +91,8 @@ class AllocationCpSatSolver(
         self.allocation_changes_variables = {}
         self.used_variables_created = False
         self.used_variables = {}
-        self.done_variables_created = False
-        self.done_variables_created = {}
+        self.task_allocated_variables_created = False
+        self.task_allocated_variables_created = {}
 
     @abstractmethod
     def get_task_unary_resource_is_present_variable(
@@ -236,12 +236,12 @@ class AllocationCpSatSolver(
                     self.cp_model.add(used == 0)
             self.used_variables_created = True
 
-    def create_done_variables(self):
-        if not self.done_variables_created:
-            self.done_variables = {}
+    def create_task_allocated_variables(self):
+        if not self.task_allocated_variables_created:
+            self.task_allocated_variables = {}
             for task in self.subset_tasks_of_interest:
-                done = self.cp_model.new_bool_var(f"{task}_done")
-                self.done_variables[task] = done
+                allocated = self.cp_model.new_bool_var(f"{task}_allocated")
+                self.task_allocated_variables[task] = allocated
                 list_is_present_variables = [
                     is_present
                     for unary_resource in self.subset_unaryresources_allowed
@@ -260,15 +260,17 @@ class AllocationCpSatSolver(
                         nb_teams_allocated_to_task = sum(list_is_present_variables)
                         self.cp_model.add(
                             nb_teams_allocated_to_task == 1
-                        ).only_enforce_if(done)
+                        ).only_enforce_if(allocated)
                         self.cp_model.add(
                             nb_teams_allocated_to_task == 0
-                        ).only_enforce_if(~done)
+                        ).only_enforce_if(~allocated)
                     else:
-                        self.cp_model.add_max_equality(done, list_is_present_variables)
+                        self.cp_model.add_max_equality(
+                            allocated, list_is_present_variables
+                        )
                 else:
-                    self.cp_model.add(done == 0)
-            self.done_variables_created = True
+                    self.cp_model.add(allocated == 0)
+            self.task_allocated_variables_created = True
 
     def add_unary_resources_per_task_constraints(self):
         """Add constraints on number min/max of allocated resources per task.
@@ -349,9 +351,9 @@ class AllocationCpSatSolver(
         self.add_same_unary_allocation_constraints()
         self.add_unary_resources_per_task_constraints()
 
-    def get_nb_tasks_done_variable(self) -> LinearExprT:
-        self.create_done_variables()
-        return sum(self.done_variables.values())
+    def get_nb_tasks_allocated_variable(self) -> LinearExprT:
+        self.create_task_allocated_variables()
+        return sum(self.task_allocated_variables.values())
 
     def get_nb_unary_resources_used_variable(self) -> LinearExprT:
         self.create_used_variables()

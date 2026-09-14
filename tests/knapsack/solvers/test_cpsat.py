@@ -85,9 +85,9 @@ def test_constraint_nb_allocation_changes(problem, solver, start_solution):
     )
 
 
-def test_nb_tasks_done(problem, solver):
+def test_nb_tasks_allocated(problem, solver):
     sol: KnapsackSolution
-    var = solver.get_nb_tasks_done_variable()
+    var = solver.get_nb_tasks_allocated_variable()
     nb_tasks = 2
 
     constraints = solver.add_bound_constraint(var, SignEnum.LEQ, nb_tasks)

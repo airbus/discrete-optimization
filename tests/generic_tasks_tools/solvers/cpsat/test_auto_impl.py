@@ -54,14 +54,14 @@ from discrete_optimization.shop.transformations.to_generic_scheduling import (
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective) + [[(Objective.MAKESPAN, -2), (Objective.NB_TASKS_DONE, +2)]],
+    list(Objective) + [[(Objective.MAKESPAN, -2), (Objective.NB_TASKS_ALLOCATED, +2)]],
 )
 def test_auto(
     objective,
     caplog,
 ):
     def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
-        return variable.compute_nb_tasks_done() - variable.get_max_end_time()
+        return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
 
     problem = GenericSchedulingImplProblem(
         horizon=10,
@@ -132,7 +132,8 @@ def test_auto(
         solver: GenericSchedulingAutoCpSatImplSolver,
     ) -> LinearExprT:
         return (
-            solver.get_nb_tasks_done_variable() - solver.get_global_makespan_variable()
+            solver.get_nb_tasks_allocated_variable()
+            - solver.get_global_makespan_variable()
         )
 
     exactly_one_unary_resource_per_task = objective in [
@@ -167,8 +168,8 @@ def test_auto(
         assert kpi["nb_resources_used"] == 3
     elif objective == Objective.MAKESPAN:
         assert kpi["makespan"] == 9
-    elif objective == Objective.NB_TASKS_DONE:
-        assert kpi["nb_tasks_done"] == 2
+    elif objective == Objective.NB_TASKS_ALLOCATED:
+        assert kpi["nb_tasks_allocated"] == 2
     elif objective == Objective.COST:
         assert sol.get_mode("task-1") == 1
         assert not sol.is_allocated("task-1", unary_resource="worker1")
@@ -178,7 +179,7 @@ def test_auto(
     elif objective == Objective.CUSTOM:
         assert kpi["custom_objective"] == 2 - 9
     elif isinstance(objective, list):
-        assert kpi["nb_tasks_done"] == 2
+        assert kpi["nb_tasks_allocated"] == 2
         assert kpi["makespan"] == 9
 
     # check warm start from a "bad" solution

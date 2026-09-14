@@ -517,8 +517,8 @@ class GenericSchedulingProblem(
         match objective:
             case Objective.MAKESPAN:
                 return variable.get_max_end_time()
-            case Objective.NB_TASKS_DONE:
-                return variable.compute_nb_tasks_done()
+            case Objective.NB_TASKS_ALLOCATED:
+                return variable.compute_nb_tasks_allocated()
             case Objective.NB_UNARY_RESOURCES_USED:
                 return variable.compute_nb_unary_resources_used()
             case Objective.NB_RESOURCES_USED:
