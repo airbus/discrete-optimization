@@ -227,13 +227,19 @@ class GenericSchedulingAutoCpSatSolver(
 
         """
         return (
-            # no optional interval per mode created => need task intervals at least for end-start=duration constraint
-            # + for cumulative constraints if cumulative resources existing
-            self.avoid_interval_optional_for_cumulative_resources
-        ) or (
-            # no optional interval per unary resource created => need task intervals if unary resources exist
-            self.avoid_interval_optional_for_unary_resources
-            and len(self.problem.unary_resources_list) > 0
+            (
+                # no optional interval per mode created => task intervals needed for end-start=duration constraint
+                self.avoid_interval_optional_for_cumulative_resources
+            )
+            or (
+                # no optional interval per unary resource created => need task intervals if unary resources exist
+                self.avoid_interval_optional_for_unary_resources
+                and len(self.problem.unary_resources_list) > 0
+            )
+            or (
+                # dependent cumulative consumption => task intervals needed for cumulative constraints
+                self.problem.has_any_cumulative_consumption_dependent()
+            )
         )
 
     def include_constraint_on_cumulative_resource(
