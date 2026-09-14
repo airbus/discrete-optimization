@@ -1,0 +1,669 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ortools.sat.python.cp_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntervalVar</span><span class="p">,</span> <span class="n">IntVar</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.entities</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GroupEntity</span><span class="p">,</span>
+    <span class="n">SchedulingEntity</span><span class="p">,</span>
+    <span class="n">TaskEntity</span><span class="p">,</span>
+    <span class="n">TaskModeEntity</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.generic_scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CumulativeResource</span><span class="p">,</span>
+    <span class="n">GenericSchedulingProblem</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.resource_blocking</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BlockingConstraintMetadata</span><span class="p">,</span>
+    <span class="n">BlockingMode</span><span class="p">,</span>
+    <span class="n">CumulativeResource</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cpsat.cumulative_resource</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CumulativeResource</span><span class="p">,</span>
+    <span class="n">CumulativeResourceSchedulingCpSatSolver</span><span class="p">,</span>
+    <span class="n">OtherCalendarResource</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="ResourceBlockingCpSatSolver">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking.ResourceBlockingCpSatSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResourceBlockingCpSatSolver</span><span class="p">(</span>
+    <span class="n">CumulativeResourceSchedulingCpSatSolver</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span> <span class="n">CumulativeResource</span><span class="p">,</span> <span class="n">OtherCalendarResource</span>
+    <span class="p">],</span>
+    <span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">CumulativeResource</span><span class="p">,</span> <span class="n">OtherCalendarResource</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""CP-SAT mixin for handling resource blocking constraints.</span>
+
+<span class="sd">    This mixin adds support for:</span>
+<span class="sd">    - Flexible gap blocking: resources blocked between two scheduling entities</span>
+<span class="sd">    - Span blocking: resources blocked during the span of a set of tasks</span>
+
+<span class="sd">    The mixin handles overlaps between blocking intervals and:</span>
+<span class="sd">    - Calendar unavailability periods (fake tasks)</span>
+<span class="sd">    - Actual task execution intervals</span>
+<span class="sd">    - Other blocking intervals</span>
+
+<span class="sd">    It creates appropriate cumulative constraints per resource, properly accounting</span>
+<span class="sd">    for blocking intervals without double-counting consumption.</span>
+<span class="sd">    """</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">GenericSchedulingProblem</span>
+    <span class="n">_blocking_intervals</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="n">_starts_entity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">]</span>
+    <span class="n">_ends_entity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">]</span>
+    <span class="n">_durations_entity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">]</span>
+    <span class="n">_intervals_entity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">]</span>
+    <span class="n">_bounds_entity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">IntVar</span><span class="p">]</span>
+
+<div class="viewcode-block" id="ResourceBlockingCpSatSolver.init_model">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking.ResourceBlockingCpSatSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize model and reset blocking interval storage."""</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_blocking_intervals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="n">CumulativeResource</span><span class="p">,</span>
+            <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">IntervalVar</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">BlockingConstraintMetadata</span><span class="p">]],</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="ResourceBlockingCpSatSolver.constrain_group_entity_times">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking.ResourceBlockingCpSatSolver.constrain_group_entity_times">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constrain_group_entity_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">GroupEntity</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Add constraints for group entity start/end times.</span>
+
+<span class="sd">        A group's start is the minimum start of its tasks.</span>
+<span class="sd">        A group's end is the maximum end of its tasks.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            entity: The group entity</span>
+<span class="sd">        """</span>
+        <span class="n">group_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span>
+        <span class="n">group_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMinEquality</span><span class="p">(</span>
+            <span class="n">group_start</span><span class="p">,</span>
+            <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">tasks</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddMaxEquality</span><span class="p">(</span>
+            <span class="n">group_end</span><span class="p">,</span>
+            <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">tasks</span>
+            <span class="p">],</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_tasks_from_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Extract all tasks involved in a scheduling entity.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            entity: The scheduling entity</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Set of tasks involved in this entity</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">TaskEntity</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">}</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">TaskModeEntity</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">}</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">GroupEntity</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">set</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ResourceBlockingCpSatSolver.get_lb_ub_entity">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking.ResourceBlockingCpSatSolver.get_lb_ub_entity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_lb_ub_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return lbstart, ubstart, lbend, ubend"""</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="p">(</span><span class="n">TaskEntity</span><span class="p">,</span> <span class="n">TaskModeEntity</span><span class="p">)):</span>
+            <span class="n">lbs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+            <span class="p">)</span>
+            <span class="n">ubs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+            <span class="p">)</span>
+            <span class="n">lbe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+            <span class="p">)</span>
+            <span class="n">ube</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">lbs</span><span class="p">,</span> <span class="n">ubs</span><span class="p">,</span> <span class="n">lbe</span><span class="p">,</span> <span class="n">ube</span>
+
+        <span class="n">lb_start</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="n">ub_start</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="n">lb_end</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="n">ub_end</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">lb_start</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">ub_start</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">lb_end</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">ub_end</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ResourceBlockingCpSatSolver.get_lb_ub_size">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking.ResourceBlockingCpSatSolver.get_lb_ub_size">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_lb_ub_size</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">entity1</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">,</span>
+        <span class="n">start_or_end1</span><span class="p">:</span> <span class="n">StartOrEnd</span><span class="p">,</span>
+        <span class="n">entity2</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">,</span>
+        <span class="n">start_or_end2</span><span class="p">:</span> <span class="n">StartOrEnd</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">lbs1</span><span class="p">,</span> <span class="n">ubs1</span><span class="p">,</span> <span class="n">lbe1</span><span class="p">,</span> <span class="n">ube1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_entity</span><span class="p">(</span><span class="n">entity1</span><span class="p">)</span>
+        <span class="n">lbs2</span><span class="p">,</span> <span class="n">ubs2</span><span class="p">,</span> <span class="n">lbe2</span><span class="p">,</span> <span class="n">ube2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_entity</span><span class="p">(</span><span class="n">entity2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">start_or_end1</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">start_or_end2</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbs2</span> <span class="o">-</span> <span class="n">ubs1</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ubs2</span> <span class="o">-</span> <span class="n">lbs1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">start_or_end2</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbe2</span> <span class="o">-</span> <span class="n">ubs1</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ube2</span> <span class="o">-</span> <span class="n">lbs1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">start_or_end1</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">start_or_end2</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbs2</span> <span class="o">-</span> <span class="n">ube1</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ubs2</span> <span class="o">-</span> <span class="n">lbe1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">start_or_end2</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbe2</span> <span class="o">-</span> <span class="n">ube1</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ube2</span> <span class="o">-</span> <span class="n">lbe1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="ResourceBlockingCpSatSolver.create_entity_intervals">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking.ResourceBlockingCpSatSolver.create_entity_intervals">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_entity_intervals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">all_entities</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="p">(</span>
+            <span class="n">entity_1</span><span class="p">,</span>
+            <span class="n">_</span><span class="p">,</span>
+            <span class="n">entity_2</span><span class="p">,</span>
+            <span class="n">_</span><span class="p">,</span>
+            <span class="n">_</span><span class="p">,</span>
+            <span class="n">_</span><span class="p">,</span>
+        <span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_flexible_gap_blocking_constraints</span><span class="p">():</span>
+            <span class="n">all_entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity_1</span><span class="p">)</span>
+            <span class="n">all_entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity_2</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">entity</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_span_blocking_constraints</span><span class="p">():</span>
+            <span class="n">all_entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">all_entities</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">entity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">:</span>
+                <span class="n">tasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tasks_from_entity</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_interval</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">lb_start</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                            <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span>
+                    <span class="p">]</span>
+                    <span class="n">ub_start</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                            <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span>
+                    <span class="p">]</span>
+                    <span class="n">lb_end</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                            <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span>
+                    <span class="p">]</span>
+                    <span class="n">ub_end</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                            <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span>
+                    <span class="p">]</span>
+                    <span class="n">min_lb_start</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">lb_start</span><span class="p">)</span>
+                    <span class="n">max_ub_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ub_start</span><span class="p">)</span>
+                    <span class="n">min_lb_end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">lb_end</span><span class="p">)</span>
+                    <span class="n">max_ub_end</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ub_end</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                        <span class="n">lb</span><span class="o">=</span><span class="n">min_lb_start</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">max_ub_start</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"start_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">tasks</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                        <span class="n">lb</span><span class="o">=</span><span class="n">min_lb_end</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">max_ub_end</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"end_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">tasks</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                        <span class="n">lb</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">min_lb_end</span> <span class="o">-</span> <span class="n">max_ub_start</span><span class="p">),</span>
+                        <span class="n">ub</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_ub_end</span> <span class="o">-</span> <span class="n">min_lb_start</span><span class="p">),</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"duration_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">tasks</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntervalVar</span><span class="p">(</span>
+                        <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                        <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                        <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">tasks</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ResourceBlockingCpSatSolver.create_flexible_gap_blocking_intervals">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking.ResourceBlockingCpSatSolver.create_flexible_gap_blocking_intervals">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_flexible_gap_blocking_intervals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create interval variables for flexible gap blocking constraints.</span>
+
+<span class="sd">        For each flexible gap constraint, creates an interval from the first entity's</span>
+<span class="sd">        reference point to the second entity's reference point, with the specified</span>
+<span class="sd">        resource demands.</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">i_constraint</span><span class="p">,</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_flexible_gap_blocking_constraints</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="p">(</span>
+                <span class="n">entity1</span><span class="p">,</span>
+                <span class="n">ref1</span><span class="p">,</span>
+                <span class="n">entity2</span><span class="p">,</span>
+                <span class="n">ref2</span><span class="p">,</span>
+                <span class="n">resources</span><span class="p">,</span>
+                <span class="n">metadata</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">constraint</span>
+            <span class="c1"># Get time variables for the gap boundaries</span>
+            <span class="n">gap_start</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">ref1</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity1</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">gap_end</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity2</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">ref2</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity2</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">lb_size</span><span class="p">,</span> <span class="n">ub_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_size</span><span class="p">(</span><span class="n">entity1</span><span class="p">,</span> <span class="n">ref1</span><span class="p">,</span> <span class="n">entity2</span><span class="p">,</span> <span class="n">ref2</span><span class="p">)</span>
+            <span class="c1"># Create a variable for the gap size</span>
+            <span class="c1"># The gap may be 0 or positive (we'll enforce positive later)</span>
+            <span class="n">gap_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewIntVar</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="n">lb_size</span><span class="p">,</span>
+                <span class="n">ub</span><span class="o">=</span><span class="n">ub_size</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"gap_size_</span><span class="si">{</span><span class="n">i_constraint</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># Create a boolean variable for gap validity (positive duration)</span>
+            <span class="n">gap_is_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewBoolVar</span><span class="p">(</span><span class="sa">f</span><span class="s2">"gap_valid_</span><span class="si">{</span><span class="n">i_constraint</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="c1"># Constrain gap_size = gap_end - gap_start when gap is present</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">gap_size</span> <span class="o">==</span> <span class="n">gap_end</span> <span class="o">-</span> <span class="n">gap_start</span><span class="p">)</span><span class="o">.</span><span class="n">OnlyEnforceIf</span><span class="p">(</span>
+                <span class="n">gap_is_present</span>
+            <span class="p">)</span>
+            <span class="c1"># Create interval variable for the gap</span>
+            <span class="n">gap_interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewOptionalIntervalVar</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="n">gap_start</span><span class="p">,</span>
+                <span class="n">size</span><span class="o">=</span><span class="n">gap_size</span><span class="p">,</span>
+                <span class="n">end</span><span class="o">=</span><span class="n">gap_end</span><span class="p">,</span>
+                <span class="n">is_present</span><span class="o">=</span><span class="n">gap_is_present</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"blocking_gap_</span><span class="si">{</span><span class="n">entity1</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">ref1</span><span class="si">}</span><span class="s2">_to_</span><span class="si">{</span><span class="n">entity2</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">ref2</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity1</span><span class="p">,</span> <span class="n">TaskModeEntity</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">entity2</span><span class="p">,</span> <span class="n">TaskModeEntity</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">Add</span><span class="p">(</span><span class="n">gap_is_present</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+
+            <span class="c1"># For TaskModeEntity, only block when task is in the specified mode</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity1</span><span class="p">,</span> <span class="n">TaskModeEntity</span><span class="p">):</span>
+                <span class="n">mode_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_mode_is_present_variable</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">entity1</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">entity1</span><span class="o">.</span><span class="n">mode</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddImplication</span><span class="p">(</span><span class="n">mode_present</span><span class="p">,</span> <span class="n">gap_is_present</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity2</span><span class="p">,</span> <span class="n">TaskModeEntity</span><span class="p">):</span>
+                <span class="n">mode_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_mode_is_present_variable</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">entity2</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">entity2</span><span class="o">.</span><span class="n">mode</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">AddImplication</span><span class="p">(</span><span class="n">mode_present</span><span class="p">,</span> <span class="n">gap_is_present</span><span class="p">)</span>
+            <span class="c1"># Store blocking intervals per resource with metadata and involved tasks</span>
+            <span class="k">for</span> <span class="n">resource</span><span class="p">,</span> <span class="n">demand</span> <span class="ow">in</span> <span class="n">resources</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">resource</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blocking_intervals</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_blocking_intervals</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="c1"># Store interval with its metadata and tasks for later processing</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_blocking_intervals</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">gap_interval</span><span class="p">,</span> <span class="n">demand</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ResourceBlockingCpSatSolver.create_span_blocking_intervals">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking.ResourceBlockingCpSatSolver.create_span_blocking_intervals">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_span_blocking_intervals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create interval variables for span blocking constraints.</span>
+
+<span class="sd">        For each span constraint, creates an interval from the minimum start time</span>
+<span class="sd">        to the maximum end time of the specified tasks, with the specified resource demands.</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">i_constraint</span><span class="p">,</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_span_blocking_constraints</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="n">entity</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">constraint</span>
+            <span class="c1"># Store blocking intervals per resource with metadata</span>
+            <span class="k">for</span> <span class="n">resource</span><span class="p">,</span> <span class="n">demand</span> <span class="ow">in</span> <span class="n">resources</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">resource</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blocking_intervals</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_blocking_intervals</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="c1"># Store interval with its metadata and task set for overlap handling</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_blocking_intervals</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span> <span class="n">demand</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ResourceBlockingCpSatSolver.create_cumulative_constraint_including_blocking">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking.ResourceBlockingCpSatSolver.create_cumulative_constraint_including_blocking">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_cumulative_constraint_including_blocking</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">CumulativeResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create cumulative constraints including blocking intervals.</span>
+
+<span class="sd">        Blocking is ALWAYS ADDITIVE: task consumption + blocking consumption.</span>
+
+<span class="sd">        Creates TWO cumulative constraints to properly handle BlockingMode:</span>
+
+<span class="sd">        Constraint 1 (WITHOUT calendar):</span>
+<span class="sd">            - All task intervals</span>
+<span class="sd">            - ALL blocking intervals (RESERVATION + ACTIVE)</span>
+<span class="sd">            - NO fake tasks (calendar gaps)</span>
+<span class="sd">            Purpose: Enforces RESERVATION blocking even during unavailable periods</span>
+
+<span class="sd">        Constraint 2 (WITH calendar):</span>
+<span class="sd">            - All task intervals</span>
+<span class="sd">            - ONLY ACTIVE blocking intervals</span>
+<span class="sd">            - Fake tasks (calendar gaps)</span>
+<span class="sd">            Purpose: Enforces ACTIVE blocking only during available periods</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource: The cumulative resource to constrain</span>
+<span class="sd">        """</span>
+        <span class="c1"># Get task consumption intervals</span>
+        <span class="n">task_intervals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_resource_consumption_intervals</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+
+        <span class="c1"># Get fake tasks for calendar gaps</span>
+        <span class="n">fake_tasks_intervals</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">NewFixedSizeIntervalVar</span><span class="p">(</span>
+                    <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
+                    <span class="n">size</span><span class="o">=</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"fake_task_</span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">i_task</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">value</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i_task</span><span class="p">,</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_fake_tasks</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Separate blocking intervals by mode</span>
+        <span class="n">blocking_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blocking_intervals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">reservation_blocking</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">active_blocking</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">blocking_entry</span> <span class="ow">in</span> <span class="n">blocking_data</span><span class="p">:</span>
+            <span class="n">interval</span><span class="p">,</span> <span class="n">demand</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">blocking_entry</span>
+            <span class="k">if</span> <span class="n">metadata</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">BlockingMode</span><span class="o">.</span><span class="n">RESERVATION</span><span class="p">:</span>
+                <span class="n">reservation_blocking</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">interval</span><span class="p">,</span> <span class="n">demand</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># ACTIVE</span>
+                <span class="n">active_blocking</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">interval</span><span class="p">,</span> <span class="n">demand</span><span class="p">))</span>
+
+        <span class="c1"># Get resource capacity</span>
+        <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_resource_max_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+
+        <span class="c1"># CONSTRAINT 1: Tasks + ALL blocking (RESERVATION + ACTIVE) - NO calendar</span>
+        <span class="c1"># This enforces RESERVATION blocking even during unavailable periods</span>
+        <span class="n">intervals_no_calendar</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">intervals_no_calendar</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">task_intervals</span><span class="p">)</span>
+        <span class="n">intervals_no_calendar</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">reservation_blocking</span><span class="p">)</span>
+        <span class="n">intervals_no_calendar</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">active_blocking</span><span class="p">)</span>
+
+        <span class="n">intervals_1</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">interval</span>
+            <span class="k">for</span> <span class="n">interval</span><span class="p">,</span> <span class="n">demand</span> <span class="ow">in</span> <span class="n">intervals_no_calendar</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">demand</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">]</span>
+        <span class="n">demands_1</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">demand</span>
+            <span class="k">for</span> <span class="n">interval</span><span class="p">,</span> <span class="n">demand</span> <span class="ow">in</span> <span class="n">intervals_no_calendar</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">demand</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">intervals_1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">capacity</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">demands_1</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_no_overlap_for_capa_1</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_cumulative_for_capa_1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_no_overlap</span><span class="p">(</span><span class="n">intervals_1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_cumulative_for_capa_1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_cumulative</span><span class="p">(</span>
+                        <span class="n">intervals</span><span class="o">=</span><span class="n">intervals_1</span><span class="p">,</span> <span class="n">demands</span><span class="o">=</span><span class="n">demands_1</span><span class="p">,</span> <span class="n">capacity</span><span class="o">=</span><span class="n">capacity</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_cumulative</span><span class="p">(</span>
+                    <span class="n">intervals</span><span class="o">=</span><span class="n">intervals_1</span><span class="p">,</span> <span class="n">demands</span><span class="o">=</span><span class="n">demands_1</span><span class="p">,</span> <span class="n">capacity</span><span class="o">=</span><span class="n">capacity</span>
+                <span class="p">)</span>
+
+        <span class="c1"># CONSTRAINT 2: Tasks + ACTIVE blocking + calendar - NO RESERVATION blocking</span>
+        <span class="c1"># This enforces ACTIVE blocking only during available periods (constrained by calendar)</span>
+        <span class="k">if</span> <span class="n">active_blocking</span> <span class="ow">or</span> <span class="n">fake_tasks_intervals</span><span class="p">:</span>
+            <span class="n">intervals_with_calendar</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">intervals_with_calendar</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">task_intervals</span><span class="p">)</span>
+            <span class="n">intervals_with_calendar</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">active_blocking</span><span class="p">)</span>
+            <span class="n">intervals_with_calendar</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">fake_tasks_intervals</span><span class="p">)</span>
+
+            <span class="n">intervals_2</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">interval</span>
+                <span class="k">for</span> <span class="n">interval</span><span class="p">,</span> <span class="n">demand</span> <span class="ow">in</span> <span class="n">intervals_with_calendar</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">demand</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="n">demands_2</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">demand</span>
+                <span class="k">for</span> <span class="n">interval</span><span class="p">,</span> <span class="n">demand</span> <span class="ow">in</span> <span class="n">intervals_with_calendar</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">demand</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">]</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">intervals_2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">capacity</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span>
+                    <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">demands_2</span>
+                <span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">use_no_overlap_for_capa_1</span>
+                        <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_cumulative_for_capa_1</span>
+                    <span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_no_overlap</span><span class="p">(</span><span class="n">intervals_2</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_cumulative_for_capa_1</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_cumulative</span><span class="p">(</span>
+                            <span class="n">intervals</span><span class="o">=</span><span class="n">intervals_2</span><span class="p">,</span> <span class="n">demands</span><span class="o">=</span><span class="n">demands_2</span><span class="p">,</span> <span class="n">capacity</span><span class="o">=</span><span class="n">capacity</span>
+                        <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">add_cumulative</span><span class="p">(</span>
+                        <span class="n">intervals</span><span class="o">=</span><span class="n">intervals_2</span><span class="p">,</span> <span class="n">demands</span><span class="o">=</span><span class="n">demands_2</span><span class="p">,</span> <span class="n">capacity</span><span class="o">=</span><span class="n">capacity</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ResourceBlockingCpSatSolver.create_resource_blocking_constraints">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking.ResourceBlockingCpSatSolver.create_resource_blocking_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_resource_blocking_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create all resource blocking interval variables.</span>
+
+<span class="sd">        This should be called during model initialization, before cumulative</span>
+<span class="sd">        resource constraints are created (so that create_calendar_resources_constraint</span>
+<span class="sd">        can check for blocking intervals).</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_entity_intervals</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">GroupEntity</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">constrain_group_entity_times</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_flexible_gap_blocking_intervals</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_span_blocking_intervals</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ResourceBlockingCpSatSolver.create_calendar_resources_constraint">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cpsat.html#discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking.ResourceBlockingCpSatSolver.create_calendar_resources_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_calendar_resources_constraint</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">CumulativeResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create calendar resource constraint, using blocking-aware version if needed.</span>
+
+<span class="sd">        Overrides the parent method to automatically use blocking-aware cumulative</span>
+<span class="sd">        constraints when blocking intervals exist for this resource.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            resource: The resource to constrain</span>
+<span class="sd">        """</span>
+        <span class="c1"># Check if this resource has blocking constraints</span>
+        <span class="n">has_blocking</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blocking_intervals</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blocking_intervals</span><span class="p">[</span><span class="n">resource</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">has_blocking</span><span class="p">:</span>
+            <span class="c1"># Use specialized method that includes blocking intervals</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_cumulative_constraint_including_blocking</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use standard parent method</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_calendar_resources_constraint</span><span class="p">(</span><span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

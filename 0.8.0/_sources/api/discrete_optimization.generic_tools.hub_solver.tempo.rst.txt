@@ -1,0 +1,21 @@
+discrete\_optimization.generic\_tools.hub\_solver.tempo package
+===============================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.hub\_solver.tempo.tempo\_tools module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.hub_solver.tempo.tempo_tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.hub_solver.tempo
+   :members:
+   :show-inheritance:
+   :undoc-members:

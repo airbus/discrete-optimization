@@ -1,0 +1,29 @@
+discrete\_optimization.workforce.allocation.transformations package
+===================================================================
+
+Submodules
+----------
+
+discrete\_optimization.workforce.allocation.transformations.to\_coloring module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.allocation.transformations.to_coloring
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.allocation.transformations.to\_list\_coloring module
+-------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.allocation.transformations.to_list_coloring
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.workforce.allocation.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:
