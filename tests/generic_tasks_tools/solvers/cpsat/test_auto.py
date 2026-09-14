@@ -174,7 +174,7 @@ class MyProblem(
             + variable.compute_nb_non_renewable_resources_used(),
             resources_levels=variable.compute_aggregated_calendar_resources_levels()
             + variable.compute_aggregated_non_renewable_resources_consumptions(),
-            nb_tasks_done=variable.compute_nb_tasks_done(),
+            nb_tasks_allocated=variable.compute_nb_tasks_allocated(),
         )
 
     def satisfy(self, variable: Solution) -> bool:
@@ -210,7 +210,7 @@ class MyProblem(
                     type=TypeObjective.OBJECTIVE,
                     default_weight=1,
                 ),
-                nb_tasks_done=ObjectiveDoc(
+                nb_tasks_allocated=ObjectiveDoc(
                     type=TypeObjective.OBJECTIVE,
                     default_weight=-1,
                 ),
@@ -265,7 +265,7 @@ def test_problem(caplog):
     problem.satisfy(sol)
     d = problem.evaluate(sol)
     assert d["makespan"] == 9
-    assert d["nb_tasks_done"] == 2
+    assert d["nb_tasks_allocated"] == 2
     assert d["nb_allocated"] == 2
     assert d["nb_resources_used"] == 4
     assert d["resources_levels"] == 5
@@ -286,7 +286,7 @@ def test_problem(caplog):
     problem.satisfy(sol)
     d = problem.evaluate(sol)
     assert d["makespan"] == 10
-    assert d["nb_tasks_done"] == 2
+    assert d["nb_tasks_allocated"] == 2
     assert d["nb_allocated"] == 1
 
     sol = MySolution(
@@ -309,7 +309,7 @@ def test_problem(caplog):
     problem.satisfy(sol)
     d = problem.evaluate(sol)
     assert d["makespan"] == 10
-    assert d["nb_tasks_done"] == 0
+    assert d["nb_tasks_allocated"] == 0
     assert d["nb_allocated"] == 0
 
     # nok: worker not available
@@ -435,7 +435,7 @@ def test_auto(
         if objective == Objective.CUSTOM:
             objective_var = (
                 solver.get_global_makespan_variable()
-                - solver.get_nb_tasks_done_variable()
+                - solver.get_nb_tasks_allocated_variable()
             )
             solver.cp_model.minimize(objective_var)
     assert (
@@ -464,10 +464,10 @@ def test_auto(
         assert kpi["nb_resources_used"] == 3
     elif objective == Objective.MAKESPAN:
         assert kpi["makespan"] == 9
-    elif objective == Objective.NB_TASKS_DONE:
-        assert kpi["nb_tasks_done"] == 2
+    elif objective == Objective.NB_TASKS_ALLOCATED:
+        assert kpi["nb_tasks_allocated"] == 2
     elif objective == Objective.CUSTOM:
-        assert kpi["nb_tasks_done"] == 2
+        assert kpi["nb_tasks_allocated"] == 2
         assert kpi["makespan"] == 9
         assert kpi["nb_allocated"] == 2
 

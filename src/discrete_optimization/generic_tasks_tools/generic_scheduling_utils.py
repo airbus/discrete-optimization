@@ -83,7 +83,7 @@ class Objective(Enum):
 
     MAKESPAN = "makespan"
     """Global makespan of the schedule, to minimize."""
-    NB_TASKS_DONE = "nb_tasks_done"
+    NB_TASKS_ALLOCATED = "nb_tasks_allocated"
     """Number of tasks with at least one resource allocated, to maximize."""
     NB_UNARY_RESOURCES_USED = "nb_unary_resources_used"
     """Number of allocated unary resources, to minimize."""
@@ -110,7 +110,7 @@ class Objective(Enum):
 
 OBJECTIVE_DEFAULT_WEIGHTS: dict[Objective, int] = {
     Objective.MAKESPAN: -1,
-    Objective.NB_TASKS_DONE: 1,
+    Objective.NB_TASKS_ALLOCATED: 1,
     Objective.NB_UNARY_RESOURCES_USED: -1,
     Objective.NB_RESOURCES_USED: -1,
     Objective.RESOURCES_LEVELS: -1,

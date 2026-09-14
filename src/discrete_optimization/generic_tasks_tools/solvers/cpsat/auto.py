@@ -1019,8 +1019,8 @@ class GenericSchedulingAutoCpSatSolver(
         match objective:
             case Objective.MAKESPAN:
                 objective_var = self.get_global_makespan_variable()
-            case Objective.NB_TASKS_DONE:
-                objective_var = self.get_nb_tasks_done_variable()
+            case Objective.NB_TASKS_ALLOCATED:
+                objective_var = self.get_nb_tasks_allocated_variable()
             case Objective.NB_UNARY_RESOURCES_USED:
                 objective_var = self.get_nb_unary_resources_used_variable()
                 if (

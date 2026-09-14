@@ -25,7 +25,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
 @fixture
 def problem_wo_skills():
     def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
-        return variable.compute_nb_tasks_done() - variable.get_max_end_time()
+        return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
 
     return GenericSchedulingImplProblem(
         horizon=10,
@@ -110,7 +110,7 @@ def test_problem(problem_wo_skills, caplog):
     d = problem.evaluate(sol)
     print(d)
     assert d["makespan"] == 9
-    assert d["nb_tasks_done"] == 2
+    assert d["nb_tasks_allocated"] == 2
     assert d["nb_unary_resources_used"] == 2
     assert d["nb_resources_used"] == 4
     assert d["resources_levels"] == 5
@@ -132,7 +132,7 @@ def test_problem(problem_wo_skills, caplog):
     problem.satisfy(sol)
     d = problem.evaluate(sol)
     assert d["makespan"] == 10
-    assert d["nb_tasks_done"] == 2
+    assert d["nb_tasks_allocated"] == 2
     assert d["nb_unary_resources_used"] == 1
 
     sol = GenericSchedulingImplSolution(
@@ -155,7 +155,7 @@ def test_problem(problem_wo_skills, caplog):
     problem.satisfy(sol)
     d = problem.evaluate(sol)
     assert d["makespan"] == 10
-    assert d["nb_tasks_done"] == 0
+    assert d["nb_tasks_allocated"] == 0
     assert d["nb_unary_resources_used"] == 0
 
     # nok: worker not available

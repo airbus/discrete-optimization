@@ -191,7 +191,7 @@ class TasksConstraintHandler(ConstraintHandler, Generic[Task]):
             if isinstance(current_solution, AllocationSolution) and isinstance(
                 solver, AllocationCpSolver
             ):
-                objective = -solver.get_nb_tasks_done_variable()
+                objective = -solver.get_nb_tasks_allocated_variable()
         elif self.objective_subproblem == ObjectiveSubproblem.NB_UNARY_RESOURCES_USED:
             if isinstance(current_solution, AllocationSolution) and isinstance(
                 solver, AllocationCpSolver
