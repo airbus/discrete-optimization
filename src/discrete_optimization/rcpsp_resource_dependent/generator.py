@@ -11,7 +11,7 @@ variants by adding mode-dependent resource consumption patterns.
 import random
 from copy import deepcopy
 from enum import Enum
-from typing import Hashable, Optional
+from typing import Any, Hashable, Optional
 
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp_resource_dependent.problem import (
@@ -320,7 +320,7 @@ def add_simple_resource_dependency(
 
     Example:
         >>> # Make task "2" resource "R1" consumption depend on task "1" mode
-        >>> rd_problem = add_simple_resource_dependency(
+        >>> rd_problem = add_simple_resource_dependency(  # doctest: +SKIP
         ...     base_problem=rcpsp_problem,
         ...     task="2",
         ...     resource="R1",
@@ -353,7 +353,7 @@ def add_simple_resource_dependency(
 
 def validate_resource_dependent_problem(
     problem: RcpspResourceDependentProblem,
-) -> dict[str, any]:
+) -> dict[str, Any]:
     """Validate a resource-dependent problem and return statistics.
 
     Args:
@@ -368,8 +368,8 @@ def validate_resource_dependent_problem(
         - tasks_with_dependencies: Set of tasks having at least one dependency
 
     Example:
-        >>> stats = validate_resource_dependent_problem(rd_problem)
-        >>> print(f"Dependency ratio: {stats['dependency_ratio']:.2%}")
+        >>> stats = validate_resource_dependent_problem(rd_problem)  # doctest: +SKIP
+        >>> print(f"Dependency ratio: {stats['dependency_ratio']:.2%}")  # doctest: +SKIP
     """
     num_fixed = 0
     num_dependent = 0

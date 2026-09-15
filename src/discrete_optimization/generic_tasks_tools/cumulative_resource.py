@@ -46,8 +46,8 @@ class CumulativeResourceProblem(
     Task A's electricity varies based on whether task B's heater is on:
 
         >>> mapping = {
-        ...     frozenset([(task_B, 0)]): 10,  # B heater off: A uses 10 kW
-        ...     frozenset([(task_B, 1)]): 8,   # B heater on: A uses 8 kW
+        ...     frozenset([("task_B", 0)]): 10,  # B heater off: A uses 10 kW
+        ...     frozenset([("task_B", 1)]): 8,   # B heater on: A uses 8 kW
         ... }
 
     Implementation pattern:
@@ -90,10 +90,10 @@ class CumulativeResourceProblem(
             Returns None if task has standard (non-dependent) consumption.
 
         Example:
-            >>> mapping = problem.get_cumulative_resource_consumption_mapping(
+            >>> mapping = problem.get_cumulative_resource_consumption_mapping(  # doctest: +SKIP
             ...     "electricity", task_A, 0
             ... )
-            >>> # {frozenset([(task_B, 0)]): 100, frozenset([(task_B, 1)]): 80}
+            {frozenset([("task_B", 0)]): 100, frozenset([("task_B", 1)]): 80}
         """
         # To be overridden in child classes
         return {
