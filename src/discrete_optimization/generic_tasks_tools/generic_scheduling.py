@@ -517,8 +517,8 @@ class GenericSchedulingProblem(
         match objective:
             case Objective.MAKESPAN:
                 return variable.get_max_end_time()
-            case Objective.NB_TASKS_DONE:
-                return variable.compute_nb_tasks_done()
+            case Objective.NB_TASKS_ALLOCATED:
+                return variable.compute_nb_tasks_allocated()
             case Objective.NB_UNARY_RESOURCES_USED:
                 return variable.compute_nb_unary_resources_used()
             case Objective.NB_RESOURCES_USED:
@@ -548,7 +548,7 @@ class GenericSchedulingProblem(
             case Penalty.TIME:
                 penalty = 0
                 # time windows
-                for task in self.tasks_list:
+                for task in variable.get_present_tasks():
                     start = variable.get_start_time(task)
                     end = variable.get_end_time(task)
                     start_lb = self.get_task_start_or_end_lower_bound(
@@ -576,16 +576,19 @@ class GenericSchedulingProblem(
                                 task2_start_or_end=task2_start_or_end,
                                 min_or_max=min_or_max,
                             ):
-                                t1 = variable.get_start_or_end_time(
-                                    task=task1, start_or_end=task1_start_or_end
-                                )
-                                t2 = variable.get_start_or_end_time(
-                                    task=task2, start_or_end=task2_start_or_end
-                                )
-                                if min_or_max == MinOrMax.MIN:
-                                    penalty += max(0, t1 + offset - t2)
-                                else:
-                                    penalty += max(0, t2 - (t1 + offset))
+                                if variable.is_present(task1) and variable.is_present(
+                                    task2
+                                ):
+                                    t1 = variable.get_start_or_end_time(
+                                        task=task1, start_or_end=task1_start_or_end
+                                    )
+                                    t2 = variable.get_start_or_end_time(
+                                        task=task2, start_or_end=task2_start_or_end
+                                    )
+                                    if min_or_max == MinOrMax.MIN:
+                                        penalty += max(0, t1 + offset - t2)
+                                    else:
+                                        penalty += max(0, t2 - (t1 + offset))
 
             case _:
                 raise NotImplementedError()
@@ -643,6 +646,7 @@ class GenericSchedulingProblem(
         forbidden_intervals: bool = True,
         resource_blocking: bool = True,
         mode_constraints: bool = True,
+        optional_tasks: bool = True,
     ) -> bool:
         """Partial checks on solution.
 
@@ -661,13 +665,15 @@ class GenericSchedulingProblem(
             no_overlap:
             forbidden_intervals:
             resource_blocking:
-
+            optional_tasks:
         Returns:
 
         """
         return (
+            # presence of tasks
+            (not optional_tasks or variable.check_present_tasks())
             # duration consistency
-            (not duration or variable.check_duration_constraints())
+            and (not duration or variable.check_duration_constraints())
             # calendar resources capacity violations (unary resources + skills + cumulative resources)
             and (
                 not calendar
@@ -749,12 +755,12 @@ class GenericSchedulingSolution(
                     for unary_resource in self.get_task_allocation(task=task)
                 )
             )
-            for task in self.problem.tasks_list
+            for task in self.get_present_tasks()
         )
 
     def compute_workload_dispersion(self) -> int:
         workload = [0 for i in range(len(self.problem.unary_resources_list))]
-        for task in self.problem.tasks_list:
+        for task in self.get_present_tasks():
             urs = self.get_task_allocation(task)
             duration = self.get_duration(task)
             for ur in urs:
@@ -763,3 +769,6 @@ class GenericSchedulingSolution(
         if nz:
             return max(nz) - min(nz)
         return 0
+
+    def is_present(self, task: Task) -> bool:
+        return self.is_scheduled(task) and self.has_a_mode(task)

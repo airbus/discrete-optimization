@@ -32,9 +32,6 @@ from discrete_optimization.generic_tasks_tools.cumulative_resource import (
 )
 from discrete_optimization.generic_tasks_tools.entities import SchedulingEntity
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.multimode import (
-    MultimodeSolution,
-)
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingSolution,
 )
@@ -174,7 +171,6 @@ class ResourceBlockingProblem(
 
 class ResourceBlockingSolution(
     CumulativeResourceSolution[Task, CumulativeResource, OtherCalendarResource],
-    MultimodeSolution[Task],
     Generic[Task, CumulativeResource, OtherCalendarResource],
 ):
     """
@@ -267,17 +263,18 @@ class ResourceBlockingSolution(
             consumption[start_time:end_time] += amount
 
         # Process span blocking constraints
-        for tasks, resources, metadata in self.problem.get_span_blocking_constraints():
+        for entity, resources, metadata in self.problem.get_span_blocking_constraints():
             # Skip if resource not in this constraint
             if resource not in resources:
                 continue
 
-            # Compute span: min start to max end of all tasks
-            if len(tasks) == 0:
+            # skip if entity inactive
+            if not entity.is_active(solution):
                 continue
 
-            start_time = min(solution.get_start_time(t) for t in tasks)
-            end_time = max(solution.get_end_time(t) for t in tasks)
+            # Compute span: min start to max end of all tasks
+            start_time: int = entity.get_start_time(solution)
+            end_time: int = entity.get_end_time(solution)
 
             if end_time <= start_time:
                 continue
@@ -287,7 +284,7 @@ class ResourceBlockingSolution(
             # Validate ACTIVE mode
             if metadata.mode == BlockingMode.ACTIVE:
                 self._validate_active_blocking_span(
-                    resource, start_time, end_time, tasks
+                    resource, start_time, end_time, entity.get_tasks()
                 )
 
             # For span blocking, apply consumption directly
@@ -506,7 +503,7 @@ class ResourceBlockingSolution(
         """
         consumption = np.zeros(horizon, dtype=int)
 
-        for task in self.problem.tasks_list:
+        for task in self.get_present_tasks():
             start = self.get_start_time(task)
             end = self.get_end_time(task)
             mode = self.get_mode(task)

@@ -9,6 +9,7 @@ import cpmpy
 from cpmpy.expressions.globalconstraints import NoOverlap
 from packaging.version import Version
 
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tools.cpmpy_tools import (
     CpmpySolver,
     MetaCpmpyConstraint,
@@ -265,7 +266,10 @@ class CpmpySingleMachineSolver(CpmpySolver):
 
     def retrieve_current_solution(self) -> Solution:
         """Constructs a WTSolution from the solved CPMpy model."""
-        schedule = [() for _ in range(self.problem.num_jobs)]
+        schedule = [
+            (AbsentValue.ABSENT, AbsentValue.ABSENT)
+            for _ in range(self.problem.num_jobs)
+        ]
 
         if self.model_type == SingleMachineModel.CP:
             starts_val = self.variables["starts"].value()

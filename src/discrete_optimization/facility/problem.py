@@ -103,6 +103,11 @@ class FacilitySolution(AllocationSolution[Customer, Facility]):
     def is_allocated(self, task: Customer, unary_resource: Facility) -> bool:
         return self.facility_for_customers[task.index] == unary_resource.index
 
+    def is_present(self, task: Customer) -> bool:
+        return (
+            0 <= self.facility_for_customers[task.index] < self.problem.facility_count
+        )
+
 
 class FacilityProblem(AllocationProblem[Customer, Facility]):
     """Base class for the facility problem.
@@ -123,6 +128,8 @@ class FacilityProblem(AllocationProblem[Customer, Facility]):
         facilities: list[Facility],
         customers: list[Customer],
     ):
+        assert facility_count == len(facilities)
+        assert customer_count == len(customers)
         self.facility_count = facility_count
         self.customer_count = customer_count
         self.facilities = facilities

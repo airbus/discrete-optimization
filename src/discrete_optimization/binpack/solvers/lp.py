@@ -109,7 +109,7 @@ class _BaseLpBinPackSolver(MilpSolver):
         get_var_value_for_current_solution: Callable[[Any], float],
         get_obj_value_for_current_solution: Callable[[], float],
     ) -> BinPackSolution:
-        allocation = [None] * self.problem.nb_items
+        allocation = [-1] * self.problem.nb_items
         for (
             variable_decision_key,
             variable_decision_value,

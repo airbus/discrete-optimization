@@ -447,7 +447,7 @@ class CpSatTeamAllocationSolver(
             objectives_expr = [o for o in objectives_expr if o is not None]
 
         if optional_activities:
-            nb_activities_done = self.get_nb_tasks_done_variable()
+            nb_activities_done = self.get_nb_tasks_allocated_variable()
             self.variables["objs"]["nb_allocated"] = nb_activities_done
             objectives_expr = [nb_activities_done] + objectives_expr
             self.variables["allocated"] = is_allocated
@@ -460,8 +460,8 @@ class CpSatTeamAllocationSolver(
         self.variables["keys_variable_to_log"] = keys_variable_to_log
 
     def create_is_allocated_variables(self) -> list[IntVar]:
-        self.create_done_variables()
-        return [self.done_variables[task] for task in self.problem.tasks_list]
+        self.create_task_allocated_variables()
+        return [self.task_allocated_variables[task] for task in self.problem.tasks_list]
 
     def create_used_variables_list(
         self,

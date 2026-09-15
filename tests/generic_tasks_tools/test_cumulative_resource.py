@@ -21,7 +21,7 @@ Task = str
 
 
 class MyCumulativeResourceProblem(
-    CumulativeResourceProblem[Task, CumulativeResource, OtherRenewableResource]
+    CumulativeResourceProblem[Task, CumulativeResource, OtherRenewableResource],
 ):
     resource_availabilities = dict(
         R1=[
@@ -116,7 +116,7 @@ class MyKOCumulativeResourceProblem(MyCumulativeResourceProblem):
 
 
 class MyCumulativeResourceSolution(
-    CumulativeResourceSolution[Task, CumulativeResource, OtherRenewableResource]
+    CumulativeResourceSolution[Task, CumulativeResource, OtherRenewableResource],
 ):
     problem: MyCumulativeResourceProblem
 

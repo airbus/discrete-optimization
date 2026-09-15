@@ -11,6 +11,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
@@ -50,6 +51,9 @@ class VRPTWSolution(SchedulingSolution[Task], AllocationSolution[Task, UnaryReso
         tw_violation (float): Total violation of time windows (sum of lateness).
         capacity_violation (float): Total violation of vehicle capacities.
     """
+
+    def is_present(self, task: Task) -> bool:
+        return self.get_end_time(task) is not AbsentValue.ABSENT
 
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
         return task in self.routes[unary_resource]
@@ -125,7 +129,7 @@ class VRPTWSolution(SchedulingSolution[Task], AllocationSolution[Task, UnaryReso
             f"Routes:\n{route_str}"
         )
 
-    def get_end_time(self, task: Task) -> int:
+    def get_end_time(self, task: Task) -> int | AbsentValue:
         if getattr(self, "_times", None) is not None:
             t = getattr(self, "_times")[task]
             return t
@@ -139,9 +143,9 @@ class VRPTWSolution(SchedulingSolution[Task], AllocationSolution[Task, UnaryReso
                     )
         if task == self.problem.depot_node:
             return 0
-        return None
+        return AbsentValue.ABSENT
 
-    def get_start_time(self, task: Task) -> int:
+    def get_start_time(self, task: Task) -> int | AbsentValue:
         return self.get_end_time(task)
 
 
@@ -157,6 +161,9 @@ class VRPTWProblem(SchedulingProblem[Task], AllocationProblem[Task, UnaryResourc
     - Customers with service times.
     - Objectives: 1) Minimize number of vehicles, 2) Minimize total distance.
     """
+
+    def is_optional(self, task: Task) -> bool:
+        return False
 
     def get_makespan_upper_bound(self) -> int:
         return round(1000 ** self.time_windows[self.depot_node][1])

@@ -909,8 +909,8 @@ def generate_schedule_from_permutation_serial_sgs_preemptive(
         last_act_id = rcpsp_problem.sink_task
         if last_act_id not in rcpsp_schedule:
             rcpsp_schedule[last_act_id] = {}
-            rcpsp_schedule[last_act_id]["starts"] = [9999999]
-            rcpsp_schedule[last_act_id]["ends"] = [9999999]
+            rcpsp_schedule[last_act_id]["starts"] = [TOO_BIG_TIME]
+            rcpsp_schedule[last_act_id]["ends"] = [TOO_BIG_TIME]
     else:
         rcpsp_schedule_feasible = True
     return rcpsp_schedule, rcpsp_schedule_feasible
@@ -1276,8 +1276,8 @@ def generate_schedule_from_permutation_serial_sgs_partial_schedule_preempptive(
         last_act_id = rcpsp_problem.sink_task
         if last_act_id not in rcpsp_schedule:
             rcpsp_schedule[last_act_id] = {}
-            rcpsp_schedule[last_act_id]["starts"] = [99999999]
-            rcpsp_schedule[last_act_id]["ends"] = [9999999]
+            rcpsp_schedule[last_act_id]["starts"] = [TOO_BIG_TIME]
+            rcpsp_schedule[last_act_id]["ends"] = [TOO_BIG_TIME]
     else:
         rcpsp_schedule_feasible = True
     return rcpsp_schedule, rcpsp_schedule_feasible

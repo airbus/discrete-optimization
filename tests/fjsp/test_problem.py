@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 
 import logging
+import re
 
 from pytest import fixture
 
@@ -59,7 +60,7 @@ def test_fjsp_satisfy_nok_unallowed_machine(problem, caplog):
     )
     with caplog.at_level(level=logging.DEBUG):
         assert not problem.satisfy(sol)
-    # assert re.search("Unallowed machine.*(1, 0)", caplog.text)
+    assert re.search(".*machine.*not.*allowed.*(1, 0)", caplog.text)
 
 
 def test_fjsp_satisfy_nok_overlap_machine(problem, caplog):
@@ -80,7 +81,7 @@ def test_fjsp_satisfy_nok_overlap_machine(problem, caplog):
     )
     with caplog.at_level(level=logging.DEBUG):
         assert not problem.satisfy(sol)
-    # assert re.search("Overlapping.*0", caplog.text)
+    assert re.search("resource.*0", caplog.text)
 
 
 def test_fjsp_satisfy_nok_mode_machine(problem, caplog):
@@ -95,7 +96,7 @@ def test_fjsp_satisfy_nok_mode_machine(problem, caplog):
     )
     with caplog.at_level(level=logging.DEBUG):
         assert not problem.satisfy(sol)
-    # assert re.search("not match.*(1, 0)", caplog.text)
+    assert re.search("not match.*(1, 0)", caplog.text)
 
 
 def test_fjsp_satisfy_nok_precedence(problem, caplog):
@@ -109,7 +110,7 @@ def test_fjsp_satisfy_nok_precedence(problem, caplog):
     )
     with caplog.at_level(level=logging.DEBUG):
         assert not problem.satisfy(sol)
-    # assert re.search("Precedence.*(1, 1).*(1, 2)", caplog.text)
+    assert re.search("Precedence.*(1, 1).*(1, 2)", caplog.text)
 
 
 def test_fjsp_satisfy_nok_duration(problem, caplog):
@@ -123,4 +124,4 @@ def test_fjsp_satisfy_nok_duration(problem, caplog):
     )
     with caplog.at_level(level=logging.DEBUG):
         assert not problem.satisfy(sol)
-    # assert re.search("Duration.*(1, 0)", caplog.text)
+    assert re.search("Duration.*(1, 0)", caplog.text)

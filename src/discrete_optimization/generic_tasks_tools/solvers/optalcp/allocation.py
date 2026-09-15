@@ -45,9 +45,9 @@ class AllocationOptalSolver(
     """Flag telling whether 'used variables' have been created"""
     used_variables: dict[UnaryResource, cp.BoolVar]
     """Variables tracking whether a unary resource has been used at least once."""
-    done_variables_created = False
-    """Flag telling whether 'done variables' have been created"""
-    done_variables: dict[Task, cp.BoolExpr]
+    task_allocated_variables_created = False
+    """Flag telling whether 'task_allocated_variables' have been created"""
+    task_allocated_variables: dict[Task, cp.BoolExpr]
     """Variables tracking whether a task has at least one unary resource allocated."""
 
     at_most_one_unary_resource_per_task = False
@@ -91,8 +91,8 @@ class AllocationOptalSolver(
         super().init_model(**kwargs)
         self.used_variables_created = False
         self.used_variables = {}
-        self.done_variables_created = False
-        self.done_variables_created = {}
+        self.task_allocated_variables_created = False
+        self.task_allocated_variables_created = {}
 
     @abstractmethod
     def get_task_unary_resource_is_present_variable(
@@ -217,7 +217,7 @@ class AllocationOptalSolver(
             for unary_resource in self.subset_unaryresources_allowed:
                 used = self.cp_model.bool_var(f"used_{unary_resource}")
                 self.used_variables[unary_resource] = used
-                list_is_present_variables = [
+                list_is_allocated_variables = [
                     is_present
                     for task in self.subset_tasks_of_interest
                     # filter out trivial 0's corresponding to incompatible (task, resource)
@@ -230,21 +230,21 @@ class AllocationOptalSolver(
                         )
                     )
                 ]
-                if len(list_is_present_variables) > 0:
+                if len(list_is_allocated_variables) > 0:
                     self.cp_model.enforce(
-                        used == self.cp_model.max(list_is_present_variables)
+                        used == self.cp_model.max(list_is_allocated_variables)
                     )
                 else:
                     self.cp_model.enforce(used == 0)
             self.used_variables_created = True
 
-    def create_done_variables(self):
-        if not self.done_variables_created:
-            self.done_variables = {}
+    def create_task_allocated_variables(self):
+        if not self.task_allocated_variables_created:
+            self.task_allocated_variables = {}
             for task in self.subset_tasks_of_interest:
-                done = self.cp_model.bool_var(f"{task}_done")
-                self.done_variables[task] = done
-                list_is_present_variables = [
+                allocated = self.cp_model.bool_var(f"{task}_allocated")
+                self.task_allocated_variables[task] = allocated
+                list_is_allocated_variables = [
                     is_present
                     for unary_resource in self.subset_unaryresources_allowed
                     # filter out trivial 0's corresponding to incompatible (task, resource)
@@ -257,17 +257,17 @@ class AllocationOptalSolver(
                         )
                     )
                 ]
-                if len(list_is_present_variables) > 0:
+                if len(list_is_allocated_variables) > 0:
                     self.cp_model.enforce(
-                        done == self.cp_model.max(list_is_present_variables)
+                        allocated == self.cp_model.max(list_is_allocated_variables)
                     )
                 else:
-                    self.cp_model.enforce(done == 0)
-            self.done_variables_created = True
+                    self.cp_model.enforce(allocated == 0)
+            self.task_allocated_variables_created = True
 
-    def get_nb_tasks_done_variable(self) -> Any:
-        self.create_done_variables()
-        return sum(self.done_variables.values())
+    def get_nb_tasks_allocated_variable(self) -> Any:
+        self.create_task_allocated_variables()
+        return sum(self.task_allocated_variables.values())
 
     def get_nb_unary_resources_used_variable(self) -> Any:
         self.create_used_variables()

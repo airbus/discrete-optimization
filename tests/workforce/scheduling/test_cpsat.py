@@ -450,11 +450,11 @@ def test_objective_subtasks_sum_ends(problem):
     )
 
 
-def test_objective_nb_tasks_done(problem):
+def test_objective_nb_tasks_allocated(problem):
     solver = CPSatAllocSchedulingSolver(problem)
     sol: AllocSchedulingSolution
     solver.init_model()
-    objective = -solver.get_nb_tasks_done_variable()
+    objective = -solver.get_nb_tasks_allocated_variable()
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
     assert solver.solver.ObjectiveValue() == -sum(

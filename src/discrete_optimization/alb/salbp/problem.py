@@ -10,9 +10,6 @@ from discrete_optimization.alb.base.problem import (
     BaseALBSolution,
     TaskData,
 )
-from discrete_optimization.generic_tasks_tools.allocation import (
-    UnaryResource,
-)
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
     ModeOptim,
@@ -116,10 +113,10 @@ class SalbpSolution(BaseALBSolution[Task, Resource]):
     def get_start_time(self, task: Task) -> int:
         return self.allocation_to_station[self.problem.tasks_to_index[task]]
 
-    def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
+    def is_allocated(self, task: Task, unary_resource: Resource) -> bool:
         return (
-            self.allocation_to_station[self.problem.tasks_to_index[task]]
-            == unary_resource
+            self.get_station_index(task)
+            == unary_resource  # here the index is the station itself
         )
 
     def copy(self) -> "SalbpSolution":

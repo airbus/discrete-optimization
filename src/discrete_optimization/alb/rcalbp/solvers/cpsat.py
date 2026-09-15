@@ -22,8 +22,8 @@ from discrete_optimization.alb.rcalbp.problem import (
     RCALBPProblem,
     RCALBPSolution,
     Resource,
+    Station,
     Task,
-    UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
@@ -40,14 +40,16 @@ class ModelingShared(Enum):
 
 
 class CpSatRcAlbpSolver(
-    AllocationCpSatSolver[Task, UnaryResource],
+    AllocationCpSatSolver[Task, Station],
 ):
     """
     CP-SAT Solver for RC-ALBP with shared resources.
     Implements FOLDED and CALENDAR approaches.
     """
 
-    # def get_binary_allocation_variable(self, task: Task, unary_resource: UnaryResource) -> LinearExprT:
+    problem: RCALBPProblem
+
+    # def get_binary_allocation_variable(self, task: Task, unary_resource: Station) -> LinearExprT:
     #    if self.modeling == ModelingShared.FOLDED:
     #        station_to_idx = {s: i for i, s in enumerate(self.problem.stations)}
     #        return self.variables["task_station_binary"][task, station_to_idx[unary_resource]]
@@ -78,7 +80,7 @@ class CpSatRcAlbpSolver(
         return self.variables["ends"][task]
 
     def get_task_unary_resource_is_present_variable(
-        self, task: Task, unary_resource: UnaryResource
+        self, task: Task, unary_resource: Station
     ) -> LinearExprT:
         if self.modeling == ModelingShared.FOLDED:
             return self.variables["task_station_binary"][task, unary_resource]

@@ -54,14 +54,14 @@ from discrete_optimization.shop.transformations.to_generic_scheduling import (
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective) + [[(Objective.MAKESPAN, -2), (Objective.NB_TASKS_DONE, +2)]],
+    list(Objective) + [[(Objective.MAKESPAN, -2), (Objective.NB_TASKS_ALLOCATED, +2)]],
 )
 def test_auto(
     objective,
     caplog,
 ):
     def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
-        return variable.compute_nb_tasks_done() - variable.get_max_end_time()
+        return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
 
     problem = GenericSchedulingImplProblem(
         horizon=10,
@@ -132,7 +132,8 @@ def test_auto(
         solver: GenericSchedulingAutoCpSatImplSolver,
     ) -> LinearExprT:
         return (
-            solver.get_nb_tasks_done_variable() - solver.get_global_makespan_variable()
+            solver.get_nb_tasks_allocated_variable()
+            - solver.get_global_makespan_variable()
         )
 
     exactly_one_unary_resource_per_task = objective in [
@@ -167,8 +168,8 @@ def test_auto(
         assert kpi["nb_resources_used"] == 3
     elif objective == Objective.MAKESPAN:
         assert kpi["makespan"] == 9
-    elif objective == Objective.NB_TASKS_DONE:
-        assert kpi["nb_tasks_done"] == 2
+    elif objective == Objective.NB_TASKS_ALLOCATED:
+        assert kpi["nb_tasks_allocated"] == 2
     elif objective == Objective.COST:
         assert sol.get_mode("task-1") == 1
         assert not sol.is_allocated("task-1", unary_resource="worker1")
@@ -178,7 +179,167 @@ def test_auto(
     elif objective == Objective.CUSTOM:
         assert kpi["custom_objective"] == 2 - 9
     elif isinstance(objective, list):
-        assert kpi["nb_tasks_done"] == 2
+        assert kpi["nb_tasks_allocated"] == 2
+        assert kpi["makespan"] == 9
+
+    # check warm start from a "bad" solution
+    if objective == Objective.COST:
+        return  # skip warm start
+    bad_sol = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(
+                    start=1, end=4, mode=1, allocated={"worker1": set()}
+                ),
+                "task-2": TaskVariable(
+                    start=6, end=10, mode=0, allocated={"worker2": set()}
+                ),
+            }
+        ),
+    )
+    problem.satisfy(bad_sol)
+
+    # warm start + 1 sol only => should find the "bad" solution
+    solver.set_warm_start(solution=bad_sol)
+    res = solver.solve(
+        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
+        parameters_cp=ParametersCp.default(),
+        callbacks=[NbIterationStopper(1)],
+    )
+    sol, fit = res[0]
+    assert sol.raw_sol.task_variables == bad_sol.raw_sol.task_variables
+
+
+@pytest.mark.parametrize(
+    "objective",
+    list(Objective) + [[(Objective.MAKESPAN, -2), (Objective.NB_TASKS_ALLOCATED, +2)]],
+)
+def test_auto_optional_tasks(
+    objective,
+    caplog,
+):
+    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
+        return -sum(
+            variable.get_start_time(task) for task in variable.problem.tasks_list
+        )
+
+    problem = GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 1,
+                1: 3,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        resource_consumptions={
+            "task-1": {
+                0: {
+                    "non_renewable_resource": 2,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                },
+            },
+            "task-2": {
+                0: {
+                    "cumulative_resource": 2,
+                },
+            },
+        },
+        successors={"task-1": {"task-2"}},
+        unary_resources={"worker1", "worker2"},
+        unary_resources_availabilities={
+            "worker1": [(1, 4)],
+            "worker2": [(3, 18)],
+        },
+        non_skill_cumulative_resources={
+            "cumulative_resource": [
+                (3, 5, 1),
+                (5, 10, 2),
+            ],
+        },
+        non_renewable_resources={
+            "non_renewable_resource": 1,
+        },
+        optional_tasks={"task-1"},
+        objective=objective,
+        custom_evaluate_fn=custom_evaluate_fn,
+        mode_costs={
+            "task-1": {
+                0: 100,
+                1: 3,
+            },
+            "task-2": {
+                0: 0,
+            },
+        },
+        unary_resource_costs={
+            "task-1": {
+                1: {
+                    "worker1": 27,
+                    "worker2": 10,
+                },
+            },
+        },
+    )
+
+    # prepare solver
+
+    # custom objective: makespan - nb tasks allocated
+    def custom_objective_factory(
+        solver: GenericSchedulingAutoCpSatImplSolver,
+    ) -> LinearExprT:
+        return -solver.get_subtasks_sum_start_time_variable(problem.tasks_list)
+
+    exactly_one_unary_resource_per_task = objective in [
+        Objective.NB_UNARY_RESOURCES_USED,
+        Objective.NB_RESOURCES_USED,
+        Objective.RESOURCES_LEVELS,
+        Objective.COST,
+    ]
+
+    solver = GenericSchedulingAutoCpSatImplSolver(
+        problem=problem,
+        objective=objective,
+        custom_objective_factory=custom_objective_factory,
+    )
+
+    solver.init_model(
+        exactly_one_unary_resource_per_task=exactly_one_unary_resource_per_task
+    )
+
+    # solve
+    res = solver.solve(
+        parameters_cp=ParametersCp.default(),
+        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+    )
+
+    # check sol and kpis
+    sol: GenericSchedulingImplSolution
+    sol, fit = res[-1]
+    assert problem.satisfy(sol)
+    kpi = problem.evaluate(sol)
+
+    if objective == Objective.NB_UNARY_RESOURCES_USED:
+        assert kpi["nb_unary_resources_used"] == 1
+    elif objective == Objective.NB_RESOURCES_USED:
+        assert kpi["nb_resources_used"] == 2
+    elif objective == Objective.MAKESPAN:
+        assert kpi["makespan"] == 9
+    elif objective == Objective.NB_TASKS_ALLOCATED:
+        assert kpi["nb_tasks_allocated"] == 2
+    elif objective == Objective.COST:
+        assert not sol.is_present("task-1")
+        assert kpi["cost"] == 0
+
+    elif objective == Objective.CUSTOM:
+        assert kpi["custom_objective"] == -5
+    elif isinstance(objective, list):
+        assert kpi["nb_tasks_allocated"] == 2
         assert kpi["makespan"] == 9
 
     # check warm start from a "bad" solution
@@ -227,6 +388,27 @@ def test_start_to_end_time_lag():
     result = solver.solve(time_limit=10, parameters_cp=ParametersCp.default())
     solution: GenericSchedulingImplSolution = result.get_best_solution()
     assert problem.satisfy(solution)
+
+
+def test_start_to_end_time_lag_optional_tasks():
+    problem = GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 3,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        optional_tasks={"task-1"},
+        start_to_end_min_time_lags=[("task-1", "task-2", 8)],
+    )
+    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    result = solver.solve(time_limit=10, parameters_cp=ParametersCp.default())
+    solution: GenericSchedulingImplSolution = result.get_best_solution()
+    assert problem.satisfy(solution)
+    assert not solution.is_present("task-1")
 
 
 def test_no_overlap():

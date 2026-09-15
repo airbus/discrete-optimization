@@ -271,6 +271,7 @@ class ToGenericSchedulingImpl(
             }
             for task in source_problem.tasks_list
         }
+        optional_tasks = set(source_problem.optional_tasks_list)
         (
             objective,
             custom_evaluate_fn,
@@ -307,6 +308,7 @@ class ToGenericSchedulingImpl(
             objective=objective,
             custom_evaluate_fn=custom_evaluate_fn,
             objective_resource_weights=objective_resource_weights,
+            optional_tasks=optional_tasks,
             compute_time_penalty=compute_time_penalty,
         )
 
@@ -433,6 +435,7 @@ def convert_solution_from_specific_to_generic(
                     start=solution.get_start_time(task),
                     end=solution.get_end_time(task),
                     mode=solution.get_mode(task),
+                    is_present=solution.is_present(task),
                     allocated={
                         unary_resource: {
                             skill

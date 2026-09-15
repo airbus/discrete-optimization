@@ -4,6 +4,7 @@
 
 """Transformation from CommonShopProblem (JSP/FJSP/OSP) to GenericSchedulingImpl."""
 
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     Skill,
     UnaryResource,
@@ -25,7 +26,7 @@ def transform_solution_from_raw_generic_to_shop(
             (
                 (task_var := raw_sol.task_variables[j, k]).start,
                 task_var.end,
-                problem.mode2machine[j, k][task_var.mode],
+                problem.mode2machine[j, k].get(task_var.mode, AbsentValue.ABSENT),
                 task_var.mode,
             )
             for k, sub_job in enumerate(job.subjobs)

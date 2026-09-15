@@ -80,6 +80,9 @@ class RCALBPLSolution(AllocationSolution[Task, WorkStation], SchedulingSolution[
         else:
             return 0
 
+    def is_present(self, task: Task) -> bool:
+        return 0 <= self.wks.get(task[0], -1) < self.problem.nb_stations
+
     def copy(self) -> "RCALBPLSolution":
         return RCALBPLSolution(
             problem=self.problem,
@@ -140,7 +143,10 @@ class RCALBPLVectorSolution(RCALBPLSolution):
         self.raw = sol.raw
 
 
-class RCALBPLProblem(SchedulingProblem[Task], AllocationProblem[Task, WorkStation]):
+class RCALBPLProblem(
+    SchedulingProblem[Task],
+    AllocationProblem[Task, WorkStation],
+):
     """
     Problem definition for Resource-Constrained Assembly Line Balancing
     with Learning Effect (RC-ALBP/L).

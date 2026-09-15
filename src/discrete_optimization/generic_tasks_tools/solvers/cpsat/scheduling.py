@@ -10,11 +10,13 @@ from ortools.sat.python.cp_model import IntervalVar, IntVar, LinearExprT
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingCpSolver
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
+)
 from discrete_optimization.generic_tools.cp_tools import SignEnum
-from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 
 
-class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
+class SchedulingCpSatSolver(TasksCpSatSolver[Task], SchedulingCpSolver[Task]):
     """Base class for most ortools/cpsat solvers handling scheduling problems.
 
     Allows to have common code.
@@ -43,6 +45,9 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
     ) -> LinearExprT:
         """Retrieve the variable storing the start or end time of given task.
 
+        For optional tasks, the start and end should be 0 when absent
+        so that the makespan/sum of starts/sum of ends variables do not take them into account.
+
         Args:
             task:
             start_or_end:
@@ -59,6 +64,10 @@ class SchedulingCpSatSolver(OrtoolsCpSatSolver, SchedulingCpSolver[Task]):
         This is needed when wanting to avoid using optional interval,
         e.g. if `self.avoid_interval_optional_for_cumulative_resources` or
         `self.avoid_interval_optional_for_unary_resources` is set to True.
+
+        If the task is optional, this interval should be also taken into account
+        the presence/absence of the task.
+
 
         """
         raise NotImplementedError

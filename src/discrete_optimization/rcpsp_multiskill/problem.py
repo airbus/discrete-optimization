@@ -25,7 +25,7 @@ from discrete_optimization.generic_tasks_tools.calendar_resource import (
     convert_calendar_to_availability_intervals,
     merge_resources_calendars,
 )
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -48,6 +48,7 @@ from discrete_optimization.rcpsp.problem import (
 from discrete_optimization.rcpsp.special_constraints import (
     SpecialConstraintsDescription,
 )
+from discrete_optimization.rcpsp.utils import TOO_BIG_TIME
 from discrete_optimization.rcpsp_multiskill.fast_function_ms_rcpsp import (
     sgs_fast_ms,
     sgs_fast_ms_partial_schedule,
@@ -130,7 +131,7 @@ class MultiskillRcpspSolution(
         problem: Problem,
         modes: dict[Hashable, int],
         schedule: dict[
-            Hashable, dict[str, Union[int, list[int]]]
+            Hashable, dict[str, int]
         ],  # (task: {"start_time": start, "end_time": }}
         employee_usage: dict[Hashable, dict[Hashable, set[str]]],
     ):  # {task: {employee: set(skills})}):
@@ -168,14 +169,29 @@ class MultiskillRcpspSolution(
             employee_usage=deepcopy(self.employee_usage),
         )
 
-    def get_start_time(self, task):
-        return self.schedule[task]["start_time"]
+    def get_start_time(self, task) -> int | AbsentValue:
+        if task in self.schedule:
+            time = self.schedule[task]["start_time"]
+            if time != TOO_BIG_TIME:
+                return time
+            else:
+                return AbsentValue.ABSENT
+        return AbsentValue.ABSENT
 
-    def get_end_time(self, task):
-        return self.schedule[task]["end_time"]
+    def get_end_time(self, task) -> int | AbsentValue:
+        if task in self.schedule:
+            time = self.schedule[task]["end_time"]
+            if time != TOO_BIG_TIME:
+                return time
+            else:
+                return AbsentValue.ABSENT
+        return AbsentValue.ABSENT
 
     def get_active_time(self, task):
-        return list(range(self.get_start_time(task), self.get_end_time(task)))
+        if self.is_present(task):
+            return list(range(self.get_start_time(task), self.get_end_time(task)))
+        else:
+            return []
 
     def is_allocated(self, task: Task, unary_resource: UnaryResource) -> bool:
         return (
@@ -216,13 +232,13 @@ class PreemptiveMultiskillRcpspSolution(MultiskillRcpspSolution):
             employee_usage=deepcopy(self.employee_usage),
         )
 
-    def get_start_time(self, task):
+    def get_start_time(self, task) -> int | AbsentValue:
         return self.schedule.get(task, {"starts": [None]})["starts"][0]
 
     def get_start_times_list(self, task):
         return self.schedule.get(task, {"starts": [None]})["starts"]
 
-    def get_end_time(self, task):
+    def get_end_time(self, task) -> int | AbsentValue:
         return self.schedule.get(task, {"ends": [None]})["ends"][-1]
 
     def get_end_times_list(self, task):
@@ -503,7 +519,7 @@ class VariantMultiskillRcpspSolution(MultiskillRcpspSolution):
     ):
         if unfeasible_non_renewable_resources:
             self.schedule = {
-                t: {"start_time": 99999, "end_time": 99999}
+                t: {"start_time": TOO_BIG_TIME, "end_time": TOO_BIG_TIME}
                 for t in self.problem.tasks_list
             }
             return
@@ -659,7 +675,8 @@ class VariantPreemptiveMultiskillRcpspSolution(PreemptiveMultiskillRcpspSolution
     ):
         if unfeasible_non_renewable_resources:
             self.schedule = {
-                t: {"starts": [99999], "ends": [99999]} for t in self.problem.tasks_list
+                t: {"starts": [TOO_BIG_TIME], "ends": [TOO_BIG_TIME]}
+                for t in self.problem.tasks_list
             }
             return
         self.schedule = {}
@@ -1019,8 +1036,8 @@ def sgs_multi_skill(solution: VariantMultiskillRcpspSolution):
     if unfeasible_non_renewable_resources or unfeasible_in_horizon or unfeasible_skills:
         last_act_id: Task = max(problem.successors.keys())
         rcpsp_schedule[last_act_id] = {
-            "start_time": 99999999,
-            "end_time": 9999999,
+            "start_time": TOO_BIG_TIME,
+            "end_time": TOO_BIG_TIME,
         }
     return rcpsp_schedule, [], employee_usage, modes_dict
 
@@ -1277,8 +1294,8 @@ def sgs_multi_skill_preemptive(solution: VariantPreemptiveMultiskillRcpspSolutio
         rcpsp_schedule_feasible = False
         last_act_id: Task = max(problem.successors.keys())
         rcpsp_schedule[last_act_id] = {
-            "starts": [99999999],
-            "ends": [9999999],
+            "starts": [TOO_BIG_TIME],
+            "ends": [TOO_BIG_TIME],
         }
     else:
         rcpsp_schedule_feasible = True
@@ -1614,8 +1631,8 @@ def sgs_multi_skill_preemptive_partial_schedule(
         rcpsp_schedule_feasible = False
         last_act_id: Task = max(problem.successors.keys())
         rcpsp_schedule[last_act_id] = {
-            "starts": [99999999],
-            "ends": [9999999],
+            "starts": [TOO_BIG_TIME],
+            "ends": [TOO_BIG_TIME],
         }
     else:
         rcpsp_schedule_feasible = True
@@ -1906,8 +1923,8 @@ def sgs_multi_skill_partial_schedule(
         last_act_id: Task = max(problem.successors.keys())
         if last_act_id not in rcpsp_schedule.keys():
             rcpsp_schedule[last_act_id] = {
-                "start_time": 99999999,
-                "end_time": 9999999,
+                "start_time": TOO_BIG_TIME,
+                "end_time": TOO_BIG_TIME,
             }
     else:
         rcpsp_schedule_feasible = True
@@ -2248,6 +2265,9 @@ class MultiskillRcpspProblem(
     def update_resource_availabilities(self) -> None:
         super().update_resource_availabilities()
         self.get_resource_availabilities.cache_clear()
+
+    def is_optional(self, task: Task) -> bool:
+        return False
 
     def get_no_overlap(self) -> set[frozenset[Task]]:
         if self.do_special_constraints:

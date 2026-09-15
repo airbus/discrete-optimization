@@ -341,7 +341,7 @@ class CPSatAllocSchedulingSolver(
         if ObjectivesEnum.NB_DONE_AC in objectives and optional_activities:
             self.variables["objectives"][
                 ObjectivesEnum.NB_DONE_AC
-            ] = -self.get_nb_tasks_done_variable()
+            ] = -self.get_nb_tasks_allocated_variable()
         used = self.create_used_variables_dict()
         self.variables["used"] = used
         if kwargs["symmbreak_on_used"]:

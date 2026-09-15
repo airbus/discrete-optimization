@@ -14,6 +14,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     WithoutAllocationProblem,
     WithoutAllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -101,9 +102,9 @@ class AnyShopSolution(
     def __init__(
         self,
         problem: "CommonShopProblem",
-        schedule: list[list[tuple[int, int]]],
-        machine_index: list[list[int]] = None,
-        recipe_index: list[list[int]] = None,
+        schedule: list[list[tuple[int | AbsentValue.ABSENT, int | AbsentValue.ABSENT]]],
+        machine_index: list[list[int | AbsentValue.ABSENT]] = None,
+        recipe_index: list[list[int | AbsentValue.ABSENT]] = None,
     ):
         # For each job and sub-job, start, end time, machine id, and option choice given as tuple of int.
         super().__init__(problem=problem)
@@ -126,7 +127,7 @@ class AnyShopSolution(
                     machine = self.machine_index[i][k]
                     recipe_job_i.append(
                         self.problem.machine_to_mode_mapping(task=(i, k)).get(
-                            machine, None
+                            machine, AbsentValue.ABSENT
                         )
                     )
                 recipe_index.append(recipe_job_i)
@@ -140,19 +141,19 @@ class AnyShopSolution(
             recipe_index=self.recipe_index,
         )
 
-    def get_end_time(self, task: Task) -> int:
+    def get_end_time(self, task: Task) -> int | AbsentValue:
         j, k = task
         return self.schedule[j][k][1]
 
-    def get_start_time(self, task: Task) -> int:
+    def get_start_time(self, task: Task) -> int | AbsentValue:
         j, k = task
         return self.schedule[j][k][0]
 
-    def get_machine(self, task: Task) -> int:
+    def get_machine(self, task: Task) -> int | AbsentValue:
         j, k = task
         return self.machine_index[j][k]
 
-    def get_mode(self, task: Task) -> int:
+    def get_mode(self, task: Task) -> int | AbsentValue:
         """Get 'mode' of given task, aka chosen machine."""
         j, k = task
         return self.recipe_index[j][k]
@@ -251,7 +252,10 @@ class CommonShopProblem(
     def satisfy(self, variable: AnyShopSolution) -> bool:
         # This check is specific sanity check on the AnyShopSolution
         for task in self.tasks_list:
-            if variable.get_mode(task) is None:
+            if (
+                variable.get_mode(task) is None
+                or variable.get_mode(task) is AbsentValue.ABSENT
+            ):
                 logger.debug(
                     f"Current machine choice is not an allowed option for task {task}"
                 )
@@ -269,6 +273,9 @@ class CommonShopProblem(
             logger.debug(f"Automatic check show constraint violation")
             return False
         return True
+
+    def is_optional(self, task: Task) -> bool:
+        return False
 
     def get_makespan_upper_bound(self) -> int:
         return self.horizon

@@ -10,7 +10,7 @@ from discrete_optimization.generic_tasks_tools.base import (
     TasksProblem,
     TasksSolution,
 )
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
 from discrete_optimization.generic_tasks_tools.utils import optional_override
 from discrete_optimization.generic_tools.cp_tools import SignEnum
 
@@ -52,23 +52,80 @@ class SchedulingSolution(TasksSolution[Task]):
     problem: SchedulingProblem[Task]
 
     @abstractmethod
-    def get_end_time(self, task: Task) -> int: ...
+    def get_end_time(self, task: Task) -> int | AbsentValue:
+        """Get end time of the task
+
+        Hypothesis:
+            The returned time can have AbsentValue.ABSENT only if `self.is_present(task) is False`.
+
+        Args:
+            task:
+
+        Returns:
+
+        """
+        ...
 
     @abstractmethod
-    def get_start_time(self, task: Task) -> int: ...
+    def get_start_time(self, task: Task) -> int | AbsentValue:
+        """Get start time of the task
 
-    def get_start_or_end_time(self, task: Task, start_or_end: StartOrEnd) -> int:
-        """Get the start or end time for a given task."""
+        Hypothesis:
+            The returned time can have AbsentValue.ABSENT only if `self.is_present(task) is False`.
+
+        Args:
+            task:
+
+        Returns:
+
+        """
+        ...
+
+    def is_scheduled(self, task: Task) -> bool:
+        """Tell whether the task been scheduled."""
+        return (
+            self.get_start_time(task) is not AbsentValue.ABSENT
+            and self.get_end_time(task) is not AbsentValue.ABSENT
+        )
+
+    def is_present(self, task: Task) -> bool:
+        return self.is_scheduled(task)
+
+    def get_start_or_end_time(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> int | AbsentValue:
+        """Get the start or end time for a given task.
+
+        The returned time can have AbsentValue.ABSENT only if `self.is_present(task) is False`.
+
+        """
         if start_or_end == StartOrEnd.START:
             return self.get_start_time(task)
         else:
             return self.get_end_time(task)
 
-    def get_duration(self, task: Task) -> int:
-        return self.get_end_time(task) - self.get_start_time(task)
+    def get_duration(self, task: Task) -> int | AbsentValue:
+        if (start := self.get_start_time(task)) is not AbsentValue.ABSENT and (
+            end := self.get_end_time(task)
+        ) is not AbsentValue.ABSENT:
+            return end - start
+        return AbsentValue.ABSENT
 
     def get_max_end_time(self) -> int:
-        return max(self.get_end_time(task) for task in self.problem.get_last_tasks())
+        """Get makespan of the solution.
+
+        If no tasks are done, will return 0.
+
+        Returns:
+
+        """
+        active_last_tasks = [
+            task for task in self.problem.get_last_tasks() if self.is_present(task)
+        ]
+        if len(active_last_tasks) == 0:
+            return 0
+        else:
+            return max(self.get_end_time(task) for task in active_last_tasks)
 
     def constraint_on_task_satisfied(
         self, task: Task, start_or_end: StartOrEnd, sign: SignEnum, time: int
@@ -91,12 +148,18 @@ class SchedulingSolution(TasksSolution[Task]):
         return self.get_end_time(task1) == self.get_start_time(task2)
 
     def get_running_tasks(self, time: int) -> list[Task]:
-        """Extract tasks running at given time."""
+        """Extract tasks running at given time.
+
+        Optional tasks not "present" (according to `is_present()`) are removed from the list.
+
+        """
         return [
             task
             for task in self.problem.tasks_list
-            if self.get_start_time(task=task) <= time
-            and self.get_end_time(task=task) > time
+            if (
+                self.is_present(task)
+                and self.get_start_time(task) <= time < self.get_end_time(task)
+            )
         ]
 
 

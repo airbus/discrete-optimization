@@ -13,6 +13,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
     SchedulingSolution,
@@ -37,7 +38,10 @@ Item = int
 BinPack = int
 
 
-class BinPackSolution(AllocationSolution[Item, BinPack], SchedulingSolution[Item]):
+class BinPackSolution(
+    AllocationSolution[Item, BinPack],
+    SchedulingSolution[Item],
+):
     problem: BinPackProblem
 
     def __init__(self, problem: BinPackProblem, allocation: list[int]):
@@ -49,14 +53,23 @@ class BinPackSolution(AllocationSolution[Item, BinPack], SchedulingSolution[Item
             problem=self.problem, allocation=deepcopy(self.allocation)
         )
 
-    def get_end_time(self, task: Item) -> int:
-        return self.allocation[task] + 1
+    def get_end_time(self, task: Item) -> int | AbsentValue:
+        if self.is_present(task):
+            return self.allocation[task] + 1
+        else:
+            return AbsentValue.ABSENT
 
-    def get_start_time(self, task: Item) -> int:
-        return self.allocation[task]
+    def get_start_time(self, task: Item) -> int | AbsentValue:
+        if self.is_present(task):
+            return self.allocation[task]
+        else:
+            return AbsentValue.ABSENT
 
     def is_allocated(self, task: Item, unary_resource: BinPack) -> bool:
         return self.allocation[task] == unary_resource
+
+    def is_present(self, task: Item) -> bool:
+        return 0 <= self.allocation[task] < self.problem.nb_bins
 
 
 @dataclass(frozen=True)
@@ -81,10 +94,10 @@ class BinInstance:
     compatible_items: set[int] | None = field(default=None)
 
 
-from discrete_optimization.generic_tasks_tools.scheduling import SchedulingProblem
-
-
-class BinPackProblemBinType(AllocationProblem[Item, BinPack], SchedulingProblem[Item]):
+class BinPackProblemBinType(
+    AllocationProblem[Item, BinPack],
+    SchedulingProblem[Item],
+):
     def __init__(
         self,
         list_items: list[ItemBinPack],

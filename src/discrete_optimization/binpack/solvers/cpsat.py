@@ -75,7 +75,7 @@ class CpSatBinPackBinTypeSolver(
         logger.info(
             f"Obj={cpsolvercb.objective_value}, Bound={cpsolvercb.best_objective_bound}"
         )
-        allocation: list[Optional[int]] = [None for i in range(self.problem.nb_items)]
+        allocation: list[int] = [-1 for i in range(self.problem.nb_items)]
         if self.modeling == ModelingBinPack.BINARY:
             for i, j in self.variables["allocation"]:
                 if cpsolvercb.Value(self.variables["allocation"][(i, j)]) == 1:

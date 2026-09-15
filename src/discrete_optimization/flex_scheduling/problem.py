@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import field
 from functools import cache
 from typing import Dict, Hashable, List, Set, Tuple, Type
 
@@ -20,7 +20,7 @@ from discrete_optimization.generic_tasks_tools.entities import (
     TaskEntity,
     TaskModeEntity,
 )
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -283,17 +283,29 @@ class ScheduleSolution(
         self.schedule = schedule
         self.modes = modes
 
-    def get_end_time(self, task: Task) -> int:
+    def get_end_time(self, task: Task) -> int | AbsentValue:
         index = self.problem.task_id_to_index[task]
-        return int(self.schedule[index, 1])
+        time = self.schedule[index, 1]
+        try:
+            return int(time)
+        except (ValueError, TypeError):
+            return AbsentValue.ABSENT
 
-    def get_start_time(self, task: Task) -> int:
+    def get_start_time(self, task: Task) -> int | AbsentValue:
         index = self.problem.task_id_to_index[task]
-        return int(self.schedule[index, 0])
+        time = self.schedule[index, 0]
+        try:
+            return int(time)
+        except (ValueError, TypeError):
+            return AbsentValue.ABSENT
 
-    def get_mode(self, task: Task) -> int:
+    def get_mode(self, task: Task) -> int | AbsentValue:
         index = self.problem.task_id_to_index[task]
-        return int(self.modes[index])
+        mode = self.modes[index]
+        try:
+            return int(mode)
+        except (ValueError, TypeError):
+            return AbsentValue.ABSENT
 
     def copy(self) -> "Solution":
         return ScheduleSolution(
@@ -301,6 +313,9 @@ class ScheduleSolution(
             schedule=np.copy(self.schedule),
             modes=np.copy(self.modes),
         )
+
+    def is_present(self, task: Task) -> bool:
+        return self.is_scheduled(task) and self.has_a_mode(task)
 
 
 class ScheduleSolutionPreemptive(SchedulingSolution[Task], MultimodeSolution[Task]):
@@ -316,9 +331,13 @@ class ScheduleSolutionPreemptive(SchedulingSolution[Task], MultimodeSolution[Tas
         self.schedule = schedule
         self.modes = modes
 
-    def get_mode(self, task: Task) -> int:
+    def get_mode(self, task: Task) -> int | AbsentValue:
         index = self.problem.task_id_to_index[task]
-        return self.modes[index]
+        mode = self.modes[index]
+        try:
+            return int(mode)
+        except (ValueError, TypeError):
+            return AbsentValue.ABSENT
 
     def get_end_time(self, task: Task) -> int:
         index = self.problem.task_id_to_index[task]
@@ -334,6 +353,9 @@ class ScheduleSolutionPreemptive(SchedulingSolution[Task], MultimodeSolution[Tas
             schedule=deepcopy(self.schedule),
             modes=np.copy(self.modes),
         )
+
+    def is_present(self, task: Task) -> bool:
+        return self.has_a_mode(task)
 
 
 class FlexProblem(
@@ -493,6 +515,9 @@ class FlexProblem(
             return GroupEntity(
                 tasks=frozenset(group.tasks_group), group_id=abstraction.group_id
             )
+
+    def is_optional(self, task: Task) -> bool:
+        return False
 
     @property
     def non_skill_cumulative_resources_list(self) -> list[Skill]:

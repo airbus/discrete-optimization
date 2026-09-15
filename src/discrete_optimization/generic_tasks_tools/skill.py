@@ -195,12 +195,12 @@ class SkillSolution(
             self.check_skill_constraint(
                 task=task, skill=skill, exact=exact, slack=slack
             )
-            for task in self.problem.tasks_list
+            for task in self.get_present_tasks()
             for skill in self.problem.skills_list
         )
 
     def check_skill_usage_and_allocation_consistency(self) -> bool:
-        for task in self.problem.tasks_list:
+        for task in self.get_present_tasks():
             for unary_resource in self.problem.unary_resources_list:
                 is_allocated = self.is_allocated(
                     task=task, unary_resource=unary_resource
@@ -233,7 +233,7 @@ class SkillSolution(
     def check_only_one_skill_per_task_and_unary_resource(self):
         # only one skill per task ?
         if self.problem.only_one_skill_per_task:
-            for task in self.problem.tasks_list:
+            for task in self.get_present_tasks():
                 for unary_resource in self.problem.unary_resources_list:
                     if (
                         sum(

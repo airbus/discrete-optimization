@@ -58,16 +58,17 @@ def transform_solution_from_raw_generic_to_rcpsp_ms(
     schedule = {}
     employee_usage = {}
     for task, task_variable in raw_sol.task_variables.items():
-        schedule[task] = {
-            "start_time": task_variable.start,
-            "end_time": task_variable.end,
-        }
-        modes_dict[task] = task_variable.mode
-        employee_usage[task] = {
-            worker: skills
-            for worker, skills in task_variable.allocated.items()
-            if len(skills) > 0
-        }
+        if task_variable.is_present:
+            schedule[task] = {
+                "start_time": task_variable.start,
+                "end_time": task_variable.end,
+            }
+            modes_dict[task] = task_variable.mode
+            employee_usage[task] = {
+                worker: skills
+                for worker, skills in task_variable.allocated.items()
+                if len(skills) > 0
+            }
     return MultiskillRcpspSolution(
         problem=problem,
         schedule=schedule,

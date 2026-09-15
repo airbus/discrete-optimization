@@ -186,16 +186,19 @@ class NonRenewableResourceSolution(
         Returns:
 
         """
-        if not self.problem.is_non_renewable_resource_task_mode_consumption_dependent(
-            resource=resource, task=task, mode=self.get_mode(task)
-        ):
-            return self.problem.get_non_renewable_resource_consumption(
+        if self.is_present(task):
+            if not self.problem.is_non_renewable_resource_task_mode_consumption_dependent(
                 resource=resource, task=task, mode=self.get_mode(task)
-            )
+            ):
+                return self.problem.get_non_renewable_resource_consumption(
+                    resource=resource, task=task, mode=self.get_mode(task)
+                )
+            else:
+                return self.get_non_renewable_resource_consumption_from_mapping(
+                    resource=resource, task=task
+                )
         else:
-            return self.get_non_renewable_resource_consumption_from_mapping(
-                resource=resource, task=task
-            )
+            return 0
 
     def check_non_renewable_resource_capacity_constraint(
         self, resource: NonRenewableResource
@@ -209,7 +212,7 @@ class NonRenewableResourceSolution(
         self, resources: Iterable[NonRenewableResource]
     ):
         resources_consumption = {resource: 0 for resource in resources}
-        for task in self.problem.tasks_list:
+        for task in self.get_present_tasks():
             for resource in resources:
                 resources_consumption[resource] += (
                     self.get_non_renewable_resource_consumption(
@@ -245,7 +248,7 @@ class NonRenewableResourceSolution(
                 self.get_non_renewable_resource_consumption(
                     resource=resource, task=task
                 )
-                for task in self.problem.tasks_list
+                for task in self.get_present_tasks()
             )
             for resource in self.problem.non_renewable_resources_list
         }

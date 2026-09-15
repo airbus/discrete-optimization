@@ -6,6 +6,9 @@ from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
     SchedulingCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.utils import (
+    enforce_only_if_tasks_present,
+)
 from discrete_optimization.generic_tasks_tools.timelag import TimelagProblem
 
 
@@ -82,7 +85,7 @@ class TimelagCpSatSolver(SchedulingCpSatSolver[Task]):
             set(max_timelags).union(max_timelags_0_offset)
         )
         for task1, task2, offset in min_only_timelags:
-            self.cp_model.add(
+            constraint = self.cp_model.add(
                 self.get_task_start_or_end_variable(
                     task=task1, start_or_end=task1_start_or_end
                 )
@@ -91,10 +94,14 @@ class TimelagCpSatSolver(SchedulingCpSatSolver[Task]):
                     task=task2, start_or_end=task2_start_or_end
                 )
             )
+            # handle optional tasks
+            enforce_only_if_tasks_present(
+                constraint=constraint, tasks=(task1, task2), solver=self
+            )
         # max only constraints
         max_only_timelags = set(max_timelags).difference(min_timelags)
         for task1, task2, offset in max_only_timelags:
-            self.cp_model.add(
+            constraint = self.cp_model.add(
                 self.get_task_start_or_end_variable(
                     task=task1, start_or_end=task1_start_or_end
                 )
@@ -102,6 +109,10 @@ class TimelagCpSatSolver(SchedulingCpSatSolver[Task]):
                 >= self.get_task_start_or_end_variable(
                     task=task2, start_or_end=task2_start_or_end
                 )
+            )
+            # handle optional tasks
+            enforce_only_if_tasks_present(
+                constraint=constraint, tasks=(task1, task2), solver=self
             )
 
     def create_timelag_constraints(self) -> None:
