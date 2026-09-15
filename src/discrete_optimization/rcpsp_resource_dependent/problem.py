@@ -100,18 +100,18 @@ class RcpspResourceDependentProblem(
     Fixed consumption (int):
 
         >>> mode_details = {
-        ...     task_A: {0: {"duration": 5, "electricity": 10}}
+        ...     "task_A": {0: {"duration": 5, "electricity": 10}}
         ... }
 
     Dependent consumption (dict mapping):
 
         >>> mode_details = {
-        ...     task_A: {
+        ...     "task_A": {
         ...         0: {
         ...             "duration": 5,
         ...             "electricity": {
-        ...                 frozenset([(task_B, 0)]): 10,  # B in mode 0: use 10
-        ...                 frozenset([(task_B, 1)]): 8,   # B in mode 1: use 8
+        ...                 frozenset([("task_B", 0)]): 10,  # B in mode 0: use 10
+        ...                 frozenset([("task_B", 1)]): 8,   # B in mode 1: use 8
         ...             }
         ...         }
         ...     }
