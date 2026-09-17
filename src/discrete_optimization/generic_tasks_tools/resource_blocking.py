@@ -421,8 +421,12 @@ class ResourceBlockingSolution(
             if len(entity.get_tasks()) == 0:
                 continue
             tasks = entity.get_tasks()
-            start_time = min(solution.get_start_time(t) for t in tasks)
-            end_time = max(solution.get_end_time(t) for t in tasks)
+            start_time = min(
+                solution.get_start_time(t) for t in tasks if solution.is_present(t)
+            )
+            end_time = max(
+                solution.get_end_time(t) for t in tasks if solution.is_present(t)
+            )
 
             if end_time <= start_time:
                 continue
@@ -578,8 +582,12 @@ class ResourceBlockingSolution(
                 continue
 
             # Compute span
-            start_time = min(solution.get_start_time(t) for t in tasks)
-            end_time = max(solution.get_end_time(t) for t in tasks)
+            start_time = min(
+                solution.get_start_time(t) for t in tasks if solution.is_present(t)
+            )
+            end_time = max(
+                solution.get_end_time(t) for t in tasks if solution.is_present(t)
+            )
 
             if end_time <= start_time:
                 continue
