@@ -288,7 +288,11 @@ class ResourceBlockingCpSatSolver(
                         var = self.cp_model.new_bool_var(
                             name=f"is_active_{entity.entity_id}"
                         )
-                        self.cp_model.add_max_equality(var, optional_tasks_in_group)
+                        is_present_vars = [
+                            self.get_task_is_present_variable(task=task)
+                            for task in entity.tasks
+                        ]
+                        self.cp_model.add_max_equality(var, is_present_vars)
                         self._entity_active[entity] = var
                     else:
                         self._entity_active[entity] = 1
@@ -395,9 +399,10 @@ class ResourceBlockingCpSatSolver(
                 self.cp_model.add(gap_is_present == 1).only_enforce_if(
                     *is_active_entity_list
                 )
-                self.cp_model.add(gap_is_present == 0).only_enforce_if(
-                    sum(~is_active_var for is_active_var in is_active_entity_list) >= 1
-                )
+                for is_active_var in is_active_entity_list:
+                    self.cp_model.add(gap_is_present == 0).only_enforce_if(
+                        ~is_active_var
+                    )
             else:
                 # both entities always active
                 self.cp_model.add(gap_is_present == 1)

@@ -3,6 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 """Tests for RCPSP with Resource Blocking Constraints."""
 
+import logging
+
 import pytest
 
 from discrete_optimization.generic_tasks_tools.entities import GroupEntity, TaskEntity
@@ -21,6 +23,8 @@ from discrete_optimization.rcpsp_blocking_resource.blocking_generator import (
 from discrete_optimization.rcpsp_blocking_resource.problem_with_blocking import (
     RcpspWithResourceBlocking,
 )
+
+logging.basicConfig(level=logging.INFO)
 
 
 def test_rcpsp_with_blocking_creation():
