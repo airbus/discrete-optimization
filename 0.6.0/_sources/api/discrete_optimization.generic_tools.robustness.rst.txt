@@ -1,0 +1,21 @@
+discrete\_optimization.generic\_tools.robustness package
+========================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.robustness.robustness\_tool module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.robustness.robustness_tool
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.robustness
+   :members:
+   :undoc-members:
+   :show-inheritance:

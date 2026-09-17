@@ -1,0 +1,93 @@
+discrete\_optimization.multibatching.solvers package
+====================================================
+
+Submodules
+----------
+
+discrete\_optimization.multibatching.solvers.asp module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.solvers.asp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.multibatching.solvers.benders module
+-----------------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.solvers.benders
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.multibatching.solvers.cp\_mzn module
+-----------------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.solvers.cp_mzn
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.multibatching.solvers.cpsat module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.multibatching.solvers.dp module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.multibatching.solvers.lp module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.solvers.lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.multibatching.solvers.netx module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.solvers.netx
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.multibatching.solvers.packing\_subproblem module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.solvers.packing_subproblem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.multibatching.solvers.solver\_utils module
+-----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.solvers.solver_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.multibatching.solvers.two\_steps module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.solvers.two_steps
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.multibatching.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

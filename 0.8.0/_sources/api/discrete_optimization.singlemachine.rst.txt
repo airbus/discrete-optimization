@@ -1,0 +1,37 @@
+discrete\_optimization.singlemachine package
+============================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.singlemachine.solvers
+
+Submodules
+----------
+
+discrete\_optimization.singlemachine.parser module
+--------------------------------------------------
+
+.. automodule:: discrete_optimization.singlemachine.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.singlemachine.problem module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.singlemachine.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.singlemachine
+   :members:
+   :show-inheritance:
+   :undoc-members:

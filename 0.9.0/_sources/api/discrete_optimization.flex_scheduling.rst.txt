@@ -1,0 +1,53 @@
+discrete\_optimization.flex\_scheduling package
+===============================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.flex_scheduling.solvers
+
+Submodules
+----------
+
+discrete\_optimization.flex\_scheduling.fsp\_utils module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.flex_scheduling.fsp_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.flex\_scheduling.generator module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.flex_scheduling.generator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.flex\_scheduling.problem module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.flex_scheduling.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.flex\_scheduling.simulator module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.flex_scheduling.simulator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.flex_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,53 @@
+discrete\_optimization.vrp.solver package
+=========================================
+
+Submodules
+----------
+
+discrete\_optimization.vrp.solver.greedy\_vrp module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solver.greedy_vrp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.vrp.solver.lp\_vrp\_iterative module
+-----------------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solver.lp_vrp_iterative
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.vrp.solver.lp\_vrp\_iterative\_pymip module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solver.lp_vrp_iterative_pymip
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.vrp.solver.solver\_ortools module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solver.solver_ortools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.vrp.solver.vrp\_solver module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.solver.vrp_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.vrp.solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
