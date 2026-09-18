@@ -51,7 +51,6 @@ from discrete_optimization.generic_tasks_tools.timewindow import (
     TimewindowProblem,
     TimewindowSolution,
 )
-from discrete_optimization.generic_tasks_tools.utils import optional_override
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,

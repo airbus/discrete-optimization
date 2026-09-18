@@ -100,17 +100,23 @@ def test_objectives(model, avoid_interval_optional):
     objective = solver.get_subtasks_makespan_variable(subtasks)
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    assert solver.solver.ObjectiveValue() == max(sol.get_end_time(task) for task in subtasks)
+    assert solver.solver.ObjectiveValue() == max(
+        sol.get_end_time(task) for task in subtasks
+    )
     # sum end time subtasks
     objective = solver.get_subtasks_sum_end_time_variable(subtasks)
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    assert solver.solver.ObjectiveValue() == sum(sol.get_end_time(task) for task in subtasks)
+    assert solver.solver.ObjectiveValue() == sum(
+        sol.get_end_time(task) for task in subtasks
+    )
     # sum start time subtasks
     objective = solver.get_subtasks_sum_start_time_variable(subtasks)
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    assert solver.solver.ObjectiveValue() == sum(sol.get_start_time(task) for task in subtasks)
+    assert solver.solver.ObjectiveValue() == sum(
+        sol.get_start_time(task) for task in subtasks
+    )
     # max end time
     objective = solver.get_global_makespan_variable()
     solver.minimize_variable(objective)
