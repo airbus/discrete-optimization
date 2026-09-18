@@ -37,7 +37,7 @@ from discrete_optimization.generic_tasks_tools.objectives.schedule_changes impor
     ScheduleChangesComputer,
 )
 from discrete_optimization.generic_tasks_tools.objectives.scheduled_tasks import (
-    ScheduledTasksObjective,
+    ScheduledTasksComputer,
 )
 from discrete_optimization.generic_tasks_tools.objectives.soft_time_penalty import (
     SoftTimePenaltyComputer,
@@ -62,7 +62,7 @@ def get_mapping():
         SoftTimePenaltyComputer,
         UnaryResourcesUsedComputer,
         CumulCostComputer,
-        ScheduledTasksObjective,
+        ScheduledTasksComputer,
     ]
     mapping = {}
     for objective_computer in list_available:
