@@ -93,37 +93,33 @@ class Objective(Enum):
     """Global makespan of the schedule, to minimize."""
     NB_TASKS_ALLOCATED = "nb_tasks_allocated"
     """Number of tasks with at least one resource allocated, to maximize."""
+    NB_TASKS_SCHEDULED = "nb_tasks_scheduled"
+    """Number of tasks actually scheduled, to maximize (usually)."""
     NB_UNARY_RESOURCES_USED = "nb_unary_resources_used"
     """Number of allocated unary resources, to minimize."""
-    NB_RESOURCES_USED = "nb_resources_used"
-    """Weighted sum of resources used, to minimize.
-
-    Include non-renewable, cumulative, and unary resources.
-    The weigths are to be defined in `solver.objective_resource_weights`.
-
-    """
-    RESOURCES_LEVELS = "resources_levels"
+    CALENDAR_RESOURCES_LEVELS = "calendar_resources_levels"
     """Weighted sum of resources levels (i.e. needed capacities), to minimize.
-
-    Include non-renewable, cumulative, and unary resources.
-    The weigths are to be defined in `solver.objective_resource_weights`.
-
     """
-    COST = "cost"
-    """Cost of the solution taking into account mode choice and resources consumptions."""
-    DISPERSION_WORKLOAD = "dispersion_workload"
+    # DISPERSION_WORKLOAD = "dispersion_workload"
+    NON_RENEWABLE_RESOURCES_LEVELS = "non_renewable_resources_levels"
+    """Weighted sum of non-renewable resources levels (i.e. needed capacities), to minimize.
+    """
+    ALLOCATION_CHANGES = "allocation_changes"
+    ALLOCATION_COST = "allocation_cost"
+    MODE_COST = "mode_cost"
+    EARLINESS_TARDINESS = "earliness_tardiness"
+    SCHEDULE_CHANGES = "scheduling_changes"
+
+    CUMUL_COST = "cumulative_cost"
+    TIME_PENALTY = "time_penalty"
 
     CUSTOM = "custom_objective"
 
 
 OBJECTIVE_DEFAULT_WEIGHTS: dict[Objective, int] = {
-    Objective.MAKESPAN: -1,
-    Objective.NB_TASKS_ALLOCATED: 1,
-    Objective.NB_UNARY_RESOURCES_USED: -1,
-    Objective.NB_RESOURCES_USED: -1,
-    Objective.RESOURCES_LEVELS: -1,
-    Objective.DISPERSION_WORKLOAD: -1,
-    Objective.COST: -1,
+    Objective.MAKESPAN: 1,
+    Objective.NB_TASKS_ALLOCATED: -1,
+    Objective.NB_UNARY_RESOURCES_USED: 1,
     Objective.CUSTOM: 1,
 }
 """Default weight applied to a given objective so that it will be *maximized*."""

@@ -31,6 +31,21 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     WithoutNonRenewableResourceProblem,
     WithoutNonRenewableResourceSolution,
 )
+from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
+    AllocatedTasksObjective,
+)
+from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
+    CumulCostComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used import (
+    UnaryResourcesUsedComputer,
+)
 from discrete_optimization.generic_tasks_tools.skill import (
     NoSkill,
     WithoutSkillProblem,
@@ -90,7 +105,7 @@ class AllocSchedulingSolution(
             allocation=np.copy(self.allocation),
         )
 
-    def get_end_time(self, task: Task) -> int | AbsentValue.ABSENT:
+    def get_end_time(self, task: Task) -> int | AbsentValue:
         i_task = self.problem.tasks_to_index[task]
         time = int(self.schedule[i_task, 1])
         try:
@@ -98,7 +113,7 @@ class AllocSchedulingSolution(
         except (TypeError, ValueError):
             return AbsentValue.ABSENT
 
-    def get_start_time(self, task: Task) -> int | AbsentValue.ABSENT:
+    def get_start_time(self, task: Task) -> int | AbsentValue:
         i_task = self.problem.tasks_to_index[task]
         time = self.schedule[i_task, 0]
         try:
@@ -319,6 +334,22 @@ class AllocSchedulingProblem(
 
     def get_solution_type(self) -> type[Solution]:
         return AllocSchedulingSolution
+
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        return [
+            AllocatedTasksObjective(problem=self, weight_objective=-100000),
+            CumulCostComputer(
+                problem=self,
+                weight_objective=1,
+                cumul_dimensions=["duration"],
+                value_tasks={
+                    "duration": {t: self.get_task_duration(t) for t in self.tasks_list}
+                },
+                value_tasks_per_mode={},
+            ),
+            UnaryResourcesUsedComputer(problem=self, weight_objective=10000),
+            MakespanObjectiveComputer(problem=self, weight_objective=1),
+        ]
 
     def get_objective_register(self) -> ObjectiveRegister:
         dict_objective = {
@@ -800,9 +831,9 @@ def satisfy_detailed_precedence(
 
 def satisfy_detailed_same_allocation(
     problem: AllocSchedulingProblem, solution: AllocSchedulingSolution
-) -> list[tuple[str, set[Hashable]], set[int]]:
+) -> list[tuple[str, set[Hashable], set[int]]]:
     list_violated_same_allocation_constraint: list[
-        tuple[str, set[Hashable]], set[int]
+        tuple[str, set[Hashable], set[int]]
     ] = []
     for set_same_alloc in problem.same_allocation:
         one_ac = next(iter(set_same_alloc))

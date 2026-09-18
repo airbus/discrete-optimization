@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
@@ -23,7 +24,6 @@ from discrete_optimization.rcpsp.solution import RcpspSolution
 from discrete_optimization.rcpsp.solvers.cpsat import (
     CpSatCumulativeResourceRcpspSolver,
     CpSatRcpspSolver,
-    CpSatResourceRcpspSolver,
 )
 from discrete_optimization.rcpsp.solvers.pile import (
     PileCalendarRcpspSolver,
@@ -59,7 +59,7 @@ def test_ortools(model):
         rcpsp_modes=solution.rcpsp_modes,
     )
     fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
-    assert fit == -fit_2["makespan"]
+    assert fit == fit_2[Objective.MAKESPAN]
     assert rcpsp_problem.satisfy(solution)
     assert solution.check_all_calendar_resource_capacity_constraints()
     rcpsp_problem.plot_ressource_view(solution)
@@ -104,12 +104,16 @@ def test_objectives(model, avoid_interval_optional_for_cumulative_resources):
     objective = solver.get_subtasks_makespan_variable(subtasks)
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    solver.solver.ObjectiveValue() == max(sol.get_end_time(task) for task in subtasks)
+    assert solver.solver.ObjectiveValue() == max(
+        sol.get_end_time(task) for task in subtasks
+    )
     # sum end time subtasks
     objective = solver.get_subtasks_sum_end_time_variable(subtasks)
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
-    solver.solver.ObjectiveValue() == sum(sol.get_end_time(task) for task in subtasks)
+    assert solver.solver.ObjectiveValue() == sum(
+        sol.get_end_time(task) for task in subtasks
+    )
     # sum start time subtasks
     objective = solver.get_subtasks_sum_start_time_variable(subtasks)
     solver.minimize_variable(objective)
@@ -274,9 +278,8 @@ def test_ortools_with_calendar_resource(
         rcpsp_permutation=solution.rcpsp_permutation,
         rcpsp_modes=solution.rcpsp_modes,
     )
-    eval_dict = rcpsp_problem.evaluate(solution_rebuilt)
-    print(eval_dict)
-    assert fit == -eval_dict["makespan"]
+    fit_2 = rcpsp_problem.evaluate(solution_rebuilt)
+    assert fit == fit_2[Objective.MAKESPAN]
     assert rcpsp_problem.satisfy(solution)
     assert solution.check_all_calendar_resource_capacity_constraints()
 
@@ -312,21 +315,6 @@ def test_ortools_cumulativeresource_optim(model):
     file = [f for f in files_available if model in f][0]
     rcpsp_problem = parse_file(file)
     solver = CpSatCumulativeResourceRcpspSolver(problem=rcpsp_problem)
-    result_storage = solver.solve(time_limit=50)
-    solution, fit = result_storage.get_best_solution_fit()
-    assert rcpsp_problem.satisfy(solution)
-    assert solution.check_all_calendar_resource_capacity_constraints()
-
-
-@pytest.mark.parametrize(
-    "model",
-    ["j301_1.sm", "j1010_1.mm"],
-)
-def test_ortools_resource_optim(model):
-    files_available = get_data_available()
-    file = [f for f in files_available if model in f][0]
-    rcpsp_problem = parse_file(file)
-    solver = CpSatResourceRcpspSolver(problem=rcpsp_problem)
     result_storage = solver.solve(time_limit=50)
     solution, fit = result_storage.get_best_solution_fit()
     assert rcpsp_problem.satisfy(solution)

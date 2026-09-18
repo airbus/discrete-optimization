@@ -51,8 +51,8 @@ def test_default_ga_setting():
         knapsack_problem,
     )
     assert len(ga_solver._objectives) == 2
-    assert ga_solver._objective_weights[1] < 0
-    assert ga_solver._objectives[1] == "weight_violation"
+    index_weight_violation = ga_solver._objectives.index("weight_violation")
+    assert ga_solver._objective_weights[index_weight_violation] < 0
     assert ga_solver._objective_handling == ObjectiveHandling.AGGREGATE
 
 
@@ -63,8 +63,8 @@ def test_default_nsga_setting():
         knapsack_problem,
     )
     assert len(ga_solver._objectives) == 2
-    assert ga_solver._objective_weights[1] < 0
-    assert ga_solver._objectives[1] == "weight_violation"
+    index_weight_violation = ga_solver._objectives.index("weight_violation")
+    assert ga_solver._objective_weights[index_weight_violation] < 0
     assert ga_solver._objective_handling == ObjectiveHandling.MULTI_OBJ
 
 

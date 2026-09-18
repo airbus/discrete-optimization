@@ -5,33 +5,38 @@ from __future__ import annotations
 
 from enum import Enum
 
-from ortools.sat.python.cp_model import Domain
-
-from discrete_optimization.generic_tasks_tools.generic_scheduling import (
-    GenericSchedulingProblem,
-)
-
-
-class ModelisationDispersion(Enum):
-    EXACT = 0
-    MAX_DIFF = 1
-    PROXY_MAX_MIN = 2
-    PROXY_MIN_MAX = 3
-    PROXY_SUM = 4
-    PROXY_SLACK = 5
-
+from ortools.sat.python.cp_model import Domain, LinearExpr
 
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     UnaryResource,
 )
+from discrete_optimization.generic_tasks_tools.generic_scheduling import (
+    GenericSchedulingProblem,
+)
 from discrete_optimization.generic_tasks_tools.multimode import MultimodeProblem
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    NonRenewableResource,
+)
+from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
+    CumulCostComputer,
+)
+from discrete_optimization.generic_tasks_tools.skill import (
+    NonSkillCumulativeResource,
+    Skill,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
     AllocationCpSatSolver,
     Task,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
+    GenericSchedulingAutoCpSatSolver,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode import (
     MultimodeCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.objective_modeler import (
+    ObjectiveModelerCpSat,
 )
 
 
@@ -45,6 +50,15 @@ class MultimodeAllocationSolver(
     AllocationCpSatSolver[Task, UnaryResource], MultimodeCpSatSolver[Task]
 ):
     pass
+
+
+class ModelisationDispersion(Enum):
+    EXACT = 0
+    MAX_DIFF = 1
+    PROXY_MAX_MIN = 2
+    PROXY_MIN_MAX = 3
+    PROXY_SUM = 4
+    PROXY_SLACK = 5
 
 
 class CumulativeObjective:
@@ -326,3 +340,47 @@ class CumulativeObjective:
             return slack
         else:
             raise NotImplementedError(f"Method {modelisation_dispersion} unknown")
+
+
+class CumulCostModelerCpSat(ObjectiveModelerCpSat):
+    objective_computer: CumulCostComputer
+
+    def __init__(
+        self,
+        solver: GenericSchedulingAutoCpSatSolver[
+            Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        ],
+        objective_computer: CumulCostComputer,
+        modelisation_dispersion: ModelisationDispersion = ModelisationDispersion.EXACT,
+    ) -> None:
+        super().__init__(solver, objective_computer)
+        self.modelisation_dispersion = modelisation_dispersion
+        self.cumul_objective = []
+        self.objs = []
+
+    def get_objective_expr(self) -> LinearExpr:
+        for dim in self.objective_computer.cumul_dimensions:
+            cumul_obj = CumulativeObjective(
+                problem=self.solver.problem, solver=self.solver
+            )
+            obj = cumul_obj.create_dispersion_objective(
+                val_per_task_per_mode={
+                    t: {
+                        m: self.objective_computer.get_value_dimension_task_mode(
+                            dimension=dim, task=t, mode=m
+                        )
+                        for m in self.solver.problem.get_task_modes(t)
+                    }
+                    for t in self.solver.problem.tasks_list
+                    if t in self.objective_computer.value_tasks[dim]
+                    or any(
+                        x[0] == t
+                        for x in self.objective_computer.value_tasks_per_mode[dim]
+                    )
+                },
+                name_value=dim,
+                modelisation_dispersion=self.modelisation_dispersion,
+            )
+            self.cumul_objective.append(cumul_obj)
+            self.objs.append(obj)
+        return sum(self.objs)

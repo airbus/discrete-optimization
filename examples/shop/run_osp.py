@@ -78,3 +78,4 @@ def run_cpmpy_osp():
 
 if __name__ == "__main__":
     run_osp()
+    run_cpmpy_osp()

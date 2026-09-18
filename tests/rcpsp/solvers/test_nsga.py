@@ -1,6 +1,7 @@
 #  Copyright (c) 2022-2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -21,7 +22,7 @@ def test_single_mode_nsga_2obj():
     rcpsp_problem = parse_file(file_path)
 
     mutation = DeapMutation.MUT_SHUFFLE_INDEXES
-    objectives = ["makespan", "mean_resource_reserve"]
+    objectives = [Objective.MAKESPAN, "mean_resource_reserve"]
     objective_weights = [-1, +1]
     params_objective_function = ParamsObjectiveFunction(
         objective_handling=ObjectiveHandling.MULTI_OBJ,

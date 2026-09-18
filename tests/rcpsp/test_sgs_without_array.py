@@ -4,6 +4,7 @@
 
 from sortedcontainers import SortedDict
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.sgs_without_array import SgsWithoutArray
 from discrete_optimization.rcpsp.solution import RcpspSolution
@@ -20,7 +21,7 @@ def test_sgs_wo_array():
 
     solution.generate_schedule_from_permutation_serial_sgs(do_fast=False)
     assert rcpsp_problem.evaluate(solution) == {
-        "makespan": 49,
+        Objective.MAKESPAN: 49,
         "mean_resource_reserve": 0,
         "constraint_penalty": 0.0,
     }
@@ -80,7 +81,7 @@ def test_sgs_wo_array():
         rcpsp_schedule_feasible=rcpsp_schedule_feasible,
     )
     assert rcpsp_problem.evaluate(sol) == {
-        "makespan": 49,
+        Objective.MAKESPAN: 49,
         "mean_resource_reserve": 0,
         "constraint_penalty": 0.0,
     }

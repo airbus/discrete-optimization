@@ -24,9 +24,14 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
 )
-from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
+)
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.skill import (
     NonSkillCumulativeResource,
@@ -36,12 +41,7 @@ from discrete_optimization.generic_tasks_tools.skill import (
     WithoutSkillSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
-    ObjectiveDoc,
-    ObjectiveHandling,
-    ObjectiveRegister,
     Solution,
-    TypeObjective,
 )
 
 
@@ -217,21 +217,11 @@ class RcpspResourceDependentProblem(
     def tasks_list(self) -> list[Task]:
         return self._tasks_list
 
-    def evaluate(self, variable: Solution) -> dict[str, float]:
-        makespan = self.compute_subobjective(variable, objective=Objective.MAKESPAN)
-        return {"makespan": makespan}
-
     def get_solution_type(self) -> type[Solution]:
         return RcpspResourceDependentSolution
 
-    def get_objective_register(self) -> ObjectiveRegister:
-        return ObjectiveRegister(
-            objective_sense=ModeOptim.MINIMIZATION,
-            objective_handling=ObjectiveHandling.SINGLE,
-            dict_objective_to_doc={
-                "makespan": ObjectiveDoc(TypeObjective.OBJECTIVE, default_weight=1)
-            },
-        )
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        return self.list_objective_computer
 
     def __init__(
         self,
@@ -243,6 +233,7 @@ class RcpspResourceDependentProblem(
         tasks_list: Optional[list[Hashable]] = None,
         source_task: Optional[Hashable] = None,
         sink_task: Optional[Hashable] = None,
+        list_objective_computer: list[ObjectiveComputer] = None,
     ):
         self.resources = resources
         self.non_renewable_resources = non_renewable_resources
@@ -254,3 +245,9 @@ class RcpspResourceDependentProblem(
             self._tasks_list = list(self.mode_details.keys())
         self.source_task = source_task
         self.sink_task = sink_task
+        if list_objective_computer is None:
+            self.list_objective_computer = [
+                MakespanObjectiveComputer(self, weight_objective=1)
+            ]
+        else:
+            self.list_objective_computer = list_objective_computer

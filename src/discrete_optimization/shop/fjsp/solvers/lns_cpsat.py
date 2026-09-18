@@ -130,7 +130,7 @@ class NeighFjspConstraintHandler(OrtoolsCpSatConstraintHandler):
         """
         sol, _ = result_storage[-1]
         sol: FJobShopSolution
-        makespan = self.problem.evaluate(sol)["makespan"]
+        makespan = sol.get_max_end_time()
         keys_part, keys = self.neighbor_builder.find_subtasks(current_solution=sol)
         constraints = []
         for k in keys:

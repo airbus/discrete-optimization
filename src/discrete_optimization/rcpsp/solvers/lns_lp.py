@@ -297,10 +297,7 @@ class _BaseStartTimeIntervalMultimodeRcpspConstraintHandler(ConstraintHandler):
             result_storage_last_iteration=result_storage_last_iteration,
         )
         st = solver.start_solution
-        if (
-            self.problem.evaluate(st)["makespan"]
-            < self.problem.evaluate(current_solution)["makespan"]
-        ):
+        if st.get_max_end_time() < current_solution.get_max_end_time():
             current_solution = st
         solver.set_warm_start(current_solution)
 
