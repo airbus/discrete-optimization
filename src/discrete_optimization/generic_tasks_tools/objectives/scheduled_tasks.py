@@ -29,8 +29,9 @@ class ScheduledTasksComputer(ObjectiveComputer[Task], Generic[Task]):
         else:
             self.weight_per_task = weight_per_task
 
-    def get_objective_name(self) -> Objective | str:
-        return Objective.NB_TASKS_ALLOCATED
+    @staticmethod
+    def get_objective_name() -> Objective | str:
+        return Objective.NB_TASKS_SCHEDULED
 
     def compute_objective(self, solution: SchedulingSolution[Task]) -> float:
         return sum(
