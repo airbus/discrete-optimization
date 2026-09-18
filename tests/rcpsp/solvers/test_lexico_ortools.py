@@ -13,7 +13,6 @@ from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.cpsat import (
     CpSatCumulativeResourceRcpspSolver,
-    CpSatResourceRcpspSolver,
 )
 
 
@@ -63,34 +62,5 @@ def test_ortools_cumulativeresource_optim(objectives):
     clb = RetrieveSubRes()
     result_storage = solver.solve(time_limit=10, objectives=objectives, callbacks=[clb])
 
-    print([sol._internal_objectives for sol, fit in result_storage.list_solution_fits])
-    check_lexico_order_on_result_storage(callback_subres=clb, solver=solver)
-
-
-@pytest.mark.parametrize(
-    "objectives",
-    [
-        None,
-        ["makespan", "used_resource"],
-        ["used_resource", "makespan"],
-    ],
-)
-def test_ortools_resource_optim(objectives):
-    files_available = get_data_available()
-    file = [f for f in files_available if "j301_1.sm" in f][0]
-    rcpsp_problem = parse_file(file)
-    subsolver = CpSatResourceRcpspSolver(problem=rcpsp_problem)
-
-    solver = LexicoSolver(
-        problem=rcpsp_problem,
-        subsolver=subsolver,
-    )
-    solver.init_model()
-    clb = RetrieveSubRes()
-    result_storage = solver.solve(
-        callbacks=[clb],
-        time_limit=10,
-        objectives=objectives,
-    )
     print([sol._internal_objectives for sol, fit in result_storage.list_solution_fits])
     check_lexico_order_on_result_storage(callback_subres=clb, solver=solver)

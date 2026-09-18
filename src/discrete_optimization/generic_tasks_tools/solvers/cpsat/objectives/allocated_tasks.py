@@ -11,5 +11,5 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.objectiv
 
 class AllocatedTasksObjectiveCpSatModeler(ObjectiveModelerCpSat):
     def get_objective_expr(self) -> LinearExpr:
-        self.solver.create_done_variables()
-        return sum(self.solver.done_variables.values())
+        self.solver.create_task_allocated_variables()
+        return self.solver.get_nb_tasks_allocated_variable()

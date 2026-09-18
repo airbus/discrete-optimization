@@ -337,7 +337,7 @@ class AllocSchedulingProblem(
 
     def get_list_objective_computer(self) -> list[ObjectiveComputer]:
         return [
-            AllocatedTasksObjective(problem=self, weight_objective=100000),
+            AllocatedTasksObjective(problem=self, weight_objective=-100000),
             CumulCostComputer(
                 problem=self,
                 weight_objective=1,

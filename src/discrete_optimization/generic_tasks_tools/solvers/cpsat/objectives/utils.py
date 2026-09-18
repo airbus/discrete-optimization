@@ -34,6 +34,9 @@ def create_computer_to_modeler_mapping():
     from discrete_optimization.generic_tasks_tools.objectives.schedule_changes import (
         ScheduleChangesComputer,
     )
+    from discrete_optimization.generic_tasks_tools.objectives.scheduled_tasks import (
+        ScheduledTasksComputer,
+    )
     from discrete_optimization.generic_tasks_tools.objectives.soft_time_penalty import (
         SoftTimePenaltyComputer,
     )
@@ -69,6 +72,9 @@ def create_computer_to_modeler_mapping():
     from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.schedule_changes import (
         ScheduleChangesModelerCpSat,
     )
+    from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.scheduled_tasks import (
+        ScheduledTasksCpSatModeler,
+    )
     from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.soft_time_penalty import (
         SoftTimePenaltyModelerCpSat,
     )
@@ -90,4 +96,5 @@ def create_computer_to_modeler_mapping():
         SoftTimePenaltyComputer: SoftTimePenaltyModelerCpSat,
         UnaryResourcesUsedComputer: UnaryResourcesUsedModelerCpSat,
         CumulCostComputer: CumulCostModelerCpSat,
+        ScheduledTasksComputer: ScheduledTasksCpSatModeler,
     }

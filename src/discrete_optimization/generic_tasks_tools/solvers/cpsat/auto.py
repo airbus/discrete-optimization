@@ -51,6 +51,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.utils import (
     create_variable_function_of_mode_on_solver,
 )
 from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
     Solution,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -996,18 +997,23 @@ class GenericSchedulingAutoCpSatSolver(
             ) not in self.dict_objective_expr:
                 self.dict_objective_expr[key] = 0
             self.dict_objective_expr[key] += obj_modeler.get_objective_expr()
-        self.cp_model.minimize(
-            sum(
-                [
-                    weight * self.dict_objective_expr[obj]
-                    for obj, weight in zip(
-                        self.params_objective_function.objectives,
-                        self.params_objective_function.weights,
-                    )
-                    if obj in self.dict_objective_expr
-                ]
-            )
+        obj = sum(
+            [
+                weight * self.dict_objective_expr[obj]
+                for obj, weight in zip(
+                    self.params_objective_function.objectives,
+                    self.params_objective_function.weights,
+                )
+                if obj in self.dict_objective_expr
+            ]
         )
+        match self.params_objective_function.sense_function:
+            case ModeOptim.MINIMIZATION:
+                self.cp_model.minimize(obj)
+            case ModeOptim.MAXIMIZATION:
+                self.cp_model.maximize(obj)
+            case _:
+                raise NotImplementedError
 
     def _create_duration_variable_on_the_fly(
         self, task: Task, task_interval_will_exist: Optional[bool] = None

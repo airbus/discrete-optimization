@@ -5,10 +5,6 @@
 import logging
 
 import numpy as np
-from discrete_optimization.rcpsp.solvers.cpsat_auto import (
-    CpSatAutoCumulativeResourceRcpspSolver,
-    CpSatAutoRcpspSolver,
-)
 from matplotlib import pyplot as plt
 
 from discrete_optimization.datasets import get_data_home
@@ -23,7 +19,10 @@ from discrete_optimization.rcpsp.solution import RcpspSolution
 from discrete_optimization.rcpsp.solvers.cpsat import (
     CpSatCumulativeResourceRcpspSolver,
     CpSatRcpspSolver,
-    CpSatResourceRcpspSolver,
+)
+from discrete_optimization.rcpsp.solvers.cpsat_auto import (
+    CpSatAutoCumulativeResourceRcpspSolver,
+    CpSatAutoRcpspSolver,
 )
 from discrete_optimization.rcpsp.utils import plot_ressource_view, plot_task_gantt
 
@@ -153,24 +152,6 @@ def cpsat_with_calendar():
     solution, fit = result_storage.get_best_solution_fit()
     print(fit)
     print(solver.status_solver)
-
-
-def run_multimode_rcpsp_resource():
-    files_available = get_data_available()
-    file = [f for f in files_available if "j1010_1.mm" in f][0]
-    rcpsp_problem = parse_file(file)
-    solver = CpSatResourceRcpspSolver(problem=rcpsp_problem)
-    result_storage = solver.solve(time_limit=50)
-    solution, fit = result_storage.get_best_solution_fit()
-    plot_task_gantt(rcpsp_problem, solution)
-    plot_ressource_view(rcpsp_problem, solution)
-    solution: RcpspSolution
-    l = solution.check_non_renewable_resource_capacity_constraints(
-        resources=rcpsp_problem.non_renewable_resources_list
-    )
-    plt.show()
-    assert rcpsp_problem.satisfy(solution)
-    assert solution.check_all_calendar_resource_capacity_constraints()
 
 
 def run_multimode_cumulative_rcpsp_resource():
