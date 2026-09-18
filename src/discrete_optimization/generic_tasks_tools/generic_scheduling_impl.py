@@ -188,7 +188,6 @@ class GenericSchedulingImplProblem(
     )
     same_unary_allocation: list[set[Task]] = field(default_factory=list)
     objective: InitVar[Objective | Iterable[tuple[Objective, int]]] = Objective.MAKESPAN
-    weighted_objectives: tuple[tuple[Objective, int], ...] = field(init=False)
     custom_evaluate_fn: Optional[Callable[[GenericSchedulingImplSolution], int]] = None
     objective_resource_weights: Optional[dict[AnyResource, int]] = None
     mode_costs: dict[Task, dict[int, int]] = field(default_factory=dict)
@@ -197,7 +196,9 @@ class GenericSchedulingImplProblem(
     )
     compute_time_penalty: bool = True
     optional_tasks: set[Task] = field(default_factory=set)
-    list_objective_computer: list[ObjectiveComputer] = None
+    list_objective_computer: list[ObjectiveComputer] = field(
+        compare=False, default=None
+    )
 
     def __post_init__(self, objective: Objective | Iterable[tuple[Objective, int]]):
         if self.list_objective_computer is None:
