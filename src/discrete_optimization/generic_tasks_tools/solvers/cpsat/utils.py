@@ -179,30 +179,6 @@ def create_variable_function_of_mode_on_solver(
     return var
 
 
-def create_variable_function_of_mode(
-    cp_model: CpModel,
-    name_var: str,
-    mode2value: dict[int, int],
-    mode2var: dict[int, LinearExprT],
-    modeling: ModeToValueModeling = ModeToValueModeling.ENFORCE_IF,
-    no_constraint: bool = False,
-) -> LinearExprT:
-    """Create variable whose values depend on chosen mode
-
-    Args:
-        cp_model:
-        name_var:
-        mode2value:
-        mode2var:
-        modeling:
-        no_constraint: if True, create a variable with proper domain without constraining
-            values on mode (e.g. because the constraints are created elsewhere via interval variables)
-
-    Returns:
-
-    """
-
-
 def create_resource_dependent_variable(
     cp_model: CpModel,
     name_var: str,
