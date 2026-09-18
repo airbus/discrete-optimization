@@ -18,7 +18,6 @@ from discrete_optimization.rcpsp.solution import RcpspSolution
 from discrete_optimization.rcpsp.solvers.cpsat import (
     CpSatCumulativeResourceRcpspSolver,
     CpSatRcpspSolver,
-    CpSatResourceRcpspSolver,
 )
 from discrete_optimization.rcpsp.special_constraints import (
     SpecialConstraintsDescription,
@@ -194,26 +193,6 @@ def solver_cpsat(time_limit):
         return solution.get_max_end_time()
 
     mode_optim = ModeOptim.MINIMIZATION
-    return solver_cls, kwargs, objective_fn, mode_optim
-
-
-@parametrize("time_limit", [30])
-def solver_cpsat_resource(time_limit):
-    solver_cls = CpSatResourceRcpspSolver
-    parameters_cp = (
-        ParametersCp.default()
-    )  # only 1 process to avoid discrepancy with github runners
-    kwargs = dict(time_limit=time_limit, parameters_cp=parameters_cp)
-
-    def objective_fn(solution: RcpspSolution):
-        return (
-            solution.get_max_end_time(),
-            solution.compute_nb_calendar_resources_used()
-            + solution.compute_nb_non_renewable_resources_used(),
-        )
-
-    mode_optim = ModeOptim.MINIMIZATION
-
     return solver_cls, kwargs, objective_fn, mode_optim
 
 

@@ -280,7 +280,6 @@ class RcpspProblem(
             )
         else:
             self.special_constraints = special_constraints
-        super().is_optional()
         self.update_problem()
 
     def get_list_objective_computer(self) -> list[ObjectiveComputer]:

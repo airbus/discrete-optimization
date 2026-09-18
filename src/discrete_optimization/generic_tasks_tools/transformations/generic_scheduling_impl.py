@@ -2,7 +2,6 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 from abc import abstractmethod
-from collections.abc import Iterable
 from typing import Generic, Optional, TypeVar
 
 from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
@@ -223,36 +222,8 @@ class ToGenericSchedulingImpl(
             task: source_problem.get_forbidden_intervals(task)
             for task in source_problem.tasks_list
         }
-<<<<<<< HEAD
-        mode_costs: dict[Task, dict[int, int]] = {
-            task: {
-                mode: source_problem.get_mode_cost(task=task, mode=mode)
-                for mode in source_problem.get_task_modes(task=task)
-            }
-            for task in source_problem.tasks_list
-        }
-        unary_resource_costs: dict[Task, dict[int, dict[UnaryResource, int]]] = {
-            task: {
-                mode: {
-                    unary_resource: source_problem.get_unary_resource_cost(
-                        unary_resource=unary_resource, task=task, mode=mode
-                    )
-                    for unary_resource in source_problem.unary_resources_list
-                }
-                for mode in source_problem.get_task_modes(task=task)
-            }
-            for task in source_problem.tasks_list
-        }
         optional_tasks = set(source_problem.optional_tasks_list)
-        (
-            objective,
-            custom_evaluate_fn,
-            objective_resource_weights,
-            compute_time_penalty,
-        ) = self.transform_objective(source_problem)
-=======
         list_objective_computer = self.get_list_objective_computer(source_problem)
->>>>>>> a9110582 (initial commit: refactor objective handling for scheduling problem.)
 
         return GenericSchedulingImplProblem(
             horizon=horizon,
@@ -278,15 +249,8 @@ class ToGenericSchedulingImpl(
             span_blocking_constraints=source_problem.get_span_blocking_constraints(),
             mode_constraints=source_problem.get_mode_constraints(),
             same_unary_allocation=source_problem.get_same_unary_allocation(),
-<<<<<<< HEAD
-            objective=objective,
-            custom_evaluate_fn=custom_evaluate_fn,
-            objective_resource_weights=objective_resource_weights,
             optional_tasks=optional_tasks,
-            compute_time_penalty=compute_time_penalty,
-=======
             list_objective_computer=list_objective_computer,
->>>>>>> a9110582 (initial commit: refactor objective handling for scheduling problem.)
         )
 
     def forward_transform_solution(

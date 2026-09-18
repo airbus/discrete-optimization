@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections.abc import Container, Hashable, Iterable
 from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 import numpy as np
 import wrapt
@@ -128,6 +128,7 @@ class GenericSchedulingImplProblem(
         compute_time_penalty: whether to include time penalties in evaluation
 
     """
+
     horizon: int
     durations_per_mode: dict[Task, dict[int, int]]
     resource_consumptions: dict[
@@ -148,7 +149,9 @@ class GenericSchedulingImplProblem(
     unary_resources_skills: dict[UnaryResource, dict[Skill, int]] = field(
         default_factory=dict
     )
-    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = field(default_factory=dict)
+    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = (
+        field(default_factory=dict)
+    )
     unary_resources_task_compatibility: dict[Task, set[UnaryResource]] = field(
         default_factory=dict
     )
@@ -159,7 +162,9 @@ class GenericSchedulingImplProblem(
     non_renewable_resources: dict[NonRenewableResource, int] = field(
         default_factory=dict
     )
-    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = field(default_factory=dict)
+    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = (
+        field(default_factory=dict)
+    )
     start_to_start_min_time_lags: list[tuple[Task, Task, int]] = field(
         default_factory=list
     )
@@ -195,12 +200,6 @@ class GenericSchedulingImplProblem(
     list_objective_computer: list[ObjectiveComputer] = None
 
     def __post_init__(self, objective: Objective | Iterable[tuple[Objective, int]]):
-        if isinstance(objective, Objective):
-            self.weighted_objectives: tuple[tuple[Objective, int], ...] = (
-                (objective, OBJECTIVE_DEFAULT_WEIGHTS[objective]),
-            )
-        else:
-            self.weighted_objectives = tuple(objective)
         if self.list_objective_computer is None:
             self.list_objective_computer = [
                 MakespanObjectiveComputer(

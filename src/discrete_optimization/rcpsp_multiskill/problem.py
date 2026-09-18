@@ -40,9 +40,6 @@ from discrete_optimization.generic_tasks_tools.objectives.objective_computer imp
 from discrete_optimization.generic_tasks_tools.objectives.soft_time_penalty import (
     SoftTimePenaltyComputer,
 )
-from discrete_optimization.generic_tasks_tools.resource_blocking import (
-    WithoutResourceBlockingProblem,
-)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,

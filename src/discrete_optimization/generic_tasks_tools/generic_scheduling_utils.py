@@ -93,12 +93,14 @@ class Objective(Enum):
     """Global makespan of the schedule, to minimize."""
     NB_TASKS_ALLOCATED = "nb_tasks_allocated"
     """Number of tasks with at least one resource allocated, to maximize."""
+    NB_TASKS_SCHEDULED = "nb_tasks_scheduled"
+    """Number of tasks actually scheduled, to maximize (usually)."""
     NB_UNARY_RESOURCES_USED = "nb_unary_resources_used"
     """Number of allocated unary resources, to minimize."""
     CALENDAR_RESOURCES_LEVELS = "calendar_resources_levels"
     """Weighted sum of resources levels (i.e. needed capacities), to minimize.
     """
-    DISPERSION_WORKLOAD = "dispersion_workload"
+    # DISPERSION_WORKLOAD = "dispersion_workload"
     NON_RENEWABLE_RESOURCES_LEVELS = "non_renewable_resources_levels"
     """Weighted sum of non-renewable resources levels (i.e. needed capacities), to minimize.
     """
@@ -115,9 +117,9 @@ class Objective(Enum):
 
 
 OBJECTIVE_DEFAULT_WEIGHTS: dict[Objective, int] = {
-    Objective.MAKESPAN: -1,
-    Objective.NB_TASKS_ALLOCATED: 1,
-    Objective.NB_UNARY_RESOURCES_USED: -1,
+    Objective.MAKESPAN: 1,
+    Objective.NB_TASKS_ALLOCATED: -1,
+    Objective.NB_UNARY_RESOURCES_USED: 1,
     Objective.CUSTOM: 1,
 }
 """Default weight applied to a given objective so that it will be *maximized*."""

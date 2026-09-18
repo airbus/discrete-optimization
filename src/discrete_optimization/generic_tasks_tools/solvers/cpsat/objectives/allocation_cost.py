@@ -10,6 +10,10 @@ from discrete_optimization.generic_tasks_tools.objectives.allocation_cost import
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.objective_modeler import (
     ObjectiveModelerCpSat,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.utils import (
+    ModeToValueModeling,
+    create_variable_function_of_mode_on_solver,
+)
 
 
 class AllocationCostModelerCpSat(ObjectiveModelerCpSat):
@@ -45,7 +49,8 @@ class AllocationCostMultimodeModelerCpSat(ObjectiveModelerCpSat):
             self.solver.unary_resource_cost_variables[task] = {}
             for unary_resource in self.solver.problem.unary_resources_list:
                 self.solver.unary_resource_cost_variables[task][unary_resource] = (
-                    self.solver._create_var_per_mode_if_allocated(
+                    create_variable_function_of_mode_on_solver(
+                        solver=self.solver,
                         name=f"unary_resource_cost_{task}_{unary_resource}",
                         mode2value={
                             mode: self.objective_computer.cost_allocation_resource_to_task_mode(
@@ -54,7 +59,9 @@ class AllocationCostMultimodeModelerCpSat(ObjectiveModelerCpSat):
                             for mode in self.solver.problem.get_task_modes(task=task)
                         },
                         task=task,
-                        unary_resource=unary_resource,
+                        modeling=ModeToValueModeling.ENFORCE_IF,
+                        conditional_var=self.solver.get_task_is_present_variable(task),
+                        no_constraint=False,
                     )
                 )
         return sum(

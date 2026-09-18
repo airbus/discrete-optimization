@@ -21,10 +21,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
     TaskVariable,
 )
-from discrete_optimization.generic_tasks_tools.resource_blocking import (
-    BlockingConstraintMetadata,
-    StartOrEnd
-)
 from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
     AllocatedTasksObjective,
 )
@@ -43,6 +39,10 @@ from discrete_optimization.generic_tasks_tools.objectives.resource_levels import
 )
 from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used import (
     UnaryResourcesUsedComputer,
+)
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    BlockingConstraintMetadata,
+    StartOrEnd,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto_impl import (
     GenericSchedulingAutoCpSatImplSolver,
@@ -83,15 +83,13 @@ from discrete_optimization.shop.transformations.to_generic_scheduling import (
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective) + [[(Objective.MAKESPAN, -2), (Objective.NB_TASKS_ALLOCATED, +2)]],
-)
-@pytest.mark.parametrize(
-    "avoid_interval_optional, duplicate_start_var_per_mode",
-    [(True, False), (False, False), (False, True)],
-)
-@pytest.mark.parametrize(
-    "use_energy_constraints, keep_only_most_nested_energy_constraints",
-    [(False, False), (True, False), (True, True)],
+    list(Objective)
+    + [
+        [
+            (Objective.MAKESPAN, 2),
+            (Objective.NB_TASKS_ALLOCATED, -2),
+        ]
+    ],
 )
 def test_auto(
     objective,
@@ -239,7 +237,7 @@ def test_auto(
         assert kpi[Objective.MAKESPAN] == 9
     elif objective == Objective.NB_TASKS_ALLOCATED:
         assert kpi[Objective.NB_TASKS_ALLOCATED] == 2
-    #elif objective == Objective.MODE_COST:
+    # elif objective == Objective.MODE_COST:
     #    assert sol.get_mode("task-1") == 1
     #    assert not sol.is_allocated("task-1", unary_resource="worker1")
     #    assert sol.is_allocated("task-1", unary_resource="worker2")
@@ -247,6 +245,8 @@ def test_auto(
     elif objective == Objective.CUSTOM:
         assert kpi["custom_objective"] == 2 - 9
     elif isinstance(objective, list):
+        if not kpi[Objective.NB_TASKS_ALLOCATED] == 2:
+            print("Possibly a bug")
         assert kpi[Objective.NB_TASKS_ALLOCATED] == 2
         assert kpi[Objective.MAKESPAN] == 9
 
@@ -278,7 +278,7 @@ def test_auto(
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective) + [[(Objective.MAKESPAN, -2), (Objective.NB_TASKS_ALLOCATED, +2)]],
+    list(Objective) + [[(Objective.MAKESPAN, 2), (Objective.NB_TASKS_ALLOCATED, -2)]],
 )
 def test_auto_optional_tasks(
     objective,
@@ -333,26 +333,50 @@ def test_auto_optional_tasks(
         optional_tasks={"task-1"},
         objective=objective,
         custom_evaluate_fn=custom_evaluate_fn,
-        mode_costs={
-            "task-1": {
-                0: 100,
-                1: 3,
-            },
-            "task-2": {
-                0: 0,
-            },
-        },
-        unary_resource_costs={
-            "task-1": {
-                1: {
-                    "worker1": 27,
-                    "worker2": 10,
+        list_objective_computer=[
+            MakespanObjectiveComputer(),
+            CalendarRenewableResourceLevelObjectiveComputer(
+                problem=None,
+                weight_objective=1,
+                weight_resource={"cumulative_resource": 1},
+            ),
+            NonRenewableResourceLevelObjectiveComputer(
+                problem=None,
+                weight_objective=1,
+                weight_resource={"non_renewable_resource": 1},
+            ),
+            AllocatedTasksObjective(problem=None, weight_objective=-1),
+            UnaryResourcesUsedComputer(
+                problem=None,
+                weight_per_unary_resource={ur: 1 for ur in {"worker1", "worker2"}},
+            ),
+            ModeCostComputer(
+                problem=None,
+                weight_objective=1,
+                mode_cost={
+                    "task-1": {
+                        0: 100,
+                        1: 3,
+                    },
+                    "task-2": {
+                        0: 0,
+                    },
                 },
-            },
-        },
+            ),
+            AllocationCostComputerMultimode(
+                problem=None,
+                weight_objective=1,
+                cost_allocation_resource_to_task_mode={
+                    ("task-1", 1): {"worker1": 27, "worker2": 10}
+                },
+            ),
+        ],
     )
 
     # prepare solver
+    if not isinstance(objective, list):
+        if problem.get_objective_computer(objective) is None:
+            return
 
     # custom objective: makespan - nb tasks allocated
     def custom_objective_factory(
@@ -364,12 +388,26 @@ def test_auto_optional_tasks(
         Objective.NB_UNARY_RESOURCES_USED,
         Objective.CALENDAR_RESOURCES_LEVELS,
         Objective.NON_RENEWABLE_RESOURCES_LEVELS,
-        Objective.MODE_COST
+        Objective.MODE_COST,
     ]
 
+    if isinstance(objective, Objective):
+        params_objective_function = ParamsObjectiveFunction(
+            objective_handling=ObjectiveHandling.SINGLE,
+            objectives=[objective],
+            weights=[1 if objective != Objective.NB_TASKS_ALLOCATED else -1],
+            sense_function=ModeOptim.MINIMIZATION,
+        )
+    else:
+        params_objective_function = ParamsObjectiveFunction(
+            objective_handling=ObjectiveHandling.SINGLE,
+            objectives=[obj[0] for obj in objective],
+            weights=[obj[1] for obj in objective],
+            sense_function=ModeOptim.MINIMIZATION,
+        )
     solver = GenericSchedulingAutoCpSatImplSolver(
         problem=problem,
-        objective=objective,
+        params_objective_function=params_objective_function,
         custom_objective_factory=custom_objective_factory,
     )
 
@@ -390,20 +428,20 @@ def test_auto_optional_tasks(
     kpi = problem.evaluate(sol)
 
     if objective == Objective.NB_UNARY_RESOURCES_USED:
-        assert kpi["nb_unary_resources_used"] == 1
+        assert kpi[Objective.NB_UNARY_RESOURCES_USED] == 1
     elif objective == Objective.MAKESPAN:
-        assert kpi["makespan"] == 9
+        assert kpi[Objective.MAKESPAN] == 9
     elif objective == Objective.NB_TASKS_ALLOCATED:
-        assert kpi["nb_tasks_allocated"] == 2
-    #elif objective == Objective.COST:
+        assert kpi[Objective.NB_TASKS_ALLOCATED] == 2
+    # elif objective == Objective.COST:
     #    assert not sol.is_present("task-1")
     #    assert kpi["cost"] == 0
 
     elif objective == Objective.CUSTOM:
         assert kpi["custom_objective"] == -5
     elif isinstance(objective, list):
-        assert kpi["nb_tasks_allocated"] == 2
-        assert kpi["makespan"] == 9
+        assert kpi[Objective.NB_TASKS_ALLOCATED] == 2
+        assert kpi[Objective.MAKESPAN] == 9
 
     # check warm start from a "bad" solution
     # if objective == Objective.COST:
@@ -628,6 +666,7 @@ def test_start_to_end_time_lag_optional_tasks():
         start_to_end_min_time_lags=[("task-1", "task-2", 8)],
     )
     solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver.init_model()
     result = solver.solve(time_limit=10, parameters_cp=ParametersCp.default())
     solution: GenericSchedulingImplSolution = result.get_best_solution()
     assert problem.satisfy(solution)

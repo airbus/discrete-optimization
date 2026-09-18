@@ -23,9 +23,17 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     Objective,
     RawSolution,
 )
+from discrete_optimization.generic_tasks_tools.objectives.resource_levels import (
+    CalendarRenewableResourceLevelObjectiveComputer,
+    NonRenewableResourceLevelObjectiveComputer,
+)
 from discrete_optimization.generic_tasks_tools.skill import NoSkill
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.resource_levels import (
+    CalendarRenewableResourceLevelModelerCpSat,
+    NonRenewableResourceLevelModelerCpSat,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -152,117 +160,6 @@ class CpSatRcpspSolver(
         )
 
 
-class CpSatResourceRcpspSolver(CpSatRcpspSolver):
-    """
-    Specific solver to minimize the minimum resource amount needed to accomplish the scheduling problem.
-    In this version we don't sum up the resource at a given time, and it suits/makes sense mostly
-    for disjunctive resource (machines)
-    """
-
-    objective = (
-        Objective.CUSTOM
-    )  # custom objective (linear combination of makespan and nb_used_resources)
-
-    def init_model(self, **kwargs):
-        weight_on_makespan = kwargs.get("weight_on_makespan", 1)
-        weight_on_used_resource = kwargs.get("weight_on_used_resource", 10000)
-        super().init_model(**kwargs)
-        nb_used_resources_var = self.get_nb_resources_used_variable()
-        makespan_var = self.get_global_makespan_variable()
-
-        self.cp_model.minimize(
-            weight_on_used_resource * nb_used_resources_var
-            + weight_on_makespan * makespan_var
-        )
-
-    def _internal_objective(self, obj: str) -> ObjLinearExprT:
-        if obj == "makespan":
-            return self.get_global_makespan_variable()
-        elif obj == "used_resource":
-            return self.get_nb_resources_used_variable()
-        else:
-            raise ValueError(f"Unknown objective '{obj}'.")
-
-    def set_lexico_objective(self, obj: str) -> None:
-        """Update internal model objective.
-
-        Args:
-            obj: a string representing the desired objective.
-                Should be one of "makespan" or "used_resource".
-
-        Returns:
-
-        """
-        self.cp_model.minimize(self._internal_objective(obj))
-
-    def add_lexico_constraint(self, obj: str, value: float) -> Iterable[Constraint]:
-        """
-
-        Args:
-            obj: a string representing the desired objective.
-                Should be one of `self.problem.get_objective_names()`.
-            value: the limiting value.
-                If the optimization direction is maximizing, this is a lower bound,
-                else this is an upper bound.
-
-        Returns:
-            the created constraints.
-
-        """
-        return [self.cp_model.add(self._internal_objective(obj) <= int(value))]
-
-    @staticmethod
-    def implements_lexico_api() -> bool:
-        return True
-
-    def retrieve_tasks_variables(
-        self, cpsolvercb: CpSolverSolutionCallback
-    ) -> RawSolution[Task, NoUnaryResource, NoSkill]:
-        """Construct each task variable from the cpsat solver internal solution.
-
-        It will be called each time the cpsat solver find a new solution.
-        At that point, value of internal variables are accessible via `cpsolvercb.value(VARIABLE_NAME)`.
-
-        We override the method from generic auto solver to add the internal objective value.
-
-        Args:
-            cpsolvercb: the ortools callback called when the cpsat solver finds a new solution.
-
-        Returns:
-            the task variables for the intermediate solution
-
-        """
-        raw_sol = super().retrieve_tasks_variables(cpsolvercb)
-
-        raw_sol.metadata.update(
-            {
-                obj: cpsolvercb.value(self._internal_objective(obj))
-                for obj in self.get_lexico_objectives_available()
-            }
-        )
-
-        return raw_sol
-
-    def convert_task_variables_to_solution(
-        self, raw_sol: RawSolution[Task, NoUnaryResource, NoSkill]
-    ) -> RcpspSolution:
-        """Convert temporary solution to rcpsp format.
-
-        Add internal objectives.
-
-        """
-        sol = super().convert_task_variables_to_solution(raw_sol=raw_sol)
-        sol._internal_objectives = raw_sol.metadata
-        return sol
-
-    def get_lexico_objectives_available(self) -> list[str]:
-        return ["makespan", "used_resource"]
-
-    def get_lexico_objective_value(self, obj: str, res: ResultStorage) -> float:
-        values = [sol._internal_objectives[obj] for sol, fit in res.list_solution_fits]
-        return min(values)
-
-
 class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
     """
     Specific solver to minimize the minimum resource amount needed to accomplish the scheduling problem.
@@ -272,6 +169,9 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
     objective = (
         Objective.CUSTOM
     )  # custom objective (linear combination of makespan and nb_used_resources)
+    renewable_obj_modeler: CalendarRenewableResourceLevelModelerCpSat = None
+    non_renewable_obj_modeler: NonRenewableResourceLevelModelerCpSat = None
+    resources_level_obj_var: LinearExprT = None
 
     def init_model(self, **kwargs):
         kwargs = self.complete_with_default_hyperparameters(kwargs)
@@ -285,6 +185,41 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
             weight_on_used_resource * resources_level_var
             + weight_on_makespan * makespan_var
         )
+
+    def get_aggregated_resources_levels_variable(self):
+        if self.resources_level_obj_var is None:
+            renewable_objective_computer = (
+                CalendarRenewableResourceLevelObjectiveComputer(
+                    problem=self.problem,
+                    weight_resource={
+                        r: 1 for r in self.problem.calendar_resources_list
+                    },
+                    weight_objective=1,
+                )
+            )
+            renewable_objective_cpsat = CalendarRenewableResourceLevelModelerCpSat(
+                solver=self, objective_computer=renewable_objective_computer
+            )
+            non_renewable_objective_computer = (
+                NonRenewableResourceLevelObjectiveComputer(
+                    problem=self.problem,
+                    weight_resource={
+                        r: 1 for r in self.problem.non_renewable_resources_list
+                    },
+                    weight_objective=1,
+                )
+            )
+            non_renewable_objective_cpsat = NonRenewableResourceLevelModelerCpSat(
+                solver=self, objective_computer=non_renewable_objective_computer
+            )
+            resources_level_var = (
+                renewable_objective_cpsat.get_objective_expr()
+                + non_renewable_objective_cpsat.get_objective_expr()
+            )
+            self.renewable_obj_modeler = renewable_objective_cpsat
+            self.non_renewable_obj_modeler = non_renewable_objective_cpsat
+            self.resources_level_obj_var = resources_level_var
+        return self.resources_level_obj_var
 
     def _internal_objective(self, obj: str) -> ObjLinearExprT:
         if obj == "makespan":
