@@ -288,7 +288,7 @@ def test_problem(problem_wo_skills, caplog):
     mode_cost_computer: ModeCostComputer = problem.get_objective_computer(
         Objective.MODE_COST
     )[0]
-    mode_cost_computer._mode_cost = {("task-1", 0): 10, ("task-1", 1): 35}
+    mode_cost_computer._mode_cost = {"task-1": {0: 10, 1: 35}}
     unary_cost_computer: AllocationCostComputerMultimode = (
         problem.get_objective_computer(Objective.ALLOCATION_COST)[1]
     )
