@@ -211,6 +211,12 @@ class GenericSchedulingImplProblem(
             l.set_problem(self)
         self.update_problem()
 
+    def evaluate(self, variable: GenericSchedulingSolution) -> dict[str, float]:
+        kpis = super().evaluate(variable)
+        if self.custom_evaluate_fn is not None:
+            kpis[Objective.CUSTOM] = self.custom_evaluate_fn(variable)
+        return kpis
+
     def update_problem(self):
         """Method to call when some attributes of the problem are modified."""
         self._tasks_list = list(self.durations_per_mode)

@@ -140,6 +140,7 @@ def test_auto(
                 (5, 10, 2),
             ],
         },
+        custom_evaluate_fn=custom_evaluate_fn,
         non_renewable_resources={
             "non_renewable_resource": 1,
         },
@@ -185,7 +186,10 @@ def test_auto(
 
     # prepare solver
     if not isinstance(objective, list):
-        if problem.get_objective_computer(objective) is None:
+        if (
+            problem.get_objective_computer(objective) is None
+            and objective != Objective.CUSTOM
+        ):
             return
 
     # custom objective: makespan - nb tasks allocated
@@ -200,6 +204,7 @@ def test_auto(
     exactly_one_unary_resource_per_task = objective in [
         Objective.NB_UNARY_RESOURCES_USED,
         Objective.CALENDAR_RESOURCES_LEVELS,
+        Objective.CUSTOM,
     ]
     if objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
         exactly_one_unary_resource_per_task = True
@@ -253,7 +258,7 @@ def test_auto(
         assert kpi[Objective.ALLOCATION_COST] == 10
         assert kpi[Objective.MODE_COST] == 3
     elif objective == Objective.CUSTOM:
-        assert kpi["custom_objective"] == 2 - 9
+        assert kpi[Objective.CUSTOM] == 2 - 10
     elif objective == [
         (Objective.MAKESPAN, 2),
         (Objective.NB_TASKS_ALLOCATED, -2),
@@ -301,7 +306,7 @@ def test_auto_optional_tasks(
 ):
     def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
         return -sum(
-            variable.get_start_time(task) for task in variable.problem.tasks_list
+            variable.get_start_time(task) for task in variable.get_present_tasks()
         )
 
     problem = GenericSchedulingImplProblem(
@@ -387,9 +392,8 @@ def test_auto_optional_tasks(
             ),
         ],
     )
-
     # prepare solver
-    if not isinstance(objective, list):
+    if not isinstance(objective, list) and objective != Objective.CUSTOM:
         if problem.get_objective_computer(objective) is None:
             return
 
@@ -425,12 +429,14 @@ def test_auto_optional_tasks(
     solver = GenericSchedulingAutoCpSatImplSolver(
         problem=problem,
         params_objective_function=params_objective_function,
+        objective=objective,
         custom_objective_factory=custom_objective_factory,
     )
 
     solver.init_model(
         exactly_one_unary_resource_per_task=exactly_one_unary_resource_per_task
     )
+    # solver.set_warm_start(sol)
 
     # solve
     res = solver.solve(
@@ -454,7 +460,8 @@ def test_auto_optional_tasks(
         assert not sol.is_present("task-1")
         assert kpi[Objective.MODE_COST] + kpi[Objective.ALLOCATION_COST] == 0
     elif objective == Objective.CUSTOM:
-        assert kpi["custom_objective"] == -5
+        # task 1 (mode1): 3->6, task 2 : 6->10
+        assert kpi[Objective.CUSTOM] == -9
     elif isinstance(objective, list):
         assert kpi[Objective.NB_TASKS_ALLOCATED] == 2
         assert kpi[Objective.MAKESPAN] == 9
