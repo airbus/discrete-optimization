@@ -1009,10 +1009,8 @@ class GenericSchedulingAutoCpSatSolver(
         )
         match self.params_objective_function.sense_function:
             case ModeOptim.MINIMIZATION:
-                print("Mini")
                 self.cp_model.minimize(obj)
             case ModeOptim.MAXIMIZATION:
-                print("Maxi")
                 self.cp_model.maximize(obj)
             case _:
                 raise NotImplementedError
