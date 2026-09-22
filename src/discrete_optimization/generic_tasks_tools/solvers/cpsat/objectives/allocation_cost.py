@@ -60,7 +60,9 @@ class AllocationCostMultimodeModelerCpSat(ObjectiveModelerCpSat):
                         },
                         task=task,
                         modeling=ModeToValueModeling.ENFORCE_IF,
-                        conditional_var=self.solver.get_task_is_present_variable(task),
+                        conditional_var=self.solver.get_task_unary_resource_is_present_variable(
+                            task, unary_resource
+                        ),
                         no_constraint=False,
                     )
                 )
