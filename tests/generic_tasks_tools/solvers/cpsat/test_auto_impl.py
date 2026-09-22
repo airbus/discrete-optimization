@@ -88,7 +88,11 @@ from discrete_optimization.shop.transformations.to_generic_scheduling import (
         [
             (Objective.MAKESPAN, 2),
             (Objective.NB_TASKS_ALLOCATED, -2),
-        ]
+        ],
+        [
+            (Objective.MODE_COST, 1),
+            (Objective.ALLOCATION_COST, 1),
+        ],
     ],
 )
 def test_auto(
@@ -197,6 +201,8 @@ def test_auto(
         Objective.NB_UNARY_RESOURCES_USED,
         Objective.CALENDAR_RESOURCES_LEVELS,
     ]
+    if objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
+        exactly_one_unary_resource_per_task = True
     if isinstance(objective, Objective):
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.SINGLE,
@@ -206,7 +212,7 @@ def test_auto(
         )
     else:
         params_objective_function = ParamsObjectiveFunction(
-            objective_handling=ObjectiveHandling.SINGLE,
+            objective_handling=ObjectiveHandling.AGGREGATE,
             objectives=[obj[0] for obj in objective],
             weights=[obj[1] for obj in objective],
             sense_function=ModeOptim.MINIMIZATION,
@@ -223,7 +229,10 @@ def test_auto(
     )
 
     # solve
-    res = solver.solve(parameters_cp=ParametersCp.default())
+    res = solver.solve(
+        parameters_cp=ParametersCp.default(),
+        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+    )
 
     # check sol and kpis
     sol: GenericSchedulingImplSolution
@@ -237,16 +246,18 @@ def test_auto(
         assert kpi[Objective.MAKESPAN] == 9
     elif objective == Objective.NB_TASKS_ALLOCATED:
         assert kpi[Objective.NB_TASKS_ALLOCATED] == 2
-    # elif objective == Objective.MODE_COST:
-    #    assert sol.get_mode("task-1") == 1
-    #    assert not sol.is_allocated("task-1", unary_resource="worker1")
-    #    assert sol.is_allocated("task-1", unary_resource="worker2")
-    #    assert kpi["cost"] == 3 + 10
+    elif objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
+        assert sol.get_mode("task-1") == 1
+        assert not sol.is_allocated("task-1", unary_resource="worker1")
+        assert sol.is_allocated("task-1", unary_resource="worker2")
+        assert kpi[Objective.ALLOCATION_COST] == 10
+        assert kpi[Objective.MODE_COST] == 3
     elif objective == Objective.CUSTOM:
         assert kpi["custom_objective"] == 2 - 9
-    elif isinstance(objective, list):
-        if not kpi[Objective.NB_TASKS_ALLOCATED] == 2:
-            print("Possibly a bug")
+    elif objective == [
+        (Objective.MAKESPAN, 2),
+        (Objective.NB_TASKS_ALLOCATED, -2),
+    ]:
         assert kpi[Objective.NB_TASKS_ALLOCATED] == 2
         assert kpi[Objective.MAKESPAN] == 9
 

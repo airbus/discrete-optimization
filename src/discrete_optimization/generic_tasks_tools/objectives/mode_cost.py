@@ -23,7 +23,7 @@ class ModeCostComputer(ObjectiveComputer[Task]):
         self,
         problem: MultimodeProblem[Task] = None,
         weight_objective: float = 1.0,
-        mode_cost: dict[tuple[Task, int], int] = None,
+        mode_cost: dict[Task, dict[int, int]] = None,
     ):
         super().__init__(problem, weight_objective)
         if mode_cost is None:
@@ -32,7 +32,9 @@ class ModeCostComputer(ObjectiveComputer[Task]):
             self._mode_cost = mode_cost
 
     def mode_cost(self, task: Task, mode: int) -> float:
-        return self._mode_cost.get((task, mode), 0)
+        if task in self._mode_cost:
+            return self._mode_cost[task].get(mode, 0)
+        return 0
 
     def has_any_mode_cost(self):
         return any(self._mode_cost[tm] != 0 for tm in self._mode_cost)
