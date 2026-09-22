@@ -289,7 +289,11 @@ def test_auto(
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective) + [[(Objective.MAKESPAN, 2), (Objective.NB_TASKS_ALLOCATED, -2)]],
+    list(Objective)
+    + [
+        [(Objective.MAKESPAN, 2), (Objective.NB_TASKS_ALLOCATED, -2)],
+        [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)],
+    ],
 )
 def test_auto_optional_tasks(
     objective,
@@ -401,6 +405,8 @@ def test_auto_optional_tasks(
         Objective.NON_RENEWABLE_RESOURCES_LEVELS,
         Objective.MODE_COST,
     ]
+    if objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
+        exactly_one_unary_resource_per_task = True
 
     if isinstance(objective, Objective):
         params_objective_function = ParamsObjectiveFunction(
@@ -444,10 +450,9 @@ def test_auto_optional_tasks(
         assert kpi[Objective.MAKESPAN] == 9
     elif objective == Objective.NB_TASKS_ALLOCATED:
         assert kpi[Objective.NB_TASKS_ALLOCATED] == 2
-    # elif objective == Objective.COST:
-    #    assert not sol.is_present("task-1")
-    #    assert kpi["cost"] == 0
-
+    elif objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
+        assert not sol.is_present("task-1")
+        assert kpi[Objective.MODE_COST] + kpi[Objective.ALLOCATION_COST] == 0
     elif objective == Objective.CUSTOM:
         assert kpi["custom_objective"] == -5
     elif isinstance(objective, list):
