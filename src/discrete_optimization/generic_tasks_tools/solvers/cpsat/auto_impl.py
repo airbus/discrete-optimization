@@ -61,8 +61,9 @@ class GenericSchedulingAutoCpSatImplSolver(
         """
 
         Args:
-            problem:
-            params_objective_function:
+            problem: GenericSchedulingProblem to optimize
+            params_objective_function: Objective function settings to optimize
+            objective: Objective param, only used when it is CUSTOM, otherwise the params_objective_function is considered.
             custom_objective_factory: callable constructing the custom objective variable using this solver variables.
                 It should correspond to `problem.custom_evaluate_fn`. It will be used as a way to compute
                 the subobjective "custom" if appearing in `params_objective_function.objectives`.
