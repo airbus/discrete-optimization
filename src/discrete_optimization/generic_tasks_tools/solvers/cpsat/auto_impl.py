@@ -27,6 +27,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
     ParamsObjectiveFunction,
 )
 
@@ -141,7 +142,13 @@ class GenericSchedulingAutoCpSatImplSolver(
         )
         if self.objective == Objective.CUSTOM:
             if self.custom_objective_factory is not None:
-                self.cp_model.minimize(self.custom_objective_factory(self))
+                match self.params_objective_function.sense_function:
+                    case ModeOptim.MINIMIZATION:
+                        self.cp_model.minimize(self.custom_objective_factory(self))
+                    case ModeOptim.MAXIMIZATION:
+                        self.cp_model.maximize(self.custom_objective_factory(self))
+                    case _:
+                        raise NotImplementedError()
 
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, UnaryResource, Skill]

@@ -292,6 +292,134 @@ def test_auto(
     assert sol.raw_sol.task_variables == bad_sol.raw_sol.task_variables
 
 
+@pytest.mark.parametrize("mode_optim", list(ModeOptim))
+def test_auto_custom(
+    mode_optim,
+    caplog,
+):
+    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
+        return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
+
+    problem = GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 1,
+                1: 3,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        resource_consumptions={
+            "task-1": {
+                0: {
+                    "non_renewable_resource": 2,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                },
+            },
+            "task-2": {
+                0: {
+                    "cumulative_resource": 2,
+                },
+            },
+        },
+        successors={"task-1": {"task-2"}},
+        unary_resources={"worker1", "worker2"},
+        unary_resources_availabilities={
+            "worker1": [(1, 4)],
+            "worker2": [(3, 18)],
+        },
+        non_skill_cumulative_resources={
+            "cumulative_resource": [
+                (3, 5, 1),
+                (5, 10, 2),
+            ],
+        },
+        custom_evaluate_fn=custom_evaluate_fn,
+        non_renewable_resources={
+            "non_renewable_resource": 1,
+        },
+        list_objective_computer=[
+            MakespanObjectiveComputer(),
+            CalendarRenewableResourceLevelObjectiveComputer(
+                problem=None,
+                weight_objective=1,
+                weight_resource={"cumulative_resource": 1},
+            ),
+            NonRenewableResourceLevelObjectiveComputer(
+                problem=None,
+                weight_objective=1,
+                weight_resource={"non_renewable_resource": 1},
+            ),
+            AllocatedTasksObjective(problem=None, weight_objective=-1),
+            UnaryResourcesUsedComputer(
+                problem=None,
+                weight_per_unary_resource={ur: 1 for ur in {"worker1", "worker2"}},
+            ),
+            ModeCostComputer(
+                problem=None,
+                weight_objective=1,
+                mode_cost={
+                    "task-1": {
+                        0: 100,
+                        1: 3,
+                    },
+                    "task-2": {
+                        0: 0,
+                    },
+                },
+            ),
+            AllocationCostComputerMultimode(
+                problem=None,
+                weight_objective=1,
+                cost_allocation_resource_to_task_mode={
+                    ("task-1", 1): {"worker1": 27, "worker2": 10}
+                },
+            ),
+        ],
+    )
+
+    # custom objective: makespan - nb tasks allocated
+    def custom_objective_factory(
+        solver: GenericSchedulingAutoCpSatImplSolver,
+    ) -> LinearExprT:
+        return (
+            solver.get_nb_tasks_allocated_variable()
+            - solver.get_global_makespan_variable()
+        )
+
+    params_objective_function = ParamsObjectiveFunction(
+        objective_handling=ObjectiveHandling.SINGLE,
+        objectives=[Objective.CUSTOM],
+        weights=[1],
+        sense_function=mode_optim,
+    )
+    solver = GenericSchedulingAutoCpSatImplSolver(
+        problem=problem,
+        objective=Objective.CUSTOM,
+        params_objective_function=params_objective_function,
+        custom_objective_factory=custom_objective_factory,
+    )
+
+    solver.init_model(exactly_one_unary_resource_per_task=True)
+
+    # solve
+    res = solver.solve(parameters_cp=ParametersCp.default())
+
+    # check sol and kpis
+    sol: GenericSchedulingImplSolution
+    sol, fit = res[-1]
+    assert problem.satisfy(sol)
+    kpi = problem.evaluate(sol)
+    if mode_optim == ModeOptim.MINIMIZATION:
+        assert kpi[Objective.CUSTOM] == 2 - 10
+    if mode_optim == ModeOptim.MAXIMIZATION:
+        assert kpi[Objective.CUSTOM] == 2 - 9
+
+
 @pytest.mark.parametrize(
     "objective",
     list(Objective)
