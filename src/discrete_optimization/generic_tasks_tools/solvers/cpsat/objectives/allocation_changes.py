@@ -9,9 +9,6 @@ from discrete_optimization.generic_tasks_tools.allocation import Task, UnaryReso
 from discrete_optimization.generic_tasks_tools.objectives.allocation_changes import (
     AllocationSwitchObjectiveComputer,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
-    GenericSchedulingAutoCpSatSolver,
-)
 
 # TODO : investigate, if not better to take into account via :
 #  self.problem.get_unary_resource_cost ... !
@@ -22,7 +19,6 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.objectiv
 
 class AllocationSwitchModelerCpSat(ObjectiveModelerCpSat, Generic[Task, UnaryResource]):
     objective_computer: AllocationSwitchObjectiveComputer[Task, UnaryResource]
-    solver: GenericSchedulingAutoCpSatSolver
     allocation_change_variables_initialized: bool = False
     allocation_change_variables: dict
     init_value: dict

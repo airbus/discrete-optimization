@@ -46,6 +46,12 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.generic_scheduling 
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode_scheduling import (
     SinglemodeSchedulingCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.objective_modeler import (
+    ObjectiveModelerCpSat,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.utils import (
+    mapping_computer_to_modeler,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.utils import (
     ModeToValueModeling,
     create_variable_function_of_mode_on_solver,
@@ -58,14 +64,6 @@ from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
-)
-
-if False:
-    from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.objective_modeler import (
-        ObjectiveModelerCpSat,
-    )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.utils import (
-    create_computer_to_modeler_mapping,
 )
 
 logger = logging.getLogger(__name__)
@@ -202,7 +200,7 @@ class GenericSchedulingAutoCpSatSolver(
     demand_non_renewable_modeling: ModeToValueModeling = ModeToValueModeling.ENFORCE_IF
     """Specify how the demand vars are defined with the modes"""
 
-    list_obj_modeler_weight: list[tuple[ObjectiveModelerCpSat, float]] = None
+    list_obj_modeler_weight: list[tuple[ObjectiveModelerCpSat, float]]
     dict_objective_expr: dict[Objective | str, LinearExprT]
 
     @property
@@ -418,7 +416,7 @@ class GenericSchedulingAutoCpSatSolver(
         self.all_used_variables = {}
         self.resource_level_variables_created = False
         self.resource_level_variables = {}
-        self.list_obj_modeler_weight = None
+        self.list_obj_modeler_weight = []
 
         # In cumulative_resource, non_renewable_resource
         self.demand_cumulative_resource_task_initialized = False
@@ -968,7 +966,7 @@ class GenericSchedulingAutoCpSatSolver(
         self.add_mode_constraints()
 
     def init_list_obj_modelers(self):
-        mapping_obj_computer_to_modeler = create_computer_to_modeler_mapping()
+        mapping_obj_computer_to_modeler = mapping_computer_to_modeler
         self.list_obj_modeler_weight = []
         for obj, weight in zip(
             self.params_objective_function.objectives,
@@ -978,7 +976,7 @@ class GenericSchedulingAutoCpSatSolver(
             if obj_computers is None:
                 continue
             for obj_computer in obj_computers:
-                obj_modeler_class: Type[ObjectiveModelerCpSat] = (
+                obj_modeler_class: Type["ObjectiveModelerCpSat"] = (
                     mapping_obj_computer_to_modeler[obj_computer.__class__]
                 )
                 obj_modeler = obj_modeler_class(
@@ -986,8 +984,15 @@ class GenericSchedulingAutoCpSatSolver(
                 )
                 self.list_obj_modeler_weight.append((obj_modeler, weight))
 
-    def _set_objective(self) -> None:
+    def is_list_obj_modeler_init(self):
         if self.list_obj_modeler_weight is None:
+            return False
+        if len(self.list_obj_modeler_weight) == 0:
+            return False
+        return True
+
+    def _set_objective(self) -> None:
+        if not self.is_list_obj_modeler_init():
             self.init_list_obj_modelers()
         self.dict_objective_expr = {}
         for obj_modeler, weight in self.list_obj_modeler_weight:
