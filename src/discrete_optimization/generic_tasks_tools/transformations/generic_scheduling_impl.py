@@ -251,6 +251,7 @@ class ToGenericSchedulingImpl(
             same_unary_allocation=source_problem.get_same_unary_allocation(),
             optional_tasks=optional_tasks,
             list_objective_computer=list_objective_computer,
+            alternative_scheduling_subproblems=source_problem.get_alternative_scheduling_subproblem(),
         )
 
     def forward_transform_solution(

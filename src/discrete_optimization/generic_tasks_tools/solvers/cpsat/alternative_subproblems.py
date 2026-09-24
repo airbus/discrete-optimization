@@ -1,11 +1,8 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from abc import abstractmethod
 from functools import reduce
 from typing import Generic
-
-from ortools.sat.python.cp_model import LinearExprT
 
 from discrete_optimization.generic_tasks_tools.alternative_subproblems import (
     AlternativeSchedulingProblem,
@@ -16,23 +13,15 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode_scheduling import (
     MultimodeSchedulingCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.utils import (
+    enforce_only_if_tasks_present,
+)
 
 
 class AlternativeSubproblemCpSatSolver(
     MultimodeSchedulingCpSatSolver[Task], Generic[Task]
 ):
     problem: AlternativeSchedulingProblem[Task]
-
-    @abstractmethod
-    def get_task_scheduled_variable(self, task: Task) -> LinearExprT:
-        """
-
-        Args:
-            task:
-
-        Returns:
-
-        """
 
     def create_alternative_subproblems_constraints(self):
         subproblems = self.problem.get_alternative_scheduling_subproblem()
@@ -57,48 +46,65 @@ class AlternativeSubproblemCpSatSolver(
             for p in ps:
                 for p0, p1 in zip(p[:-1], p[1:]):
                     self.cp_model.add_implication(
-                        self.get_task_scheduled_variable(p0),
-                        self.get_task_scheduled_variable(p1),
+                        self.get_task_is_present_variable(p0),
+                        self.get_task_is_present_variable(p1),
                     )
             nb_to_do = alternative_problem.nb_path_to_do
             if len(ps) >= nb_to_do:
                 if nb_to_do == 1:
                     self.cp_model.add_exactly_one(
-                        [self.get_task_scheduled_variable(p[0]) for p in ps]
+                        [self.get_task_is_present_variable(p[0]) for p in ps]
                     )
                 else:
                     self.cp_model.add(
-                        sum([self.get_task_scheduled_variable(p[0]) for p in ps])
+                        sum([self.get_task_is_present_variable(p[0]) for p in ps])
                         == nb_to_do
                     )
             if alternative_problem.is_path_successors:
                 for p in ps:
                     for p0, p1 in zip(p[:-1], p[1:]):
-                        self.cp_model.add(
+                        cstr = self.cp_model.add(
                             self.get_task_start_or_end_variable(p1, StartOrEnd.START)
                             >= self.get_task_start_or_end_variable(p0, StartOrEnd.END)
+                        )
+                        enforce_only_if_tasks_present(
+                            constraint=cstr, tasks=(p1, p0), solver=self
                         )
                 for p in alternative_problem.list_paths:
                     for p0, p1 in zip(p[:-1], p[1:]):
-                        self.cp_model.add(
+                        cstr = self.cp_model.add(
                             self.get_task_start_or_end_variable(p1, StartOrEnd.START)
                             >= self.get_task_start_or_end_variable(p0, StartOrEnd.END)
                         )
+                        enforce_only_if_tasks_present(
+                            constraint=cstr, tasks=(p1, p0), solver=self
+                        )
+
                     if p[0] != alternative_problem.source_task:
-                        self.cp_model.add(
+                        cstr = self.cp_model.add(
                             self.get_task_start_or_end_variable(p[0], StartOrEnd.START)
                             >= self.get_task_start_or_end_variable(
                                 alternative_problem.source_task, StartOrEnd.END
                             )
                         )
+                        enforce_only_if_tasks_present(
+                            constraint=cstr,
+                            tasks=(p[0], alternative_problem.source_task),
+                            solver=self,
+                        )
                     if p[-1] != alternative_problem.sink_task:
-                        self.cp_model.add(
+                        cstr = self.cp_model.add(
                             self.get_task_start_or_end_variable(
                                 alternative_problem.sink_task, StartOrEnd.START
                             )
                             >= self.get_task_start_or_end_variable(
                                 p[-1], StartOrEnd.END
                             )
+                        )
+                        enforce_only_if_tasks_present(
+                            constraint=cstr,
+                            tasks=(alternative_problem.sink_task, p[-1]),
+                            solver=self,
                         )
         else:
             path_taken = [
@@ -108,7 +114,7 @@ class AlternativeSubproblemCpSatSolver(
             for i in range(len(path_taken)):
                 self.cp_model.add_min_equality(
                     path_taken[i],
-                    [self.get_task_scheduled_variable(p) for p in ps[i]],
+                    [self.get_task_is_present_variable(p) for p in ps[i]],
                 )
             nb_to_do = alternative_problem.nb_path_to_do
             if nb_to_do == 1:
@@ -159,6 +165,6 @@ class AlternativeSubproblemCpSatSolver(
             for i in range(len(path_used)):
                 self.cp_model.add_max_equality(
                     path_used[i],
-                    [self.get_task_scheduled_variable(p) for p in ps[i]],
+                    [self.get_task_is_present_variable(p) for p in ps[i]],
                 )
             self.cp_model.add(sum(path_used) <= alternative_problem.nb_path_to_do)

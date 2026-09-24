@@ -964,6 +964,8 @@ class GenericSchedulingAutoCpSatSolver(
         self.create_forbidden_intervals_constraints()
         # mode constraint
         self.add_mode_constraints()
+        # alternative path
+        self.create_alternative_subproblems_constraints()
 
     def init_list_obj_modelers(self):
         mapping_obj_computer_to_modeler = mapping_computer_to_modeler

@@ -704,6 +704,9 @@ class RcpspProblem(
         if variable.rcpsp_schedule_feasible is False:
             logger.debug("Schedule flagged as infeasible when generated")
             return False
+        satisfy = super().satisfy(variable)
+        if not satisfy:
+            return satisfy
         if len(variable.rcpsp_schedule) != self.n_jobs:
             logger.debug("Missing task in schedule")
         if self.do_special_constraints:

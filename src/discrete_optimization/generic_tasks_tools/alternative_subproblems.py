@@ -12,6 +12,7 @@ from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     MultimodeSchedulingProblem,
     MultimodeSchedulingSolution,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,7 @@ class AlternativeSchedulingSubProblem:
 
 
 class AlternativeSchedulingProblem(MultimodeSchedulingProblem[Task], Generic[Task]):
+    @optional_override
     def get_alternative_scheduling_subproblem(
         self,
     ) -> list[AlternativeSchedulingSubProblem]:
