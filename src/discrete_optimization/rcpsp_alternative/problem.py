@@ -7,10 +7,10 @@
 import logging
 from typing import Any, Hashable, Optional, Union
 
-from discrete_optimization.generic_tasks_tools import AbsentValue
 from discrete_optimization.generic_tasks_tools.alternative_subproblems import (
     AlternativeSchedulingSubProblem,
 )
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.rcpsp.problem import RcpspProblem
 from discrete_optimization.rcpsp.solution import (
     NonRenewableResource,

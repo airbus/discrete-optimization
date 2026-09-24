@@ -6,6 +6,9 @@ import logging
 
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
+from discrete_optimization.rcpsp.solution import RcpspSolution
+from discrete_optimization.rcpsp.utils import plot_ressource_view, plot_task_gantt, plt
+from discrete_optimization.rcpsp_alternative.problem import get_optional_tasks_done
 from discrete_optimization.rcpsp_alternative.solvers.cpsat import (
     CpsatRcpspWithAlternativePathSolver,
 )
@@ -15,16 +18,30 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def test_cpsat():
-    problem = parse_file([f for f in get_data_available() if "j301_1.sm" in f][0])
+def run_cpsat():
+    problem = parse_file([f for f in get_data_available() if "j601_1.sm" in f][0])
     problem = create_problem_rcpsp(
         problem,
-        nb_alternative_paths=2,
+        nb_alternative_paths=5,
         range_nb_subpath=(1, 4),
         range_len_subpath=(3, 5),
     )
     solver = CpsatRcpspWithAlternativePathSolver(problem)
     solver.init_model(strict_alternative_path=True)
-    res = solver.solve(parameters_cp=ParametersCp.default_cpsat(), time_limit=10)
+    res = solver.solve(
+        parameters_cp=ParametersCp.default_cpsat(),
+        ortools_cpsat_solver_kwargs=dict(log_search_progress=True),
+        time_limit=30,
+    )
     sol = res[-1][0]
-    assert problem.satisfy(sol)
+    sol: RcpspSolution
+    print(sol.check_alternative_scheduling_subproblem())
+    print(problem.evaluate(sol), problem.satisfy(sol))
+    print(get_optional_tasks_done(sol, problem))
+    plot_task_gantt(problem, sol)
+    plot_ressource_view(problem, sol)
+    plt.show()
+
+
+if __name__ == "__main__":
+    run_cpsat()

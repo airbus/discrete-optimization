@@ -11,6 +11,9 @@ from typing import Callable, Optional
 import numpy as np
 import wrapt
 
+from discrete_optimization.generic_tasks_tools.alternative_subproblems import (
+    AlternativeSchedulingSubProblem,
+)
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
     convert_availability_intervals_to_calendar,
     convert_calendar_to_availability_intervals,
@@ -149,9 +152,7 @@ class GenericSchedulingImplProblem(
     unary_resources_skills: dict[UnaryResource, dict[Skill, int]] = field(
         default_factory=dict
     )
-    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = (
-        field(default_factory=dict)
-    )
+    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = field(default_factory=dict)
     unary_resources_task_compatibility: dict[Task, set[UnaryResource]] = field(
         default_factory=dict
     )
@@ -162,9 +163,7 @@ class GenericSchedulingImplProblem(
     non_renewable_resources: dict[NonRenewableResource, int] = field(
         default_factory=dict
     )
-    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = (
-        field(default_factory=dict)
-    )
+    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = field(default_factory=dict)
     start_to_start_min_time_lags: list[tuple[Task, Task, int]] = field(
         default_factory=list
     )
@@ -197,7 +196,9 @@ class GenericSchedulingImplProblem(
     compute_time_penalty: bool = True
     optional_tasks: set[Task] = field(default_factory=set)
     list_objective_computer: list[ObjectiveComputer] = field(
-        compare=False, default=None
+        compare=False, default=None)
+    alternative_scheduling_subproblems: list[AlternativeSchedulingSubProblem] = field(
+        default_factory=list
     )
 
     def __post_init__(self, objective: Objective | Iterable[tuple[Objective, int]]):
@@ -247,6 +248,11 @@ class GenericSchedulingImplProblem(
             "There are duplicates in resources list, "
             "potentially because calendar and non-renewable resources intersect."
         )
+
+    def get_alternative_scheduling_subproblem(
+        self,
+    ) -> list[AlternativeSchedulingSubProblem]:
+        return self.alternative_scheduling_subproblems
 
     def is_cumulative_resource_task_mode_consumption_dependent(
         self, resource: CumulativeResource, task: Task, mode: int

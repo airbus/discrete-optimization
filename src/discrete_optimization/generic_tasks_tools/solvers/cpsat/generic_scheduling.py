@@ -20,6 +20,9 @@ from discrete_optimization.generic_tasks_tools.skill import (
     NonSkillCumulativeResource,
     Skill,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.alternative_subproblems import (
+    AlternativeSubproblemCpSatSolver,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.no_overlap import (
     NoOverlapCpSatSolver,
 )
@@ -49,6 +52,7 @@ class GenericSchedulingCpSatSolver(
     PrecedenceSchedulingCpSatSolver[Task],
     TimelagCpSatSolver[Task],
     NoOverlapCpSatSolver[Task],
+    AlternativeSubproblemCpSatSolver[Task],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],

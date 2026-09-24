@@ -12,6 +12,10 @@ import wrapt
 from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
 )
+from discrete_optimization.generic_tasks_tools.alternative_subproblems import (
+    AlternativeSchedulingProblem,
+    AlternativeSchedulingSolution,
+)
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
@@ -72,6 +76,7 @@ class GenericSchedulingProblem(
     TimelagProblem[Task],
     TimewindowProblem[Task],
     NoOverlapProblem[Task],
+    AlternativeSchedulingProblem[Task],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
@@ -533,6 +538,7 @@ class GenericSchedulingProblem(
         resource_blocking: bool = True,
         mode_constraints: bool = True,
         optional_tasks: bool = True,
+        alternative_scheduling: bool = True,
     ) -> bool:
         """Partial checks on solution.
 
@@ -551,7 +557,9 @@ class GenericSchedulingProblem(
             no_overlap:
             forbidden_intervals:
             resource_blocking:
+            mode_constraints:
             optional_tasks:
+            alternative_scheduling:
         Returns:
 
         """
@@ -594,6 +602,10 @@ class GenericSchedulingProblem(
             # resource blocking
             and (not resource_blocking or variable.check_blocking_constraints())
             and (not mode_constraints or variable.check_mode_constraint())
+            and (
+                not alternative_scheduling
+                or variable.check_alternative_scheduling_subproblem()
+            )
         )
 
     @abstractmethod
@@ -647,6 +659,7 @@ class GenericSchedulingSolution(
     TimelagSolution[Task],
     TimewindowSolution[Task],
     NoOverlapSolution[Task],
+    AlternativeSchedulingSolution[Task],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],
