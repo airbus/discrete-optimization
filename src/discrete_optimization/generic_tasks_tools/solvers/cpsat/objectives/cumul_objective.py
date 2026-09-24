@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from ortools.sat.python.cp_model import Domain, LinearExpr
 
@@ -29,9 +30,11 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
     AllocationCpSatSolver,
     Task,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
-    GenericSchedulingAutoCpSatSolver,
-)
+
+if TYPE_CHECKING:
+    from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
+        GenericSchedulingAutoCpSatSolver,
+    )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode import (
     MultimodeCpSatSolver,
 )

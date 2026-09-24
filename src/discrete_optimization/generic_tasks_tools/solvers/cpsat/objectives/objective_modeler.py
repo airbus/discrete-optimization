@@ -1,22 +1,30 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Generic
+from typing import TYPE_CHECKING, Generic
 
 from ortools.sat.python.cp_model import LinearExpr
 
+from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
+from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    NonRenewableResource,
+)
 from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
     ObjectiveComputer,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
-    GenericSchedulingAutoCpSatSolver,
-    NonRenewableResource,
+from discrete_optimization.generic_tasks_tools.skill import (
     NonSkillCumulativeResource,
     Skill,
-    Task,
-    UnaryResource,
 )
+
+if TYPE_CHECKING:
+    from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
+        GenericSchedulingAutoCpSatSolver,
+    )
 
 
 class ObjectiveModelerCpSat(
