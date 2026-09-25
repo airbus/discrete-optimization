@@ -152,7 +152,9 @@ class GenericSchedulingImplProblem(
     unary_resources_skills: dict[UnaryResource, dict[Skill, int]] = field(
         default_factory=dict
     )
-    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = field(default_factory=dict)
+    unary_resources_availabilities: dict[UnaryResource, UnaryAvailabilityIntervals] = (
+        field(default_factory=dict)
+    )
     unary_resources_task_compatibility: dict[Task, set[UnaryResource]] = field(
         default_factory=dict
     )
@@ -163,7 +165,9 @@ class GenericSchedulingImplProblem(
     non_renewable_resources: dict[NonRenewableResource, int] = field(
         default_factory=dict
     )
-    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = field(default_factory=dict)
+    time_windows: dict[Task, tuple[int | None, int | None, int | None, int | None]] = (
+        field(default_factory=dict)
+    )
     start_to_start_min_time_lags: list[tuple[Task, Task, int]] = field(
         default_factory=list
     )
@@ -196,7 +200,8 @@ class GenericSchedulingImplProblem(
     compute_time_penalty: bool = True
     optional_tasks: set[Task] = field(default_factory=set)
     list_objective_computer: list[ObjectiveComputer] = field(
-        compare=False, default=None)
+        compare=False, default=None
+    )
     alternative_scheduling_subproblems: list[AlternativeSchedulingSubProblem] = field(
         default_factory=list
     )
