@@ -1,0 +1,21 @@
+discrete\_optimization.vrp.mutation package
+===========================================
+
+Submodules
+----------
+
+discrete\_optimization.vrp.mutation.mutation\_vrp module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.mutation.mutation_vrp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.vrp.mutation
+   :members:
+   :undoc-members:
+   :show-inheritance:

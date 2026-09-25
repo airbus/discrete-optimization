@@ -1,0 +1,29 @@
+discrete\_optimization.shop.transformations package
+===================================================
+
+Submodules
+----------
+
+discrete\_optimization.shop.transformations.to\_generic\_scheduling module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.shop.transformations.to_generic_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.shop.transformations.to\_rcpsp\_multimode module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.shop.transformations.to_rcpsp_multimode
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.shop.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

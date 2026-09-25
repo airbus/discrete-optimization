@@ -1,0 +1,37 @@
+discrete\_optimization.rcpsp\_alternative package
+=================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.rcpsp_alternative.solvers
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_alternative.problem module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_alternative.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_alternative.utils module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_alternative.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_alternative
+   :members:
+   :show-inheritance:
+   :undoc-members:

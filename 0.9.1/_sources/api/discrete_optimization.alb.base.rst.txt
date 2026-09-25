@@ -1,0 +1,21 @@
+discrete\_optimization.alb.base package
+=======================================
+
+Submodules
+----------
+
+discrete\_optimization.alb.base.problem module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.alb.base.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.alb.base
+   :members:
+   :show-inheritance:
+   :undoc-members:

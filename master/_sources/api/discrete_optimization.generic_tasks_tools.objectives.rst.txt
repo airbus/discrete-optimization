@@ -1,0 +1,125 @@
+discrete\_optimization.generic\_tasks\_tools.objectives package
+===============================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tasks\_tools.objectives.allocated\_tasks module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.allocated_tasks
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.allocation\_changes module
+----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.allocation_changes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.allocation\_cost module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.allocation_cost
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.cumul\_cost module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.cumul_cost
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.earliness\_tardiness module
+-----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.earliness_tardiness
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.makespan module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.makespan
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.mode\_cost module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.mode_cost
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.objective\_computer module
+----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.objective_computer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.resource\_levels module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.resource_levels
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.schedule\_changes module
+--------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.schedule_changes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.scheduled\_tasks module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.scheduled_tasks
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.soft\_time\_penalty module
+----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.soft_time_penalty
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.unary\_resource\_used module
+------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.unary_resource_used
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.objectives.utils module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.objectives
+   :members:
+   :show-inheritance:
+   :undoc-members:

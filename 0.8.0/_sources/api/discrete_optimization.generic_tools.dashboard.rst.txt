@@ -1,0 +1,45 @@
+discrete\_optimization.generic\_tools.dashboard package
+=======================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.dashboard.config module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.dashboard.config
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.dashboard.dashboard module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.dashboard.dashboard
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.dashboard.plots module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.dashboard.plots
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.dashboard.preprocess module
+-----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.dashboard.preprocess
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.dashboard
+   :members:
+   :show-inheritance:
+   :undoc-members:
