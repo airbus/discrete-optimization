@@ -394,13 +394,16 @@ class CalendarPreemptiveSolution(
     def _compute_calendar_resource_consumption_np(
         self, resources: Iterable[Resource]
     ) -> np.ndarray:
+        if not self.problem.has_any_calendar_preempted():
+            # Fallback to CalendarResource checker.
+            return super()._compute_calendar_resource_consumption_np(resources)
         # Override the util function, so that the cumulative calendar resource constraint
         # is well checked ! we remove the consumption of the task on its idle time.
         makespan = self.get_max_end_time()
         resources_consumption = {
             resource: np.zeros(makespan, dtype=int) for resource in resources
         }
-        for task in self.problem.tasks_list:
+        for task in self.get_present_tasks():
             start = self.get_start_time(task)
             end = self.get_end_time(task)
             mode = self.get_mode(task)
