@@ -168,6 +168,12 @@ class ResourceBlockingProblem(
         """
         return []
 
+    def has_any_blocking(self):
+        return (
+            len(self.get_flexible_gap_blocking_constraints()) > 0
+            or len(self.get_span_blocking_constraints()) > 0
+        )
+
 
 class ResourceBlockingSolution(
     CumulativeResourceSolution[Task, CumulativeResource, OtherCalendarResource],
@@ -379,9 +385,10 @@ class ResourceBlockingSolution(
         Returns:
             True if all constraints satisfied, False otherwise
         """
+        if not self.problem.has_any_blocking():
+            return True
         solution: SchedulingSolution = self  # type: ignore
-        horizon = getattr(self.problem, "horizon", 10000)
-
+        horizon = self.get_max_end_time()
         # STEP 1: Validate ACTIVE mode calendar constraints
         # ACTIVE blocking can only occur when resource is available
         for (
@@ -448,8 +455,9 @@ class ResourceBlockingSolution(
 
         for resource in self.problem.cumulative_resources_list:
             capacity = self.problem.get_resource_max_capacity(resource)
-            task_consumption = self._compute_task_consumption(resource, horizon)
-
+            task_consumption = self._compute_calendar_resource_consumption_np(
+                {resource}
+            )[resource]
             # Compute blocking by mode
             reservation_blocking = self._compute_blocking_by_mode(
                 resource, horizon, BlockingMode.RESERVATION
@@ -457,7 +465,6 @@ class ResourceBlockingSolution(
             active_blocking = self._compute_blocking_by_mode(
                 resource, horizon, BlockingMode.ACTIVE
             )
-
             # CHECK 1 (mirrors CP-SAT constraint 1):
             # Tasks + RESERVATION blocking + ACTIVE blocking <= base capacity
             # No calendar/fake_tasks - allows RESERVATION to span unavailable periods
@@ -472,13 +479,11 @@ class ResourceBlockingSolution(
                         f"+ active={active_blocking[t]} = {total} > capacity={capacity}"
                     )
                     return False
-
             # CHECK 2 (mirrors CP-SAT constraint 2):
             # Tasks + ACTIVE blocking + fake_tasks <= capacity
             # Equivalent to: Tasks + ACTIVE blocking <= calendar[t]
             # This enforces that ACTIVE blocking respects calendar availability
             calendar = self.problem.get_resource_calendar(resource)
-
             for t in range(min(horizon, len(calendar))):
                 calendar_capacity = calendar[t]
                 total = task_consumption[t] + active_blocking[t]
@@ -490,7 +495,6 @@ class ResourceBlockingSolution(
                         f"= {total} > calendar_capacity={calendar_capacity}"
                     )
                     return False
-
         return True
 
     def _compute_task_consumption(

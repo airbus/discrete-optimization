@@ -435,6 +435,21 @@ class ResourceBlockingCpSatSolver(
                     (self._intervals_entity[entity], demand, metadata)
                 )
 
+    def get_blocking_intervals_and_demands(
+        self, resource: CumulativeResource
+    ) -> tuple[list[tuple[IntervalVar, int]], list[tuple[IntervalVar, int]]]:
+        blocking_data = self._blocking_intervals.get(resource, [])
+        reservation_blocking = []
+        active_blocking = []
+
+        for blocking_entry in blocking_data:
+            interval, demand, metadata = blocking_entry
+            if metadata.mode == BlockingMode.RESERVATION:
+                reservation_blocking.append((interval, demand))
+            else:  # ACTIVE
+                active_blocking.append((interval, demand))
+        return reservation_blocking, active_blocking
+
     def create_cumulative_constraint_including_blocking(
         self, resource: CumulativeResource
     ) -> None:
@@ -476,22 +491,12 @@ class ResourceBlockingCpSatSolver(
                 self.problem.get_fake_tasks(resource=resource)
             )
         ]
-
         # Separate blocking intervals by mode
-        blocking_data = self._blocking_intervals.get(resource, [])
-        reservation_blocking = []
-        active_blocking = []
-
-        for blocking_entry in blocking_data:
-            interval, demand, metadata = blocking_entry
-            if metadata.mode == BlockingMode.RESERVATION:
-                reservation_blocking.append((interval, demand))
-            else:  # ACTIVE
-                active_blocking.append((interval, demand))
-
+        reservation_blocking, active_blocking = self.get_blocking_intervals_and_demands(
+            resource
+        )
         # Get resource capacity
         capacity = self.problem.get_resource_max_capacity(resource)
-
         # CONSTRAINT 1: Tasks + ALL blocking (RESERVATION + ACTIVE) - NO calendar
         # This enforces RESERVATION blocking even during unavailable periods
         intervals_no_calendar = []

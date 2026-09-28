@@ -1847,7 +1847,7 @@ def build_multiple_cumulative_constraints_inputs(
     has a longer duration, as computed in compute_duration_tasks_function_time function.
     -With previous formulation of cumulative constraint, this corner case is not well taken into account,
     We put in a cumulative constraint all task consuming some resource and all interval corresponding to (partial)
-    resource unavaibility, and this was leading to unsat problem
+    resource unavailability, and this was leading to unsat problem
     """
     res_comp: List[Dict[str, int]] = create_resource_consumption_from_calendar(
         calendar_availability=resource.calendar_availability
