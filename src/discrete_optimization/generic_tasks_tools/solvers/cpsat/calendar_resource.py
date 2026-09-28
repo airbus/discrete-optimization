@@ -8,8 +8,10 @@ from typing import Generic
 from ortools.sat.python.cp_model import IntervalVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.calendar_preemptive import (
+    CalendarPreemptiveProblem,
+)
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
-    CalendarResourceProblem,
     Resource,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
@@ -18,8 +20,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
 
 
 class CalendarResourceCpSatSolver(SchedulingCpSatSolver[Task], Generic[Task, Resource]):
-    problem: CalendarResourceProblem[Task, Resource]
-
+    problem: CalendarPreemptiveProblem
     use_no_overlap_for_capa_1: bool = True
     """Flag to use rather no_overlap constraint when resource capacity is 1."""
     use_cumulative_for_capa_1: bool = False
@@ -85,7 +86,7 @@ class CalendarResourceCpSatSolver(SchedulingCpSatSolver[Task], Generic[Task, Res
         """Get all intervals where a given resource is consumed by a task, and related consumption value.
 
         To take into account optional tasks;
-        - either the resource returned should constrainted to 0 when the task is absent,
+        - either the resource returned should constrained to 0 when the task is absent,
         - or the interval should be optional with the corresponding is_present variable being 0 when the task is absent.
 
         Args:

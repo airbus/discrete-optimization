@@ -23,6 +23,12 @@ from discrete_optimization.generic_tasks_tools.skill import (
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.alternative_subproblems import (
     AlternativeSubproblemCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.calendar_preemptive import (
+    CalendarPreemptiveCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.calendar_resource_generic import (
+    CalendarResourceGenericCpSatSolver,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.no_overlap import (
     NoOverlapCpSatSolver,
 )
@@ -31,9 +37,6 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.non_renewable_resou
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduling import (
     PrecedenceSchedulingCpSatSolver,
-)
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking import (
-    ResourceBlockingCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.skill import (
     SkillSchedulingCpSatSolver,
@@ -44,7 +47,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.timelag import (
 
 
 class GenericSchedulingCpSatSolver(
-    ResourceBlockingCpSatSolver[Task, NonSkillCumulativeResource, UnaryResource],
+    CalendarResourceGenericCpSatSolver[Task, NonSkillCumulativeResource, UnaryResource],
     SkillSchedulingCpSatSolver[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource
     ],
@@ -53,6 +56,7 @@ class GenericSchedulingCpSatSolver(
     TimelagCpSatSolver[Task],
     NoOverlapCpSatSolver[Task],
     AlternativeSubproblemCpSatSolver[Task],
+    CalendarPreemptiveCpSatSolver[Task, NonSkillCumulativeResource, UnaryResource],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
     ],

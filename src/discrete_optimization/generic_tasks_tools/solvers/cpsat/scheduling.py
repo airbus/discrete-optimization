@@ -13,6 +13,7 @@ from discrete_optimization.generic_tasks_tools.scheduling import SchedulingCpSol
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
     TasksCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 from discrete_optimization.generic_tools.cp_tools import SignEnum
 
 
@@ -71,6 +72,17 @@ class SchedulingCpSatSolver(TasksCpSatSolver[Task], SchedulingCpSolver[Task]):
 
         """
         raise NotImplementedError
+
+    @optional_override
+    def get_duration_variable(self, task: Task) -> LinearExprT:
+        return self.get_task_start_or_end_variable(
+            task, StartOrEnd.END
+        ) - self.get_task_start_or_end_variable(task, StartOrEnd.START)
+
+    def get_duration_expression(self, task: Task) -> LinearExprT:
+        return self.get_task_start_or_end_variable(
+            task, StartOrEnd.END
+        ) - self.get_task_start_or_end_variable(task, StartOrEnd.START)
 
     def add_constraint_on_task(
         self, task: Task, start_or_end: StartOrEnd, sign: SignEnum, time: int

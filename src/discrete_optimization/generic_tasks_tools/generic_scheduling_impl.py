@@ -64,7 +64,11 @@ AvailabilityIntervals = list[tuple[int, int, int]]  # start, end, value
 @dataclass
 class GenericSchedulingImplProblem(
     GenericSchedulingProblem[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
     ]
 ):
     """Generic implementation of a scheduling problem.
@@ -205,6 +209,7 @@ class GenericSchedulingImplProblem(
     alternative_scheduling_subproblems: list[AlternativeSchedulingSubProblem] = field(
         default_factory=list
     )
+    calendar_preemptive_tasks: set[Task] = field(default_factory=set)
 
     def __post_init__(self, objective: Objective | Iterable[tuple[Objective, int]]):
         if self.list_objective_computer is None:
@@ -253,6 +258,9 @@ class GenericSchedulingImplProblem(
             "There are duplicates in resources list, "
             "potentially because calendar and non-renewable resources intersect."
         )
+
+    def is_task_calendar_preempted(self, task: Task) -> bool:
+        return task in self.calendar_preemptive_tasks
 
     def get_alternative_scheduling_subproblem(
         self,

@@ -40,6 +40,9 @@ from discrete_optimization.generic_tasks_tools.skill import (
     NonSkillCumulativeResource,
     Skill,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.calendar_preemptive import (
+    ModelingCalendarPreemptive,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.generic_scheduling import (
     GenericSchedulingCpSatSolver,
 )
@@ -199,6 +202,9 @@ class GenericSchedulingAutoCpSatSolver(
     demand_cumulative_modeling: ModeToValueModeling = ModeToValueModeling.ENFORCE_IF
     demand_non_renewable_modeling: ModeToValueModeling = ModeToValueModeling.ENFORCE_IF
     """Specify how the demand vars are defined with the modes"""
+    calendar_preemptive_modeling: ModelingCalendarPreemptive = (
+        ModelingCalendarPreemptive.INDICATOR
+    )
 
     list_obj_modeler_weight: list[tuple[ObjectiveModelerCpSat, float]]
     dict_objective_expr: dict[Objective | str, LinearExprT]
@@ -214,9 +220,13 @@ class GenericSchedulingAutoCpSatSolver(
         If additional custom constraints require them, override it.
 
         """
-        return self.needs_task_intervals or (
-            len(self.problem.unary_resources_list) > 0
-            and not self.avoid_interval_optional_for_unary_resources
+        return (
+            self.needs_task_intervals
+            or (
+                len(self.problem.unary_resources_list) > 0
+                and not self.avoid_interval_optional_for_unary_resources
+            )
+            or (self.problem.has_any_calendar_preempted())
         )
 
     @property
@@ -343,6 +353,7 @@ class GenericSchedulingAutoCpSatSolver(
         demand_cumulative_modeling: Optional[ModeToValueModeling] = None,
         demand_non_renewable_modeling: Optional[ModeToValueModeling] = None,
         create_present_task_variables_for_all_tasks: Optional[bool] = None,
+        calendar_preemptive_modeling: Optional[ModelingCalendarPreemptive] = None,
         **kwargs: Any,
     ) -> None:
         """Init cp model and reset stored variables if any."""
@@ -383,6 +394,8 @@ class GenericSchedulingAutoCpSatSolver(
             self.demand_cumulative_modeling = demand_cumulative_modeling
         if demand_non_renewable_modeling is not None:
             self.demand_non_renewable_modeling = demand_non_renewable_modeling
+        if calendar_preemptive_modeling is not None:
+            self.calendar_preemptive_modeling = calendar_preemptive_modeling
         # pre-compute tasks start/end bounds ?
         if tasks_bounds is None:
             self.compute_task_bounds()
@@ -931,6 +944,9 @@ class GenericSchedulingAutoCpSatSolver(
 
     def _add_constraints(self) -> None:
         self.create_resource_blocking_constraints()
+        self.create_preemptive_duration_constraints(
+            modeling=self.calendar_preemptive_modeling
+        )
         # mode selection -> presence
         self.create_link_mode_to_presence()
         # time lag
@@ -1025,28 +1041,38 @@ class GenericSchedulingAutoCpSatSolver(
     def _create_duration_variable_on_the_fly(
         self, task: Task, task_interval_will_exist: Optional[bool] = None
     ) -> None:
-        mode2duration = {
-            mode: self.problem.get_task_mode_duration(task=task, mode=mode)
-            for mode in self.problem.get_task_modes(task)
-        }
-        # if
-        # - end-start = proper duration(mode) (ie not self.avoid_interval_optional_for_cumulative_resources)
-        # - and duration_var=end-start (ie task interval to created)
-        # we do not need to link duration_var values to mode
-        if task_interval_will_exist is None:
-            task_interval_will_exist = self.needs_task_intervals
-        no_constraint = (
-            task_interval_will_exist
-            and not self.avoid_interval_optional_for_cumulative_resources
-        )
-        self.duration_variables[task] = create_variable_function_of_mode_on_solver(
-            solver=self,
-            name=f"duration_{task}",
-            mode2value=mode2duration,
-            task=task,
-            modeling=ModeToValueModeling.ENFORCE_IF,
-            no_constraint=no_constraint,
-        )
+        if self.problem.is_task_calendar_preempted(task):
+            # TODO : should be done elsewhere (calendar preempt?)
+            possible_durs = set(self.problem.get_possible_durations_for_task(task))
+            if self.problem.is_optional(task):
+                possible_durs.add(0)
+            self.duration_variables[task] = self.cp_model.new_int_var_from_domain(
+                Domain.from_values(list(possible_durs)), name=f"duration_{task}"
+            )
+            # The constraint on duration will be done via another constraint
+        else:
+            mode2duration = {
+                mode: self.problem.get_task_mode_duration(task=task, mode=mode)
+                for mode in self.problem.get_task_modes(task)
+            }
+            # if
+            # - end-start = proper duration(mode) (ie not self.avoid_interval_optional_for_cumulative_resources)
+            # - and duration_var=end-start (ie task interval to created)
+            # we do not need to link duration_var values to mode
+            if task_interval_will_exist is None:
+                task_interval_will_exist = self.needs_task_intervals
+            no_constraint = (
+                task_interval_will_exist
+                and not self.avoid_interval_optional_for_cumulative_resources
+            )
+            self.duration_variables[task] = create_variable_function_of_mode_on_solver(
+                solver=self,
+                name=f"duration_{task}",
+                mode2value=mode2duration,
+                task=task,
+                modeling=ModeToValueModeling.ENFORCE_IF,
+                no_constraint=no_constraint,
+            )
 
     def get_duration_variable(
         self, task: Task, task_interval_will_exist: Optional[bool] = None

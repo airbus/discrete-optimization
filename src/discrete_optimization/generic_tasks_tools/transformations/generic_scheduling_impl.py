@@ -252,6 +252,7 @@ class ToGenericSchedulingImpl(
             optional_tasks=optional_tasks,
             list_objective_computer=list_objective_computer,
             alternative_scheduling_subproblems=source_problem.get_alternative_scheduling_subproblem(),
+            calendar_preemptive_tasks=source_problem.get_all_tasks_calendar_preempted(),
         )
 
     def forward_transform_solution(
