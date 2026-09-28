@@ -143,6 +143,27 @@ def problem_no_overlap():
     )
 
 
+@fixture
+def problem_calendar_preemptive():
+    return GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 2,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        resource_consumptions={
+            "task-1": {0: {"R1": 2, "R2": 3}},
+            "task-2": {0: {"R1": 2, "R2": 3}},
+        },
+        non_skill_cumulative_resources={"R1": [(0, 2, 4), (4, 8, 2)], "R2": 6},
+        calendar_preemptive_tasks={"task-2"},
+    )
+
+
 def test_problem(problem_wo_skills, caplog):
     problem = problem_wo_skills
     sol = GenericSchedulingImplSolution(
@@ -373,6 +394,33 @@ def test_no_overlap(problem_no_overlap, caplog):
         ),
     )
     assert problem.satisfy(sol)
+
+
+def test_calendar_preemptive(problem_calendar_preemptive):
+    problem: GenericSchedulingImplProblem = problem_calendar_preemptive
+    sol = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(start=0, end=2, mode=0),
+                "task-2": TaskVariable(start=0, end=6, mode=0),
+            }
+        ),
+    )
+    # Task 2 spans over 6 unit of time (break of the resource "R1" between time 2 and 4
+    assert problem.satisfy(sol)
+
+    sol_not_good = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(start=0, end=2, mode=0),
+                "task-2": TaskVariable(start=0, end=4, mode=0),
+            }
+        ),
+    )
+    # The task 2 doesn't span large enough.
+    assert not problem.satisfy(sol_not_good)
 
 
 def test_subproblem_from_partial_solution(caplog):
