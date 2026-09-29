@@ -8,10 +8,8 @@ from typing import Generic
 from ortools.sat.python.cp_model import IntervalVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.calendar_preemptive import (
-    CalendarPreemptiveProblem,
-)
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    CalendarResourceProblem,
     Resource,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
@@ -20,7 +18,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
 
 
 class CalendarResourceCpSatSolver(SchedulingCpSatSolver[Task], Generic[Task, Resource]):
-    problem: CalendarPreemptiveProblem
+    problem: CalendarResourceProblem[Task, Resource]
     use_no_overlap_for_capa_1: bool = True
     """Flag to use rather no_overlap constraint when resource capacity is 1."""
     use_cumulative_for_capa_1: bool = False

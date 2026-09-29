@@ -245,10 +245,15 @@ class GenericSchedulingImplProblem(
         self.update_task_bounds()
         self.update_time_lags()
         self.update_precedence_constraints()
+        self.update_calendar_preemptive_tasks()
 
     def update_resource_availabilities(self) -> None:
         self.get_resource_availabilities.cache_clear()
         super().update_resource_availabilities()
+
+    def update_calendar_preemptive_tasks(self):
+        self.get_all_tasks_calendar_preempted.cache_clear()
+        self.has_any_calendar_preempted.cache_clear()
 
     def check_resources_lists(self) -> None:
         """Check duplicates in resources."""
