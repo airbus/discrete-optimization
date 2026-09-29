@@ -93,7 +93,8 @@ class GenericSchedulingProblem(
         UnaryResource,
         Skill,
         NonSkillCumulativeResource,
-        NonRenewableResource
+        NonRenewableResource,
+        ExclusionResource,
     ],
 ):
     """Scheduling problem with all optional features

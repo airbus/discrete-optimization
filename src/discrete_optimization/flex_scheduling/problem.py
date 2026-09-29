@@ -21,6 +21,7 @@ from discrete_optimization.generic_tasks_tools.entities import (
     TaskModeEntity,
 )
 from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -275,7 +276,12 @@ class ObjectiveParams:
 
 class ScheduleSolution(
     GenericSchedulingSolution[
-        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     WithoutSkillSolution[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
@@ -366,7 +372,12 @@ class ScheduleSolutionPreemptive(SchedulingSolution[Task], MultimodeSolution[Tas
 
 class FlexProblem(
     GenericSchedulingProblem[
-        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource

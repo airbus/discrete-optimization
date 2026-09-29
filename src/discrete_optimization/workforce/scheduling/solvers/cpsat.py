@@ -12,6 +12,7 @@ from ortools.sat.python.cp_model import (
 )
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     Objective,
     RawSolution,
@@ -99,7 +100,12 @@ class AdditionalCPConstraints:
 
 class CPSatAllocSchedulingSolver(
     SinglemodeGenericSchedulingAutoCpSatSolver[
-        Task, UnaryResource, NoSkill, NonSkillCumulativeResource, NoNonRenewableResource
+        Task,
+        UnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NoNonRenewableResource,
+        ExclusionResource,
     ],
     SolverAllocScheduling,
 ):

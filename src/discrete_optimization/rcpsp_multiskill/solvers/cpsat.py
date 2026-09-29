@@ -8,6 +8,7 @@ from ortools.sat.python.cp_model import (
     CpSolverSolutionCallback,
 )
 
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
 )
@@ -37,7 +38,12 @@ logger = logging.getLogger(__name__)
 
 class CpSatMultiskillRcpspSolver(
     GenericSchedulingAutoCpSatSolver[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
 ):
     hyperparameters = [

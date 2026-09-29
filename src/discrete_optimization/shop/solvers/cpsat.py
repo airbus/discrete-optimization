@@ -5,6 +5,7 @@
 import logging
 from typing import Any
 
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
 )
@@ -40,6 +41,7 @@ class CommonShopCpSatSolver(
         NoSkill,
         NonSkillCumulativeResource,
         NoNonRenewableResource,
+        ExclusionResource,
     ],
     WithoutSkillSchedulingCpSatSolver[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource

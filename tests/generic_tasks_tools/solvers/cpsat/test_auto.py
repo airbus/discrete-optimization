@@ -12,6 +12,7 @@ from typing import Any, Iterable, Optional
 import pytest
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -65,7 +66,12 @@ Task = str
 
 class MySolution(
     GenericSchedulingSolution[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     WithoutSkillSolution[
         Task, UnaryResource, NonSkillCumulativeResource, UnaryResource
@@ -99,7 +105,12 @@ class MySolution(
 
 class MyProblem(
     GenericSchedulingProblem[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     WithoutSkillProblem[Task, UnaryResource, NonSkillCumulativeResource, UnaryResource],
 ):
@@ -251,7 +262,12 @@ class MyProblem(
 
 class MyAutoCpSatSolver(
     GenericSchedulingAutoCpSatSolver[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]
 ):
     problem: MyProblem

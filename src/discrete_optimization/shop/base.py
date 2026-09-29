@@ -15,6 +15,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     WithoutAllocationSolution,
 )
 from discrete_optimization.generic_tasks_tools.enums import AbsentValue
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -88,6 +89,7 @@ class AnyShopSolution(
         NoSkill,
         NonSkillCumulativeResource,
         NoNonRenewableResource,
+        ExclusionResource,
     ],
     WithoutSkillSolution[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
@@ -167,6 +169,7 @@ class CommonShopProblem(
         NoSkill,
         NonSkillCumulativeResource,
         NoNonRenewableResource,
+        ExclusionResource,
     ],
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource

@@ -7,6 +7,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 )
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
 )
@@ -32,7 +33,12 @@ from discrete_optimization.rcpsp_resource_dependent.problem import (
 
 class CpSatRcpspResourceDependentSolver(
     GenericSchedulingAutoCpSatSolver[
-        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]
 ):
     problem: RcpspResourceDependentProblem
@@ -40,7 +46,12 @@ class CpSatRcpspResourceDependentSolver(
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, UnaryResource, Skill]
     ) -> GenericSchedulingSolution[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]:
         return RcpspResourceDependentSolution(
             problem=self.problem,
