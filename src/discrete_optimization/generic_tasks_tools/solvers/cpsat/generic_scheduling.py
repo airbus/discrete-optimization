@@ -9,6 +9,7 @@ from ortools.sat.python.cp_model import IntervalVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     Resource,
@@ -28,6 +29,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.calendar_preemptive
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.calendar_resource_generic import (
     CalendarResourceGenericCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.exclusions import (
+    ExclusionCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.no_overlap import (
     NoOverlapCpSatSolver,
@@ -57,8 +61,14 @@ class GenericSchedulingCpSatSolver(
     NoOverlapCpSatSolver[Task],
     AlternativeSubproblemCpSatSolver[Task],
     CalendarPreemptiveCpSatSolver[Task, NonSkillCumulativeResource, UnaryResource],
+    ExclusionCpSatSolver[Task, ExclusionResource],
     Generic[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
 ):
     """Mixin for cpsat solver dealing with scheduling + allocation problems.
@@ -76,7 +86,12 @@ class GenericSchedulingCpSatSolver(
     """
 
     problem: GenericSchedulingProblem[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]
 
     avoid_interval_optional_for_unary_resources: bool = False

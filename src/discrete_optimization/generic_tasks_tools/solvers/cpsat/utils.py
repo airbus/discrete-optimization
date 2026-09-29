@@ -90,9 +90,13 @@ def create_variable_function_of_mode_on_solver(
                 if mode2value[mode] != 0
             )
         case ModeToValueModeling.ENFORCE_IF:
-            var = solver.cp_model.new_int_var_from_domain(
-                Domain.from_values(list(possible_values)), name=name
-            )
+            if possible_values == {0, 1}:
+                # Corner case, might happen.
+                var = solver.cp_model.new_bool_var(name=name)
+            else:
+                var = solver.cp_model.new_int_var_from_domain(
+                    Domain.from_values(list(possible_values)), name=name
+                )
             for mode, value in mode2value.items():
                 enforce_mode_value_vars = (
                     solver.get_task_mode_is_present_variable(task=task, mode=mode),

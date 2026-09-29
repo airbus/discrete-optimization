@@ -29,6 +29,12 @@ def optional_override(funcobj):
     return funcobj
 
 
+def optional_override_implem(funcobj):
+    """ """
+    funcobj.__is_optional_override_implem__ = True
+    return funcobj
+
+
 def get_mandatory_methods_to_implement(
     cls: type[TasksProblem],
 ) -> dict[str, Callable[[...], Any]]:

@@ -18,6 +18,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     WithoutAllocationSolution,
 )
 from discrete_optimization.generic_tasks_tools.enums import AbsentValue
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
 )
@@ -46,7 +47,12 @@ class TaskDetails:
 
 class RcpspSolution(
     GenericSchedulingSolution[
-        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     WithoutSkillSolution[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource

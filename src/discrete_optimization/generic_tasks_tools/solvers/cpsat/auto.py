@@ -19,6 +19,7 @@ from ortools.sat.python.cp_model import (
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     CumulativeResource,
     GenericSchedulingSolution,
@@ -76,7 +77,12 @@ AnyResource = NonRenewableResource | UnaryResource | Skill | NonSkillCumulativeR
 
 class GenericSchedulingAutoCpSatSolver(
     GenericSchedulingCpSatSolver[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     WarmstartMixin,
 ):
@@ -943,10 +949,14 @@ class GenericSchedulingAutoCpSatSolver(
             )
 
     def _add_constraints(self) -> None:
+        # Define the entity variables for resource blocking constraint
         self.create_resource_blocking_constraints()
+        # Calendar preemptive duration constraint
         self.create_preemptive_duration_constraints(
             modeling=self.calendar_preemptive_modeling
         )
+        # Exclusion resource constraint
+        self.create_exclusion_constraints()
         # mode selection -> presence
         self.create_link_mode_to_presence()
         # time lag
@@ -1461,7 +1471,12 @@ class GenericSchedulingAutoCpSatSolver(
 
 class SinglemodeGenericSchedulingAutoCpSatSolver(
     GenericSchedulingAutoCpSatSolver[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     SinglemodeSchedulingCpSatSolver[Task],
 ):

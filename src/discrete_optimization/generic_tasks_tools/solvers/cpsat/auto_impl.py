@@ -10,6 +10,7 @@ from typing import Any, Optional
 
 from ortools.sat.python.cp_model import LinearExprT
 
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     GenericSchedulingImplProblem,
     GenericSchedulingImplSolution,
@@ -36,7 +37,12 @@ logger = logging.getLogger(__name__)
 
 class GenericSchedulingAutoCpSatImplSolver(
     GenericSchedulingAutoCpSatSolver[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]
 ):
     """Generic implementation of cpsat solver for scheduling problems (with or without allocation).

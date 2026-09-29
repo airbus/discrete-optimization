@@ -57,6 +57,7 @@ from discrete_optimization.rcpsp.fast_function import (
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
 from discrete_optimization.rcpsp.solution import (
+    ExclusionResource,
     NonRenewableResource,
     NonSkillCumulativeResource,
     RcpspSolution,
@@ -81,7 +82,12 @@ class ScheduleGenerationScheme(Enum):
 
 class RcpspProblem(
     GenericSchedulingProblem[
-        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource

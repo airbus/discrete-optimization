@@ -39,7 +39,7 @@ class CumulativeResourceSchedulingCpSatSolver(
     cumulative_demand_resource_task_initialized: bool = False
     demands_resource_task: dict[tuple[CumulativeResource, Task], LinearExprT]
     demand_cumulative_resource_task_initialized: bool = False
-    demands_cumulative_resource_vars: dict[tuple[CumulativeResource, Task], LinearExprT]
+    demands_cumulative_resource_vars: dict[tuple[Task, Resource], LinearExprT]
     demand_cumulative_modeling: ModeToValueModeling
 
     def get_resource_consumption_intervals(

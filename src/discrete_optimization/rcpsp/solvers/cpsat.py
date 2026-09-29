@@ -19,6 +19,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     Objective,
     RawSolution,
@@ -57,7 +58,12 @@ logger = logging.getLogger(__name__)
 
 class CpSatRcpspSolver(
     GenericSchedulingAutoCpSatSolver[
-        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     RcpspSolver,
 ):
