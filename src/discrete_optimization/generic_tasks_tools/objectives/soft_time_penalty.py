@@ -4,6 +4,7 @@
 from typing import Generic
 
 from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -22,11 +23,21 @@ from discrete_optimization.generic_tasks_tools.objectives.objective_computer imp
 class SoftTimePenaltyComputer(
     ObjectiveComputer[Task],
     Generic[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
 ):
     problem: GenericSchedulingProblem[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]
     penalty = 0
 
@@ -37,7 +48,12 @@ class SoftTimePenaltyComputer(
     def compute_objective(
         self,
         solution: GenericSchedulingSolution[
-            Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+            Task,
+            UnaryResource,
+            Skill,
+            NonSkillCumulativeResource,
+            NonRenewableResource,
+            ExclusionResource,
         ],
     ) -> float:
         penalty = 0

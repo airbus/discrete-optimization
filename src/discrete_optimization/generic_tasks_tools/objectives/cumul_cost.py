@@ -4,6 +4,7 @@
 from typing import Generic, Hashable, TypeVar
 
 from discrete_optimization.generic_tasks_tools.allocation import Task, UnaryResource
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -22,11 +23,21 @@ CUMUL_DIMENSIONS = TypeVar("CUMUL_DIMENSIONS", bound=Hashable)
 class CumulCostComputer(
     ObjectiveComputer[Task],
     Generic[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
 ):
     problem: GenericSchedulingProblem[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]
 
     @staticmethod
@@ -35,9 +46,7 @@ class CumulCostComputer(
 
     def __init__(
         self,
-        problem: GenericSchedulingProblem[
-            Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
-        ] = None,
+        problem: GenericSchedulingProblem = None,
         weight_objective: float = 1.0,
         cumul_dimensions: list[CUMUL_DIMENSIONS] = None,
         value_tasks: dict[CUMUL_DIMENSIONS, dict[Task, float]] = None,
@@ -89,7 +98,12 @@ class CumulCostComputer(
     def compute_objective(
         self,
         solution: GenericSchedulingSolution[
-            Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+            Task,
+            UnaryResource,
+            Skill,
+            NonSkillCumulativeResource,
+            NonRenewableResource,
+            ExclusionResource,
         ],
     ) -> float:
         cumul_per_unary_resource = {

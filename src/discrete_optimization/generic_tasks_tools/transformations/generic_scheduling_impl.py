@@ -224,7 +224,34 @@ class ToGenericSchedulingImpl(
         }
         optional_tasks = set(source_problem.optional_tasks_list)
         list_objective_computer = self.get_list_objective_computer(source_problem)
-
+        exclusion_resource_capacity = {
+            r: source_problem.get_capacity_exclusion_resource(r)
+            for r in source_problem.exclusion_resources_list
+        }
+        exclusion_resource_consumptions = {
+            t: {
+                m: {
+                    r: source_problem.get_task_consumption_exclusion_resource(
+                        resource=r, task=t, mode=m
+                    )
+                    for r in source_problem.exclusion_resources_list
+                }
+                for m in source_problem.get_task_modes(t)
+            }
+            for t in source_problem.tasks_list
+        }
+        exclusion_resource_boolean = {
+            t: {
+                m: {
+                    r: source_problem.is_task_mode_excluding_others(
+                        task=t, mode=m, resource=r
+                    )
+                    for r in source_problem.exclusion_resources_list
+                }
+                for m in source_problem.get_task_modes(t)
+            }
+            for t in source_problem.tasks_list
+        }
         return GenericSchedulingImplProblem(
             horizon=horizon,
             durations_per_mode=durations_per_mode,
@@ -253,6 +280,9 @@ class ToGenericSchedulingImpl(
             list_objective_computer=list_objective_computer,
             alternative_scheduling_subproblems=source_problem.get_alternative_scheduling_subproblem(),
             calendar_preemptive_tasks=source_problem.get_all_tasks_calendar_preempted(),
+            exclusion_resource_capacity=exclusion_resource_capacity,
+            exclusion_resource_consumptions=exclusion_resource_consumptions,
+            exclusion_resource_boolean=exclusion_resource_boolean,
         )
 
     def forward_transform_solution(

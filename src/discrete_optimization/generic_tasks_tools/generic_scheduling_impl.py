@@ -44,6 +44,7 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     FlexibleGapBlockingConstraint,
     SpanBlockingConstraint,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override_implem
 from discrete_optimization.generic_tools.do_problem import (
     Solution,
 )
@@ -211,6 +212,15 @@ class GenericSchedulingImplProblem(
         default_factory=list
     )
     calendar_preemptive_tasks: set[Task] = field(default_factory=set)
+    exclusion_resource_capacity: dict[ExclusionResource, int] = field(
+        default_factory=dict
+    )
+    exclusion_resource_consumptions: dict[
+        Task, dict[int, dict[ExclusionResource, int]]
+    ] = field(default_factory=dict)
+    exclusion_resource_boolean: dict[Task, dict[int, dict[ExclusionResource, bool]]] = (
+        field(default_factory=dict)
+    )
 
     def __post_init__(self, objective: Objective | Iterable[tuple[Objective, int]]):
         if self.list_objective_computer is None:
@@ -264,6 +274,35 @@ class GenericSchedulingImplProblem(
             "There are duplicates in resources list, "
             "potentially because calendar and non-renewable resources intersect."
         )
+
+    @optional_override_implem
+    def is_task_mode_excluding_others(
+        self, task: Task, mode: int, resource: ExclusionResource
+    ) -> bool:
+        if task in self.exclusion_resource_boolean:
+            if mode in self.exclusion_resource_boolean[task]:
+                if resource in self.exclusion_resource_boolean[task][mode]:
+                    return self.exclusion_resource_boolean[task][mode][resource]
+        return False
+
+    @optional_override_implem
+    def get_task_consumption_exclusion_resource(
+        self, resource: ExclusionResource, task: Task, mode: int
+    ):
+        if task in self.exclusion_resource_consumptions:
+            if mode in self.exclusion_resource_consumptions[task]:
+                if resource in self.exclusion_resource_consumptions[task][mode]:
+                    return self.exclusion_resource_consumptions[task][mode][resource]
+        return 0
+
+    @property
+    @optional_override_implem
+    def exclusion_resources_list(self) -> list[ExclusionResource]:
+        return list(self.exclusion_resource_capacity.keys())
+
+    @optional_override_implem
+    def get_capacity_exclusion_resource(self, resource: ExclusionResource):
+        return self.exclusion_resource_capacity[resource]
 
     def is_task_calendar_preempted(self, task: Task) -> bool:
         return task in self.calendar_preemptive_tasks
@@ -721,7 +760,12 @@ def _restrict_timelags(
 
 class GenericSchedulingImplSolution(
     GenericSchedulingSolution[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]
 ):
     """Generic implementation of a solution to a scheduling problem.

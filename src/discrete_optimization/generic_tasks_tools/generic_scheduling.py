@@ -22,6 +22,11 @@ from discrete_optimization.generic_tasks_tools.calendar_preemptive import (
     CalendarPreemptiveSolution,
 )
 from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
+from discrete_optimization.generic_tasks_tools.exclusions import (
+    ExclusionProblem,
+    ExclusionResource,
+    ExclusionSolution,
+)
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.no_overlap import (
     NoOverlapProblem,
@@ -75,6 +80,7 @@ AnyResource = NonRenewableResource | Resource
 class GenericSchedulingProblem(
     ResourceBlockingProblem[Task, CumulativeResource, UnaryResource],
     CalendarPreemptiveProblem[Task, CumulativeResource, UnaryResource],
+    ExclusionProblem[Task, ExclusionResource],
     SkillProblem[Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource],
     NonRenewableResourceProblem[Task, NonRenewableResource],
     PrecedenceSchedulingProblem[Task],
@@ -87,7 +93,7 @@ class GenericSchedulingProblem(
         UnaryResource,
         Skill,
         NonSkillCumulativeResource,
-        NonRenewableResource,
+        NonRenewableResource
     ],
 ):
     """Scheduling problem with all optional features
@@ -548,6 +554,7 @@ class GenericSchedulingProblem(
         mode_constraints: bool = True,
         optional_tasks: bool = True,
         alternative_scheduling: bool = True,
+        exclusion_resources: bool = True,
     ) -> bool:
         """Partial checks on solution.
 
@@ -569,6 +576,7 @@ class GenericSchedulingProblem(
             mode_constraints:
             optional_tasks:
             alternative_scheduling:
+            exclusion_resources:
         Returns:
 
         """
@@ -615,6 +623,7 @@ class GenericSchedulingProblem(
                 not alternative_scheduling
                 or variable.check_alternative_scheduling_subproblem()
             )
+            and (not exclusion_resources or variable.check_exclusion_constraint())
         )
 
     @abstractmethod
@@ -661,6 +670,7 @@ class GenericSchedulingProblem(
 class GenericSchedulingSolution(
     ResourceBlockingSolution[Task, CumulativeResource, UnaryResource],
     CalendarPreemptiveSolution[Task, CumulativeResource, UnaryResource],
+    ExclusionSolution[Task, ExclusionResource],
     SkillSolution[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource
     ],
@@ -671,13 +681,23 @@ class GenericSchedulingSolution(
     NoOverlapSolution[Task],
     AlternativeSchedulingSolution[Task],
     Generic[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
 ):
     """Solution type associated to GenericSchedulingProblem."""
 
     problem: GenericSchedulingProblem[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]
 
     def get_calendar_resource_consumption(self, resource: Resource, task: Task) -> int:
