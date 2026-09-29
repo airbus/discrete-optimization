@@ -6,6 +6,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
 )
@@ -33,7 +34,12 @@ from discrete_optimization.rcpsp_cal_preemptive.problem import (
 
 class CpSatAutoCalendarPreemptiveSolver(
     GenericSchedulingAutoCpSatSolver[
-        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]
 ):
     problem: CalendarPreemptiveRcpspProblem
@@ -44,6 +50,11 @@ class CpSatAutoCalendarPreemptiveSolver(
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, UnaryResource, Skill]
     ) -> GenericSchedulingSolution[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]:
         return transform_solution_from_raw_generic_to_rcpsp(raw_sol, self.problem)

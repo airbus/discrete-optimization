@@ -24,6 +24,7 @@ from discrete_optimization.generic_tasks_tools.enums import (
     MinOrMax,
     StartOrEnd,
 )
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -71,6 +72,7 @@ class GenericSchedulingImplProblem(
         Skill,
         NonSkillCumulativeResource,
         NonRenewableResource,
+        ExclusionResource,
     ]
 ):
     """Generic implementation of a scheduling problem.

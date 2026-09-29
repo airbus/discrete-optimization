@@ -20,6 +20,7 @@ from discrete_optimization.generic_tasks_tools.calendar_resource import (
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     CumulativeResource,
 )
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -47,7 +48,12 @@ from discrete_optimization.generic_tools.do_problem import (
 
 class RcpspResourceDependentSolution(
     GenericSchedulingSolution[
-        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     WithoutSkillSolution[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
@@ -84,7 +90,12 @@ class RcpspResourceDependentSolution(
 
 class RcpspResourceDependentProblem(
     GenericSchedulingProblem[
-        Task, NoUnaryResource, NoSkill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
