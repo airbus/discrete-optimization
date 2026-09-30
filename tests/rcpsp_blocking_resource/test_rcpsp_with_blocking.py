@@ -13,6 +13,8 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import O
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
     BlockingMode,
+    FlexibleGapBlockingConstraint,
+    SpanBlockingConstraint,
 )
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
@@ -41,16 +43,17 @@ def test_rcpsp_with_blocking_creation():
 
     # Add gap blocking constraint
     blocking_constraints = [
-        (
-            TaskEntity(2),
-            StartOrEnd.END,
-            TaskEntity(3),
-            StartOrEnd.START,
-            {"R1": 1},
-            BlockingConstraintMetadata(
+        FlexibleGapBlockingConstraint(
+            metadata=BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,
                 description="Setup between task 2 and 3",
             ),
+            default_resource_blocked={"R1": 1},
+            choice_resource_blocked={},
+            left_entity=TaskEntity(2),
+            start_or_end_left_entity=StartOrEnd.END,
+            right_entity=TaskEntity(3),
+            start_or_end_right_entity=StartOrEnd.START,
         )
     ]
 
@@ -101,15 +104,16 @@ def test_setup_blocking_affects_schedule():
 
     # With blocking: setup time between task 2 and 3
     blocking_constraints = [
-        (
-            TaskEntity(2),
-            StartOrEnd.END,
-            TaskEntity(3),
-            StartOrEnd.START,
-            {"R1": 1},  # Block 1 unit during setup
-            BlockingConstraintMetadata(
+        FlexibleGapBlockingConstraint(
+            metadata=BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,
             ),
+            default_resource_blocked={"R1": 1},
+            choice_resource_blocked={},
+            left_entity=TaskEntity(2),
+            start_or_end_left_entity=StartOrEnd.END,
+            right_entity=TaskEntity(3),
+            start_or_end_right_entity=StartOrEnd.START,
         )
     ]
 
@@ -148,13 +152,14 @@ def test_span_blocking_forces_reservation():
 
     # Span blocking: reserve R1 for entire span of tasks 2, 3
     span_constraints = [
-        (
-            GroupEntity(frozenset([2, 3])),
-            {"R1": 1},
-            BlockingConstraintMetadata(
+        SpanBlockingConstraint(
+            metadata=BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,
                 description="Batch reservation",
             ),
+            default_resource_blocked={"R1": 1},
+            choice_resource_blocked={},
+            entity=GroupEntity(frozenset([2, 3])),
         )
     ]
 
@@ -281,15 +286,16 @@ def test_blocking_constraints_validation():
 
     # Add blocking that requires gap between task 2 end and task 3 start
     blocking_constraints = [
-        (
-            TaskEntity(2),
-            StartOrEnd.END,
-            TaskEntity(3),
-            StartOrEnd.START,
-            {"R1": 3},  # Block significant resource
-            BlockingConstraintMetadata(
+        FlexibleGapBlockingConstraint(
+            metadata=BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,
             ),
+            default_resource_blocked={"R1": 3},
+            choice_resource_blocked={},
+            left_entity=TaskEntity(2),
+            start_or_end_left_entity=StartOrEnd.END,
+            right_entity=TaskEntity(3),
+            start_or_end_right_entity=StartOrEnd.START,
         )
     ]
 
