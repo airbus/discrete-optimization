@@ -16,8 +16,7 @@ Key features:
 from __future__ import annotations
 
 import logging
-from collections.abc import Hashable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Generic
 
@@ -71,27 +70,46 @@ class BlockingConstraintMetadata:
             - ACTIVE: Blocking only during available periods. Resource must be "ON".
                      Enforced with calendar constraints.
         description: Optional human-readable description of the constraint
+        name_choice:
+        the name of the underlying choice to be made,
+        if choice_resource_blocked is not empty.
     """
 
     mode: BlockingMode = BlockingMode.RESERVATION
     description: str = ""
+    name_choice: str = ""
 
 
-# Type aliases for blocking constraints (defined after BlockingConstraintMetadata)
-FlexibleGapBlockingConstraint = tuple[
-    SchedulingEntity,
-    StartOrEnd,
-    SchedulingEntity,
-    StartOrEnd,
-    dict[Hashable, int],  # resources
-    BlockingConstraintMetadata,
-]
+@dataclass(frozen=True)
+class BlockingConstraint(Generic[CumulativeResource]):
+    metadata: BlockingConstraintMetadata
+    default_resource_blocked: dict[CumulativeResource, int]
+    choice_resource_blocked: dict[int, dict[CumulativeResource, int]] = field(
+        default_factory=dict
+    )
 
-SpanBlockingConstraint = tuple[
-    SchedulingEntity,  # tasks
-    dict[Hashable, int],  # resources
-    BlockingConstraintMetadata,
-]
+    def has_a_choice(self):
+        return len(self.choice_resource_blocked) > 0
+
+    def has_default_resource_blocked(self):
+        return len(self.default_resource_blocked) > 0
+
+    def get_all_potential_resources_blocked(self) -> set[CumulativeResource]:
+        potential_res = set(self.default_resource_blocked.keys())
+        for choice in self.choice_resource_blocked:
+            potential_res.update(set(self.choice_resource_blocked[choice]))
+        return potential_res
+
+
+class SpanBlockingConstraint(BlockingConstraint[CumulativeResource]):
+    entity: SchedulingEntity
+
+
+class FlexibleGapBlockingConstraint(BlockingConstraint[CumulativeResource]):
+    left_entity: SchedulingEntity
+    start_or_end_left_entity: StartOrEnd
+    right_entity: SchedulingEntity
+    start_or_end_right_entity: StartOrEnd
 
 
 class ResourceBlockingProblem(
@@ -111,34 +129,8 @@ class ResourceBlockingProblem(
     @optional_override
     def get_flexible_gap_blocking_constraints(
         self,
-    ) -> list[
-        tuple[
-            SchedulingEntity,
-            StartOrEnd,
-            SchedulingEntity,
-            StartOrEnd,
-            dict[CumulativeResource, int],
-            BlockingConstraintMetadata,
-        ]
-    ]:
+    ) -> list[FlexibleGapBlockingConstraint[CumulativeResource]]:
         """Return flexible gap blocking constraints.
-
-        Each constraint blocks resources from one entity point to another entity point.
-        Supports four patterns based on start/end combinations:
-        - END → START: Classic gap/changeover (most common)
-        - START → START: Preparation period
-        - START → END: Full span coverage
-        - END → END: Extended cleanup
-
-        Returns:
-            List of tuples (entity1, point1, entity2, point2, resources, metadata):
-            - entity1: First entity (task, group, or conditional)
-            - point1: START or END of first entity
-            - entity2: Second entity
-            - point2: START or END of second entity
-            - resources: Dict mapping resources to consumption amounts
-            - metadata: Blocking behavior configuration
-
         Default to no flexible gap blocking constraints.
 
         """
@@ -147,11 +139,7 @@ class ResourceBlockingProblem(
     @optional_override
     def get_span_blocking_constraints(
         self,
-    ) -> list[
-        tuple[
-            SchedulingEntity, dict[CumulativeResource, int], BlockingConstraintMetadata
-        ]
-    ]:
+    ) -> list[SpanBlockingConstraint[CumulativeResource]]:
         """Return span blocking constraints.
 
         Each constraint blocks resources for the entire span of a task group:
@@ -193,10 +181,67 @@ class ResourceBlockingSolution(
 
     problem: ResourceBlockingProblem[Task, CumulativeResource, OtherCalendarResource]
 
+    @optional_override
+    def get_choice_of_resource_blocking(
+        self,
+        blocking_constraint: SpanBlockingConstraint | FlexibleGapBlockingConstraint,
+    ) -> int | None:
+        if not blocking_constraint.has_a_choice():
+            return None
+        # Should be stored in the solution object somehow
+        raise NotImplementedError
+
+    def is_resource_blocking_active(
+        self, resource_blocking_constraint: BlockingConstraint[CumulativeResource]
+    ) -> bool:
+        if isinstance(resource_blocking_constraint, SpanBlockingConstraint):
+            return resource_blocking_constraint.entity.is_active(self)
+        if isinstance(resource_blocking_constraint, FlexibleGapBlockingConstraint):
+            return resource_blocking_constraint.left_entity.is_active(
+                self
+            ) and resource_blocking_constraint.right_entity.is_active(self)
+        # Other kind of resource blocking constraint not yet implemented.
+        raise NotImplementedError
+
+    def get_resource_blocked(
+        self,
+        resource_blocking_constraint: BlockingConstraint[CumulativeResource],
+        resource: CumulativeResource,
+    ) -> int:
+        active = self.is_resource_blocking_active(resource_blocking_constraint)
+        if not active:
+            return 0
+        amount = 0
+        if resource in resource_blocking_constraint.default_resource_blocked:
+            amount += resource_blocking_constraint.default_resource_blocked[resource]
+        if resource_blocking_constraint.has_a_choice():
+            choice = self.get_choice_of_resource_blocking(resource_blocking_constraint)
+            if resource in (
+                choice_resource := resource_blocking_constraint.choice_resource_blocked[
+                    choice
+                ]
+            ):
+                amount += choice_resource[resource]
+        return amount
+
+    def get_all_resource_blocked(
+        self, resource_blocking_constraint: BlockingConstraint[CumulativeResource]
+    ) -> dict[CumulativeResource, int]:
+        potential_resource_blocked: set[CumulativeResource] = (
+            resource_blocking_constraint.get_all_potential_resources_blocked()
+        )
+        dict_resource_blocked: dict[CumulativeResource, int] = {}
+        for res in potential_resource_blocked:
+            amount = self.get_resource_blocked(resource_blocking_constraint, res)
+            if amount > 0:
+                dict_resource_blocked[res] = amount
+        return dict_resource_blocked
+
     def compute_blocking_consumption(
         self,
         horizon: int,
         resource: CumulativeResource,
+        blocking_modes: set[BlockingMode] = None,
     ) -> np.ndarray:
         """Compute resource consumption from all blocking constraints.
 
@@ -211,7 +256,7 @@ class ResourceBlockingSolution(
         Args:
             horizon: Time horizon for the schedule
             resource: The resource to compute consumption for
-
+            blocking_modes: blocking modes to consider
         Returns:
             Array of length horizon with blocking consumption at each time point.
             Note: This is blocking consumption only. Task consumption is computed separately.
@@ -220,36 +265,37 @@ class ResourceBlockingSolution(
         Raises:
             ValueError: If ACTIVE mode blocking spans resource unavailable period
         """
+        if blocking_modes is None:
+            blocking_modes = {BlockingMode.RESERVATION, BlockingMode.ACTIVE}
         consumption = np.zeros(horizon, dtype=int)
         solution: SchedulingSolution = self  # type: ignore
 
         # Process flexible gap blocking constraints
         for (
-            entity1,
-            point1,
-            entity2,
-            point2,
-            resources,
-            metadata,
+            flexible_gap_blocking
         ) in self.problem.get_flexible_gap_blocking_constraints():
-            # Skip if resource not in this constraint
-            if resource not in resources:
+            entity_1 = flexible_gap_blocking.left_entity
+            start_or_end_entity_1 = flexible_gap_blocking.start_or_end_left_entity
+            entity_2 = flexible_gap_blocking.right_entity
+            start_or_end_entity_2 = flexible_gap_blocking.start_or_end_right_entity
+            metadata = flexible_gap_blocking.metadata
+            if metadata.mode not in blocking_modes:
                 continue
-
-            # Skip if conditional entity is not active
-            if not entity1.is_active(solution) or not entity2.is_active(solution):
+            resource_consumption = self.get_resource_blocked(
+                flexible_gap_blocking, resource
+            )
+            if resource_consumption == 0:
                 continue
-
             # Get blocking period
             start_time = (
-                entity1.get_start_time(solution)
-                if point1 == StartOrEnd.START
-                else entity1.get_end_time(solution)
+                entity_1.get_start_time(solution)
+                if start_or_end_entity_1 == StartOrEnd.START
+                else entity_1.get_end_time(solution)
             )
             end_time = (
-                entity2.get_start_time(solution)
-                if point2 == StartOrEnd.START
-                else entity2.get_end_time(solution)
+                entity_2.get_start_time(solution)
+                if start_or_end_entity_2 == StartOrEnd.START
+                else entity_2.get_end_time(solution)
             )
 
             # Skip if blocking period is empty or negative
@@ -257,27 +303,27 @@ class ResourceBlockingSolution(
                 continue
 
             # Get consumption amount
-            amount = resources[resource]
-
+            amount = resource_consumption
             # Validate ACTIVE mode: resource must be available during blocking
             if metadata.mode == BlockingMode.ACTIVE:
                 self._validate_active_blocking(
-                    resource, start_time, end_time, entity1, entity2
+                    resource, start_time, end_time, entity_1, entity_2
                 )
 
             # Apply blocking consumption (ADDITIVE: always adds to consumption)
             consumption[start_time:end_time] += amount
 
         # Process span blocking constraints
-        for entity, resources, metadata in self.problem.get_span_blocking_constraints():
-            # Skip if resource not in this constraint
-            if resource not in resources:
+        for span_blocking_constraint in self.problem.get_span_blocking_constraints():
+            metadata = span_blocking_constraint.metadata
+            if metadata.mode not in blocking_modes:
                 continue
-
-            # skip if entity inactive
-            if not entity.is_active(solution):
+            entity = span_blocking_constraint.entity
+            resource_consumption = self.get_resource_blocked(
+                span_blocking_constraint, resource
+            )
+            if resource_consumption == 0:
                 continue
-
             # Compute span: min start to max end of all tasks
             start_time: int = entity.get_start_time(solution)
             end_time: int = entity.get_end_time(solution)
@@ -285,7 +331,7 @@ class ResourceBlockingSolution(
             if end_time <= start_time:
                 continue
 
-            amount = resources[resource]
+            amount = resource_consumption
 
             # Validate ACTIVE mode
             if metadata.mode == BlockingMode.ACTIVE:
@@ -392,24 +438,23 @@ class ResourceBlockingSolution(
         # STEP 1: Validate ACTIVE mode calendar constraints
         # ACTIVE blocking can only occur when resource is available
         for (
-            entity1,
-            point1,
-            entity2,
-            point2,
-            resources,
-            metadata,
+            flexible_gap_blocking
         ) in self.problem.get_flexible_gap_blocking_constraints():
-            if not entity1.is_active(solution) or not entity2.is_active(solution):
+            if not self.is_resource_blocking_active(flexible_gap_blocking):
                 continue
-
+            entity1 = flexible_gap_blocking.left_entity
+            entity2 = flexible_gap_blocking.right_entity
+            start_or_end_entity1 = flexible_gap_blocking.start_or_end_left_entity
+            start_or_end_entity2 = flexible_gap_blocking.start_or_end_right_entity
+            metadata = flexible_gap_blocking.metadata
             start_time = (
                 entity1.get_start_time(solution)
-                if point1 == StartOrEnd.START
+                if start_or_end_entity1 == StartOrEnd.START
                 else entity1.get_end_time(solution)
             )
             end_time = (
                 entity2.get_start_time(solution)
-                if point2 == StartOrEnd.START
+                if start_or_end_entity2 == StartOrEnd.START
                 else entity2.get_end_time(solution)
             )
 
@@ -417,29 +462,30 @@ class ResourceBlockingSolution(
                 continue
 
             if metadata.mode == BlockingMode.ACTIVE:
-                for resource in resources:
+                # Non-zeros resource blocked.
+                resource_blocked = self.get_all_resource_blocked(flexible_gap_blocking)
+                for resource in resource_blocked:
                     if not self._validate_active_blocking(
                         resource, start_time, end_time, entity1, entity2
                     ):
                         return False
 
         # Validate span blocking ACTIVE mode
-        for entity, resources, metadata in self.problem.get_span_blocking_constraints():
+        for span_blocking_constraint in self.problem.get_span_blocking_constraints():
+            entity = span_blocking_constraint.entity
+            metadata = span_blocking_constraint.metadata
             if len(entity.get_tasks()) == 0:
                 continue
             tasks = entity.get_tasks()
-            start_time = min(
-                solution.get_start_time(t) for t in tasks if solution.is_present(t)
-            )
-            end_time = max(
-                solution.get_end_time(t) for t in tasks if solution.is_present(t)
-            )
-
+            start_time = entity.get_start_time(self)
+            end_time = entity.get_end_time(self)
             if end_time <= start_time:
                 continue
-
             if metadata.mode == BlockingMode.ACTIVE:
-                for resource in resources:
+                resource_blocked = self.get_all_resource_blocked(
+                    span_blocking_constraint
+                )
+                for resource in resource_blocked:
                     if not self._validate_active_blocking_span(
                         resource, start_time, end_time, tasks
                     ):
@@ -497,33 +543,6 @@ class ResourceBlockingSolution(
                     return False
         return True
 
-    def _compute_task_consumption(
-        self, resource: CumulativeResource, horizon: int
-    ) -> np.ndarray:
-        """Compute resource consumption from tasks.
-
-        Args:
-            resource: The resource to compute consumption for
-            horizon: Time horizon
-
-        Returns:
-            Array of length horizon with task consumption at each time point
-        """
-        consumption = np.zeros(horizon, dtype=int)
-
-        for task in self.get_present_tasks():
-            start = self.get_start_time(task)
-            end = self.get_end_time(task)
-            mode = self.get_mode(task)
-
-            # Get consumption amount
-            amount = self.get_calendar_resource_consumption(resource, task)
-
-            if amount > 0 and start < end:
-                consumption[start:end] += amount
-
-        return consumption
-
     def _compute_blocking_by_mode(
         self, resource: CumulativeResource, horizon: int, mode: BlockingMode
     ) -> np.ndarray:
@@ -537,83 +556,6 @@ class ResourceBlockingSolution(
         Returns:
             Array of length horizon with blocking consumption at each time point
         """
-        consumption = np.zeros(horizon, dtype=int)
-        solution: SchedulingSolution = self  # type: ignore
-
-        # Process flexible gap blocking constraints
-        for (
-            entity1,
-            point1,
-            entity2,
-            point2,
-            resources,
-            metadata,
-        ) in self.problem.get_flexible_gap_blocking_constraints():
-            # Skip if wrong mode or resource not in constraint
-            if metadata.mode != mode or resource not in resources:
-                continue
-
-            # Skip inactive entities
-            if not entity1.is_active(solution) or not entity2.is_active(solution):
-                continue
-
-            # Get blocking period
-            start_time = (
-                entity1.get_start_time(solution)
-                if point1 == StartOrEnd.START
-                else entity1.get_end_time(solution)
-            )
-            end_time = (
-                entity2.get_start_time(solution)
-                if point2 == StartOrEnd.START
-                else entity2.get_end_time(solution)
-            )
-
-            if end_time <= start_time:
-                continue
-
-            # Add blocking consumption
-            amount = resources[resource]
-            consumption[start_time:end_time] += amount
-
-        # Process span blocking constraints
-        for entity, resources, metadata in self.problem.get_span_blocking_constraints():
-            # Skip if wrong mode or resource not in constraint
-            if metadata.mode != mode or resource not in resources:
-                continue
-            tasks = entity.get_tasks()
-            if len(tasks) == 0:
-                continue
-
-            # Compute span
-            start_time = min(
-                solution.get_start_time(t) for t in tasks if solution.is_present(t)
-            )
-            end_time = max(
-                solution.get_end_time(t) for t in tasks if solution.is_present(t)
-            )
-
-            if end_time <= start_time:
-                continue
-
-            # Add blocking consumption
-            amount = resources[resource]
-            consumption[start_time:end_time] += amount
-
-        return consumption
-
-    def satisfy(self) -> bool:
-        """Check if solution satisfies all constraints including blocking.
-
-        This extends the base satisfy() method to include blocking constraints.
-
-        Returns:
-            True if all constraints satisfied, False otherwise
-        """
-        # Check base constraints if available
-        if hasattr(super(), "satisfy"):
-            if not super().satisfy():  # type: ignore
-                return False
-
-        # Check blocking constraints
-        return self.check_blocking_constraints()
+        return self.compute_blocking_consumption(
+            resource=resource, horizon=horizon, blocking_modes={mode}
+        )
