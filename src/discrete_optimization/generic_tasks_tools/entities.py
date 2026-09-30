@@ -238,14 +238,14 @@ class GroupEntity(SchedulingEntity[Task]):
         if len(active_tasks) == 0:
             return AbsentValue.ABSENT
         else:
-            return min(solution.get_start_time(task) for task in self.tasks)
+            return min(solution.get_start_time(task) for task in active_tasks)
 
     def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue:
         active_tasks = [task for task in self.tasks if solution.is_present(task)]
         if len(active_tasks) == 0:
             return AbsentValue.ABSENT
         else:
-            return max(solution.get_end_time(task) for task in self.tasks)
+            return max(solution.get_end_time(task) for task in active_tasks)
 
     def is_active(self, solution: SchedulingSolution) -> bool:
         # Group is active if any task is scheduled

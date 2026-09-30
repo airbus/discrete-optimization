@@ -115,16 +115,17 @@ def generate_setup_time_blocking(
 
             if shared_resources:
                 # Create gap blocking constraint for setup time
-                constraint: FlexibleGapBlockingConstraint = (
-                    TaskEntity(task),
-                    StartOrEnd.END,
-                    TaskEntity(successor),
-                    StartOrEnd.START,
-                    shared_resources,
-                    BlockingConstraintMetadata(
+                constraint = FlexibleGapBlockingConstraint(
+                    metadata=BlockingConstraintMetadata(
                         mode=BlockingMode.RESERVATION,
                         description=f"Setup time between task {task} and {successor}",
                     ),
+                    default_resource_blocked=shared_resources,
+                    choice_resource_blocked={},
+                    left_entity=TaskEntity(task),
+                    start_or_end_left_entity=StartOrEnd.END,
+                    right_entity=TaskEntity(successor),
+                    start_or_end_right_entity=StartOrEnd.START,
                 )
                 blocking_constraints.append(constraint)
 
@@ -232,13 +233,14 @@ def generate_batch_blocking(
         # Block a fraction of available capacity
         blocking_amount = max(1, int(available * blocking_intensity))
 
-        constraint: SpanBlockingConstraint = (
-            GroupEntity(frozenset(batch_tasks)),
-            {resource_name: blocking_amount},
-            BlockingConstraintMetadata(
+        constraint: SpanBlockingConstraint = SpanBlockingConstraint(
+            metadata=BlockingConstraintMetadata(
                 mode=BlockingMode.RESERVATION,
                 description=f"Batch {batch_idx + 1} reservation for {resource_name}",
             ),
+            default_resource_blocked={resource_name: blocking_amount},
+            choice_resource_blocked={},
+            entity=GroupEntity(frozenset(batch_tasks)),
         )
         blocking_constraints.append(constraint)
 

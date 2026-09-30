@@ -22,7 +22,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
     BlockingMode,
-    CumulativeResource,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumulative_resource import (
     CumulativeResource,
@@ -184,18 +183,11 @@ class ResourceBlockingCpSatSolver(
         self._durations_entity = {}
         self._intervals_entity: dict[SchedulingEntity[Task], IntervalVar] = {}
         all_entities = []
-        for (
-            entity_1,
-            _,
-            entity_2,
-            _,
-            _,
-            _,
-        ) in self.problem.get_flexible_gap_blocking_constraints():
-            all_entities.append(entity_1)
-            all_entities.append(entity_2)
-        for entity, _, _ in self.problem.get_span_blocking_constraints():
-            all_entities.append(entity)
+        for constraint in self.problem.get_flexible_gap_blocking_constraints():
+            all_entities.append(constraint.left_entity)
+            all_entities.append(constraint.right_entity)
+        for span_constraint in self.problem.get_span_blocking_constraints():
+            all_entities.append(span_constraint.entity)
 
         for entity in all_entities:
             if entity not in self._starts_entity:
@@ -425,7 +417,9 @@ class ResourceBlockingCpSatSolver(
         for i_constraint, constraint in enumerate(
             self.problem.get_span_blocking_constraints()
         ):
-            entity, resources, metadata = constraint
+            entity = constraint.entity
+            resources = constraint.default_resource_blocked
+            metadata = constraint.metadata
             # Store blocking intervals per resource with metadata
             for resource, demand in resources.items():
                 if resource not in self._blocking_intervals:
