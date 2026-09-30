@@ -59,6 +59,7 @@ class ResourceBlockingCpSatSolver(
     _durations_entity: dict[SchedulingEntity, IntVar]
     _intervals_entity: dict[SchedulingEntity, IntVar]
     _bounds_entity: dict[SchedulingEntity, IntVar]
+    _choices_blocking_constraint_vars: dict[str, dict[int, IntVar]]
 
     def init_model(self, **kwargs: Any) -> None:
         """Initialize model and reset blocking interval storage."""
@@ -341,14 +342,12 @@ class ResourceBlockingCpSatSolver(
         for i_constraint, constraint in enumerate(
             self.problem.get_flexible_gap_blocking_constraints()
         ):
-            (
-                entity1,
-                ref1,
-                entity2,
-                ref2,
-                resources,
-                metadata,
-            ) = constraint
+            entity1 = constraint.left_entity
+            ref1 = constraint.start_or_end_left_entity
+            entity2 = constraint.right_entity
+            ref2 = constraint.start_or_end_right_entity
+            metadata = constraint.metadata
+            default_resources = constraint.default_resource_blocked
             # Get time variables for the gap boundaries
             gap_start = (
                 self._starts_entity[entity1]
@@ -408,13 +407,14 @@ class ResourceBlockingCpSatSolver(
                 self.cp_model.add(gap_is_present == 1)
 
             # Store blocking intervals per resource with metadata and involved tasks
-            for resource, demand in resources.items():
+            for resource, demand in default_resources.items():
                 if resource not in self._blocking_intervals:
                     self._blocking_intervals[resource] = []
                 # Store interval with its metadata and tasks for later processing
                 self._blocking_intervals[resource].append(
                     (gap_interval, demand, metadata)
                 )
+            # TODO : create the choice vars.
 
     def create_span_blocking_intervals(self) -> None:
         """Create interval variables for span blocking constraints.
