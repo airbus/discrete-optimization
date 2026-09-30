@@ -42,6 +42,8 @@ from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used im
 )
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
+    FlexibleGapBlockingConstraint,
+    SpanBlockingConstraint,
     StartOrEnd,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto_impl import (
@@ -679,23 +681,27 @@ def test_auto_optional_tasks_with_resource_blocking():
 
     # FlexibleGapBlocking: Block machine_1 during the gap task_a→task_b
     # This should only be enforced if task_a is present
-    flexible_gap_blocking = (
-        TaskEntity("task_a"),
-        StartOrEnd.END,
-        TaskEntity("task_b"),
-        StartOrEnd.START,
-        {"machine_1": 1},  # Block 1 unit of machine_1
-        BlockingConstraintMetadata(
+    flexible_gap_blocking = FlexibleGapBlockingConstraint(
+        metadata=BlockingConstraintMetadata(
             description="Setup time blocking between task_a and task_b"
         ),
+        default_resource_blocked={"machine_1": 1},
+        choice_resource_blocked={},
+        left_entity=TaskEntity("task_a"),
+        start_or_end_left_entity=StartOrEnd.END,
+        right_entity=TaskEntity("task_b"),
+        start_or_end_right_entity=StartOrEnd.START,
     )
 
     # SpanBlocking: Block machine_2 during the span of tasks {task_c, task_d}
     # If task_c is not scheduled, this should only block during task_d
-    span_blocking = (
-        GroupEntity(frozenset(["task_c", "task_d"])),
-        {"machine_2": 1},  # Block 1 unit of machine_2
-        BlockingConstraintMetadata(description="Safety monitoring for batch C+D"),
+    span_blocking = SpanBlockingConstraint(
+        metadata=BlockingConstraintMetadata(
+            description="Safety monitoring for batch C+D"
+        ),
+        default_resource_blocked={"machine_2": 1},
+        choice_resource_blocked={},
+        entity=GroupEntity(frozenset(["task_c", "task_d"])),
     )
 
     # Create problem with blocking constraints

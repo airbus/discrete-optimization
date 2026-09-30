@@ -101,15 +101,17 @@ class BlockingConstraint(Generic[CumulativeResource]):
         return potential_res
 
 
+@dataclass(frozen=True)
 class SpanBlockingConstraint(BlockingConstraint[CumulativeResource]):
-    entity: SchedulingEntity
+    entity: SchedulingEntity = field(default_factory=SchedulingEntity)
 
 
+@dataclass(frozen=True)
 class FlexibleGapBlockingConstraint(BlockingConstraint[CumulativeResource]):
-    left_entity: SchedulingEntity
-    start_or_end_left_entity: StartOrEnd
-    right_entity: SchedulingEntity
-    start_or_end_right_entity: StartOrEnd
+    left_entity: SchedulingEntity = field(default_factory=SchedulingEntity)
+    start_or_end_left_entity: StartOrEnd = StartOrEnd.START
+    right_entity: SchedulingEntity = field(default_factory=SchedulingEntity)
+    start_or_end_right_entity: StartOrEnd = StartOrEnd.START
 
 
 class ResourceBlockingProblem(
