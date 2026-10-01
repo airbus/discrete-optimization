@@ -1,0 +1,45 @@
+discrete\_optimization.workforce.scheduling.transformations package
+===================================================================
+
+Submodules
+----------
+
+discrete\_optimization.workforce.scheduling.transformations.generic\_scheduling\_impl module
+--------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.transformations.generic_scheduling_impl
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.scheduling.transformations.to\_fjsp module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.transformations.to_fjsp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.scheduling.transformations.to\_multiskill module
+---------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.transformations.to_multiskill
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.scheduling.transformations.to\_rcpsp module
+----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.transformations.to_rcpsp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.workforce.scheduling.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

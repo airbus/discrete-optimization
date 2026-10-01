@@ -1,0 +1,29 @@
+discrete\_optimization.lotsizing.capacitatedsetuptimes.solvers package
+======================================================================
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.capacitatedsetuptimes.solvers.cpsat module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedsetuptimes.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedsetuptimes.solvers.toulbar module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedsetuptimes.solvers.toulbar
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedsetuptimes.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

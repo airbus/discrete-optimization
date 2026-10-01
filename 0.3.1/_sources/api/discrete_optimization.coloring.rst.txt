@@ -1,0 +1,61 @@
+discrete\_optimization.coloring package
+=======================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.coloring.solvers
+
+Submodules
+----------
+
+discrete\_optimization.coloring.coloring\_model module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.coloring_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.coloring.coloring\_parser module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.coloring_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.coloring.coloring\_plot module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.coloring_plot
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.coloring.coloring\_solvers module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.coloring_solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.coloring.coloring\_toolbox module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.coloring.coloring_toolbox
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.coloring
+   :members:
+   :undoc-members:
+   :show-inheritance:

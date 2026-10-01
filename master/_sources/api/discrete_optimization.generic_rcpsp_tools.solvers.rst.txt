@@ -1,0 +1,45 @@
+discrete\_optimization.generic\_rcpsp\_tools.solvers package
+============================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn
+
+Submodules
+----------
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.generic\_rcpsp\_solver module
+----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.generic_rcpsp_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.gphh module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.gphh
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.ls module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.ls
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

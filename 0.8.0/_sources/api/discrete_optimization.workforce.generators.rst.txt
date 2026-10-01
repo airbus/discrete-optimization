@@ -1,0 +1,29 @@
+discrete\_optimization.workforce.generators package
+===================================================
+
+Submodules
+----------
+
+discrete\_optimization.workforce.generators.random\_tools module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.generators.random_tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.workforce.generators.resource\_scenario module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.workforce.generators.resource_scenario
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.workforce.generators
+   :members:
+   :show-inheritance:
+   :undoc-members:

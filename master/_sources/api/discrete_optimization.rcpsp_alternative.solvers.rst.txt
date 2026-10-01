@@ -1,0 +1,21 @@
+discrete\_optimization.rcpsp\_alternative.solvers package
+=========================================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_alternative.solvers.cpsat module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_alternative.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_alternative.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:
