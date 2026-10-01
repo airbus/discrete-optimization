@@ -36,42 +36,6 @@ class RcpspWithResourceBlocking(RcpspProblem):
         All attributes from RcpspProblem, plus:
         flexible_gap_blocking_constraints: List of gap blocking constraints
         span_blocking_constraints: List of span blocking constraints
-
-    Example:
-        >>> from discrete_optimization.generic_tasks_tools.resource_blocking import (
-        ...     BlockingMode, BlockingConstraintMetadata,
-        ... )
-        >>> from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-        >>> from discrete_optimization.generic_tasks_tools.entities import TaskEntity
-        >>> # Define standard RCPSP parameters
-        >>> resources = {"R1": 5}
-        >>> mode_details = {
-        ...     1: {1: {"duration": 0, "R1": 0}},
-        ...     2: {1: {"duration": 4, "R1": 2}},
-        ...     3: {1: {"duration": 3, "R1": 3}},
-        ...     4: {1: {"duration": 0, "R1": 0}},
-        ... }
-        >>> successors = {1: [2, 3], 2: [4], 3: [4], 4: []}
-        >>> # Add setup time blocking between tasks
-        >>> blocking_constraints = [
-        ...     (
-        ...         TaskEntity(2), StartOrEnd.END,
-        ...         TaskEntity(3), StartOrEnd.START,
-        ...         {"R1": 1},  # 1 unit of R1 blocked during setup
-        ...         BlockingConstraintMetadata(
-        ...             mode=BlockingMode.RESERVATION,
-        ...             description="Setup time between task 2 and 3"
-        ...         ),
-        ...     )
-        ... ]
-        >>> problem = RcpspWithResourceBlocking(
-        ...     resources=resources,
-        ...     non_renewable_resources=[],
-        ...     mode_details=mode_details,
-        ...     successors=successors,
-        ...     horizon=20,
-        ...     flexible_gap_blocking_constraints=blocking_constraints,
-        ... )
     """
 
     def __init__(
@@ -148,19 +112,3 @@ class RcpspWithResourceBlocking(RcpspProblem):
     def get_span_blocking_constraints(self) -> list[SpanBlockingConstraint]:
         """Return span blocking constraints."""
         return self._span_blocking_constraints
-
-    def satisfy(self, variable) -> bool:  # type: ignore
-        """Check if solution satisfies all constraints including blocking.
-
-        Args:
-            variable: The solution to check
-
-        Returns:
-            True if solution satisfies all constraints
-        """
-        # Check standard RCPSP constraints first
-        if not super().satisfy(variable):
-            return False
-
-        # Check blocking constraints (from ResourceBlockingSolution mixin)
-        return variable.check_blocking_constraints()

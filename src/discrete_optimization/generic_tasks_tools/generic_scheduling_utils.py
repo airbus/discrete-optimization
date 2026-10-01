@@ -63,6 +63,7 @@ class RawSolution(Generic[Task, UnaryResource, Skill]):
     ) -> RawSolution[Task, UnaryResource, Skill]:
         return RawSolution(
             task_variables=self.task_variables | other.task_variables,
+            metadata=self.metadata | other.metadata,
         )
 
     def take_subset(
@@ -82,7 +83,8 @@ class RawSolution(Generic[Task, UnaryResource, Skill]):
                 task: task_variable
                 for task, task_variable in self.task_variables.items()
                 if task in tasks
-            }
+            },
+            metadata=self.metadata,
         )
 
 
