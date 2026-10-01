@@ -789,6 +789,309 @@ def test_auto_optional_tasks_with_resource_blocking():
     print("\n✓ Test passed: Optional tasks with resource blocking work correctly!")
 
 
+def test_auto_with_resource_blocking():
+    """Test optional tasks with resource blocking constraints.
+    This test verifies that resource blocking constraints work correctly
+    Blocking constraints:
+    1. FlexibleGapBlocking: Between Task A and Task B (both involved in blocking)
+       - If Task A is scheduled, machine_1 is blocked during gap A→B
+    2. SpanBlocking: During span of Tasks C+D (C is optional, D is mandatory)
+       - If C is present, blocks machine_2 during span of {C, D}
+       - If C is not present, blocks machine_2 during D's execution only
+    """
+    horizon = 30
+
+    # Task definitions
+    durations_per_mode = {
+        "task_a": {0: 4},  # Optional task, 4 hours
+        "task_b": {0: 3},  # Mandatory task, 3 hours
+        "task_c": {0: 5},  # Optional task, 5 hours
+        "task_d": {0: 2},  # Mandatory task, 2 hours
+        "task_e": {0: 6},  # Additional mandatory task to make it interesting
+    }
+
+    # Resource consumptions
+    resource_consumptions = {
+        "task_a": {0: {"machine_1": 1}},
+        "task_b": {0: {"machine_1": 1}},
+        "task_c": {0: {"machine_2": 1}},
+        "task_d": {0: {"machine_2": 1}},
+        "task_e": {0: {"machine_2": 1}},
+    }
+
+    # Machine capacities (both have capacity 2 to allow some parallelism)
+    non_skill_cumulative_resources = {
+        "machine_1": 2,
+        "machine_2": 2,
+    }
+
+    # Precedence: task_a must finish before task_b starts (if task_a is scheduled)
+    successors = {"task_a": ["task_b"]}
+
+    # Minimum 2-hour gap between task_a end and task_b start (setup time)
+    end_to_start_min_time_lags = [("task_a", "task_b", 2)]
+
+    # FlexibleGapBlocking: Block machine_1 during the gap task_a→task_b
+    # This should only be enforced if task_a is present
+    flexible_gap_blocking = FlexibleGapBlockingConstraint(
+        metadata=BlockingConstraintMetadata(
+            description="Setup time blocking between task_a and task_b"
+        ),
+        default_resource_blocked={"machine_1": 1},
+        choice_resource_blocked={},
+        left_entity=TaskEntity("task_a"),
+        start_or_end_left_entity=StartOrEnd.END,
+        right_entity=TaskEntity("task_b"),
+        start_or_end_right_entity=StartOrEnd.START,
+    )
+
+    # SpanBlocking: Block machine_2 during the span of tasks {task_c, task_d}
+    # If task_c is not scheduled, this should only block during task_d
+    span_blocking = SpanBlockingConstraint(
+        metadata=BlockingConstraintMetadata(
+            description="Safety monitoring for batch C+D"
+        ),
+        default_resource_blocked={"machine_2": 1},
+        choice_resource_blocked={},
+        entity=GroupEntity(frozenset(["task_c", "task_d"])),
+    )
+
+    # Create problem with blocking constraints
+    problem = GenericSchedulingImplProblem(
+        horizon=horizon,
+        durations_per_mode=durations_per_mode,
+        resource_consumptions=resource_consumptions,
+        successors=successors,
+        end_to_start_min_time_lags=end_to_start_min_time_lags,
+        non_skill_cumulative_resources=non_skill_cumulative_resources,
+        flexible_gap_blocking_constraints=[flexible_gap_blocking],
+        span_blocking_constraints=[span_blocking],
+        objective=Objective.MAKESPAN,
+    )
+
+    # Solve the problem
+    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver.init_model()
+    result = solver.solve(
+        time_limit=30,
+        parameters_cp=ParametersCp.default(),
+        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+    )
+
+    # Get solution
+    solution: GenericSchedulingImplSolution
+    solution, fit = result[-1]
+
+    # Verify solution satisfies all constraints
+    assert problem.satisfy(solution)
+
+    # Get evaluation
+    kpi = problem.evaluate(solution)
+    print(f"\nSolution KPIs: {kpi}")
+
+    # Print schedule
+    print("\nSchedule:")
+    for task in problem.tasks_list:
+        if solution.is_present(task):
+            start = solution.get_start_time(task)
+            end = solution.get_end_time(task)
+            print(f"  {task}: [{start:2d}, {end:2d}) - SCHEDULED")
+        else:
+            print(f"  {task}: NOT SCHEDULED (optional)")
+
+    # Additional assertions to verify blocking constraints behavior
+    # Test 1: If task_a is present, verify the gap blocking
+    if solution.is_present("task_a"):
+        end_a = solution.get_end_time("task_a")
+        start_b = solution.get_start_time("task_b")
+        gap_duration = start_b - end_a
+
+        print(f"\ntask_a is present: gap between task_a and task_b = {gap_duration}")
+        assert gap_duration >= 2, "Minimum gap constraint violated"
+
+        # The blocking constraint should prevent other tasks from using machine_1
+        # during the gap [end_a, start_b)
+        # We can't strictly test this without inspecting the solver internals,
+        # but we can at least verify the solution is valid
+
+    # Test 2: Verify span blocking for task_c + task_d
+    # If both are present, check they form a span
+    if solution.is_present("task_c"):
+        start_c = solution.get_start_time("task_c")
+        end_c = solution.get_end_time("task_c")
+        start_d = solution.get_start_time("task_d")
+        end_d = solution.get_end_time("task_d")
+
+        span_start = min(start_c, start_d)
+        span_end = max(end_c, end_d)
+        print(
+            f"\ntask_c is present: span of {{task_c, task_d}} = [{span_start}, {span_end})"
+        )
+
+        # The blocking reserves 1 unit of machine_2 during this span
+        # task_e should be scheduled considering this constraint
+        if solution.is_present("task_e"):
+            start_e = solution.get_start_time("task_e")
+            end_e = solution.get_end_time("task_e")
+            print(f"task_e: [{start_e}, {end_e})")
+
+    # Final check: solution is feasible
+    assert solution is not None
+
+
+def test_auto_with_resource_blocking_and_choices():
+    """Test optional tasks with resource blocking constraints.
+    This test verifies that resource blocking constraints work correctly
+    Blocking constraints:
+    1. FlexibleGapBlocking: Between Task A and Task B (both involved in blocking)
+       - If Task A is scheduled, machine_1 is blocked during gap A→B
+    2. SpanBlocking: During span of Tasks C+D (C is optional, D is mandatory)
+       - If C is present, blocks machine_2 during span of {C, D}
+       - If C is not present, blocks machine_2 during D's execution only
+    """
+    horizon = 30
+
+    # Task definitions
+    durations_per_mode = {
+        "task_a": {0: 4},  # Optional task, 4 hours
+        "task_b": {0: 3},  # Mandatory task, 3 hours
+        "task_c": {0: 5},  # Optional task, 5 hours
+        "task_d": {0: 2},  # Mandatory task, 2 hours
+        "task_e": {0: 6},  # Additional mandatory task to make it interesting
+    }
+
+    # Resource consumptions
+    resource_consumptions = {
+        "task_a": {0: {"machine_1": 1}},
+        "task_b": {0: {"machine_1": 1}},
+        "task_c": {0: {"machine_2": 1}},
+        "task_d": {0: {"machine_2": 1}},
+        "task_e": {0: {"machine_2": 1}},
+    }
+
+    # Machine capacities (both have capacity 2 to allow some parallelism)
+    non_skill_cumulative_resources = {
+        "machine_1": 2,
+        "machine_2": 2,
+    }
+
+    # Precedence: task_a must finish before task_b starts (if task_a is scheduled)
+    successors = {"task_a": ["task_b"]}
+
+    # Minimum 2-hour gap between task_a end and task_b start (setup time)
+    end_to_start_min_time_lags = [("task_a", "task_b", 2)]
+
+    # FlexibleGapBlocking: Block machine_1 during the gap task_a→task_b
+    # This should only be enforced if task_a is present
+    flexible_gap_blocking = FlexibleGapBlockingConstraint(
+        metadata=BlockingConstraintMetadata(
+            description="Setup time blocking between task_a and task_b",
+            name_choice="choice_flex_0",
+        ),
+        default_resource_blocked={},
+        # Different choice of resource blocked.
+        choice_resource_blocked={0: {"machine_1": 3}, 1: {"machine_2": 1}},
+        left_entity=TaskEntity("task_a"),
+        start_or_end_left_entity=StartOrEnd.END,
+        right_entity=TaskEntity("task_b"),
+        start_or_end_right_entity=StartOrEnd.START,
+    )
+
+    # SpanBlocking: Block machine_2 during the span of tasks {task_c, task_d}
+    # If task_c is not scheduled, this should only block during task_d
+    span_blocking = SpanBlockingConstraint(
+        metadata=BlockingConstraintMetadata(
+            description="Safety monitoring for batch C+D", name_choice="choice_span_0"
+        ),
+        default_resource_blocked={"machine_1": 1},
+        choice_resource_blocked={0: {"machine_1": 0}, 1: {"machine_1": 1}},
+        entity=GroupEntity(frozenset(["task_c", "task_d"])),
+    )
+
+    # Create problem with blocking constraints
+    problem = GenericSchedulingImplProblem(
+        horizon=horizon,
+        durations_per_mode=durations_per_mode,
+        resource_consumptions=resource_consumptions,
+        successors=successors,
+        end_to_start_min_time_lags=end_to_start_min_time_lags,
+        non_skill_cumulative_resources=non_skill_cumulative_resources,
+        flexible_gap_blocking_constraints=[flexible_gap_blocking],
+        span_blocking_constraints=[span_blocking],
+        objective=Objective.MAKESPAN,
+    )
+
+    # Solve the problem
+    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver.init_model()
+    result = solver.solve(
+        time_limit=30,
+        parameters_cp=ParametersCp.default(),
+        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+    )
+
+    # Get solution
+    solution: GenericSchedulingImplSolution
+    solution, fit = result[-1]
+
+    # Verify solution satisfies all constraints
+    assert problem.satisfy(solution)
+    # The mode 0 is unsat !!
+    assert solution.get_choice_of_resource_blocking(flexible_gap_blocking) == 1
+    # Get evaluation
+    kpi = problem.evaluate(solution)
+    print(f"\nSolution KPIs: {kpi}")
+
+    # Print schedule
+    print("\nSchedule:")
+    for task in problem.tasks_list:
+        if solution.is_present(task):
+            start = solution.get_start_time(task)
+            end = solution.get_end_time(task)
+            print(f"  {task}: [{start:2d}, {end:2d}) - SCHEDULED")
+        else:
+            print(f"  {task}: NOT SCHEDULED (optional)")
+
+    # Additional assertions to verify blocking constraints behavior
+    # Test 1: If task_a is present, verify the gap blocking
+    if solution.is_present("task_a"):
+        end_a = solution.get_end_time("task_a")
+        start_b = solution.get_start_time("task_b")
+        gap_duration = start_b - end_a
+
+        print(f"\ntask_a is present: gap between task_a and task_b = {gap_duration}")
+        assert gap_duration >= 2, "Minimum gap constraint violated"
+
+        # The blocking constraint should prevent other tasks from using machine_1
+        # during the gap [end_a, start_b)
+        # We can't strictly test this without inspecting the solver internals,
+        # but we can at least verify the solution is valid
+
+    # Test 2: Verify span blocking for task_c + task_d
+    # If both are present, check they form a span
+    if solution.is_present("task_c"):
+        start_c = solution.get_start_time("task_c")
+        end_c = solution.get_end_time("task_c")
+        start_d = solution.get_start_time("task_d")
+        end_d = solution.get_end_time("task_d")
+
+        span_start = min(start_c, start_d)
+        span_end = max(end_c, end_d)
+        print(
+            f"\ntask_c is present: span of {{task_c, task_d}} = [{span_start}, {span_end})"
+        )
+
+        # The blocking reserves 1 unit of machine_2 during this span
+        # task_e should be scheduled considering this constraint
+        if solution.is_present("task_e"):
+            start_e = solution.get_start_time("task_e")
+            end_e = solution.get_end_time("task_e")
+            print(f"task_e: [{start_e}, {end_e})")
+
+    # Final check: solution is feasible
+    assert solution is not None
+
+
 def test_start_to_end_time_lag():
     problem = GenericSchedulingImplProblem(
         horizon=10,

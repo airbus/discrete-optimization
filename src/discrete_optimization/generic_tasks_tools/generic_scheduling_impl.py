@@ -824,6 +824,16 @@ class GenericSchedulingImplSolution(
             return set()
         return set(self.raw_sol.task_variables[task].allocated)
 
+    @optional_override_implem
+    def get_choice_of_resource_blocking(
+        self,
+        blocking_constraint: SpanBlockingConstraint | FlexibleGapBlockingConstraint,
+    ) -> int | None:
+        if not blocking_constraint.has_a_choice():
+            return None
+        tag = blocking_constraint.metadata.name_choice
+        return self.raw_sol.metadata[tag]
+
     def copy(self) -> Solution:
         return GenericSchedulingImplSolution(
             problem=self.problem, raw_sol=deepcopy(self.raw_sol)

@@ -1,10 +1,10 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-
+from collections import defaultdict
 from typing import Any, Generic
 
-from ortools.sat.python.cp_model import IntervalVar, IntVar, LinearExprT
+from ortools.sat.python.cp_model import Domain, IntervalVar, IntVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.entities import (
@@ -59,6 +59,7 @@ class ResourceBlockingCpSatSolver(
     _intervals_entity: dict[SchedulingEntity, IntVar]
     _bounds_entity: dict[SchedulingEntity, IntVar]
     _choices_blocking_constraint_vars: dict[str, dict[int, IntVar]]
+    _choices_demands_variable: dict[str, dict[CumulativeResource, IntVar]]
 
     def init_model(self, **kwargs: Any) -> None:
         """Initialize model and reset blocking interval storage."""
@@ -68,6 +69,8 @@ class ResourceBlockingCpSatSolver(
             list[tuple[IntervalVar, int, BlockingConstraintMetadata]],
         ] = {}
         self._entity_active: dict[SchedulingEntity[Task], LinearExprT] = {}
+        self._choices_blocking_constraint_vars = {}
+        self._choices_demands_variable = {}
 
     def constrain_group_entity_times(self, entity: GroupEntity) -> None:
         """Add constraints for group entity start/end times.
@@ -406,7 +409,52 @@ class ResourceBlockingCpSatSolver(
                 self._blocking_intervals[resource].append(
                     (gap_interval, demand, metadata)
                 )
-            # TODO : create the choice vars.
+            if constraint.has_a_choice():
+                name_choice = metadata.name_choice
+                self._choices_blocking_constraint_vars[name_choice] = {}
+                self._choices_demands_variable[name_choice] = {}
+                resources = set()
+                possible_values_per_resource = defaultdict(set)
+                for value in constraint.choice_resource_blocked:
+                    var = self.cp_model.new_bool_var(f"{name_choice}_{value}")
+                    self._choices_blocking_constraint_vars[name_choice][value] = var
+                    resources.update(
+                        set(constraint.choice_resource_blocked[value].keys())
+                    )
+                    for r in constraint.choice_resource_blocked[value]:
+                        possible_values_per_resource[r].add(
+                            constraint.choice_resource_blocked[value][r]
+                        )
+                self.cp_model.add_exactly_one(
+                    self._choices_blocking_constraint_vars[name_choice].values()
+                )
+                for r in resources:
+                    self._choices_demands_variable[name_choice][r] = (
+                        self.cp_model.new_int_var_from_domain(
+                            domain=Domain.from_values(
+                                list(possible_values_per_resource[r]) + [0]
+                            ),
+                            name=f"{name_choice}_{r}",
+                        )
+                    )
+                for value in constraint.choice_resource_blocked:
+                    for r in constraint.choice_resource_blocked[value]:
+                        self.cp_model.add(
+                            self._choices_demands_variable[name_choice][r]
+                            == constraint.choice_resource_blocked[value][r]
+                        ).only_enforce_if(
+                            self._choices_blocking_constraint_vars[name_choice][value]
+                        )
+                for r in resources:
+                    if r not in self._blocking_intervals:
+                        self._blocking_intervals[r] = []
+                    self._blocking_intervals[r].append(
+                        (
+                            gap_interval,
+                            self._choices_demands_variable[name_choice][r],
+                            metadata,
+                        )
+                    )
 
     def create_span_blocking_intervals(self) -> None:
         """Create interval variables for span blocking constraints.
@@ -428,6 +476,53 @@ class ResourceBlockingCpSatSolver(
                 self._blocking_intervals[resource].append(
                     (self._intervals_entity[entity], demand, metadata)
                 )
+
+            if constraint.has_a_choice():
+                name_choice = metadata.name_choice
+                self._choices_blocking_constraint_vars[name_choice] = {}
+                self._choices_demands_variable[name_choice] = {}
+                resources = set()
+                possible_values_per_resource = defaultdict(set)
+                for value in constraint.choice_resource_blocked:
+                    var = self.cp_model.new_bool_var(f"{name_choice}_{value}")
+                    self._choices_blocking_constraint_vars[name_choice][value] = var
+                    resources.update(
+                        set(constraint.choice_resource_blocked[value].keys())
+                    )
+                    for r in constraint.choice_resource_blocked[value]:
+                        possible_values_per_resource[r].add(
+                            constraint.choice_resource_blocked[value][r]
+                        )
+                self.cp_model.add_exactly_one(
+                    self._choices_blocking_constraint_vars[name_choice].values()
+                )
+                for r in resources:
+                    self._choices_demands_variable[name_choice][r] = (
+                        self.cp_model.new_int_var_from_domain(
+                            domain=Domain.from_values(
+                                list(possible_values_per_resource[r]) + [0]
+                            ),
+                            name=f"{name_choice}_{r}",
+                        )
+                    )
+                for value in constraint.choice_resource_blocked:
+                    for r in constraint.choice_resource_blocked[value]:
+                        self.cp_model.add(
+                            self._choices_demands_variable[name_choice][r]
+                            == constraint.choice_resource_blocked[value][r]
+                        ).only_enforce_if(
+                            self._choices_blocking_constraint_vars[name_choice][value]
+                        )
+                for r in resources:
+                    if r not in self._blocking_intervals:
+                        self._blocking_intervals[r] = []
+                    self._blocking_intervals[r].append(
+                        (
+                            self._intervals_entity[entity],
+                            self._choices_demands_variable[name_choice][r],
+                            metadata,
+                        )
+                    )
 
     def get_blocking_intervals_and_demands(
         self, resource: CumulativeResource

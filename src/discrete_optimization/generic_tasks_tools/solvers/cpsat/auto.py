@@ -1295,7 +1295,24 @@ class GenericSchedulingAutoCpSatSolver(
                     allocated=allocated,
                     is_present=True,
                 )
-        return RawSolution(task_variables=task_variables)
+        metadata = {}
+        # Stores other decision
+        for c in (
+            self.problem.get_flexible_gap_blocking_constraints()
+            + self.problem.get_span_blocking_constraints()
+        ):
+            if c.has_a_choice():
+                tag = c.metadata.name_choice
+                choice = None
+                for val in self._choices_blocking_constraint_vars[tag]:
+                    if cpsolvercb.value(
+                        self._choices_blocking_constraint_vars[tag][val]
+                    ):
+                        choice = val
+                        break
+                metadata[tag] = choice
+
+        return RawSolution(task_variables=task_variables, metadata=metadata)
 
     def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
         # construct generic tasks variables
