@@ -41,7 +41,7 @@ on:
 
 jobs:
   build-doc:
-    timeout-minutes: 5
+    timeout-minutes: 10
     outputs:
       doc_version: ${{ steps.sphinx-build.outputs.doc_version }}
     runs-on: ubuntu-latest
