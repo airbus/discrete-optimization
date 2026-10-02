@@ -3,7 +3,6 @@
 #  LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
-import logging
 from collections.abc import Container, Hashable, Iterable
 from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
@@ -383,9 +382,9 @@ class GenericSchedulingImplProblem(
         try:
             return self.resource_consumptions[task][mode][resource]
         except KeyError:
-            logging.warning(
-                f"Cumulative resource consumption requested on {resource}, {task}, {mode}, non existing"
-            )
+            # logging.warning(
+            #    f"Cumulative resource consumption requested on {resource}, {task}, {mode}, non existing"
+            # )
             return 0
 
     def get_no_overlap(self) -> set[frozenset[Task]]:

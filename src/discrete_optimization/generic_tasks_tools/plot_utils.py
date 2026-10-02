@@ -180,7 +180,7 @@ def plot_task_gantt(
         ax.set_title("Gantt Task")
     else:
         ax.set_title(title)
-    tasks = scheduling_problem.tasks_list
+    tasks = scheduling_sol.get_present_tasks()
     nb_task = len(tasks)
     sorted_task_by_start = sorted(
         tasks,

@@ -80,8 +80,11 @@ class CalendarResourceGenericCpSatSolver(
         )
 
     def create_calendar_resources_constraint(self, resource: Resource):
-        if not self.problem.has_any_calendar_preempted():
-            super().create_cumulative_constraint_including_blocking(resource)
+        if (
+            not self.problem.has_any_calendar_preempted()
+            or resource not in self.problem.cumulative_resources_list
+        ):
+            super().create_calendar_resources_constraint(resource)
             return
         decomposition = (
             self.problem.compute_calendar_break_and_task_for_cumulative_decomposition(
@@ -130,11 +133,12 @@ class CalendarResourceGenericCpSatSolver(
                 )
                 for f in decomp["calendar_tasks"]
             ]
-            current_reservation = [
-                x
-                for x in reservation_blocking
-                if x[1] + decomposition["val"] <= capacity
-            ]
+            # current_reservation = [
+            #    x
+            #    for x in reservation_blocking
+            #    if x[1] + decomp["val"] <= capacity
+            # ]
+            current_reservation = []
             all_intervals = []
             all_intervals.extend(itvs)
             all_intervals.extend(active_blocking)
