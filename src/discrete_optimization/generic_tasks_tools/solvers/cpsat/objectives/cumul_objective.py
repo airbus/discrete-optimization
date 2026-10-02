@@ -12,6 +12,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     UnaryResource,
 )
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
 )
@@ -351,7 +352,12 @@ class CumulCostModelerCpSat(ObjectiveModelerCpSat):
     def __init__(
         self,
         solver: GenericSchedulingAutoCpSatSolver[
-            Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+            Task,
+            UnaryResource,
+            Skill,
+            NonSkillCumulativeResource,
+            NonRenewableResource,
+            ExclusionResource,
         ],
         objective_computer: CumulCostComputer,
         modelisation_dispersion: ModelisationDispersion = ModelisationDispersion.EXACT,

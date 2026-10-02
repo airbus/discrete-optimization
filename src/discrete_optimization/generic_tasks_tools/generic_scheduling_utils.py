@@ -112,6 +112,7 @@ class Objective(Enum):
     EARLINESS_TARDINESS = "earliness_tardiness"
     SCHEDULE_CHANGES = "scheduling_changes"
 
+    NB_CAL_PREEMPTED_TASKS = "nb_cal_preempted_tasks"
     CUMUL_COST = "cumulative_cost"
     TIME_PENALTY = "time_penalty"
 

@@ -10,6 +10,7 @@ from ortools.sat.python.cp_model import LinearExpr
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
 )
@@ -35,13 +36,23 @@ class ObjectiveModelerCpSat(
 ):
     objective_computer: ObjectiveComputer
     solver: GenericSchedulingAutoCpSatSolver[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]
 
     def __init__(
         self,
         solver: GenericSchedulingAutoCpSatSolver[
-            Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+            Task,
+            UnaryResource,
+            Skill,
+            NonSkillCumulativeResource,
+            NonRenewableResource,
+            ExclusionResource,
         ],
         objective_computer: ObjectiveComputer,
     ) -> None:
