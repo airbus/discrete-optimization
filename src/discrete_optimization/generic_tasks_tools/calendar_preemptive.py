@@ -194,6 +194,7 @@ class CalendarPreemptiveProblem(
         # Compute using the implementation from compute_task_durations_with_calendars
         # but inline it here to work directly with problem data
         resource_calendar_dict = {}
+        cum_resource_calendar_dict = {}
         durations = {}
         task_mode_to_calendar = {}
         for task in self.tasks_list:
@@ -226,11 +227,15 @@ class CalendarPreemptiveProblem(
                     calendar_key = tuple(sorted(resource_consumption.items()))
                 # Compute binary calendar if not cached
                 if calendar_key not in resource_calendar_dict:
+                    logger.info(f"{calendar_key} not in resource_calendar_dict")
                     binary_calendar = compute_binary_calendar_for_resource_consumption(
                         resource_availabilities=resource_availabilities,
                         resource_consumption=resource_consumption,
                     )
                     resource_calendar_dict[calendar_key] = binary_calendar
+                    cum_resource_calendar_dict[calendar_key] = np.cumsum(
+                        binary_calendar
+                    )
 
                 task_mode_to_calendar[(task, mode)] = calendar_key
                 if len(resource_consumption) == 0:
@@ -245,7 +250,9 @@ class CalendarPreemptiveProblem(
                     durations[(task, mode)] = compute_duration_with_calendar_preemption(
                         orig_duration=duration,
                         resource_calendar=binary_calendar,
-                        cumulative_resource_calendar=np.cumsum(binary_calendar),
+                        cumulative_resource_calendar=cum_resource_calendar_dict[
+                            calendar_key
+                        ],
                     )
         self.calendar_preemption_data = CalendarPreemptionData(
             durations=durations,
@@ -504,9 +511,10 @@ def compute_duration_with_calendar_preemption(
 
     Example:
         If resource_calendar = [1, 1, 0, 1, 1] and orig_duration = 3:
-        - Starting at t=0: work at t=0,1,3 → duration = 4
+        - Starting at t=0: work at t=0,1,3 → duration = 4 (takes 4 time units to complete 3 work units)
         - Starting at t=1: work at t=1,3,4 → duration = 4
-        - Starting at t=3: work at t=3,4 → duration = 2 (only 2 units available)
+        - Starting at t=3: only 2 work units available (t=3,4) → duration = -1 (cannot complete)
+        - Starting at t=4: only 1 work unit available → duration = -1 (cannot complete)
 
     """
     duration = -np.ones((cumulative_resource_calendar.shape[0]))
@@ -534,30 +542,40 @@ def compute_duration_with_calendar_preemption(
             continue
 
         # Find when we complete orig_duration work units starting at time i
-        index = next(
-            (
-                j
-                for j in range(i, cumulative_resource_calendar.shape[0])
-                if cumulative_resource_calendar[j] == x + orig_duration - 1
-            ),
-            None,
+        # We need cumsum[j] == x + orig_duration - 1
+        # (the -1 accounts for the work unit at time i itself)
+        target_cumsum = x + orig_duration - 1
+
+        # Use binary search instead of linear search for O(log n) performance
+        # searchsorted finds the first index where cumsum >= target
+        index = np.searchsorted(
+            cumulative_resource_calendar[i:], target_cumsum, side="left"
         )
 
-        if index is not None:
-            duration[i] = index - i + 1
-            cur_duration = duration[i]
-            if i >= 1:
-                if duration[i] == duration[i - 1]:
-                    current_interval[1] = i
-                else:
-                    prev_d = duration[i - 1]
-                    if prev_d not in dict_of_interval_per_duration:
-                        dict_of_interval_per_duration[prev_d] = []
-                    dict_of_interval_per_duration[prev_d] += [
-                        [current_interval[0], current_interval[1]]
-                    ]
-                    current_interval = [i, i]
+        # Adjust index to absolute position
+        if index < len(cumulative_resource_calendar) - i:
+            index = i + index
+
+            # Verify we found the exact value (not just >=)
+            if cumulative_resource_calendar[index] == target_cumsum:
+                duration[i] = index - i + 1
+                cur_duration = duration[i]
+                if i >= 1:
+                    if duration[i] == duration[i - 1]:
+                        current_interval[1] = i
+                    else:
+                        prev_d = duration[i - 1]
+                        if prev_d not in dict_of_interval_per_duration:
+                            dict_of_interval_per_duration[prev_d] = []
+                        dict_of_interval_per_duration[prev_d] += [
+                            [current_interval[0], current_interval[1]]
+                        ]
+                        current_interval = [i, i]
+            else:
+                # Exact value not found - cannot complete task from this start time
+                break
         else:
+            # Not enough horizon remaining
             break
 
     if current_interval[0] != current_interval[1]:
