@@ -49,7 +49,10 @@ class MultimodeSolution(TasksSolution[Task]):
         return self.has_a_mode(task)
 
     def check_mode_constraint(self) -> bool:
-        if len(self.problem.get_mode_constraints()) == 0:
+        if (
+            len(self.problem.get_mode_constraints()) == 0
+            and len(self.problem.get_mode_subset_constraints()) == 0
+        ):
             return True
         for constraint in self.problem.get_mode_constraints():
             # First task that
@@ -68,6 +71,31 @@ class MultimodeSolution(TasksSolution[Task]):
             if mode_constraint == ModeConstraintType.UNORDERED:
                 b = (not any(self.get_mode(t) == m for t, m in list_task_mode)) or all(
                     self.get_mode(t) == m for t, m in list_task_mode
+                )
+                if not b:
+                    logger.debug(f"Mode constraint not satisfied, {list_task_mode}")
+        for subset_constraint in self.problem.get_mode_subset_constraints():
+            mode_constraint = subset_constraint[0]
+            list_task_mode = subset_constraint[1]
+            if mode_constraint == ModeConstraintType.SORTED_IMPLICATION:
+                t0, modes_0 = list_task_mode[0]
+                mode_t0 = self.get_mode(t0)
+                if mode_t0 in modes_0:
+                    for i in range(1, len(list_task_mode)):
+                        t, modes_i = list_task_mode[i]
+                        if not self.is_present(t):
+                            continue
+                        if self.get_mode(t) not in modes_i:
+                            logger.debug(
+                                f"Mode constraint not satisfied, mode of {t} not in {modes_i}"
+                            )
+                            return False
+            if mode_constraint == ModeConstraintType.UNORDERED:
+                b = (
+                    not any(self.get_mode(t) in modes for t, modes in list_task_mode)
+                ) or all(
+                    self.get_mode(t) or not self.is_present(t) in modes
+                    for t, modes in list_task_mode
                 )
                 if not b:
                     logger.debug(f"Mode constraint not satisfied, {list_task_mode}")
@@ -109,6 +137,26 @@ class MultimodeProblem(TasksProblem[Task]):
         that implies the other choice of mode.
         For example (SORTED_IMPLICATION, [(T1, 1), (T2, 2), (T3, 1)]) means :
         if T1 is in mode 1, T2 is in mode 2, T3 is in mode 1..
+        This can be useful to model mode choice that has an influence on the
+        future mode choice. For example, in an assembly line
+        if we choose a given station path for a product, it should stay on it !
+        if mode_constraint_type == ModeConstraintType.SORTED_IMPLICATION:
+            then the constraint is not active only when T1 is in mode 1,
+            it should be true if any of the task,mode is active.
+            So if mode(T2)==2 then the other mode are also forced!
+        :return:
+        """
+        return []
+
+    @optional_override
+    def get_mode_subset_constraints(
+        self,
+    ) -> list[tuple[ModeConstraintType, list[tuple[Task, set[int]]]]]:
+        """
+        An element of the list is a tuple of (ModeConstraintType, list of (task,mode))
+        that implies the other choice of mode.
+        For example (SORTED_IMPLICATION, [(T1, {1, 2}), (T2, {2}), (T3, {1, 3})]) means :
+        if T1 is in mode 1 or 2, T2 is in mode 2, T3 is in mode 1 or 3..
         This can be useful to model mode choice that has an influence on the
         future mode choice. For example, in an assembly line
         if we choose a given station path for a product, it should stay on it !

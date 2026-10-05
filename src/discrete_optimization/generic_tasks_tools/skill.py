@@ -15,7 +15,6 @@ from typing import Generic, TypeVar
 import wrapt
 
 from discrete_optimization.generic_tasks_tools.allocation import (
-    AllocationProblem,
     AllocationSolution,
     UnaryResource,
 )
@@ -25,8 +24,10 @@ from discrete_optimization.generic_tasks_tools.calendar_resource import (
 )
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     CumulativeResourceProblem,
-    CumulativeResourceSolution,
     OtherCalendarResource,
+)
+from discrete_optimization.generic_tasks_tools.cumulative_resource_generic import (
+    CumulativeResourceGenericSolution,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,8 +39,7 @@ Resource = CumulativeResource | OtherCalendarResource
 
 
 class SkillProblem(
-    CumulativeResourceProblem[Task, CumulativeResource, OtherCalendarResource],
-    AllocationProblem[Task, UnaryResource],
+    CumulativeResourceProblem[Task, CumulativeResource, UnaryResource],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, OtherCalendarResource
     ],
@@ -134,7 +134,7 @@ class SkillProblem(
 
 
 class SkillSolution(
-    CumulativeResourceSolution[Task, CumulativeResource, OtherCalendarResource],
+    CumulativeResourceGenericSolution[Task, CumulativeResource, UnaryResource],
     AllocationSolution[Task, UnaryResource],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, OtherCalendarResource

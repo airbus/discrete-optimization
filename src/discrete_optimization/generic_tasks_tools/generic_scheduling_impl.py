@@ -154,6 +154,13 @@ class GenericSchedulingImplProblem(
             ],
         ],
     ] = field(default_factory=dict)
+    unary_resource_consumptions_dependent: dict[
+        Task,
+        dict[
+            int,
+            dict[CumulativeResource | NonRenewableResource, dict[UnaryResource, int]],
+        ],
+    ] = field(default_factory=dict)
     successors: dict[Task, set[Task]] = field(default_factory=dict)
     unary_resources: set[UnaryResource] = field(default_factory=set)
     unary_resources_skills: dict[UnaryResource, dict[Skill, int]] = field(
@@ -196,6 +203,9 @@ class GenericSchedulingImplProblem(
     mode_constraints: list[tuple[ModeConstraintType, list[tuple[Task, int]]]] = field(
         default_factory=list
     )
+    mode_subset_constraints: list[
+        tuple[ModeConstraintType, list[tuple[Task, set[int]]]]
+    ] = field(default_factory=list)
     same_unary_allocation: list[set[Task]] = field(default_factory=list)
     objective: InitVar[Objective | Iterable[tuple[Objective, int]]] = Objective.MAKESPAN
     custom_evaluate_fn: Optional[Callable[[GenericSchedulingImplSolution], int]] = None
@@ -275,6 +285,24 @@ class GenericSchedulingImplProblem(
             "There are duplicates in resources list, "
             "potentially because calendar and non-renewable resources intersect."
         )
+
+    @optional_override_implem
+    def get_resource_consumption_when_unary_resource_allocated(
+        self, task: Task, mode: int, resource: Resource, unary_resource: UnaryResource
+    ):
+        if task in self.unary_resource_consumptions_dependent:
+            if mode in self.unary_resource_consumptions_dependent[task]:
+                if resource in self.unary_resource_consumptions_dependent[task][mode]:
+                    if (
+                        unary_resource
+                        in self.unary_resource_consumptions_dependent[task][mode][
+                            resource
+                        ]
+                    ):
+                        return self.unary_resource_consumptions_dependent[task][mode][
+                            resource
+                        ][unary_resource]
+        return 0
 
     @optional_override_implem
     def is_task_mode_excluding_others(
@@ -407,6 +435,11 @@ class GenericSchedulingImplProblem(
         self,
     ) -> list[tuple[ModeConstraintType, list[tuple[Task, int]]]]:
         return self.mode_constraints
+
+    def get_mode_subset_constraints(
+        self,
+    ) -> list[tuple[ModeConstraintType, list[tuple[Task, set[int]]]]]:
+        return self.mode_subset_constraints
 
     def get_same_unary_allocation(self) -> list[set[Task]]:
         return self.same_unary_allocation

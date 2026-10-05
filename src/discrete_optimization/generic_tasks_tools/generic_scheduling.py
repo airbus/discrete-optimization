@@ -17,9 +17,8 @@ from discrete_optimization.generic_tasks_tools.alternative_subproblems import (
     AlternativeSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.calendar_preemptive import (
-    CalendarPreemptiveProblem,
-    CalendarPreemptiveSolution,
+from discrete_optimization.generic_tasks_tools.cumulative_resource_generic import (
+    CumulativeResourceGenericProblem,
 )
 from discrete_optimization.generic_tasks_tools.enums import MinOrMax, StartOrEnd
 from discrete_optimization.generic_tasks_tools.exclusions import (
@@ -78,10 +77,12 @@ AnyResource = NonRenewableResource | Resource
 
 
 class GenericSchedulingProblem(
+    # ResourceBlockingProblem[Task, CumulativeResource, UnaryResource],
+    # CalendarPreemptiveProblem[Task, CumulativeResource, UnaryResource],
     ResourceBlockingProblem[Task, CumulativeResource, UnaryResource],
-    CalendarPreemptiveProblem[Task, CumulativeResource, UnaryResource],
     ExclusionProblem[Task, ExclusionResource],
     SkillProblem[Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource],
+    CumulativeResourceGenericProblem[Task, CumulativeResource, UnaryResource],
     NonRenewableResourceProblem[Task, NonRenewableResource],
     PrecedenceSchedulingProblem[Task],
     TimelagProblem[Task],
@@ -670,7 +671,8 @@ class GenericSchedulingProblem(
 
 class GenericSchedulingSolution(
     ResourceBlockingSolution[Task, CumulativeResource, UnaryResource],
-    CalendarPreemptiveSolution[Task, CumulativeResource, UnaryResource],
+    # CalendarPreemptiveSolution[Task, CumulativeResource, UnaryResource],
+    # CumulativeResourceGenericSolution[Task, CumulativeResource, UnaryResource],
     ExclusionSolution[Task, ExclusionResource],
     SkillSolution[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource

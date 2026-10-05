@@ -69,6 +69,52 @@ class MultimodeCpSatSolver(TasksCpSatSolver[Task], MultimodeCpSolver[Task]):
                 or_ = self.cp_model.NewBoolVar(f"constraint_mode_active_{i}")
                 self.cp_model.add(sum(vars) == len(vars)).only_enforce_if(or_)
                 self.cp_model.add(sum(vars) == 0).only_enforce_if(or_.Not())
+        self.add_mode_subset_constraints()
+
+    def add_mode_subset_constraints(self):
+        for i, constraint in enumerate(self.problem.get_mode_subset_constraints()):
+            mode_constraint, list_task_mode = constraint
+            vars = [
+                self.cp_model.new_bool_var(f"{i}_task_{t}_") for t, _ in list_task_mode
+            ]
+            for k in range(len(vars)):
+                task = list_task_mode[k][0]
+                if self.problem.is_optional(task):
+                    # Deactivate the constraint when not present
+                    self.cp_model.add(
+                        vars[k]
+                        == sum(
+                            [
+                                self.get_task_mode_is_present_variable(
+                                    task=list_task_mode[k][0], mode=m
+                                )
+                                for m in list_task_mode[k][1]
+                            ]
+                        )
+                        + ~self.get_task_is_present_variable(task)
+                    )
+                else:
+                    self.cp_model.add(
+                        vars[k]
+                        == sum(
+                            [
+                                self.get_task_mode_is_present_variable(
+                                    task=list_task_mode[k][0], mode=m
+                                )
+                                for m in list_task_mode[k][1]
+                            ]
+                        )
+                    )
+            if mode_constraint == ModeConstraintType.SORTED_IMPLICATION:
+                # All true if vars[0] is true.
+                self.cp_model.AddBoolAnd(vars).only_enforce_if(vars[0])
+                self.cp_model.add(sum(vars) == len(vars)).only_enforce_if(vars[0])
+                for k in range(1, len(vars)):
+                    self.cp_model.add_implication(vars[k - 1], vars[k])
+            if mode_constraint == ModeConstraintType.UNORDERED:
+                or_ = self.cp_model.NewBoolVar(f"constraint_mode_active_{i}")
+                self.cp_model.add(sum(vars) == len(vars)).only_enforce_if(or_)
+                self.cp_model.add(sum(vars) == 0).only_enforce_if(or_.Not())
 
 
 class SinglemodeCpSatSolver(MultimodeCpSatSolver[Task]):
