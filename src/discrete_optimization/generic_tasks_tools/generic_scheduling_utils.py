@@ -113,6 +113,7 @@ class Objective(Enum):
     SCHEDULE_CHANGES = "scheduling_changes"
 
     NB_CAL_PREEMPTED_TASKS = "nb_cal_preempted_tasks"
+    COST_ON_ALTERNATIVE_SUBPROBLEMS = "cost_on_alternatives_subproblem"
     CUMUL_COST = "cumulative_cost"
     TIME_PENALTY = "time_penalty"
 

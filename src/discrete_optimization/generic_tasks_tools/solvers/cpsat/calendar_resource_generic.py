@@ -11,54 +11,71 @@ from ortools.sat.python.cp_model import IntervalVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.calendar_preemptive import (
-    CalendarPreemptiveProblem,
-)
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
     Resource,
+)
+from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    OtherCalendarResource,
+)
+from discrete_optimization.generic_tasks_tools.cumulative_resource_generic import (
+    CumulativeResourceGenericProblem,
 )
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     ResourceBlockingProblem,
 )
 from discrete_optimization.generic_tasks_tools.skill import NonSkillCumulativeResource
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.calendar_preemptive import (
+    CalendarPreemptiveCpSatSolver,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_blocking import (
     ResourceBlockingCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_usage_by_unary import (
+    ResourceUsageByUnaryResourceCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
     SchedulingCpSatSolver,
 )
 
 
-class ProblemWithCalendarPreemptiveAndResourceBlocking(
+class ProblemWithCalendarPreemptiveAndResourceBlockingAndUnaryResource(
     ResourceBlockingProblem[Task, NonSkillCumulativeResource, UnaryResource],
-    CalendarPreemptiveProblem[Task, NonSkillCumulativeResource, UnaryResource],
+    CumulativeResourceGenericProblem[Task, NonSkillCumulativeResource, UnaryResource],
     Generic[Task, NonSkillCumulativeResource, UnaryResource],
 ):
     pass
 
 
 class CalendarResourceGenericCpSatSolver(
+    CalendarPreemptiveCpSatSolver[
+        Task, NonSkillCumulativeResource, OtherCalendarResource
+    ],
     ResourceBlockingCpSatSolver[Task, NonSkillCumulativeResource, UnaryResource],
+    ResourceUsageByUnaryResourceCpSatSolver[
+        Task, NonSkillCumulativeResource, OtherCalendarResource, UnaryResource
+    ],
     SchedulingCpSatSolver[Task],
-    Generic[Task, NonSkillCumulativeResource, UnaryResource],
+    Generic[Task, NonSkillCumulativeResource, OtherCalendarResource, UnaryResource],
 ):
-    problem: ProblemWithCalendarPreemptiveAndResourceBlocking[
+    problem: ProblemWithCalendarPreemptiveAndResourceBlockingAndUnaryResource[
         Task, NonSkillCumulativeResource, UnaryResource
     ]
     use_no_overlap_for_capa_1: bool = True
     """Flag to use rather no_overlap constraint when resource capacity is 1."""
     use_cumulative_for_capa_1: bool = False
     """Flag to use rather cumulative constraint when resource capacity is 1."""
+    merged_demand_var_for_task: dict[
+        tuple[Task, NonSkillCumulativeResource], LinearExprT
+    ]
+    initialized_merged_demand_var_for_task: bool = False
 
     def get_resource_interval_and_consumption_for_task(
         self,
         resource: Resource,
         task: Task,
     ) -> tuple[IntervalVar, LinearExprT]:
-        return (
-            self.get_task_interval(task=task),
-            self.get_cumulative_resource_demand_variable(task=task, resource=resource),
-        )
+        conso = self.merged_demand_var_for_task[(task, resource)]
+        return self.get_task_interval(task=task), conso
 
     def get_resource_interval_and_consumption_for_task_and_mode(
         self, resource: Resource, task: Task, mode: int
@@ -68,18 +85,60 @@ class CalendarResourceGenericCpSatSolver(
         ):
             return (
                 self.get_task_mode_interval(task=task, mode=mode),
-                self.get_cumulative_resource_demand_variable(
-                    task=task, resource=resource
-                ),
+                self.merged_demand_var_for_task[(task, resource)],
             )
         return (
             self.get_task_mode_interval(task=task, mode=mode),
-            self.problem.get_cumulative_resource_consumption(
-                resource=resource, task=task, mode=mode
-            ),
+            self.merged_demand_var_for_task[(task, resource)],
         )
 
+    def initialize_merged_demand_var(self):
+        self.merged_demand_var_for_task = {}
+        for task in self.problem.tasks_list:
+            for resource in self.problem.cumulative_resources_list:
+                unary_demand = self.get_resource_demand_from_unary(
+                    task=task, resource=resource
+                )
+                if isinstance(unary_demand, int):
+                    self.merged_demand_var_for_task[(task, resource)] = (
+                        unary_demand
+                        + self.get_cumulative_resource_demand_variable(
+                            task=task, resource=resource
+                        )
+                    )
+                else:
+                    # TODO reduce domain
+                    domain = self.problem.get_possible_cumulative_resource_consumption_all_modes(
+                        resource=resource, task=task
+                    )
+                    possible_unary_demand = [
+                        self.problem.get_resource_consumption_when_unary_resource_allocated(
+                            task=task, mode=mode, unary_resource=ur, resource=resource
+                        )
+                        for mode in self.problem.get_task_modes(task)
+                        for ur in self.problem.unary_resources_list
+                    ]
+                    max_val = max(domain)
+                    max_unary_demand = max(possible_unary_demand)
+                    self.merged_demand_var_for_task[(task, resource)] = (
+                        self.cp_model.new_int_var(
+                            lb=0,
+                            ub=max_val + max_unary_demand,
+                            name=f"merged_conso_{resource}_{task}",
+                        )
+                    )
+                    self.cp_model.add(
+                        self.merged_demand_var_for_task[(task, resource)]
+                        == unary_demand
+                        + self.get_cumulative_resource_demand_variable(
+                            task=task, resource=resource
+                        )
+                    )
+        self.initialized_merged_demand_var_for_task = True
+
     def create_calendar_resources_constraint(self, resource: Resource):
+        if not self.initialized_merged_demand_var_for_task:
+            self.initialize_merged_demand_var()
         if (
             not self.problem.has_any_calendar_preempted()
             or resource not in self.problem.cumulative_resources_list
@@ -94,6 +153,9 @@ class CalendarResourceGenericCpSatSolver(
         capacity = self.problem.get_resource_max_capacity(resource)
         reservation_blocking, active_blocking = self.get_blocking_intervals_and_demands(
             resource
+        )
+        tasks_of_interest_with_unary_dependent = (
+            self.problem.get_tasks_of_interest_for_resource(resource)
         )
         for decomp in decomposition:
             subset_tasks = set([x[0] for x in decomp["set_task_mode_conso"]])
@@ -110,6 +172,7 @@ class CalendarResourceGenericCpSatSolver(
                     for m in modes:
                         if (t, m) in task_mode_of_interest:
                             task_mode_to_include.add((t, m))
+            task_to_include_as_one.update(tasks_of_interest_with_unary_dependent)
             itvs = [
                 self.get_resource_interval_and_consumption_for_task(
                     resource=resource, task=t

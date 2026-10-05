@@ -9,6 +9,9 @@ from ortools.sat.python.cp_model import IntervalVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    OtherCalendarResource,
+)
 from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
@@ -23,12 +26,6 @@ from discrete_optimization.generic_tasks_tools.skill import (
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.alternative_subproblems import (
     AlternativeSubproblemCpSatSolver,
-)
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.calendar_preemptive import (
-    CalendarPreemptiveCpSatSolver,
-)
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.calendar_resource_generic import (
-    CalendarResourceGenericCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.exclusions import (
     ExclusionCpSatSolver,
@@ -51,23 +48,22 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.timelag import (
 
 
 class GenericSchedulingCpSatSolver(
-    CalendarResourceGenericCpSatSolver[Task, NonSkillCumulativeResource, UnaryResource],
-    SkillSchedulingCpSatSolver[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource
-    ],
-    NonRenewableCpSatSolver[Task, NonRenewableResource],
-    PrecedenceSchedulingCpSatSolver[Task],
-    TimelagCpSatSolver[Task],
-    NoOverlapCpSatSolver[Task],
-    AlternativeSubproblemCpSatSolver[Task],
-    CalendarPreemptiveCpSatSolver[Task, NonSkillCumulativeResource, UnaryResource],
     ExclusionCpSatSolver[Task, ExclusionResource],
+    AlternativeSubproblemCpSatSolver[Task],
+    NoOverlapCpSatSolver[Task],
+    TimelagCpSatSolver[Task],
+    PrecedenceSchedulingCpSatSolver[Task],
+    NonRenewableCpSatSolver[Task, NonRenewableResource],
+    SkillSchedulingCpSatSolver[
+        Task, UnaryResource, Skill, NonSkillCumulativeResource, OtherCalendarResource
+    ],
     Generic[
         Task,
         UnaryResource,
         Skill,
         NonSkillCumulativeResource,
         NonRenewableResource,
+        OtherCalendarResource,
         ExclusionResource,
     ],
 ):

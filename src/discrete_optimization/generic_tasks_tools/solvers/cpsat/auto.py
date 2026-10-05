@@ -82,6 +82,7 @@ class GenericSchedulingAutoCpSatSolver(
         Skill,
         NonSkillCumulativeResource,
         NonRenewableResource,
+        AnyResource,
         ExclusionResource,
     ],
     WarmstartMixin,

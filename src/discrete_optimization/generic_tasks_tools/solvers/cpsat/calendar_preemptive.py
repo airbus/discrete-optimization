@@ -32,6 +32,7 @@ class CalendarPreemptiveCpSatSolver(
     _indicator_variables: dict
     _is_preempted: dict
     _nb_preempted_tasks: LinearExpr
+    _nb_preempted_tasks_init = False
     _duration_per_mode: dict[tuple[Task, int], LinearExpr] = None
 
     def get_optional_duration_of_task(self, task: Task, mode: int) -> LinearExpr:
@@ -184,46 +185,52 @@ class CalendarPreemptiveCpSatSolver(
             )
 
     def compute_nb_preempted_tasks(self):
-        is_preempted_task_mode = {}
-        is_different_dur = {}
-        for t in self.problem.get_all_tasks_calendar_preempted():
-            for mode in self.problem.get_task_modes(t):
-                is_preempted_task_mode[t, mode] = self.cp_model.NewBoolVar(
-                    name=f"{t, mode}_preempted"
-                )
-                original_duration = self.problem.get_task_mode_duration(t, mode)
-                actual_dur = self.get_duration_expression(t)
-                is_present_mode = self.get_task_mode_is_present_variable(t, mode)
-                is_different_dur[t, mode] = self.cp_model.NewBoolVar(
-                    name=f"{t, mode}_is_diff_duration"
-                )
-                self.cp_model.add(actual_dur != original_duration).only_enforce_if(
-                    is_different_dur[t, mode]
-                )
-                self.cp_model.add(actual_dur == original_duration).only_enforce_if(
-                    ~is_different_dur[t, mode]
-                )
-                self.cp_model.add(is_preempted_task_mode[t, mode] == 1).only_enforce_if(
-                    is_present_mode, is_different_dur[t, mode]
-                )
-                if isinstance(is_present_mode, int):
-                    self.cp_model.add(
-                        is_preempted_task_mode[t, mode] == is_different_dur[t, mode]
+        if not self._nb_preempted_tasks_init:
+            is_preempted_task_mode = {}
+            is_different_dur = {}
+            for t in self.problem.get_all_tasks_calendar_preempted():
+                for mode in self.problem.get_task_modes(t):
+                    is_preempted_task_mode[t, mode] = self.cp_model.NewBoolVar(
+                        name=f"{t, mode}_preempted"
                     )
-                else:
-                    self.cp_model.add(
-                        is_preempted_task_mode[t, mode] == 0
-                    ).only_enforce_if(is_present_mode.Not(), is_different_dur[t, mode])
-                    self.cp_model.add(
-                        is_preempted_task_mode[t, mode] == 0
-                    ).only_enforce_if(is_present_mode, is_different_dur[t, mode].Not())
-                    self.cp_model.add(
-                        is_preempted_task_mode[t, mode] == 0
-                    ).only_enforce_if(
-                        is_present_mode.Not(), is_different_dur[t, mode].Not()
+                    original_duration = self.problem.get_task_mode_duration(t, mode)
+                    actual_dur = self.get_duration_expression(t)
+                    is_present_mode = self.get_task_mode_is_present_variable(t, mode)
+                    is_different_dur[t, mode] = self.cp_model.NewBoolVar(
+                        name=f"{t, mode}_is_diff_duration"
                     )
+                    self.cp_model.add(actual_dur != original_duration).only_enforce_if(
+                        is_different_dur[t, mode]
+                    )
+                    self.cp_model.add(actual_dur == original_duration).only_enforce_if(
+                        ~is_different_dur[t, mode]
+                    )
+                    self.cp_model.add(
+                        is_preempted_task_mode[t, mode] == 1
+                    ).only_enforce_if(is_present_mode, is_different_dur[t, mode])
+                    if isinstance(is_present_mode, int):
+                        self.cp_model.add(
+                            is_preempted_task_mode[t, mode] == is_different_dur[t, mode]
+                        )
+                    else:
+                        self.cp_model.add(
+                            is_preempted_task_mode[t, mode] == 0
+                        ).only_enforce_if(
+                            is_present_mode.Not(), is_different_dur[t, mode]
+                        )
+                        self.cp_model.add(
+                            is_preempted_task_mode[t, mode] == 0
+                        ).only_enforce_if(
+                            is_present_mode, is_different_dur[t, mode].Not()
+                        )
+                        self.cp_model.add(
+                            is_preempted_task_mode[t, mode] == 0
+                        ).only_enforce_if(
+                            is_present_mode.Not(), is_different_dur[t, mode].Not()
+                        )
 
-        self._is_preempted = is_preempted_task_mode
-        self._nb_preempted_tasks = sum(
-            [is_preempted_task_mode[k] for k in is_preempted_task_mode]
-        )
+            self._is_preempted = is_preempted_task_mode
+            self._nb_preempted_tasks = sum(
+                [is_preempted_task_mode[k] for k in is_preempted_task_mode]
+            )
+        return self._nb_preempted_tasks

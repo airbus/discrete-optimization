@@ -83,20 +83,49 @@ class ResourceBlockingCpSatSolver(
         """
         group_start = self._starts_entity[entity]
         group_end = self._ends_entity[entity]
-        self.cp_model.AddMinEquality(
-            group_start,
-            [
-                self.get_task_start_or_end_variable(task, StartOrEnd.START)
-                for task in entity.tasks
-            ],
-        )
-        self.cp_model.AddMaxEquality(
-            group_end,
-            [
-                self.get_task_start_or_end_variable(task, StartOrEnd.END)
-                for task in entity.tasks
-            ],
-        )
+        # TODO : extract this into an entity module
+        if any(self.problem.is_optional(t) for t in entity.tasks):
+            for task in entity.tasks:
+                if self.problem.is_optional(task):
+                    (
+                        self.cp_model.add(
+                            group_start
+                            <= self.get_task_start_or_end_variable(
+                                task, StartOrEnd.START
+                            )
+                        ).only_enforce_if(self.get_task_is_present_variable(task))
+                    )
+
+                    (
+                        self.cp_model.add(
+                            group_end
+                            >= self.get_task_start_or_end_variable(task, StartOrEnd.END)
+                        ).only_enforce_if(self.get_task_is_present_variable(task))
+                    )
+                else:
+                    self.cp_model.add(
+                        group_start
+                        <= self.get_task_start_or_end_variable(task, StartOrEnd.START)
+                    )
+                    self.cp_model.add(
+                        group_end
+                        >= self.get_task_start_or_end_variable(task, StartOrEnd.END)
+                    )
+        else:
+            self.cp_model.AddMinEquality(
+                group_start,
+                [
+                    self.get_task_start_or_end_variable(task, StartOrEnd.START)
+                    for task in entity.tasks
+                ],
+            )
+            self.cp_model.AddMaxEquality(
+                group_end,
+                [
+                    self.get_task_start_or_end_variable(task, StartOrEnd.END)
+                    for task in entity.tasks
+                ],
+            )
 
     def _get_tasks_from_entity(self, entity: SchedulingEntity) -> set[Task]:
         """Extract all tasks involved in a scheduling entity.
@@ -196,16 +225,17 @@ class ResourceBlockingCpSatSolver(
             if entity not in self._starts_entity:
                 tasks = self._get_tasks_from_entity(entity)
                 if len(tasks) == 1:
+                    task = list(tasks)[0]
                     self._starts_entity[entity] = self.get_task_start_or_end_variable(
-                        task=entity.task, start_or_end=StartOrEnd.START
+                        task=task, start_or_end=StartOrEnd.START
                     )
                     self._ends_entity[entity] = self.get_task_start_or_end_variable(
-                        task=entity.task, start_or_end=StartOrEnd.END
+                        task=task, start_or_end=StartOrEnd.END
                     )
                     self._durations_entity[entity] = (
                         self._ends_entity[entity] - self._starts_entity[entity]
                     )
-                    self._intervals_entity[entity] = self.get_task_interval(entity.task)
+                    self._intervals_entity[entity] = self.get_task_interval(task)
                 else:
                     lb_start = [
                         self.problem.get_task_start_or_end_lower_bound(

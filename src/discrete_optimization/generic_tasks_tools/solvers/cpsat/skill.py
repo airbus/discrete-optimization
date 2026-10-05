@@ -18,20 +18,16 @@ from discrete_optimization.generic_tasks_tools.skill import (
     Skill,
     SkillProblem,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
-    AllocationCpSatSolver,
-)
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumulative_resource import (
-    CumulativeResourceSchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.calendar_resource_generic import (
+    CalendarResourceGenericCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.utils import is_a_trivial_zero
 
 
 class SkillSchedulingCpSatSolver(
-    CumulativeResourceSchedulingCpSatSolver[
-        Task, CumulativeResource, OtherCalendarResource
+    CalendarResourceGenericCpSatSolver[
+        Task, CumulativeResource, OtherCalendarResource, UnaryResource
     ],
-    AllocationCpSatSolver[Task, UnaryResource],
     Generic[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, OtherCalendarResource
     ],
