@@ -42,7 +42,10 @@ class CumulativeResourceGenericSolution(
     def _compute_calendar_resource_consumption_np(
         self, resources: Iterable[Resource]
     ) -> np.ndarray:
-        if not self.problem.has_any_calendar_preempted():
+        if (
+            not self.problem.has_any_calendar_preempted()
+            and not self.problem.has_any_resource_consumption_depend_on_unary_resource()
+        ):
             # Fallback to CalendarResource checker.
             return super()._compute_calendar_resource_consumption_np(resources)
         # Override the util function, so that the cumulative calendar resource constraint

@@ -6,8 +6,8 @@ from __future__ import annotations
 from typing import Generic
 
 from discrete_optimization.generic_tasks_tools.allocation import (
-    AllocationProblem,
-    AllocationSolution,
+    MultimodeAllocationProblem,
+    MultiModeAllocationSolution,
     Task,
     UnaryResource,
 )
@@ -23,7 +23,7 @@ from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 
 class ResourceUsageByUnaryResourceProblem(
-    AllocationProblem[Task, UnaryResource],
+    MultimodeAllocationProblem[Task, UnaryResource],
     CumulativeResourceProblem[Task, CumulativeResource, UnaryResource],
     Generic[Task, CumulativeResource, UnaryResource],
 ):
@@ -70,7 +70,7 @@ class ResourceUsageByUnaryResourceProblem(
 
 
 class ResourceUsageByUnarySolution(
-    AllocationSolution[Task, UnaryResource],
+    MultiModeAllocationSolution[Task, UnaryResource],
     CumulativeResourceSolution[Task, CumulativeResource, UnaryResource],
 ):
     problem: ResourceUsageByUnaryResourceProblem[

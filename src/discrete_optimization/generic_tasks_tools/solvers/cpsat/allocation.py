@@ -12,11 +12,15 @@ from ortools.sat.python.cp_model import IntVar, LinearExprT
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationCpSolver,
     AllocationSolution,
+    MultimodeAllocationProblem,
     UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
     TasksCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode import (
+    MultimodeCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.utils import is_a_trivial_zero
 from discrete_optimization.generic_tools.cp_tools import SignEnum
@@ -373,6 +377,29 @@ class AllocationCpSatSolver(
     def get_nb_unary_resources_used_variable(self) -> LinearExprT:
         self.create_used_variables()
         return sum(self.used_variables.values())
+
+
+class MultimodeAllocationCpSatSolver(
+    AllocationCpSatSolver[Task, UnaryResource],
+    MultimodeCpSatSolver[Task],
+):
+    problem: MultimodeAllocationProblem[Task, UnaryResource]
+
+    def create_compatibility_task_mode_unary_resource_constraint(self):
+        for task in self.problem.tasks_list:
+            ur = self.problem.compatible_unary_resources(task)
+            for u in ur:
+                forbidden_modes = (
+                    self.problem.get_forbidden_modes_for_task_and_unary_resource(
+                        task, unary_resource=u
+                    )
+                )
+                for fm in forbidden_modes:
+                    lit1 = self.get_task_mode_is_present_variable(task=task, mode=fm)
+                    lit2 = self.get_task_unary_resource_is_present_variable(
+                        task=task, unary_resource=u
+                    )
+                    self.cp_model.add_at_most_one([lit1, lit2])
 
 
 class AllocationIntegerModellingCpSatSolver(

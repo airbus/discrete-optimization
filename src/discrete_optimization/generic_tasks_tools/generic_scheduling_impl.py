@@ -172,6 +172,9 @@ class GenericSchedulingImplProblem(
     unary_resources_task_compatibility: dict[Task, set[UnaryResource]] = field(
         default_factory=dict
     )
+    unary_resources_task_mode_compatibility: dict[
+        Task, dict[UnaryResource, set[int]]
+    ] = field(default_factory=dict)
     skills: set[Skill] = field(default_factory=set)
     non_skill_cumulative_resources: dict[
         NonSkillCumulativeResource, int | AvailabilityIntervals
@@ -243,6 +246,13 @@ class GenericSchedulingImplProblem(
         for l in self.list_objective_computer:
             l.set_problem(self)
         self.update_problem()
+        if len(self.unary_resources_task_mode_compatibility) == 0:
+            for task in self.tasks_list:
+                self.unary_resources_task_mode_compatibility[task] = {}
+                for ur in self.unary_resources_list:
+                    self.unary_resources_task_mode_compatibility[task][ur] = set(
+                        self.get_task_modes(task)
+                    )
 
     def evaluate(self, variable: GenericSchedulingSolution) -> dict[str, float]:
         kpis = super().evaluate(variable)
@@ -285,6 +295,20 @@ class GenericSchedulingImplProblem(
             "There are duplicates in resources list, "
             "potentially because calendar and non-renewable resources intersect."
         )
+
+    @optional_override_implem
+    def is_compatible_task_mode_unary_resource(
+        self, task: Task, mode: int, unary_resource: UnaryResource
+    ):
+        if task in self.unary_resources_task_mode_compatibility:
+            if unary_resource in self.unary_resources_task_mode_compatibility[task]:
+                return (
+                    mode
+                    in self.unary_resources_task_mode_compatibility[task][
+                        unary_resource
+                    ]
+                )
+        return False
 
     @optional_override_implem
     def get_resource_consumption_when_unary_resource_allocated(

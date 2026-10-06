@@ -626,6 +626,7 @@ class GenericSchedulingProblem(
                 or variable.check_alternative_scheduling_subproblem()
             )
             and (not exclusion_resources or variable.check_exclusion_constraint())
+            and (not allocation or variable.check_forbidden_mode_unary_resource())
         )
 
     @abstractmethod

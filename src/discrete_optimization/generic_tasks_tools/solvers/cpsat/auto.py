@@ -977,6 +977,8 @@ class GenericSchedulingAutoCpSatSolver(
         # 1) at most or exactly one resource allocated per task?
         # 2) Same allocation constraints
         self.add_allocation_constraints()
+        # Multimode allocation constraints (compatibility)
+        self.create_compatibility_task_mode_unary_resource_constraint()
 
         # skill value per task constraints
         self.create_fine_skill_constraints()

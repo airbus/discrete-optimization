@@ -164,6 +164,122 @@ def problem_calendar_preemptive():
     )
 
 
+@fixture
+def problem_with_unary_dependent_resource_consumption():
+    return GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 1,
+                1: 3,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        resource_consumptions={
+            "task-1": {
+                0: {
+                    "non_renewable_resource": 2,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                },
+            },
+            "task-2": {
+                0: {
+                    "cumulative_resource": 2,
+                },
+            },
+        },
+        successors={"task-1": {"task-2"}},
+        unary_resources={"worker1", "worker2"},
+        unary_resources_availabilities={
+            "worker1": [(1, 4)],
+            "worker2": [(3, 18)],
+        },
+        unary_resource_consumptions_dependent={
+            "task-1": {
+                0: {"cumulative_resource": {"worker1": 2, "worker2": 1}},
+                1: {"cumulative_resource": {"worker1": 1, "worker2": 1}},
+            }
+        },
+        non_skill_cumulative_resources={
+            "cumulative_resource": [
+                (3, 5, 1),
+                (5, 10, 2),
+            ],
+        },
+        non_renewable_resources={
+            "non_renewable_resource": 1,
+        },
+        list_objective_computer=[MakespanObjectiveComputer(weight_objective=1)],
+    )
+
+
+@fixture
+def problem_with_forbidden_task_mode_unary_resource():
+    return GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 1,
+                1: 3,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        resource_consumptions={
+            "task-1": {
+                0: {
+                    "non_renewable_resource": 2,
+                    "worker": 1,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                    "worker": 1,
+                },
+            },
+            "task-2": {
+                0: {
+                    "cumulative_resource": 2,
+                    "worker": 1,
+                },
+            },
+        },
+        skills={"worker"},
+        unary_resources_skills={"worker1": {"worker": 1}, "worker2": {"worker": 1}},
+        successors={"task-1": {"task-2"}},
+        unary_resources={"worker1", "worker2"},
+        unary_resources_availabilities={
+            "worker1": [(1, 18)],
+            "worker2": [(3, 18)],
+        },
+        # dict[Task, dict[UnaryResource, set[int]]]
+        unary_resources_task_mode_compatibility={
+            "task-1": {"worker1": {0, 1}, "worker2": {1}},
+            "task-2": {"worker1": {0}},
+        },
+        unary_resource_consumptions_dependent={
+            "task-1": {
+                0: {"cumulative_resource": {"worker1": 2, "worker2": 1}},
+                1: {"cumulative_resource": {"worker1": 1, "worker2": 1}},
+            }
+        },
+        non_skill_cumulative_resources={
+            "cumulative_resource": [
+                (3, 5, 1),
+                (5, 10, 2),
+            ],
+        },
+        non_renewable_resources={
+            "non_renewable_resource": 1,
+        },
+        list_objective_computer=[MakespanObjectiveComputer(weight_objective=1)],
+    )
+
+
 def test_problem(problem_wo_skills, caplog):
     problem = problem_wo_skills
     sol = GenericSchedulingImplSolution(
@@ -421,6 +537,81 @@ def test_calendar_preemptive(problem_calendar_preemptive):
     )
     # The task 2 doesn't span large enough.
     assert not problem.satisfy(sol_not_good)
+
+
+def test_unary_resource_consumption_dependent(
+    problem_with_unary_dependent_resource_consumption,
+):
+    problem: GenericSchedulingImplProblem = (
+        problem_with_unary_dependent_resource_consumption
+    )
+    sol = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            {
+                "task-1": TaskVariable(
+                    start=3, end=6, mode=1, allocated={"worker2": set()}
+                ),
+                "task-2": TaskVariable(start=6, end=10, mode=0, allocated={}),
+            }
+        ),
+    )
+    assert problem.satisfy(sol)
+    consumption = sol._compute_calendar_resource_consumption_np(
+        resources=["cumulative_resource"]
+    )
+    cons = consumption["cumulative_resource"]
+    assert cons[3] == 1
+    sol1 = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            {
+                "task-1": TaskVariable(
+                    start=3, end=4, mode=0, allocated={"worker1": set()}
+                ),
+                "task-2": TaskVariable(start=6, end=10, mode=0, allocated={}),
+            }
+        ),
+    )
+    assert not problem.satisfy(sol1)
+
+
+def test_forbidden_unary_resource_task_mode(
+    problem_with_forbidden_task_mode_unary_resource,
+):
+    problem: GenericSchedulingImplProblem = (
+        problem_with_forbidden_task_mode_unary_resource
+    )
+    sol = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            {
+                "task-1": TaskVariable(
+                    start=3, end=6, mode=1, allocated={"worker2": {"worker"}}
+                ),
+                "task-2": TaskVariable(
+                    start=6, end=10, mode=0, allocated={"worker1": {"worker"}}
+                ),
+            }
+        ),
+    )
+    assert problem.satisfy(sol)
+
+    sol = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            {
+                "task-1": TaskVariable(
+                    start=3, end=6, mode=1, allocated={"worker2": {"worker"}}
+                ),
+                "task-2": TaskVariable(
+                    start=6, end=10, mode=0, allocated={"worker2": {"worker"}}
+                ),
+            }
+        ),
+    )
+    # forbidden mode for task-2 with worker2
+    assert not problem.satisfy(sol)
 
 
 def test_subproblem_from_partial_solution(caplog):

@@ -36,6 +36,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.resource_usage_by_u
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
     SchedulingCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override_implem
 
 
 class ProblemWithCalendarPreemptiveAndResourceBlockingAndUnaryResource(
@@ -76,6 +77,48 @@ class CalendarResourceGenericCpSatSolver(
     ) -> tuple[IntervalVar, LinearExprT]:
         conso = self.merged_demand_var_for_task[(task, resource)]
         return self.get_task_interval(task=task), conso
+
+    # Warning : this impacts the create_calendar_resources_constraint(),
+    # including the unary resource dependent consumption
+    @optional_override_implem
+    def get_resource_consumption_intervals(
+        self, resource: Resource
+    ) -> list[tuple[IntervalVar, LinearExprT]]:
+        if self.problem.is_cumulative_resource(resource):
+            if (
+                self.avoid_interval_optional_for_cumulative_resources
+                or self.problem.has_any_cumulative_consumption_dependent()
+                or self.problem.has_any_resource_consumption_depend_on_unary_resource()
+            ):
+                # no optional interval, use rather demand variables
+                return [
+                    (self.get_task_interval(task=task), conso)
+                    for task in self.problem.tasks_list
+                    if not isinstance(
+                        (conso := self.merged_demand_var_for_task[(task, resource)]),
+                        int,
+                    )
+                    or conso > 0
+                ]
+            else:
+                return [
+                    (
+                        self.get_task_mode_interval(task=task, mode=mode),
+                        conso,
+                    )
+                    for task in self.problem.tasks_list
+                    for mode in self.problem.get_task_modes(task=task)
+                    if (
+                        conso := self.problem.get_cumulative_resource_consumption(
+                            resource=resource, task=task, mode=mode
+                        )
+                    )
+                    > 0
+                ]
+        else:
+            raise NotImplementedError(
+                f"{resource} is not a cumulative resource whose consumption depends only on task mode."
+            )
 
     def get_resource_interval_and_consumption_for_task_and_mode(
         self, resource: Resource, task: Task, mode: int
