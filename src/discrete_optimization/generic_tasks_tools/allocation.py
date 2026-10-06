@@ -11,6 +11,10 @@ from discrete_optimization.generic_tasks_tools.base import (
     TasksProblem,
     TasksSolution,
 )
+from discrete_optimization.generic_tasks_tools.multimode import (
+    MultimodeProblem,
+    MultimodeSolution,
+)
 from discrete_optimization.generic_tasks_tools.utils import optional_override
 from discrete_optimization.generic_tools.cp_tools import SignEnum
 
@@ -157,6 +161,31 @@ class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
         return True
 
 
+class MultiModeAllocationSolution(
+    AllocationSolution[Task, UnaryResource],
+    MultimodeSolution[Task],
+    Generic[Task, UnaryResource],
+):
+    problem: MultimodeAllocationProblem[Task, UnaryResource]
+
+    def check_forbidden_mode_unary_resource(self):
+        for task in self.problem.tasks_list:
+            if not self.is_present(task):
+                pass
+            allocated = self.get_task_allocation(task)
+            mode = self.get_mode(task)
+            for ur in allocated:
+                modes_forbidden = (
+                    self.problem.get_forbidden_modes_for_task_and_unary_resource(
+                        task, unary_resource=ur
+                    )
+                )
+                if mode in modes_forbidden:
+                    logger.debug(f"{ur} allocated to forbidden task,mode {task, mode}")
+                    return False
+        return True
+
+
 class AllocationProblem(TasksProblem[Task], Generic[Task, UnaryResource]):
     """Base class for allocation problems.
 
@@ -218,6 +247,29 @@ class AllocationProblem(TasksProblem[Task], Generic[Task, UnaryResource]):
         :return:
         """
         return []
+
+
+class MultimodeAllocationProblem(
+    AllocationProblem[Task, UnaryResource],
+    MultimodeProblem[Task],
+    Generic[Task, UnaryResource],
+):
+    @optional_override
+    def is_compatible_task_mode_unary_resource(
+        self, task: Task, mode: int, unary_resource: UnaryResource
+    ):
+        return True
+
+    def get_forbidden_modes_for_task_and_unary_resource(
+        self, task: Task, unary_resource: UnaryResource
+    ):
+        return [
+            m
+            for m in self.get_task_modes(task)
+            if not self.is_compatible_task_mode_unary_resource(
+                task=task, mode=m, unary_resource=unary_resource
+            )
+        ]
 
 
 class AllocationCpSolver(TasksCpSolver[Task], Generic[Task, UnaryResource]):

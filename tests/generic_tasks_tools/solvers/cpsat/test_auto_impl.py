@@ -6,6 +6,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 from ortools.sat.python.cp_model import LinearExprT
+from pytest import fixture
 
 import discrete_optimization.rcpsp.parser as rcpsp_parser
 import discrete_optimization.rcpsp_multiskill.parser_imopse as parser_imopse
@@ -1160,6 +1161,148 @@ def test_no_overlap():
     assert problem.satisfy(sol)
     kpi = problem.evaluate(sol)
     assert kpi[Objective.MAKESPAN] == 6
+
+
+@fixture
+def problem_with_unary_dependent_resource_consumption():
+    return GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 1,
+                1: 3,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        resource_consumptions={
+            "task-1": {
+                0: {
+                    "non_renewable_resource": 2,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                },
+            },
+            "task-2": {
+                0: {
+                    "cumulative_resource": 2,
+                },
+            },
+        },
+        successors={"task-1": {"task-2"}},
+        unary_resources={"worker1", "worker2"},
+        unary_resources_availabilities={
+            "worker1": [(1, 4)],
+            "worker2": [(3, 18)],
+        },
+        unary_resource_consumptions_dependent={
+            "task-1": {
+                0: {"cumulative_resource": {"worker1": 2, "worker2": 1}},
+                1: {"cumulative_resource": {"worker1": 1, "worker2": 1}},
+            }
+        },
+        non_skill_cumulative_resources={
+            "cumulative_resource": [
+                (3, 5, 1),
+                (5, 10, 2),
+            ],
+        },
+        non_renewable_resources={
+            "non_renewable_resource": 1,
+        },
+        list_objective_computer=[MakespanObjectiveComputer(weight_objective=1)],
+    )
+
+
+@fixture
+def problem_with_forbidden_task_mode_unary_resource():
+    return GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 1,
+                1: 3,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        resource_consumptions={
+            "task-1": {
+                0: {
+                    "non_renewable_resource": 2,
+                    "worker": 1,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                    "worker": 1,
+                },
+            },
+            "task-2": {
+                0: {
+                    "cumulative_resource": 2,
+                    "worker": 1,
+                },
+            },
+        },
+        skills={"worker"},
+        unary_resources_skills={"worker1": {"worker": 1}, "worker2": {"worker": 1}},
+        successors={"task-1": {"task-2"}},
+        unary_resources={"worker1", "worker2"},
+        unary_resources_availabilities={
+            "worker1": [(1, 18)],
+            "worker2": [(3, 18)],
+        },
+        # dict[Task, dict[UnaryResource, set[int]]]
+        unary_resources_task_mode_compatibility={
+            "task-1": {"worker1": {0, 1}, "worker2": {1}},
+            "task-2": {"worker1": {0}},
+        },
+        unary_resource_consumptions_dependent={
+            "task-1": {
+                0: {"cumulative_resource": {"worker1": 2, "worker2": 1}},
+                1: {"cumulative_resource": {"worker1": 1, "worker2": 1}},
+            }
+        },
+        non_skill_cumulative_resources={
+            "cumulative_resource": [
+                (3, 5, 1),
+                (5, 10, 2),
+            ],
+        },
+        non_renewable_resources={
+            "non_renewable_resource": 1,
+        },
+        list_objective_computer=[MakespanObjectiveComputer(weight_objective=1)],
+    )
+
+
+def test_solving_unary_resource_consumption_dependent(
+    problem_with_unary_dependent_resource_consumption,
+):
+    problem: GenericSchedulingImplProblem = (
+        problem_with_unary_dependent_resource_consumption
+    )
+    solver = GenericSchedulingAutoCpSatImplSolver(problem)
+    solver.init_model()
+    res = solver.solve(time_limit=10)
+    sol = res[-1][0]
+    assert problem.satisfy(sol)
+
+
+def test_solving_forbidden_unary_resource_task_mode(
+    problem_with_forbidden_task_mode_unary_resource,
+):
+    problem: GenericSchedulingImplProblem = (
+        problem_with_forbidden_task_mode_unary_resource
+    )
+    solver = GenericSchedulingAutoCpSatImplSolver(problem)
+    solver.init_model()
+    res = solver.solve(time_limit=10)
+    sol = res[-1][0]
+    assert problem.satisfy(sol)
 
 
 def test_rcpsp_simple():
