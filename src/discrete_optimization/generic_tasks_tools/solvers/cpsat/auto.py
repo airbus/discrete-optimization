@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import Any, Optional, Type
+from typing import Any, Iterable, Optional, Type, Union
 
 import networkx as nx
 from ortools.sat.python.cp_model import (
@@ -60,6 +60,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.utils import (
     ModeToValueModeling,
     create_variable_function_of_mode_on_solver,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     Solution,
@@ -68,6 +69,9 @@ from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
+)
+from discrete_optimization.generic_tools.result_storage.result_storage import (
+    ResultStorage,
 )
 
 logger = logging.getLogger(__name__)
@@ -1325,7 +1329,12 @@ class GenericSchedulingAutoCpSatSolver(
 
     def set_warm_start(self, solution: Solution) -> None:
         solution: GenericSchedulingSolution[
-            Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+            Task,
+            UnaryResource,
+            Skill,
+            NonSkillCumulativeResource,
+            NonRenewableResource,
+            ExclusionResource,
         ]
         # warm start cp_model
         self.cp_model.clear_hints()
@@ -1364,7 +1373,12 @@ class GenericSchedulingAutoCpSatSolver(
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, UnaryResource, Skill]
     ) -> GenericSchedulingSolution[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ]:
         """Convert solution from autosolver format into do format.
 
@@ -1487,6 +1501,50 @@ class GenericSchedulingAutoCpSatSolver(
                         - self.start_or_end_variables[local_start_task, StartOrEnd.END]
                     )
                 )
+
+    def implements_lexico_api(self) -> bool:
+        return True
+
+    def get_objective_expr(
+        self, obj: Union[str | Objective, list[tuple[Union[str | Objective], float]]]
+    ):
+        if isinstance(obj, list):
+            obj_expr = sum(
+                [weight * self.dict_objective_expr[obj] for obj, weight in obj]
+            )
+        else:
+            obj_expr = self.dict_objective_expr[obj]
+        return obj_expr
+
+    def set_lexico_objective(
+        self, obj: Union[str | Objective, list[tuple[Union[str | Objective], float]]]
+    ) -> None:
+        self.cp_model.minimize(self.get_objective_expr(obj))
+
+    def add_lexico_constraint(
+        self,
+        obj: Union[str | Objective, list[tuple[Union[str | Objective], float]]],
+        value: float,
+    ) -> Iterable[Any]:
+        self.cp_model.add(self.get_objective_expr(obj) <= value)
+
+    @optional_override
+    def get_lexico_objective_value(
+        self,
+        obj: Union[str | Objective, list[tuple[Union[str | Objective], float]]],
+        res: ResultStorage,
+    ) -> float:
+        # TODO, decide if better use the res.get_best_solution()
+        sol = res[-1][0]
+        kpis = self.problem.evaluate(sol)
+        if isinstance(obj, list):
+            val = sum([weight * kpis[o] for o, weight in obj])
+        else:
+            val = kpis[obj]
+        return int(val)
+
+    def get_lexico_objectives_available(self) -> list[str]:
+        return list(self.dict_objective_expr.keys())
 
 
 class SinglemodeGenericSchedulingAutoCpSatSolver(

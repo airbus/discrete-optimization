@@ -118,6 +118,8 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
     def compute_earliness_end(
         self, solution: SchedulingSolution[Task], task: Task
     ) -> float:
+        if not solution.is_present(task):
+            return 0
         return max(
             0, self.get_min_end_for_earliness(task) - solution.get_end_time(task)
         )
@@ -125,6 +127,8 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
     def compute_earliness_start(
         self, solution: SchedulingSolution[Task], task: Task
     ) -> float:
+        if not solution.is_present(task):
+            return 0
         return max(
             0, self.get_min_start_for_earliness(task) - solution.get_start_time(task)
         )
@@ -132,6 +136,8 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
     def compute_tardiness_end(
         self, solution: SchedulingSolution[Task], task: Task
     ) -> float:
+        if not solution.is_present(task):
+            return 0
         return max(
             0, solution.get_end_time(task) - self.get_max_end_for_tardiness(task)
         )
@@ -139,6 +145,8 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
     def compute_tardiness_start(
         self, solution: SchedulingSolution[Task], task: Task
     ) -> float:
+        if not solution.is_present(task):
+            return 0
         return max(
             0, solution.get_start_time(task) - self.get_max_start_for_tardiness(task)
         )
