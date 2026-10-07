@@ -124,7 +124,7 @@ class CalendarResourceGenericCpSatSolver(
         self, resource: Resource, task: Task, mode: int
     ) -> tuple[IntervalVar, LinearExprT]:
         if self.problem.is_cumulative_resource_task_mode_consumption_dependent(
-            task, mode
+            resource, task, mode
         ):
             return (
                 self.get_task_mode_interval(task=task, mode=mode),
