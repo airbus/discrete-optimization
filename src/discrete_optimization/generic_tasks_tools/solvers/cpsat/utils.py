@@ -8,12 +8,17 @@ from enum import Enum
 
 from ortools.sat.python.cp_model import Constraint, CpModel, Domain, LinearExprT
 
+from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.generic_scheduling import Task
+from discrete_optimization.generic_tasks_tools.scheduling import SchedulingProblem
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
     TasksCpSatSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.multimode import (
     MultimodeCpSatSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
+    SchedulingCpSatSolver,
 )
 
 
@@ -28,6 +33,11 @@ class ModeToValueModeling(Enum):
     LINEAR_SUM = 0
     ENFORCE_IF = 1
     TABLE = 2
+
+
+class SpanModeling(Enum):
+    INEQUALITIES = 0
+    EXACT = 1
 
 
 def create_variable_function_of_mode_on_solver(
@@ -235,3 +245,89 @@ def enforce_only_if_tasks_present(
         return constraint.only_enforce_if(*is_present_tasks_variables)
     else:
         return constraint
+
+
+def create_span_start_end_variables(
+    solver: SchedulingCpSatSolver[Task],
+    set_tasks: set[Task],
+    name_span: str,
+    span_modeling: SpanModeling = SpanModeling.INEQUALITIES,
+):
+    problem: SchedulingProblem[Task] = solver.problem
+    all_mandatory = all(not problem.is_optional(t) for t in set_tasks)
+    if all_mandatory:
+        # Use min/max
+        starts = [
+            solver.get_task_start_or_end_variable(t, start_or_end=StartOrEnd.START)
+            for t in set_tasks
+        ]
+        ends = [
+            solver.get_task_start_or_end_variable(t, start_or_end=StartOrEnd.END)
+            for t in set_tasks
+        ]
+        # TODO: use better bound for span.
+        start_span = solver.cp_model.new_int_var(
+            lb=0, ub=problem.get_makespan_upper_bound(), name=f"start_{name_span}"
+        )
+        end_span = solver.cp_model.new_int_var(
+            lb=0, ub=problem.get_makespan_upper_bound(), name=f"start_{name_span}"
+        )
+        solver.cp_model.add_min_equality(start_span, starts)
+        solver.cp_model.add_max_equality(end_span, ends)
+        return start_span, end_span
+    else:
+        starts_dict = {
+            t: solver.get_task_start_or_end_variable(t, start_or_end=StartOrEnd.START)
+            for t in set_tasks
+        }
+        ends_dict = {
+            t: solver.get_task_start_or_end_variable(t, start_or_end=StartOrEnd.END)
+            for t in set_tasks
+        }
+        # TODO: use better bound for span.
+        start_span = solver.cp_model.new_int_var(
+            lb=0, ub=problem.get_makespan_upper_bound(), name=f"start_{name_span}"
+        )
+        end_span = solver.cp_model.new_int_var(
+            lb=0, ub=problem.get_makespan_upper_bound(), name=f"start_{name_span}"
+        )
+        if span_modeling == SpanModeling.INEQUALITIES:
+            for t in set_tasks:
+                if problem.is_optional(t):
+                    solver.cp_model.add(start_span <= starts_dict[t]).only_enforce_if(
+                        solver.get_task_is_present_variable(task=t)
+                    )
+                    solver.cp_model.add(end_span >= ends_dict[t]).only_enforce_if(
+                        solver.get_task_is_present_variable(task=t)
+                    )
+                else:
+                    solver.cp_model.add(start_span <= starts_dict[t])
+                    solver.cp_model.add(end_span >= ends_dict[t])
+        if span_modeling == SpanModeling.EXACT:
+            start_min_array = []
+            # Dummy/safe upper bound
+            upper_bound = 2 * solver.get_makespan_upper_bound() + 1
+            for t in set_tasks:
+                start = solver.get_task_start_or_end_variable(
+                    t, start_or_end=StartOrEnd.START
+                )
+                end = solver.get_task_start_or_end_variable(
+                    t, start_or_end=StartOrEnd.END
+                )
+                if problem.is_optional(t):
+                    smin = solver.cp_model.new_int_var(
+                        lb=0, ub=upper_bound, name=f"start_min_{name_span}_{t}"
+                    )
+                    is_present = solver.get_task_is_present_variable(t)
+                    solver.cp_model.add(smin == upper_bound).only_enforce_if(
+                        ~is_present
+                    )
+                    solver.cp_model.add(smin == start).only_enforce_if(is_present)
+                    start_min_array.append(smin)
+                else:
+                    start_min_array.append(start)
+            solver.cp_model.add_min_equality(start_span, start_min_array)
+            solver.cp_model.add_max_equality(
+                end_span, [ends_dict[t] for t in set_tasks]
+            )
+    return start_span, end_span
