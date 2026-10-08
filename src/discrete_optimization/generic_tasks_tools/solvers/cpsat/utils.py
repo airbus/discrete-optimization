@@ -251,9 +251,20 @@ def create_span_start_end_variables(
     solver: SchedulingCpSatSolver[Task],
     set_tasks: set[Task],
     name_span: str,
+    start_span: LinearExprT | None = None,
+    end_span: LinearExprT | None = None,
     span_modeling: SpanModeling = SpanModeling.INEQUALITIES,
 ):
     problem: SchedulingProblem[Task] = solver.problem
+    if start_span is None:
+        # TODO: use better bound for span.
+        start_span = solver.cp_model.new_int_var(
+            lb=0, ub=problem.get_makespan_upper_bound(), name=f"start_{name_span}"
+        )
+    if end_span is None:
+        end_span = solver.cp_model.new_int_var(
+            lb=0, ub=problem.get_makespan_upper_bound(), name=f"end_{name_span}"
+        )
     all_mandatory = all(not problem.is_optional(t) for t in set_tasks)
     if all_mandatory:
         # Use min/max
@@ -265,13 +276,6 @@ def create_span_start_end_variables(
             solver.get_task_start_or_end_variable(t, start_or_end=StartOrEnd.END)
             for t in set_tasks
         ]
-        # TODO: use better bound for span.
-        start_span = solver.cp_model.new_int_var(
-            lb=0, ub=problem.get_makespan_upper_bound(), name=f"start_{name_span}"
-        )
-        end_span = solver.cp_model.new_int_var(
-            lb=0, ub=problem.get_makespan_upper_bound(), name=f"start_{name_span}"
-        )
         solver.cp_model.add_min_equality(start_span, starts)
         solver.cp_model.add_max_equality(end_span, ends)
         return start_span, end_span
@@ -284,13 +288,6 @@ def create_span_start_end_variables(
             t: solver.get_task_start_or_end_variable(t, start_or_end=StartOrEnd.END)
             for t in set_tasks
         }
-        # TODO: use better bound for span.
-        start_span = solver.cp_model.new_int_var(
-            lb=0, ub=problem.get_makespan_upper_bound(), name=f"start_{name_span}"
-        )
-        end_span = solver.cp_model.new_int_var(
-            lb=0, ub=problem.get_makespan_upper_bound(), name=f"start_{name_span}"
-        )
         if span_modeling == SpanModeling.INEQUALITIES:
             for t in set_tasks:
                 if problem.is_optional(t):
@@ -330,4 +327,62 @@ def create_span_start_end_variables(
             solver.cp_model.add_max_equality(
                 end_span, [ends_dict[t] for t in set_tasks]
             )
+    return start_span, end_span
+
+
+def create_span_start_end_from_vars(
+    solver: SchedulingCpSatSolver[Task],
+    starts_list: list[LinearExprT],
+    ends_list: list[LinearExprT],
+    is_present_list: list[LinearExprT],
+    name_span: str,
+    start_span: LinearExprT | None = None,
+    end_span: LinearExprT | None = None,
+    span_modeling: SpanModeling = SpanModeling.INEQUALITIES,
+):
+    problem: SchedulingProblem[Task] = solver.problem
+    if start_span is None:
+        start_span = solver.cp_model.new_int_var(
+            lb=0, ub=problem.get_makespan_upper_bound(), name=f"start_{name_span}"
+        )
+    if end_span is None:
+        end_span = solver.cp_model.new_int_var(
+            lb=0, ub=problem.get_makespan_upper_bound(), name=f"end_{name_span}"
+        )
+    if all(isinstance(x, int) and x == 1 for x in is_present_list):
+        # Use min/max
+        starts = starts_list
+        ends = ends_list
+
+        solver.cp_model.add_min_equality(start_span, starts)
+        solver.cp_model.add_max_equality(end_span, ends)
+        return start_span, end_span
+    else:
+        starts = starts_list
+        ends = ends_list
+        if span_modeling == SpanModeling.INEQUALITIES:
+            for i in range(len(starts)):
+                is_present = is_present_list[i]
+                solver.cp_model.add(start_span <= starts[i]).only_enforce_if(is_present)
+                solver.cp_model.add(end_span >= ends[i]).only_enforce_if(is_present)
+        if span_modeling == SpanModeling.EXACT:
+            start_min_array = []
+            # Dummy/safe upper bound
+            upper_bound = 2 * solver.get_makespan_upper_bound() + 1
+            for i in range(len(starts)):
+                start = starts[i]
+                is_present = is_present_list[i]
+                if not (isinstance(is_present, int) and is_present == 1):
+                    smin = solver.cp_model.new_int_var(
+                        lb=0, ub=upper_bound, name=f"start_min_{name_span}_{i}"
+                    )
+                    solver.cp_model.add(smin == upper_bound).only_enforce_if(
+                        ~is_present
+                    )
+                    solver.cp_model.add(smin == start).only_enforce_if(is_present)
+                    start_min_array.append(smin)
+                else:
+                    start_min_array.append(start)
+            solver.cp_model.add_min_equality(start_span, start_min_array)
+            solver.cp_model.add_max_equality(end_span, ends)
     return start_span, end_span

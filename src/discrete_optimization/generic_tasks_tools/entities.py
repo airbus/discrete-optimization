@@ -27,8 +27,12 @@ from dataclasses import dataclass
 from typing import Generic
 
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.enums import AbsentValue
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
+from discrete_optimization.generic_tasks_tools.utils import (
+    optional_override,
+    optional_override_implem,
+)
 
 
 @dataclass(frozen=True)
@@ -146,6 +150,10 @@ class SchedulingEntity(Generic[Task]):
         """
         ...
 
+    @optional_override
+    def unfold_entities(self):
+        yield
+
     def __hash__(self) -> int:
         """Entities are hashable (needed for dict keys)."""
         return hash(self.entity_id)
@@ -195,7 +203,7 @@ class TaskEntity(SchedulingEntity[Task]):
 
     @property
     def entity_id(self) -> Hashable:
-        return ("task", self.task)
+        return "task", self.task
 
 
 @dataclass(frozen=True)
@@ -381,13 +389,13 @@ class CompositeEntity(SchedulingEntity[Task]):
         if len(self.entities) == 0:
             raise ValueError("CompositeEntity must contain at least one entity")
 
-    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue.ABSENT:
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue:
         active_entities = [e for e in self.entities if e.is_active(solution)]
         if not active_entities:
             return AbsentValue.ABSENT
         return min(e.get_start_time(solution) for e in active_entities)
 
-    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue.ABSENT:
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue:
         active_entities = [e for e in self.entities if e.is_active(solution)]
         if not active_entities:
             return AbsentValue.ABSENT
@@ -414,3 +422,60 @@ class CompositeEntity(SchedulingEntity[Task]):
                 "composite",
                 tuple(sorted((e.entity_id for e in self.entities), key=str)),
             )
+
+    @optional_override_implem
+    def unfold_entities(self):
+        for entity in self.entities:
+            yield entity
+            entity.unfold_entities()
+
+
+@dataclass(frozen=True)
+class ConstantDurationEntity(SchedulingEntity[Task]):
+    """
+    Entity representing
+    a constant duration block
+    starting at start or end of a given entity
+    """
+
+    other_entity: SchedulingEntity[Task]
+    constant_duration: int
+    offset: int = 0
+    start_or_end: StartOrEnd = StartOrEnd.START
+    constant_duration_id: Hashable | None = None
+
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        match self.start_or_end:
+            case StartOrEnd.START:
+                return self.other_entity.get_start_time(solution) + self.offset
+            case StartOrEnd.END:
+                return self.other_entity.get_end_time(solution) + self.offset
+            case _:
+                raise ValueError(f"{self.start_or_end} is not a valid Enum")
+
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        if self.is_active(solution):
+            return self.get_start_time(solution) + self.constant_duration
+        return AbsentValue.ABSENT
+
+    def is_active(self, solution: SchedulingSolution) -> bool:
+        return self.other_entity.is_active(solution)
+
+    def get_tasks(self) -> frozenset[Task]:
+        return self.other_entity.get_tasks()
+
+    @property
+    def entity_id(self) -> Hashable:
+        if self.constant_duration_id is None:
+            return (
+                "constant_block",
+                self.other_entity.entity_id,
+                self.constant_duration,
+                self.start_or_end,
+            )
+        return self.constant_duration_id
+
+    @optional_override_implem
+    def unfold_entities(self):
+        yield self.other_entity
+        self.other_entity.unfold_entities()
