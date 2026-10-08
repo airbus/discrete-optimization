@@ -19,7 +19,9 @@ from discrete_optimization.binpack.problem import BinPackProblem, BinPackSolutio
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     GenericSchedulingImplProblem,
     GenericSchedulingImplSolution,
-    Objective,
+)
+from discrete_optimization.generic_tasks_tools.objectives.makespan import (
+    MakespanObjectiveComputer,
 )
 from discrete_optimization.generic_tools.transformation.problem_transformation import (
     ProblemTransformation,
@@ -107,7 +109,7 @@ class BinpackToGenericSchedulingTransformation(
                     ]
                     for item in range(source_problem.nb_items)
                 },
-                objective=Objective.MAKESPAN,
+                list_objective_computer=[MakespanObjectiveComputer(weight_objective=1)],
             )
         raise NotImplementedError()
 
@@ -125,7 +127,6 @@ class BinpackToGenericSchedulingTransformation(
         allocation = [-1] * source_problem.nb_items
 
         for i, item in enumerate(source_problem.list_items):
-            task_name = f"item_{item.index}"
             if solution.is_present(i):
                 allocation[i] = solution.get_start_time(i)
         return BinPackSolution(problem=source_problem, allocation=allocation)
