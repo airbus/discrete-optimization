@@ -1632,13 +1632,13 @@ def test_fjsp():
 
 
 def test_solving_with_entities():
-    entities = []
+    entities: list[ConstantDurationEntity] = []
     duration_per_mode = {}
     for product in range(5):
         keys_for_product = set()
         for nb_task in range(3):
             name_task = f"task-prod{product}-{nb_task}"
-            duration_per_mode[name_task] = random.randint(2, 5)
+            duration_per_mode[name_task] = {0: random.randint(2, 5)}
             keys_for_product.add(name_task)
         entities.append(
             ConstantDurationEntity(
@@ -1658,7 +1658,7 @@ def test_solving_with_entities():
         for i in range(len(entities))
     ]
     problem = GenericSchedulingImplProblem(
-        horizon=10,
+        horizon=200,
         durations_per_mode=duration_per_mode,
         non_skill_cumulative_resources={"r1": 1},
         span_blocking_constraints=span_blocking_constraints,
@@ -1678,3 +1678,9 @@ def test_solving_with_entities():
         time_limit=10,
     )
     sol = res[-1][0]
+    assert problem.satisfy(sol)
+    start_entities = sorted(
+        [entities[i].get_start_time(sol) for i in range(len(entities))]
+    )
+    for j in range(1, len(entities)):
+        assert start_entities[j] >= start_entities[j - 1] + 10

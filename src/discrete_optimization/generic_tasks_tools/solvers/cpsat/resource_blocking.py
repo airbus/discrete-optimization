@@ -216,9 +216,7 @@ class ResourceBlockingCpSatSolver(
         self._ends_entity[entity] = self.get_task_start_or_end_variable(
             task=task, start_or_end=StartOrEnd.END
         )
-        self._durations_entity[entity] = (
-            self._ends_entity[entity] - self._starts_entity[entity]
-        )
+        self._durations_entity[entity] = self.get_duration_variable(task)
         is_present = self._get_entity_is_active_var(entity)
         if isinstance(is_present, int) and is_present == 1:
             self._intervals_entity[entity] = self.get_task_interval(task)
