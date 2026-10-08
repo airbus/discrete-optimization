@@ -7,11 +7,12 @@ import pytest
 
 from discrete_optimization.generic_tasks_tools.entities import (
     CompositeEntity,
+    ConstantDurationEntity,
     GroupEntity,
     TaskEntity,
     TaskModeEntity,
 )
-from discrete_optimization.generic_tasks_tools.enums import AbsentValue
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
 from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolution
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
 
@@ -286,6 +287,8 @@ def test_composite_entity_mixed_types():
     composite = CompositeEntity(
         frozenset({task_entity, group_entity, mode_entity}), composite_id="mixed"
     )
+    unfolds = list(composite.unfold_entities())
+    assert len(unfolds) == 3
 
     solution = MockMultimodeSolution(
         {
@@ -497,3 +500,109 @@ def test_hierarchical_project_structure():
 
     # All tasks should be collected
     assert len(project.get_tasks()) == 6
+
+
+#
+def test_composite_entity_unfold():
+    task1 = MockTask(1)
+    task2 = MockTask(2)
+    e1 = TaskEntity(task1)
+    e2 = TaskEntity(task2)
+    composite1 = CompositeEntity(frozenset({e1, e2}), "comp")
+    unfolds = list(composite1.unfold_entities())
+    assert len(unfolds) == 2
+    assert e1 in unfolds
+    assert e2 in unfolds
+
+
+def test_constant_duration_entity():
+    task1 = MockTask(1)
+    task2 = MockTask(2)
+    e1 = TaskEntity(task1)
+    e2 = TaskEntity(task2)
+    other_entity = GroupEntity(tasks=frozenset({task1, task2}))
+    from discrete_optimization.generic_tasks_tools.entities import (
+        ConstantDurationEntity,
+    )
+
+    solution = MockMultimodeSolution(
+        {task1: (0, 10), task2: (5, 15)}, task_modes={task1: 1, task2: 1}
+    )
+
+    constant_duration_entity_from_start = ConstantDurationEntity(
+        other_entity,
+        constant_duration=20,
+        start_or_end=StartOrEnd.START,
+        constant_duration_id=None,
+    )
+    constant_duration_entity_from_end = ConstantDurationEntity(
+        other_entity,
+        constant_duration=20,
+        start_or_end=StartOrEnd.END,
+        constant_duration_id=None,
+    )
+    assert constant_duration_entity_from_start.is_active(solution)
+    assert constant_duration_entity_from_start.get_start_time(solution) == 0
+    assert constant_duration_entity_from_start.get_end_time(solution) == 20
+    assert constant_duration_entity_from_end.is_active(solution)
+    assert constant_duration_entity_from_end.get_start_time(solution) == 15
+    assert constant_duration_entity_from_end.get_end_time(solution) == 35
+
+
+def test_multi_level_entity():
+    task1 = MockTask(1)
+    task2 = MockTask(2)
+    task3 = MockTask(3)
+    e1 = TaskEntity(task1)
+    e2 = TaskEntity(task2)
+    e3 = TaskEntity(task3)
+    other_entity = GroupEntity(tasks=frozenset({task1, task2}))
+    composite_entity_from_start = ConstantDurationEntity(
+        other_entity=CompositeEntity(entities=frozenset({e1, e3})),
+        constant_duration=20,
+        offset=0,
+        start_or_end=StartOrEnd.START,
+    )
+    composite_entity_from_end = ConstantDurationEntity(
+        other_entity=CompositeEntity(entities=frozenset({e1, e3})),
+        constant_duration=20,
+        offset=0,
+        start_or_end=StartOrEnd.END,
+    )
+
+    composite_entity_from_start_offset_2 = ConstantDurationEntity(
+        other_entity=CompositeEntity(entities=frozenset({e1, e3})),
+        constant_duration=20,
+        offset=2,
+        start_or_end=StartOrEnd.START,
+    )
+    composite_entity_from_end_offset_2 = ConstantDurationEntity(
+        other_entity=CompositeEntity(entities=frozenset({e1, e3})),
+        constant_duration=20,
+        offset=2,
+        start_or_end=StartOrEnd.END,
+    )
+
+    solution = MockMultimodeSolution(
+        {
+            task1: (0, 10),
+            task2: (5, 15),
+            task3: (AbsentValue.ABSENT, AbsentValue.ABSENT),
+        },
+        task_modes={task1: 1, task2: 1, task3: AbsentValue.ABSENT},
+    )
+
+    assert composite_entity_from_start.is_active(solution)
+    assert composite_entity_from_start.get_start_time(solution) == 0
+    assert composite_entity_from_start.get_end_time(solution) == 20
+    assert composite_entity_from_end.is_active(solution)
+    assert composite_entity_from_end.get_start_time(solution) == 10
+    assert composite_entity_from_end.get_end_time(solution) == 30
+
+    assert composite_entity_from_start_offset_2.is_active(solution)
+    assert composite_entity_from_start_offset_2.get_start_time(solution) == 2
+    assert composite_entity_from_start_offset_2.get_end_time(solution) == 22
+    assert composite_entity_from_end_offset_2.is_active(solution)
+    assert composite_entity_from_end_offset_2.get_start_time(solution) == 12
+    assert composite_entity_from_end_offset_2.get_end_time(solution) == 32
+    assert not e3.is_active(solution)

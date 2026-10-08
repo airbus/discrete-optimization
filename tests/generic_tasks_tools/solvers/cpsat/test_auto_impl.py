@@ -3,6 +3,8 @@
 #  LICENSE file in the root directory of this source tree.
 from __future__ import annotations
 
+import random
+
 import numpy as np
 import pytest
 from ortools.sat.python.cp_model import LinearExprT
@@ -12,7 +14,11 @@ import discrete_optimization.rcpsp.parser as rcpsp_parser
 import discrete_optimization.rcpsp_multiskill.parser_imopse as parser_imopse
 import discrete_optimization.shop.fjsp.parser as fjsp_parser
 import discrete_optimization.shop.jsp.parser as jsp_parser
-from discrete_optimization.generic_tasks_tools.entities import GroupEntity, TaskEntity
+from discrete_optimization.generic_tasks_tools.entities import (
+    ConstantDurationEntity,
+    GroupEntity,
+    TaskEntity,
+)
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     GenericSchedulingImplProblem,
     GenericSchedulingImplSolution,
@@ -43,6 +49,7 @@ from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used im
 )
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
+    BlockingMode,
     FlexibleGapBlockingConstraint,
     SpanBlockingConstraint,
     StartOrEnd,
@@ -1622,3 +1629,52 @@ def test_fjsp():
     assert solver.aggreg_from_sol(from_generic_solution) >= solver.aggreg_from_sol(
         solution
     )
+
+
+def test_solving_with_entities():
+    entities = []
+    duration_per_mode = {}
+    for product in range(5):
+        keys_for_product = set()
+        for nb_task in range(3):
+            name_task = f"task-prod{product}-{nb_task}"
+            duration_per_mode[name_task] = random.randint(2, 5)
+            keys_for_product.add(name_task)
+        entities.append(
+            ConstantDurationEntity(
+                other_entity=GroupEntity(frozenset(keys_for_product)),
+                constant_duration=10,
+                start_or_end=StartOrEnd.START,
+            )
+        )
+    span_blocking_constraints = [
+        SpanBlockingConstraint(
+            BlockingConstraintMetadata(
+                mode=BlockingMode.RESERVATION, name_choice=f"prod_{i}"
+            ),
+            default_resource_blocked={"r1": 1},
+            entity=entities[i],
+        )
+        for i in range(len(entities))
+    ]
+    problem = GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode=duration_per_mode,
+        non_skill_cumulative_resources={"r1": 1},
+        span_blocking_constraints=span_blocking_constraints,
+    )
+    solver = GenericSchedulingAutoCpSatImplSolver(
+        problem=problem,
+        params_objective_function=ParamsObjectiveFunction(
+            ObjectiveHandling.SINGLE,
+            objectives=[Objective.MAKESPAN],
+            weights=[1],
+            sense_function=ModeOptim.MINIMIZATION,
+        ),
+    )
+    res = solver.solve(
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+        parameters_cp=ParametersCp.default(),
+        time_limit=10,
+    )
+    sol = res[-1][0]
