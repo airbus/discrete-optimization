@@ -442,12 +442,6 @@ class GenericSchedulingAutoCpSatSolver(
         self.resource_level_variables = {}
         self.list_obj_modeler_weight = []
 
-        # In cumulative_resource, non_renewable_resource
-        self.demand_cumulative_resource_task_initialized = False
-        self.demands_cumulative_resource_vars = {}
-        self.demands_non_renewable_resource_initialized = False
-        self.demands_non_renewable_resource_vars = {}
-
     def _create_variables(self):
         self._create_present_variables()
         self._create_start_or_end_variables()
@@ -456,7 +450,6 @@ class GenericSchedulingAutoCpSatSolver(
             self._create_task_duration_and_interval_variables()
         self._create_allocation_variables()
         self._create_skill_variables()
-        self._create_demand_variables()
         if self.use_energy_constraints:
             self._create_energy_variables()
 
@@ -666,31 +659,6 @@ class GenericSchedulingAutoCpSatSolver(
                             self.cp_model.add_at_most_one(
                                 self.skill_variables[task][unary_resource].values()
                             )
-
-    def _create_demand_variables(self):
-        for task in self.problem.tasks_list:
-            self.demand_variables[task] = {}
-            if self.avoid_interval_optional_for_unary_resources:
-                for resource in self.problem.unary_resources_list:
-                    self.demand_variables[task][resource] = (
-                        self.get_task_unary_resource_is_present_variable(
-                            task=task, unary_resource=resource
-                        )
-                    )
-            if self.avoid_interval_optional_for_cumulative_resources:
-                for resource in self.problem.cumulative_resources_list:
-                    if not self.demand_cumulative_resource_task_initialized:
-                        self.initialize_cumulative_resource_demand_vars()
-                    self.demand_variables[task][resource] = (
-                        self.demands_cumulative_resource_vars[task, resource]
-                    )
-            if self.use_demand_variables_for_non_renewable_resources:
-                for resource in self.problem.non_renewable_resources_list:
-                    if not self.demands_non_renewable_resource_initialized:
-                        self.initialize_non_renewable_resource_demand_vars()
-                    self.demand_variables[task][resource] = (
-                        self.demands_non_renewable_resource_vars[task, resource]
-                    )
 
     def _create_energy_variables(self):
         for task in self.problem.tasks_list:

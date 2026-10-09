@@ -18,15 +18,17 @@ from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     Resource,
 )
 from discrete_optimization.generic_tasks_tools.resource_usage_by_unary import (
-    ResourceUsageByUnaryResourceProblem,
-    ResourceUsageByUnarySolution,
+    CumulativeResourceUsageByUnaryResourceProblem,
+    CumulativeResourceUsageByUnarySolution,
     UnaryResource,
 )
 
 
 class CumulativeResourceGenericProblem(
     CalendarPreemptiveProblem[Task, CumulativeResource, UnaryResource],
-    ResourceUsageByUnaryResourceProblem[Task, CumulativeResource, UnaryResource],
+    CumulativeResourceUsageByUnaryResourceProblem[
+        Task, CumulativeResource, UnaryResource
+    ],
     Generic[Task, CumulativeResource, UnaryResource],
 ):
     pass
@@ -34,7 +36,7 @@ class CumulativeResourceGenericProblem(
 
 class CumulativeResourceGenericSolution(
     CalendarPreemptiveSolution[Task, CumulativeResource, UnaryResource],
-    ResourceUsageByUnarySolution[Task, CumulativeResource, UnaryResource],
+    CumulativeResourceUsageByUnarySolution[Task, CumulativeResource, UnaryResource],
     Generic[Task, CumulativeResource, UnaryResource],
 ):
     problem: CumulativeResourceGenericProblem[Task, CumulativeResource, UnaryResource]

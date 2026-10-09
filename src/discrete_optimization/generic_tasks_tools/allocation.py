@@ -272,6 +272,12 @@ class MultimodeAllocationProblem(
         ]
 
 
+class MultimodeAllocationSolution(
+    AllocationSolution[Task, UnaryResource], MultimodeSolution[Task]
+):
+    problem: MultimodeAllocationProblem[Task, UnaryResource]
+
+
 class AllocationCpSolver(TasksCpSolver[Task], Generic[Task, UnaryResource]):
     """Base class for solver managing constraints on allocation."""
 

@@ -6,13 +6,13 @@ from typing import Generic
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
+    MultiModeAllocationSolution,
     Task,
     UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.multimode import (
     MultimodeProblem,
-    MultimodeSolution,
 )
 from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
     ObjectiveComputer,
@@ -70,12 +70,6 @@ class MultimodeAllocationProblem(
     pass
 
 
-class MultimodeAllocationSolution(
-    AllocationSolution[Task, UnaryResource], MultimodeSolution[Task]
-):
-    pass
-
-
 class AllocationCostComputerMultimode(
     ObjectiveComputer[Task], Generic[Task, UnaryResource]
 ):
@@ -125,7 +119,7 @@ class AllocationCostComputerMultimode(
         )
 
     def compute_objective(
-        self, solution: MultimodeAllocationSolution[Task, UnaryResource]
+        self, solution: MultiModeAllocationSolution[Task, UnaryResource]
     ) -> float:
         return sum(
             self.cost_allocation_resource_to_task_mode(

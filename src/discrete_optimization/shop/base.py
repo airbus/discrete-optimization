@@ -94,7 +94,7 @@ class AnyShopSolution(
     WithoutSkillSolution[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
-    WithoutNonRenewableResourceSolution[Task],
+    WithoutNonRenewableResourceSolution[Task, NoUnaryResource],
     WithoutAllocationSolution[Task],
 ):
     problem: "CommonShopProblem"
@@ -105,9 +105,9 @@ class AnyShopSolution(
     def __init__(
         self,
         problem: "CommonShopProblem",
-        schedule: list[list[tuple[int | AbsentValue.ABSENT, int | AbsentValue.ABSENT]]],
-        machine_index: list[list[int | AbsentValue.ABSENT]] = None,
-        recipe_index: list[list[int | AbsentValue.ABSENT]] = None,
+        schedule: list[list[tuple[int | AbsentValue, int | AbsentValue]]],
+        machine_index: list[list[int | AbsentValue]] = None,
+        recipe_index: list[list[int | AbsentValue]] = None,
     ):
         # For each job and sub-job, start, end time, machine id, and option choice given as tuple of int.
         super().__init__(problem=problem)
@@ -174,7 +174,7 @@ class CommonShopProblem(
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
-    WithoutNonRenewableResourceProblem[Task],
+    WithoutNonRenewableResourceProblem[Task, NoUnaryResource],
     WithoutAllocationProblem[Task],
 ):
     n_machines: int

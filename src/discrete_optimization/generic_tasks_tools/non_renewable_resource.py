@@ -9,11 +9,15 @@ from collections.abc import Hashable, Iterable
 from functools import reduce
 from typing import Generic, Optional, TypeVar
 
-from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.multimode import (
-    MultimodeProblem,
-    MultimodeSolution,
+from discrete_optimization.generic_tasks_tools.allocation import (
+    MultimodeAllocationProblem,
+    MultiModeAllocationSolution,
+    NoUnaryResource,
+    UnaryResource,
+    WithoutAllocationProblem,
+    WithoutAllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 logger = logging.getLogger(__name__)
@@ -22,7 +26,8 @@ NonRenewableResource = TypeVar("NonRenewableResource", bound=Hashable)
 
 
 class NonRenewableResourceProblem(
-    MultimodeProblem[Task], Generic[Task, NonRenewableResource]
+    MultimodeAllocationProblem[Task, UnaryResource],
+    Generic[Task, NonRenewableResource, UnaryResource],
 ):
     """Base class for problems dealing with non-renewable resources consumed by tasks.
     Just like CumulativeResourceProblem, it supports two consumption modes:
@@ -34,6 +39,8 @@ class NonRenewableResourceProblem(
        Modeled via a consumption mapping.
        If the task/mode dont depend on any other task, returns empty condition
        with the static resource need.
+    3. **Resource via unary resource allocation** : when given unary resource is allocated
+       it consumes a given nr resource.
 
     """
 
@@ -146,11 +153,58 @@ class NonRenewableResourceProblem(
             for task in self.tasks_list
         )
 
+    @optional_override
+    def get_nr_resource_consumption_when_unary_resource_allocated(
+        self,
+        task: Task,
+        mode: int,
+        resource: NonRenewableResource,
+        unary_resource: UnaryResource,
+    ):
+        return 0
+
+    def has_any_nr_resource_consumption_depend_on_unary_resource(self):
+        return any(
+            len(self.get_non_zero_mode_nr_res_unary(task)) > 0
+            for task in self.tasks_list
+        )
+
+    def get_tasks_of_interest_for_nr_resource(self, resource: NonRenewableResource):
+        return set(
+            [
+                t
+                for t in self.tasks_list
+                if any(
+                    self.get_nr_resource_consumption_when_unary_resource_allocated(
+                        task=t, mode=m, resource=resource, unary_resource=ur
+                    )
+                    > 0
+                    for m in self.get_task_modes(t)
+                    for ur in self.unary_resources_list
+                )
+            ]
+        )
+
+    def get_non_zero_mode_nr_res_unary(
+        self, task: Task
+    ) -> list[tuple[int, NonRenewableResource, UnaryResource]]:
+        return [
+            (mode, res, unary)
+            for mode in self.get_task_modes(task)
+            for res in self.non_renewable_resources_list
+            for unary in self.unary_resources_list
+            if self.get_nr_resource_consumption_when_unary_resource_allocated(
+                task, mode, res, unary
+            )
+            > 0
+        ]
+
 
 class NonRenewableResourceSolution(
-    MultimodeSolution[Task], Generic[Task, NonRenewableResource]
+    MultiModeAllocationSolution[Task, UnaryResource],
+    Generic[Task, NonRenewableResource, UnaryResource],
 ):
-    problem: NonRenewableResourceProblem[Task, NonRenewableResource]
+    problem: NonRenewableResourceProblem[Task, NonRenewableResource, UnaryResource]
 
     def get_non_renewable_resource_consumption_from_mapping(
         self, resource: NonRenewableResource, task: Task
@@ -200,6 +254,22 @@ class NonRenewableResourceSolution(
         else:
             return 0
 
+    def get_non_renewable_resource_consumption_by_unary_allocation(
+        self, task: Task, resource: NonRenewableResource
+    ):
+        if not self.is_present(task):
+            return 0
+        mode = self.get_mode(task)
+        allocated = self.get_task_allocation(task)
+        value = 0
+        for unary in allocated:
+            value += (
+                self.problem.get_nr_resource_consumption_when_unary_resource_allocated(
+                    task=task, mode=mode, resource=resource, unary_resource=unary
+                )
+            )
+        return value
+
     def check_non_renewable_resource_capacity_constraint(
         self, resource: NonRenewableResource
     ) -> bool:
@@ -217,6 +287,11 @@ class NonRenewableResourceSolution(
                 resources_consumption[resource] += (
                     self.get_non_renewable_resource_consumption(
                         resource=resource, task=task
+                    )
+                )
+                resources_consumption[resource] += (
+                    self.get_non_renewable_resource_consumption_by_unary_allocation(
+                        task=task, resource=resource
                     )
                 )
         resources_capa_violation = {
@@ -246,6 +321,9 @@ class NonRenewableResourceSolution(
         return {
             resource: sum(
                 self.get_non_renewable_resource_consumption(
+                    resource=resource, task=task
+                )
+                + self.get_non_renewable_resource_consumption_by_unary_allocation(
                     resource=resource, task=task
                 )
                 for task in self.get_present_tasks()
@@ -292,8 +370,23 @@ class NonRenewableResourceSolution(
 NoNonRenewableResource = None
 
 
+class NonRenewableResourceWithoutAllocationProblem(
+    NonRenewableResourceProblem[Task, NonRenewableResource, NoUnaryResource],
+    WithoutAllocationProblem[Task],
+):
+    pass
+
+
+class NonRenewableResourceWithoutAllocationSolution(
+    NonRenewableResourceSolution[Task, NonRenewableResource, NoUnaryResource],
+    WithoutAllocationSolution[Task],
+):
+    pass
+
+
 class WithoutNonRenewableResourceProblem(
-    NonRenewableResourceProblem[Task, NoNonRenewableResource], Generic[Task]
+    NonRenewableResourceProblem[Task, NoNonRenewableResource, UnaryResource],
+    Generic[Task, UnaryResource],
 ):
     """Mixin for problem without non-renewable resources.
 
@@ -317,7 +410,8 @@ class WithoutNonRenewableResourceProblem(
 
 
 class WithoutNonRenewableResourceSolution(
-    NonRenewableResourceSolution[Task, NoNonRenewableResource], Generic[Task]
+    NonRenewableResourceSolution[Task, NoNonRenewableResource, UnaryResource],
+    Generic[Task, UnaryResource],
 ):
     """Mixin for solution without non-renewable resources.
 

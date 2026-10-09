@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from typing import Generic
 
+from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
     CalendarResourceProblem,
     CalendarResourceSolution,
@@ -59,9 +60,9 @@ class CalendarRenewableResourceLevelObjectiveComputer(
 
 
 class NonRenewableResourceLevelObjectiveComputer(
-    ObjectiveComputer[Task], Generic[Task, NonRenewableResource]
+    ObjectiveComputer[Task], Generic[Task, NonRenewableResource, UnaryResource]
 ):
-    problem: NonRenewableResourceProblem[Task, NonRenewableResource]
+    problem: NonRenewableResourceProblem[Task, NonRenewableResource, UnaryResource]
 
     @staticmethod
     def get_objective_name() -> Objective | str:
@@ -69,7 +70,7 @@ class NonRenewableResourceLevelObjectiveComputer(
 
     def __init__(
         self,
-        problem: NonRenewableResourceProblem[Task, Resource],
+        problem: NonRenewableResourceProblem[Task, Resource, UnaryResource],
         weight_objective: float = 1.0,
         weight_resource: dict[Resource, float] = None,
     ):
@@ -86,7 +87,10 @@ class NonRenewableResourceLevelObjectiveComputer(
         return any(self.get_weight_resource(res) > 0 for res in self.weight_resource)
 
     def compute_objective(
-        self, solution: NonRenewableResourceSolution[Task, NonRenewableResource]
+        self,
+        solution: NonRenewableResourceSolution[
+            Task, NonRenewableResource, UnaryResource
+        ],
     ) -> float:
         return solution.compute_nb_non_renewable_resources_used(
             weights={
