@@ -89,7 +89,7 @@ class AllocSchedulingSolution(
     WithoutSkillSolution[
         Task, UnaryResource, NonSkillCumulativeResource, UnaryResource
     ],
-    WithoutNonRenewableResourceSolution[Task],
+    WithoutNonRenewableResourceSolution[Task, UnaryResource],
     SinglemodeSolution[Task],
 ):
     problem: AllocSchedulingProblem
@@ -164,7 +164,7 @@ class AllocSchedulingProblem(
         ExclusionResource,
     ],
     WithoutSkillProblem[Task, UnaryResource, NonSkillCumulativeResource, UnaryResource],
-    WithoutNonRenewableResourceProblem[Task],
+    WithoutNonRenewableResourceProblem[Task, UnaryResource],
     SinglemodeSchedulingProblem[Task],
 ):
     def __init__(
