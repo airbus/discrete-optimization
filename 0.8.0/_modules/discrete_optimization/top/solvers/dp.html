@@ -1,0 +1,486 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.top.solvers.dp &mdash; discrete-optimization 0.8.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=486e5634"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../solvers.html">discrete_optimization.top.solvers</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.top.solvers.dp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.top.solvers.dp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">didppy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.dyn_prog_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">DpSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.top.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">TeamOrienteeringProblem</span><span class="p">,</span> <span class="n">VrpSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.vrp.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_length_matrix</span>
+
+
+<div class="viewcode-block" id="DpTopSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.top.solvers.html#discrete_optimization.top.solvers.dp.DpTopSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DpTopSolver</span><span class="p">(</span><span class="n">DpSolver</span><span class="p">):</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">TeamOrienteeringProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">TeamOrienteeringProblem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">ParamsObjectiveFunction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance</span> <span class="o">=</span> <span class="n">compute_length_matrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distance</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">start_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">end_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distance</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">end_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">start_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="DpTopSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.top.solvers.html#discrete_optimization.top.solvers.dp.DpTopSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scaling</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">maximize</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">distance</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">scaling</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">distance</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">reward</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">reward</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customers</span><span class="p">]</span>
+        <span class="n">reward_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span><span class="p">)</span>
+        <span class="n">vehicle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">vehicle_count</span><span class="p">)</span>
+        <span class="n">nodes_to_visit</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">i</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">start_indexes</span> <span class="ow">and</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">end_indexes</span>
+        <span class="p">]</span>
+        <span class="n">distance_to_end</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="n">distance</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">end_indexes</span><span class="p">[</span><span class="n">j</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">vehicle_count</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">distance_to_end</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">distance</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">end_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">distance_to_end_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">distance_to_end</span><span class="p">)</span>
+        <span class="n">distance_from_start</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">distance</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">start_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">k</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">distance_from_start_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">distance_from_start</span><span class="p">)</span>
+        <span class="n">distance_to_and_back</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="n">distance</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">distance</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">end_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">customer_count</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">distance_to_and_back_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">distance_to_and_back</span><span class="p">)</span>
+        <span class="n">unvisited</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_set_var</span><span class="p">(</span><span class="n">object_type</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">nodes_to_visit</span><span class="p">)</span>
+        <span class="n">cur_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_element_var</span><span class="p">(</span>
+            <span class="n">object_type</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">start_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">cur_vehicle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_element_resource_var</span><span class="p">(</span>
+            <span class="n">object_type</span><span class="o">=</span><span class="n">vehicle</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">less_is_better</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="n">distance_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">[</span><span class="n">distance</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">distance</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">distance</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_resource_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">less_is_better</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">max_time</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">scaling</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">max_length_tours</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_state_constr</span><span class="p">(</span><span class="n">time</span> <span class="o">+</span> <span class="n">distance_to_end_table</span><span class="p">[</span><span class="n">cur_node</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">max_time</span><span class="p">)</span>
+        <span class="c1"># self.model.add_state_constr(time&lt;=max_time)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">nodes_to_visit</span><span class="p">:</span>
+            <span class="n">tr</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;visit_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_same_vehicle&quot;</span><span class="p">,</span>
+                <span class="n">cost</span><span class="o">=</span><span class="mi">100</span> <span class="o">*</span> <span class="n">reward</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="o">-</span> <span class="n">distance_table</span><span class="p">[</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+                <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+                <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                    <span class="p">(</span><span class="n">unvisited</span><span class="p">,</span> <span class="n">unvisited</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">i</span><span class="p">)),</span>
+                    <span class="p">(</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">time</span> <span class="o">+</span> <span class="n">distance_table</span><span class="p">[</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">i</span><span class="p">]),</span>
+                <span class="p">],</span>
+                <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">unvisited</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">i</span><span class="p">),</span>
+                    <span class="n">time</span> <span class="o">+</span> <span class="n">distance_to_and_back_table</span><span class="p">[</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">max_time</span><span class="p">,</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transitions_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;visit_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">_same_vehicle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;same&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">tr</span><span class="p">)</span>
+            <span class="c1"># tr = dp.Transition(name=f&quot;visit_{i}_change_vehicle&quot;,</span>
+            <span class="c1">#                    cost=1000*reward[i]-distance_to_end_table[cur_node]</span>
+            <span class="c1">#                         -distance_from_start[i]</span>
+            <span class="c1">#                         + dp.IntExpr.state_cost(),</span>
+            <span class="c1">#                    effects=[(unvisited, unvisited.remove(i)),</span>
+            <span class="c1">#                             (cur_node, i),</span>
+            <span class="c1">#                             (time, distance_from_start[i]),</span>
+            <span class="c1">#                             (cur_vehicle, cur_vehicle+1)],</span>
+            <span class="c1">#                    preconditions=[unvisited.contains(i),</span>
+            <span class="c1">#                                   cur_vehicle &lt; self.problem.vehicle_count-1,</span>
+            <span class="c1">#                                   # distance_from_start_table[i]&lt;=max_time</span>
+            <span class="c1">#                                   ])</span>
+            <span class="c1"># self.model.add_transition(tr)</span>
+            <span class="c1"># self.transitions_dict[f&quot;visit_{i}_change_vehicle&quot;] = (i, &quot;next&quot;)</span>
+        <span class="n">start_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_element_table</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">start_indexes</span><span class="p">)</span>
+        <span class="n">tr_change_vehicle</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;next_vehicle&quot;</span><span class="p">,</span>
+            <span class="n">cost</span><span class="o">=-</span><span class="n">distance_to_end_table</span><span class="p">[</span><span class="n">cur_node</span><span class="p">]</span> <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+            <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">start_nodes</span><span class="p">[</span><span class="n">cur_vehicle</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]),</span>
+                <span class="p">(</span><span class="n">cur_vehicle</span><span class="p">,</span> <span class="n">cur_vehicle</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+            <span class="p">],</span>
+            <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">cur_vehicle</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">vehicle_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">time</span> <span class="o">+</span> <span class="n">distance_to_and_back_table</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">unvisited</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_time</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">tr_change_vehicle</span><span class="p">,</span> <span class="n">forced</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;next_vehicle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;next-vehicle&quot;</span><span class="p">)</span>
+        <span class="n">finish_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">finish</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;finish&quot;</span><span class="p">,</span>
+            <span class="n">cost</span><span class="o">=</span><span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+            <span class="n">effects</span><span class="o">=</span><span class="p">[(</span><span class="n">finish_</span><span class="p">,</span> <span class="mi">1</span><span class="p">)],</span>
+            <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span>
+                <span class="p">(</span><span class="n">cur_vehicle</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">vehicle_count</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="p">(</span><span class="n">time</span> <span class="o">+</span> <span class="n">distance_to_and_back_table</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">unvisited</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_time</span><span class="p">)</span>
+                <span class="o">|</span> <span class="n">unvisited</span><span class="o">.</span><span class="n">is_empty</span><span class="p">(),</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;finish&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;finish&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="n">finish</span><span class="p">,</span> <span class="n">forced</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">add_base_case</span><span class="p">([(</span><span class="n">finish_</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)])</span></div>
+
+        <span class="c1"># self.model.add_dual_bound(1000*reward_table[unvisited])</span>
+
+<div class="viewcode-block" id="DpTopSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.top.solvers.html#discrete_optimization.top.solvers.dp.DpTopSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sol</span><span class="p">:</span> <span class="n">dp</span><span class="o">.</span><span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VrpSolution</span><span class="p">:</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cur_path</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">tr</span> <span class="ow">in</span> <span class="n">sol</span><span class="o">.</span><span class="n">transitions</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">name</span>
+            <span class="n">descr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transitions_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">descr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;same&quot;</span><span class="p">:</span>
+                <span class="n">cur_path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">descr</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">descr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;next&quot;</span><span class="p">:</span>
+                <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cur_path</span><span class="p">)</span>
+                <span class="n">cur_path</span> <span class="o">=</span> <span class="p">[</span><span class="n">descr</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">descr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;next-vehicle&quot;</span><span class="p">:</span>
+                <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cur_path</span><span class="p">)</span>
+                <span class="n">cur_path</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">descr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;finish&quot;</span><span class="p">:</span>
+                <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cur_path</span><span class="p">)</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">vehicle_count</span><span class="p">:</span>
+            <span class="n">paths</span><span class="o">.</span><span class="n">extend</span><span class="p">([[]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">vehicle_count</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">paths</span><span class="p">))])</span>
+        <span class="k">return</span> <span class="n">VrpSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">list_paths</span><span class="o">=</span><span class="n">paths</span><span class="p">,</span>
+            <span class="n">list_start_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">start_indexes</span><span class="p">,</span>
+            <span class="n">list_end_index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">end_indexes</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">pass</span></div>
+</div>
+
+
+
+<span class="c1"># #  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1"># #  This source code is licensed under the MIT license found in the</span>
+<span class="c1"># #  LICENSE file in the root directory of this source tree.</span>
+<span class="c1">#</span>
+<span class="c1"># import math</span>
+<span class="c1"># from typing import Any, List, Tuple</span>
+<span class="c1"># import didppy as dp</span>
+<span class="c1"># import numpy as np</span>
+<span class="c1">#</span>
+<span class="c1"># from discrete_optimization.generic_tools.dyn_prog_tools import DpSolver</span>
+<span class="c1"># from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction</span>
+<span class="c1"># from discrete_optimization.top.problem import TeamOrienteeringProblem, VrpSolution</span>
+<span class="c1"># from discrete_optimization.vrp.utils import compute_length_matrix</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># class DpTopSolver(DpSolver):</span>
+<span class="c1">#     problem: TeamOrienteeringProblem</span>
+<span class="c1">#</span>
+<span class="c1">#     def __init__(self, problem: TeamOrienteeringProblem,</span>
+<span class="c1">#                  params_objective_function: ParamsObjectiveFunction | None = None,</span>
+<span class="c1">#                  **kwargs):</span>
+<span class="c1">#         super().__init__(problem, params_objective_function, **kwargs)</span>
+<span class="c1">#         # Compute distance matrix and ensure depot-to-depot distance is handled if needed</span>
+<span class="c1">#         _, self.distance = compute_length_matrix(self.problem)</span>
+<span class="c1">#         # Map transition names to logic for reconstruction</span>
+<span class="c1">#         self.transitions_mapping = {}</span>
+<span class="c1">#</span>
+<span class="c1">#     def init_model(self, scaling: float = 1, **kwargs: Any) -&gt; None:</span>
+<span class="c1">#         # 1. Initialize Model (Maximize Reward)</span>
+<span class="c1">#         self.model = dp.Model(maximize=True, float_cost=False)</span>
+<span class="c1">#</span>
+<span class="c1">#         # 2. Preprocessing Data</span>
+<span class="c1">#         # Scale distances to integers for DP efficiency</span>
+<span class="c1">#         dist_matrix = (np.ceil(scaling * self.distance)).astype(int)</span>
+<span class="c1">#         rewards = [int(c.reward) for c in self.problem.customers]</span>
+<span class="c1">#         max_time = int(math.floor(scaling * self.problem.max_length_tours))</span>
+<span class="c1">#</span>
+<span class="c1">#         num_customers = self.problem.customer_count</span>
+<span class="c1">#         num_vehicles = self.problem.vehicle_count</span>
+<span class="c1">#</span>
+<span class="c1">#         # Identify customer nodes (excluding start/end depots)</span>
+<span class="c1">#         # Note: We assume start/end indexes are depots and shouldn&#39;t be in the &#39;unvisited&#39; set</span>
+<span class="c1">#         # that we try to collect rewards from.</span>
+<span class="c1">#         depots = set(self.problem.start_indexes + self.problem.end_indexes)</span>
+<span class="c1">#         customer_indices = [i for i in range(num_customers) if i not in depots]</span>
+<span class="c1">#</span>
+<span class="c1">#         # 3. Define State Variables</span>
+<span class="c1">#         # Set of unvisited customers</span>
+<span class="c1">#         node_obj = self.model.add_object_type(num_customers)</span>
+<span class="c1">#         unvisited = self.model.add_set_var(object_type=node_obj, target=customer_indices)</span>
+<span class="c1">#</span>
+<span class="c1">#         # Current location (node index)</span>
+<span class="c1">#         current_node = self.model.add_element_var(object_type=node_obj,</span>
+<span class="c1">#                                                   target=self.problem.start_indexes[0])</span>
+<span class="c1">#</span>
+<span class="c1">#         # Current Vehicle Index</span>
+<span class="c1">#         vehicle_obj = self.model.add_object_type(num_vehicles + 1)  # +1 to represent &quot;Done&quot; state</span>
+<span class="c1">#         current_vehicle = self.model.add_element_var(object_type=vehicle_obj, target=0)</span>
+<span class="c1">#</span>
+<span class="c1">#         # Time consumed by current vehicle</span>
+<span class="c1">#         current_time = self.model.add_int_resource_var(target=0, less_is_better=True)</span>
+<span class="c1">#</span>
+<span class="c1">#         # 4. Define Tables for DIDPPY access</span>
+<span class="c1">#         dist_table = self.model.add_int_table(dist_matrix)</span>
+<span class="c1">#         reward_table = self.model.add_int_table(rewards)</span>
+<span class="c1">#</span>
+<span class="c1">#         # Table for End Depots per vehicle (to check return feasibility)</span>
+<span class="c1">#         # If all vehicles share the same end depot logic, this simplifies,</span>
+<span class="c1">#         # but we support specific end depots per vehicle.</span>
+<span class="c1">#         end_depots_list = self.problem.end_indexes</span>
+<span class="c1">#         # If the number of end_indexes &lt; num_vehicles (unlikely in this struct), handle it.</span>
+<span class="c1">#         # We create a table: vehicle_index -&gt; end_depot_node_index</span>
+<span class="c1">#         end_depot_table = self.model.add_int_table(end_depots_list + [end_depots_list[-1]])  # Pad for safety</span>
+<span class="c1">#</span>
+<span class="c1">#         start_depots_list = self.problem.start_indexes</span>
+<span class="c1">#         start_depot_table = self.model.add_int_table(start_depots_list + [start_depots_list[-1]])</span>
+<span class="c1">#</span>
+<span class="c1">#         # 5. Transitions</span>
+<span class="c1">#</span>
+<span class="c1">#         # A. Visit Customer Transition</span>
+<span class="c1">#         # Try to visit every customer i from the current node</span>
+<span class="c1">#         for i in customer_indices:</span>
+<span class="c1">#             name = f&quot;visit_{i}&quot;</span>
+<span class="c1">#</span>
+<span class="c1">#             # Cost to add to objective = Reward of customer i</span>
+<span class="c1">#             cost_expr = reward_table[i] + dp.IntExpr.state_cost()</span>
+<span class="c1">#</span>
+<span class="c1">#             # Distance from current node to i</span>
+<span class="c1">#             dist_to_i = dist_table[current_node, i]</span>
+<span class="c1">#             # Distance from i to the current vehicle&#39;s end depot</span>
+<span class="c1">#             dist_return = dist_table[i, end_depot_table[current_vehicle]]</span>
+<span class="c1">#</span>
+<span class="c1">#             # Preconditions:</span>
+<span class="c1">#             # 1. Customer must be unvisited</span>
+<span class="c1">#             # 2. We must have enough time to reach i AND return to the depot afterwards</span>
+<span class="c1">#             preconditions = [</span>
+<span class="c1">#                 unvisited.contains(i),</span>
+<span class="c1">#                 current_time + dist_to_i + dist_return &lt;= max_time</span>
+<span class="c1">#             ]</span>
+<span class="c1">#</span>
+<span class="c1">#             # Effects:</span>
+<span class="c1">#             effects = [</span>
+<span class="c1">#                 (unvisited, unvisited.remove(i)),</span>
+<span class="c1">#                 (current_node, i),</span>
+<span class="c1">#                 (current_time, current_time + dist_to_i)</span>
+<span class="c1">#             ]</span>
+<span class="c1">#</span>
+<span class="c1">#             transition = dp.Transition(</span>
+<span class="c1">#                 name=name,</span>
+<span class="c1">#                 cost=cost_expr,</span>
+<span class="c1">#                 effects=effects,</span>
+<span class="c1">#                 preconditions=preconditions</span>
+<span class="c1">#             )</span>
+<span class="c1">#             self.model.add_transition(transition)</span>
+<span class="c1">#             self.transitions_mapping[name] = {&quot;type&quot;: &quot;visit&quot;, &quot;node&quot;: i}</span>
+<span class="c1">#</span>
+<span class="c1">#         # B. Next Vehicle / Finish Transition</span>
+<span class="c1">#         # Move to the next vehicle (or finish if it&#39;s the last one)</span>
+<span class="c1">#         # This represents &quot;Returning to depot&quot; and &quot;Starting next vehicle&quot;</span>
+<span class="c1">#         next_veh_name = &quot;next_vehicle&quot;</span>
+<span class="c1">#</span>
+<span class="c1">#         # Preconditions:</span>
+<span class="c1">#         # Only allowed if we haven&#39;t exhausted all vehicles</span>
+<span class="c1">#         preconditions_next = [current_vehicle &lt; num_vehicles]</span>
+<span class="c1">#</span>
+<span class="c1">#         # Effects:</span>
+<span class="c1">#         # Increment vehicle index</span>
+<span class="c1">#         # Reset time to 0</span>
+<span class="c1">#         # Set location to the start depot of the *next* vehicle</span>
+<span class="c1">#         effects_next = [</span>
+<span class="c1">#             (current_vehicle, current_vehicle + 1),</span>
+<span class="c1">#             (current_time, 0),</span>
+<span class="c1">#             (current_node, start_depot_table[current_vehicle + 1])</span>
+<span class="c1">#         ]</span>
+<span class="c1">#</span>
+<span class="c1">#         transition_next = dp.Transition(</span>
+<span class="c1">#             name=next_veh_name,</span>
+<span class="c1">#             cost=dp.IntExpr.state_cost(),  # No reward gained for switching</span>
+<span class="c1">#             effects=effects_next,</span>
+<span class="c1">#             preconditions=preconditions_next</span>
+<span class="c1">#         )</span>
+<span class="c1">#         self.model.add_transition(transition_next)</span>
+<span class="c1">#         self.transitions_mapping[next_veh_name] = {&quot;type&quot;: &quot;next_vehicle&quot;}</span>
+<span class="c1">#</span>
+<span class="c1">#         # 6. Base Case</span>
+<span class="c1">#         # The problem is &quot;solved&quot; (traversal complete) when we have used all vehicles.</span>
+<span class="c1">#         # current_vehicle reaches num_vehicles</span>
+<span class="c1">#         self.model.add_base_case([current_vehicle == num_vehicles])</span>
+<span class="c1">#</span>
+<span class="c1">#         # 7. Dual Bound (Heuristic)</span>
+<span class="c1">#         # An upper bound on the remaining reward is the sum of rewards of all unvisited nodes.</span>
+<span class="c1">#         # This ignores the time constraint but provides a valid admissible heuristic for pruning.</span>
+<span class="c1">#         self.model.add_dual_bound(reward_table[unvisited])</span>
+<span class="c1">#</span>
+<span class="c1">#     def retrieve_solution(self, sol: dp.Solution) -&gt; VrpSolution:</span>
+<span class="c1">#         paths: List[List[int]] = [[] for _ in range(self.problem.vehicle_count)]</span>
+<span class="c1">#         current_vehicle_idx = 0</span>
+<span class="c1">#</span>
+<span class="c1">#         for transition in sol.transitions:</span>
+<span class="c1">#             t_info = self.transitions_mapping.get(transition.name)</span>
+<span class="c1">#             if not t_info:</span>
+<span class="c1">#                 continue</span>
+<span class="c1">#</span>
+<span class="c1">#             if t_info[&quot;type&quot;] == &quot;visit&quot;:</span>
+<span class="c1">#                 if current_vehicle_idx &lt; self.problem.vehicle_count:</span>
+<span class="c1">#                     paths[current_vehicle_idx].append(t_info[&quot;node&quot;])</span>
+<span class="c1">#</span>
+<span class="c1">#             elif t_info[&quot;type&quot;] == &quot;next_vehicle&quot;:</span>
+<span class="c1">#                 current_vehicle_idx += 1</span>
+<span class="c1">#</span>
+<span class="c1">#         return VrpSolution(</span>
+<span class="c1">#             problem=self.problem,</span>
+<span class="c1">#             list_paths=paths,</span>
+<span class="c1">#             list_start_index=self.problem.start_indexes,</span>
+<span class="c1">#             list_end_index=self.problem.end_indexes</span>
+<span class="c1">#         )</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.8.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,21 @@
+discrete\_optimization.alb.rcalbp.transformations package
+=========================================================
+
+Submodules
+----------
+
+discrete\_optimization.alb.rcalbp.transformations.to\_generic module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.rcalbp.transformations.to_generic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.alb.rcalbp.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

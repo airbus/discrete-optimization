@@ -1,0 +1,37 @@
+discrete\_optimization.tsptw package
+====================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.tsptw.solvers
+
+Submodules
+----------
+
+discrete\_optimization.tsptw.parser module
+------------------------------------------
+
+.. automodule:: discrete_optimization.tsptw.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsptw.problem module
+-------------------------------------------
+
+.. automodule:: discrete_optimization.tsptw.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.tsptw
+   :members:
+   :show-inheritance:
+   :undoc-members:

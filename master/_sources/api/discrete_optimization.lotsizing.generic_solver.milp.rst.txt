@@ -1,0 +1,69 @@
+discrete\_optimization.lotsizing.generic\_solver.milp package
+=============================================================
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.generic\_solver.milp.backlog module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.milp.backlog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.milp.changeover module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.milp.changeover
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.milp.generic\_lotsizing\_milp module
+-------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.milp.generic_lotsizing_milp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.milp.inventory module
+----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.milp.inventory
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.milp.lotsizing\_solver\_milp module
+------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.milp.lotsizing_solver_milp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.milp.parallel\_production module
+---------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.milp.parallel_production
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_solver.milp.production module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.milp.production
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.milp
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,29 @@
+discrete\_optimization.vrp.transformations package
+==================================================
+
+Submodules
+----------
+
+discrete\_optimization.vrp.transformations.to\_top module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.transformations.to_top
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.vrp.transformations.to\_vrptw module
+-----------------------------------------------------------
+
+.. automodule:: discrete_optimization.vrp.transformations.to_vrptw
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.vrp.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

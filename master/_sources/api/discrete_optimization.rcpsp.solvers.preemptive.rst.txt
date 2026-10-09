@@ -1,0 +1,29 @@
+discrete\_optimization.rcpsp.solvers.preemptive package
+=======================================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp.solvers.preemptive.cpsat module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.preemptive.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp.solvers.preemptive.optal module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.preemptive.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp.solvers.preemptive
+   :members:
+   :show-inheritance:
+   :undoc-members:

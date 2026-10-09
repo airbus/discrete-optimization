@@ -1,0 +1,21 @@
+discrete\_optimization.lotsizing.generic\_solver.toulbar package
+================================================================
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.generic\_solver.toulbar.lotsizing\_solver\_toulbar module
+------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.toulbar.lotsizing_solver_toulbar
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.toulbar
+   :members:
+   :show-inheritance:
+   :undoc-members:

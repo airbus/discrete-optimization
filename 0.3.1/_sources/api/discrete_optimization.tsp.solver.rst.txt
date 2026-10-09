@@ -1,0 +1,45 @@
+discrete\_optimization.tsp.solver package
+=========================================
+
+Submodules
+----------
+
+discrete\_optimization.tsp.solver.solver\_lp\_iterative module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solver.solver_lp_iterative
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.tsp.solver.solver\_ortools module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solver.solver_ortools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.tsp.solver.tsp\_cp\_solver module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solver.tsp_cp_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.tsp.solver.tsp\_solver module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solver.tsp_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.tsp.solver
+   :members:
+   :undoc-members:
+   :show-inheritance:

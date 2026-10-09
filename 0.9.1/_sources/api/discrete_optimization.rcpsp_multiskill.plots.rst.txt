@@ -1,0 +1,21 @@
+discrete\_optimization.rcpsp\_multiskill.plots package
+======================================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_multiskill.plots.plot\_solution module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.plots.plot_solution
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.plots
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,501 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.multibatching.solvers.dp &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+          <li class="breadcrumb-item"><a href="../solvers.html">discrete_optimization.multibatching.solvers</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.multibatching.solvers.dp</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.multibatching.solvers.dp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">didppy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.dyn_prog_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">DpSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.multibatching.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultibatchingProblem</span><span class="p">,</span>
+    <span class="n">MultibatchingSolution</span><span class="p">,</span>
+    <span class="n">PackingTransport</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.multibatching.solvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultibatchingSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.multibatching.solvers.solver_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">precompute_valid_links</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DpMultibatchingSolver">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DpMultibatchingSolver</span><span class="p">(</span><span class="n">DpSolver</span><span class="p">,</span> <span class="n">MultibatchingSolver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dynamic Programming solver for multibatching problem.</span>
+
+<span class="sd">    Simplified approach:</span>
+<span class="sd">    - State: Current supply/demand at each (product, location) pair</span>
+<span class="sd">    - Transitions: Send a batch on a transport link with specific products/quantities</span>
+<span class="sd">    - Base case: All supply/demand balanced (net = 0)</span>
+<span class="sd">    - Cost: Transport cost for each batch</span>
+
+<span class="sd">    Note: This models each product flow separately and aggregates in solution retrieval.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">MultibatchingProblem</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">dp</span><span class="o">.</span><span class="n">Model</span>
+    <span class="n">transitions</span><span class="p">:</span> <span class="nb">dict</span>
+
+<div class="viewcode-block" id="DpMultibatchingSolver.init_model">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver.init_model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize DP model for multibatching.&quot;&quot;&quot;</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">maximize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">float_cost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># Options</span>
+        <span class="n">restrict_to_shortest_paths</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;restrict_to_shortest_paths&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">shortest_path_tolerance</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shortest_path_tolerance&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="n">products</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span>
+        <span class="n">locations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations</span>
+        <span class="n">transport_links</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span>
+
+        <span class="n">nb_products</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">products</span><span class="p">)</span>
+        <span class="n">nb_locations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">locations</span><span class="p">)</span>
+        <span class="n">nb_links</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">transport_links</span><span class="p">)</span>
+
+        <span class="c1"># Precompute valid links if using shortest path heuristic</span>
+        <span class="n">valid_links_per_product</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">restrict_to_shortest_paths</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Computing valid links (Shortest Path Heuristic, tol=</span><span class="si">{</span><span class="n">shortest_path_tolerance</span><span class="si">}</span><span class="s2">)...&quot;</span>
+            <span class="p">)</span>
+            <span class="n">valid_links_per_product</span> <span class="o">=</span> <span class="n">precompute_valid_links</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="n">shortest_path_tolerance</span>
+            <span class="p">)</span>
+        <span class="c1"># Create object types</span>
+        <span class="n">product_type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span><span class="n">number</span><span class="o">=</span><span class="n">nb_products</span><span class="p">)</span>
+        <span class="n">link_type</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_object_type</span><span class="p">(</span><span class="n">number</span><span class="o">=</span><span class="n">nb_links</span><span class="p">)</span>
+        <span class="c1"># State: net supply at each (product, location)</span>
+        <span class="c1"># Positive = supply (source), Negative = demand (sink)</span>
+        <span class="c1"># Initial value = current net_supply, Goal = 0 (balanced)</span>
+        <span class="n">net_supply</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">initial_supplies</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">products</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">l_idx</span><span class="p">,</span> <span class="n">loc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">locations</span><span class="p">):</span>
+                <span class="n">supply_val</span> <span class="o">=</span> <span class="n">loc</span><span class="o">.</span><span class="n">net_supply</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="c1"># target = INITIAL value (current supply/demand)</span>
+                <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">l_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">supply_val</span><span class="p">)</span>
+                <span class="n">initial_supplies</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">l_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">supply_val</span>
+        <span class="c1"># Create lookup tables</span>
+        <span class="n">sizes_list</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">size</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">products</span><span class="p">]</span>
+        <span class="n">product_sizes</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">sizes_list</span><span class="p">)</span>
+        <span class="n">link_costs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">cost</span> <span class="o">*</span> <span class="n">link</span><span class="o">.</span><span class="n">distance</span><span class="p">)</span> <span class="k">for</span> <span class="n">link</span> <span class="ow">in</span> <span class="n">transport_links</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># Build product-link compatibility matrix</span>
+        <span class="n">product_can_use_link</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">products</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">link_idx</span><span class="p">,</span> <span class="n">link</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">transport_links</span><span class="p">):</span>
+                <span class="n">can_use</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">link</span><span class="o">.</span><span class="n">transport_type</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">valid_transports</span>
+                    <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;=</span> <span class="n">link</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span>
+                <span class="p">)</span>
+                <span class="n">product_can_use_link</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">link_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">can_use</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">current_batch</span> <span class="o">=</span> <span class="p">[</span><span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_products</span><span class="p">)]</span>
+        <span class="n">capacities_list</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span><span class="p">)</span> <span class="k">for</span> <span class="n">tl</span> <span class="ow">in</span> <span class="n">transport_links</span><span class="p">]</span>
+        <span class="n">capacities</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span><span class="p">)</span> <span class="k">for</span> <span class="n">tl</span> <span class="ow">in</span> <span class="n">transport_links</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">current_size</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">current_link</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_element_var</span><span class="p">(</span><span class="n">object_type</span><span class="o">=</span><span class="n">link_type</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">currently_open</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_var</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># Create compatibility table: True if product can use link, False otherwise</span>
+        <span class="n">compatible</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_bool_table</span><span class="p">(</span><span class="n">product_can_use_link</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">link_idx</span><span class="p">,</span> <span class="n">link</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">transport_links</span><span class="p">):</span>
+            <span class="n">source_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations_to_index</span><span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">location_l1</span><span class="p">]</span>
+            <span class="n">dest_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations_to_index</span><span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">location_l2</span><span class="p">]</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">capacity</span><span class="p">)</span>
+
+            <span class="c1"># Check if this link should be considered based on shortest path heuristic</span>
+            <span class="k">if</span> <span class="n">restrict_to_shortest_paths</span><span class="p">:</span>
+                <span class="c1"># Check if this link is valid for at least one product</span>
+                <span class="n">is_valid_for_any_product</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">products</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="n">p</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">valid_links_per_product</span>
+                        <span class="ow">and</span> <span class="n">link_idx</span> <span class="ow">in</span> <span class="n">valid_links_per_product</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+                    <span class="p">):</span>
+                        <span class="n">is_valid_for_any_product</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">is_valid_for_any_product</span><span class="p">:</span>
+                    <span class="k">continue</span>  <span class="c1"># Skip this link</span>
+
+            <span class="c1"># Build precondition: at least one product with supply&gt;0 at source AND demand&lt;0 at dest</span>
+            <span class="c1"># This biases opening links that move us toward feasibility</span>
+            <span class="n">has_useful_product</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">p_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_products</span><span class="p">):</span>
+                <span class="n">condition</span> <span class="o">=</span> <span class="p">(</span><span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">)]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+                    <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">dest_idx</span><span class="p">)]</span> <span class="o">&lt;</span> <span class="mi">0</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">p_idx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">has_useful_product</span> <span class="o">=</span> <span class="n">condition</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">has_useful_product</span> <span class="o">=</span> <span class="n">has_useful_product</span> <span class="o">|</span> <span class="n">condition</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[(</span><span class="s2">&quot;open&quot;</span><span class="p">,</span> <span class="n">link_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;open_</span><span class="si">{</span><span class="n">link_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">cost</span><span class="o">=</span><span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+                <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                    <span class="p">(</span><span class="n">currently_open</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">current_size</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                    <span class="p">(</span><span class="n">current_link</span><span class="p">,</span> <span class="n">link_idx</span><span class="p">),</span>
+                <span class="p">],</span>
+                <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span><span class="n">currently_open</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">has_useful_product</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[(</span><span class="s2">&quot;open&quot;</span><span class="p">,</span> <span class="n">link_idx</span><span class="p">)])</span>
+        <span class="n">cost_tl</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">int</span><span class="p">(</span>
+                <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">cost</span> <span class="o">*</span> <span class="n">tl</span><span class="o">.</span><span class="n">distance</span>
+                <span class="o">+</span> <span class="n">tl</span><span class="o">.</span><span class="n">transport_type</span><span class="o">.</span><span class="n">emissions</span> <span class="o">*</span> <span class="n">tl</span><span class="o">.</span><span class="n">distance</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">tl</span> <span class="ow">in</span> <span class="n">transport_links</span>
+        <span class="p">]</span>
+        <span class="n">cost_table</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_int_table</span><span class="p">(</span><span class="n">cost_tl</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[</span><span class="s2">&quot;close&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;close&quot;</span><span class="p">,</span>
+            <span class="n">cost</span><span class="o">=</span><span class="n">cost_table</span><span class="p">[</span><span class="n">current_link</span><span class="p">]</span> <span class="o">+</span> <span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+            <span class="n">effects</span><span class="o">=</span><span class="p">[(</span><span class="n">current_size</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="n">currently_open</span><span class="p">,</span> <span class="mi">0</span><span class="p">)],</span>
+            <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span><span class="n">currently_open</span> <span class="o">==</span> <span class="mi">1</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">link_idx</span><span class="p">,</span> <span class="n">link</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">transport_links</span><span class="p">):</span>
+            <span class="n">source_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations_to_index</span><span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">location_l1</span><span class="p">]</span>
+            <span class="n">dest_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations_to_index</span><span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">location_l2</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">products</span><span class="p">):</span>
+                <span class="c1"># Use the compatible table and check capacity</span>
+                <span class="n">is_compatible</span> <span class="o">=</span> <span class="n">compatible</span><span class="p">[</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">link_idx</span><span class="p">]</span> <span class="o">&amp;</span> <span class="p">(</span>
+                    <span class="n">capacities</span><span class="p">[</span><span class="n">link_idx</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">p</span><span class="o">.</span><span class="n">size</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[(</span><span class="s2">&quot;send_1&quot;</span><span class="p">,</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">link_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;send_1_</span><span class="si">{</span><span class="n">p_idx</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">link_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">cost</span><span class="o">=</span><span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+                    <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                        <span class="p">(</span><span class="n">current_size</span><span class="p">,</span> <span class="n">current_size</span> <span class="o">+</span> <span class="n">sizes_list</span><span class="p">[</span><span class="n">p_idx</span><span class="p">]),</span>
+                        <span class="p">(</span>
+                            <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">)],</span>
+                            <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">)]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="p">(</span>
+                            <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">dest_idx</span><span class="p">)],</span>
+                            <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">dest_idx</span><span class="p">)]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="p">),</span>
+                    <span class="p">],</span>
+                    <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">currently_open</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="n">is_compatible</span><span class="p">,</span>
+                        <span class="n">link_idx</span> <span class="o">==</span> <span class="n">current_link</span><span class="p">,</span>
+                        <span class="n">current_size</span> <span class="o">+</span> <span class="n">sizes_list</span><span class="p">[</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">capacities_list</span><span class="p">[</span><span class="n">link_idx</span><span class="p">],</span>
+                        <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">)]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="p">],</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[(</span><span class="s2">&quot;send_all&quot;</span><span class="p">,</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">link_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">Transition</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;send_all_</span><span class="si">{</span><span class="n">p_idx</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">link_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">cost</span><span class="o">=</span><span class="n">dp</span><span class="o">.</span><span class="n">IntExpr</span><span class="o">.</span><span class="n">state_cost</span><span class="p">(),</span>
+                    <span class="n">effects</span><span class="o">=</span><span class="p">[</span>
+                        <span class="p">(</span>
+                            <span class="n">current_size</span><span class="p">,</span>
+                            <span class="n">current_size</span>
+                            <span class="o">+</span> <span class="n">sizes_list</span><span class="p">[</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">)],</span>
+                        <span class="p">),</span>
+                        <span class="p">(</span><span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">)],</span> <span class="mi">0</span><span class="p">),</span>
+                        <span class="p">(</span>
+                            <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">dest_idx</span><span class="p">)],</span>
+                            <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">dest_idx</span><span class="p">)]</span>
+                            <span class="o">+</span> <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">)],</span>
+                        <span class="p">),</span>
+                    <span class="p">],</span>
+                    <span class="n">preconditions</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">currently_open</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="n">is_compatible</span><span class="p">,</span>
+                        <span class="n">link_idx</span> <span class="o">==</span> <span class="n">current_link</span><span class="p">,</span>
+                        <span class="n">current_size</span>
+                        <span class="o">+</span> <span class="n">sizes_list</span><span class="p">[</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">)]</span>
+                        <span class="o">&lt;=</span> <span class="n">capacities_list</span><span class="p">[</span><span class="n">link_idx</span><span class="p">],</span>
+                        <span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">)]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">,</span>
+                    <span class="p">],</span>
+                <span class="p">)</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[(</span><span class="s2">&quot;send_all&quot;</span><span class="p">,</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">link_idx</span><span class="p">)])</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">add_transition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">[(</span><span class="s2">&quot;send_1&quot;</span><span class="p">,</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">link_idx</span><span class="p">)])</span>
+
+        <span class="c1"># Base case: GOAL state - all supply/demand balanced (net_supply = 0)</span>
+        <span class="n">base_conditions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">l_idx</span><span class="p">),</span> <span class="n">initial_val</span> <span class="ow">in</span> <span class="n">initial_supplies</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">initial_val</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># This location had supply/demand, so it must be 0 at goal</span>
+                <span class="n">base_conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">net_supply</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">l_idx</span><span class="p">)]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">base_conditions</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_base_case</span><span class="p">(</span><span class="n">base_conditions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Trivial case: no supply/demand to route</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">add_base_case</span><span class="p">([</span><span class="kc">True</span><span class="p">])</span>
+
+        <span class="c1"># Store for solution retrieval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net_supply</span> <span class="o">=</span> <span class="n">net_supply</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_supplies</span> <span class="o">=</span> <span class="n">initial_supplies</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;DP model initialized: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">nb_products</span><span class="si">}</span><span class="s2"> products, </span><span class="si">{</span><span class="n">nb_locations</span><span class="si">}</span><span class="s2"> locations, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">nb_links</span><span class="si">}</span><span class="s2"> links, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transitions</span><span class="p">)</span><span class="si">}</span><span class="s2"> transitions&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DpMultibatchingSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.multibatching.solvers.html#discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sol</span><span class="p">:</span> <span class="n">dp</span><span class="o">.</span><span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract MultibatchingSolution from DP solution.</span>
+
+<span class="sd">        Parses transition sequence: open_{link} -&gt; send_{product}_{link} -&gt; close</span>
+<span class="sd">        and aggregates into batches. Simulates state changes to determine quantities</span>
+<span class="sd">        for send_all transitions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Debug: print all transitions</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Transition sequence (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">transitions</span><span class="p">)</span><span class="si">}</span><span class="s2"> transitions):&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">transitions</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Initialize shadow state with initial supplies</span>
+        <span class="n">current_state</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">l_idx</span><span class="p">),</span> <span class="n">initial_val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_supplies</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">current_state</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">l_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="n">initial_val</span>
+
+        <span class="c1"># Track batches: list of (link_idx, {p_idx: qty})</span>
+        <span class="n">batches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">current_link</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">current_batch</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">batch_opened</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">transition</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sol</span><span class="o">.</span><span class="n">transitions</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">transition</span><span class="o">.</span><span class="n">name</span>
+
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;open_&quot;</span><span class="p">):</span>
+                <span class="c1"># Start new batch</span>
+                <span class="n">link_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">current_link</span> <span class="o">=</span> <span class="n">link_idx</span>
+                <span class="n">current_batch</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+                <span class="n">batch_opened</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;send_1_&quot;</span><span class="p">):</span>
+                <span class="c1"># Format: send_1_{p_idx}_{link_idx}</span>
+                <span class="n">parts</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+                <span class="n">p_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">link_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">batch_opened</span> <span class="ow">and</span> <span class="n">current_link</span> <span class="o">==</span> <span class="n">link_idx</span><span class="p">:</span>
+                    <span class="c1"># Get source and destination for this link</span>
+                    <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">[</span><span class="n">link_idx</span><span class="p">]</span>
+                    <span class="n">source_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations_to_index</span><span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">location_l1</span><span class="p">]</span>
+                    <span class="n">dest_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations_to_index</span><span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">location_l2</span><span class="p">]</span>
+
+                    <span class="c1"># Update shadow state</span>
+                    <span class="n">current_state</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">)]</span> <span class="o">-=</span> <span class="mi">1</span>
+                    <span class="n">current_state</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">dest_idx</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="c1"># Track in batch</span>
+                    <span class="n">current_batch</span><span class="p">[</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">elif</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;send_all_&quot;</span><span class="p">):</span>
+                <span class="c1"># Format: send_all_{p_idx}_{link_idx}</span>
+                <span class="c1"># Determine quantity from current state before applying transition</span>
+                <span class="n">parts</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)</span>
+                <span class="n">p_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">link_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+                <span class="k">if</span> <span class="n">batch_opened</span> <span class="ow">and</span> <span class="n">current_link</span> <span class="o">==</span> <span class="n">link_idx</span><span class="p">:</span>
+                    <span class="c1"># Get source and destination for this link</span>
+                    <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">[</span><span class="n">link_idx</span><span class="p">]</span>
+                    <span class="n">source_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations_to_index</span><span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">location_l1</span><span class="p">]</span>
+                    <span class="n">dest_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">locations_to_index</span><span class="p">[</span><span class="n">link</span><span class="o">.</span><span class="n">location_l2</span><span class="p">]</span>
+
+                    <span class="c1"># The quantity sent is all remaining supply at source</span>
+                    <span class="n">qty_sent</span> <span class="o">=</span> <span class="n">current_state</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">qty_sent</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="c1"># Update shadow state</span>
+                        <span class="n">current_state</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">source_idx</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+                        <span class="n">current_state</span><span class="p">[(</span><span class="n">p_idx</span><span class="p">,</span> <span class="n">dest_idx</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">qty_sent</span>
+
+                        <span class="c1"># Track in batch</span>
+                        <span class="n">current_batch</span><span class="p">[</span><span class="n">p_idx</span><span class="p">]</span> <span class="o">+=</span> <span class="n">qty_sent</span>
+
+            <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;close&quot;</span><span class="p">:</span>
+                <span class="c1"># Finalize current batch</span>
+                <span class="k">if</span> <span class="n">batch_opened</span> <span class="ow">and</span> <span class="n">current_link</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">current_batch</span><span class="p">:</span>
+                    <span class="n">batches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">current_link</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">current_batch</span><span class="p">)))</span>
+                <span class="n">current_link</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">current_batch</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+                <span class="n">batch_opened</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># Finalize any remaining open batch (in case sequence ends without close)</span>
+        <span class="k">if</span> <span class="n">batch_opened</span> <span class="ow">and</span> <span class="n">current_link</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">current_batch</span><span class="p">:</span>
+            <span class="n">batches</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">current_link</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">current_batch</span><span class="p">)))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Finalizing unclosed batch on link </span><span class="si">{</span><span class="n">current_link</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Aggregate batches by link</span>
+        <span class="n">link_batches</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">link_idx</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">batches</span><span class="p">:</span>
+            <span class="n">link_batches</span><span class="p">[</span><span class="n">link_idx</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+
+        <span class="c1"># Build solution</span>
+        <span class="n">list_flows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">link_idx</span><span class="p">,</span> <span class="n">batch_list</span> <span class="ow">in</span> <span class="n">link_batches</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">transport_links</span><span class="p">[</span><span class="n">link_idx</span><span class="p">]</span>
+
+            <span class="c1"># For each link, create one PackingTransport per batch</span>
+            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">batch_list</span><span class="p">:</span>
+                <span class="n">packing</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">p_idx</span><span class="p">,</span> <span class="n">qty</span> <span class="ow">in</span> <span class="n">batch</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">product</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">products</span><span class="p">[</span><span class="n">p_idx</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">qty</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">packing</span><span class="p">[</span><span class="n">product</span><span class="p">]</span> <span class="o">=</span> <span class="n">qty</span>
+
+                <span class="k">if</span> <span class="n">packing</span><span class="p">:</span>
+                    <span class="n">list_flows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">PackingTransport</span><span class="p">(</span>
+                            <span class="n">transport_link</span><span class="o">=</span><span class="n">link</span><span class="p">,</span>
+                            <span class="n">product_packing</span><span class="o">=</span><span class="n">packing</span><span class="p">,</span>
+                            <span class="n">nb_packing</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># Each batch is 1 packing</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">MultibatchingSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">list_flows</span><span class="o">=</span><span class="n">list_flows</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Retrieved solution with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">list_flows</span><span class="p">)</span><span class="si">}</span><span class="s2"> flows from </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span><span class="si">}</span><span class="s2"> batches &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(satisfy=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">solution</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
