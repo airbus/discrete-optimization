@@ -10,7 +10,6 @@ from discrete_optimization.generic_tasks_tools.objectives.earliness_tardiness im
     EarlinessTardinessComputer,
 )
 from discrete_optimization.generic_tasks_tools.scheduling import (
-    SchedulingProblem,
     Task,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.objective_modeler import (
@@ -25,41 +24,6 @@ class EarlinessTardinessCpSatModeler(ObjectiveModelerCpSat, Generic[Task]):
     earliness_end_vars: dict
     tardiness_start_vars: dict
     tardiness_end_vars: dict
-
-    def __init__(
-        self,
-        problem: SchedulingProblem[Task],
-        weight_objective: float = 1.0,
-        max_start_and_weight_for_tardiness: dict[
-            Task, tuple[int | None, int | None]
-        ] = None,
-        max_end_and_weight_for_tardiness: dict[
-            Task, tuple[int | None, int | None]
-        ] = None,
-        min_start_and_weight_for_earliness: dict[
-            Task, tuple[int | None, int | None]
-        ] = None,
-        min_end_and_weight_for_earliness: dict[
-            Task, tuple[int | None, int | None]
-        ] = None,
-    ):
-        super().__init__(problem, weight_objective)
-        if max_start_and_weight_for_tardiness is None:
-            self.max_start_and_weight_for_tardiness = {}
-        else:
-            self.max_start_and_weight_for_tardiness = max_start_and_weight_for_tardiness
-        if max_end_and_weight_for_tardiness is None:
-            self.max_end_and_weight_for_tardiness = {}
-        else:
-            self.max_end_and_weight_for_tardiness = max_end_and_weight_for_tardiness
-        if min_start_and_weight_for_earliness is None:
-            self.min_start_and_weight_for_earliness = {}
-        else:
-            self.min_start_and_weight_for_earliness = min_start_and_weight_for_earliness
-        if min_end_and_weight_for_earliness is None:
-            self.min_end_and_weight_for_earliness = {}
-        else:
-            self.min_end_and_weight_for_earliness = min_end_and_weight_for_earliness
 
     def _create_earliness_tardiness_vars(self):
         cp_model = self.solver.cp_model
@@ -118,7 +82,7 @@ class EarlinessTardinessCpSatModeler(ObjectiveModelerCpSat, Generic[Task]):
                 lb=0, ub=max_tardiness, name=f"tardiness_start_{task}"
             )
             cp_model.add_max_equality(
-                self.earliness_start_vars[task],
+                self.tardiness_start_vars[task],
                 [
                     0,
                     self.solver.get_task_start_or_end_variable(task, StartOrEnd.START)
@@ -135,7 +99,7 @@ class EarlinessTardinessCpSatModeler(ObjectiveModelerCpSat, Generic[Task]):
                 lb=0, ub=max_tardiness, name=f"tardiness_end_{task}"
             )
             cp_model.add_max_equality(
-                self.earliness_start_vars[task],
+                self.tardiness_end_vars[task],
                 [
                     0,
                     self.solver.get_task_start_or_end_variable(task, StartOrEnd.END)

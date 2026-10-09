@@ -479,3 +479,69 @@ class ConstantDurationEntity(SchedulingEntity[Task]):
     def unfold_entities(self):
         yield self.other_entity
         self.other_entity.unfold_entities()
+
+
+@dataclass(frozen=True)
+class MultiplyTaskEntity(SchedulingEntity[Task]):
+    # Allows to create some interval based on a base one:
+    # if task is the interval [2, 3], multiply_factor is 3, and start_or_end = Start
+    # Then the entity is [6, 7], if start_or_end = End :
+    # will be, [8, 9]
+    task: Task
+    multiply_factor: int
+    start_or_end: StartOrEnd = StartOrEnd.START
+
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        if not solution.is_present(self.task):
+            return AbsentValue.ABSENT
+        match self.start_or_end:
+            case StartOrEnd.START:
+                return solution.get_start_time(self.task) * self.multiply_factor
+            case StartOrEnd.END:
+                dur = solution.get_duration(self.task)
+                return solution.get_end_time(self.task) * self.multiply_factor - dur
+
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        if not solution.is_present(self.task):
+            return AbsentValue.ABSENT
+        match self.start_or_end:
+            case StartOrEnd.START:
+                dur = solution.get_duration(self.task)
+                return solution.get_start_time(self.task) * self.multiply_factor + dur
+            case StartOrEnd.END:
+                return solution.get_end_time(self.task) * self.multiply_factor
+
+    def is_active(self, solution: SchedulingSolution) -> bool:
+        return solution.is_present(self.task)
+
+    def get_tasks(self) -> frozenset[Task]:
+        return frozenset({self.task})
+
+    @property
+    def entity_id(self) -> Hashable:
+        return "mult", self.task, self.multiply_factor, self.start_or_end
+
+
+@dataclass(frozen=True)
+class ModuloTaskEntity(SchedulingEntity[Task]):
+    task: Task
+    modulo_value: int
+
+    def __post_init__(self):
+        assert self.modulo_value > 0
+
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        return solution.get_start_time(self.task) % self.modulo_value
+
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        return solution.get_end_time(self.task) % self.modulo_value
+
+    def is_active(self, solution: SchedulingSolution) -> bool:
+        return solution.is_present(self.task)
+
+    def get_tasks(self) -> frozenset[Task]:
+        return frozenset({self.task})
+
+    @property
+    def entity_id(self) -> Hashable:
+        return "task-modulo", self.task, self.modulo_value
