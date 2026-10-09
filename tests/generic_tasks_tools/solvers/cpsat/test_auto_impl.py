@@ -1224,6 +1224,61 @@ def problem_with_unary_dependent_resource_consumption():
 
 
 @fixture
+def problem_with_unary_dependent_nr_resource_consumption():
+    return GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 1,
+                1: 3,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        resource_consumptions={
+            "task-1": {
+                0: {
+                    "non_renewable_resource": 2,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                },
+            },
+            "task-2": {
+                0: {
+                    "cumulative_resource": 2,
+                },
+            },
+        },
+        successors={"task-1": {"task-2"}},
+        unary_resources={"worker1", "worker2"},
+        unary_resource_consumptions_dependent={
+            "task-1": {
+                0: {
+                    "cumulative_resource": {"worker1": 2, "worker2": 1},
+                    "non_renewable_resource": {"worker1": 1, "worker2": 2},
+                },
+                1: {
+                    "cumulative_resource": {"worker1": 1, "worker2": 1},
+                    "non_renewable_resource": {"worker1": 2, "worker2": 0},
+                },
+            }
+        },
+        non_skill_cumulative_resources={
+            "cumulative_resource": [
+                (3, 5, 1),
+                (5, 10, 2),
+            ],
+        },
+        non_renewable_resources={
+            "non_renewable_resource": 2,
+        },
+        list_objective_computer=[MakespanObjectiveComputer(weight_objective=1)],
+    )
+
+
+@fixture
 def problem_with_forbidden_task_mode_unary_resource():
     return GenericSchedulingImplProblem(
         horizon=10,
@@ -1291,6 +1346,19 @@ def test_solving_unary_resource_consumption_dependent(
 ):
     problem: GenericSchedulingImplProblem = (
         problem_with_unary_dependent_resource_consumption
+    )
+    solver = GenericSchedulingAutoCpSatImplSolver(problem)
+    solver.init_model()
+    res = solver.solve(time_limit=10)
+    sol = res[-1][0]
+    assert problem.satisfy(sol)
+
+
+def test_solving_unary_nr_resource_consumption_dependent(
+    problem_with_unary_dependent_nr_resource_consumption,
+):
+    problem: GenericSchedulingImplProblem = (
+        problem_with_unary_dependent_nr_resource_consumption
     )
     solver = GenericSchedulingAutoCpSatImplSolver(problem)
     solver.init_model()
