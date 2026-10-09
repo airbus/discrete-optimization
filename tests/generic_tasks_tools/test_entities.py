@@ -9,6 +9,8 @@ from discrete_optimization.generic_tasks_tools.entities import (
     CompositeEntity,
     ConstantDurationEntity,
     GroupEntity,
+    ModuloTaskEntity,
+    MultiplyTaskEntity,
     TaskEntity,
     TaskModeEntity,
 )
@@ -64,7 +66,7 @@ class MockSchedulingSolution(SchedulingSolution[Task]):
         )
 
 
-class MockMultimodeSolution(MultimodeSolution[Task]):
+class MockMultimodeSolution(SchedulingSolution[Task], MultimodeSolution[Task]):
     """Mock multimode solution for testing mode-aware entities."""
 
     def __init__(self, task_times, task_modes):
@@ -606,3 +608,36 @@ def test_multi_level_entity():
     assert composite_entity_from_end_offset_2.get_start_time(solution) == 12
     assert composite_entity_from_end_offset_2.get_end_time(solution) == 32
     assert not e3.is_active(solution)
+
+
+def test_modulo_entity():
+    task1 = MockTask(1)
+    task2 = MockTask(2)
+    solution = MockMultimodeSolution(
+        {task1: (31, 34), task2: (5, 15)}, task_modes={task1: 1, task2: 1}
+    )
+    modulo_entity_1 = ModuloTaskEntity(task=task1, modulo_value=7)
+    assert modulo_entity_1.is_active(solution)
+    assert modulo_entity_1.get_start_time(solution) == 3
+    assert modulo_entity_1.get_end_time(solution) == 6
+
+
+def test_multiplication_entity():
+    task1 = MockTask(1)
+    task2 = MockTask(2)
+    solution = MockMultimodeSolution(
+        {task1: (31, 34), task2: (5, 15)}, task_modes={task1: 1, task2: 1}
+    )
+    modulo_entity_1_start = MultiplyTaskEntity(
+        task=task1, multiply_factor=2, start_or_end=StartOrEnd.START
+    )
+
+    modulo_entity_1_end = MultiplyTaskEntity(
+        task=task1, multiply_factor=2, start_or_end=StartOrEnd.END
+    )
+    assert modulo_entity_1_start.is_active(solution)
+    assert modulo_entity_1_start.get_start_time(solution) == 62
+    assert modulo_entity_1_start.get_end_time(solution) == 65
+    assert modulo_entity_1_end.is_active(solution)
+    assert modulo_entity_1_end.get_start_time(solution) == 65
+    assert modulo_entity_1_end.get_end_time(solution) == 68

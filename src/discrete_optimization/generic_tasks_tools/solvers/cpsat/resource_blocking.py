@@ -11,6 +11,8 @@ from discrete_optimization.generic_tasks_tools.entities import (
     CompositeEntity,
     ConstantDurationEntity,
     GroupEntity,
+    ModuloTaskEntity,
+    MultiplyTaskEntity,
     SchedulingEntity,
     TaskEntity,
     TaskModeEntity,
@@ -77,24 +79,6 @@ class ResourceBlockingCpSatSolver(
         self._entity_active: dict[SchedulingEntity[Task], LinearExprT] = {}
         self._choices_blocking_constraint_vars = {}
         self._choices_demands_variable = {}
-
-    def _get_tasks_from_entity(self, entity: SchedulingEntity) -> set[Task]:
-        """Extract all tasks involved in a scheduling entity.
-
-        Args:
-            entity: The scheduling entity
-
-        Returns:
-            Set of tasks involved in this entity
-        """
-        if isinstance(entity, TaskEntity):
-            return {entity.task}
-        elif isinstance(entity, TaskModeEntity):
-            return {entity.task}
-        elif isinstance(entity, GroupEntity):
-            return set(entity.tasks)
-        else:
-            return set()
 
     def get_lb_ub_entity(self, entity: SchedulingEntity) -> tuple[int, int, int, int]:
         """Return lbstart, ubstart, lbend, ubend for an entity."""
@@ -164,6 +148,42 @@ class ResourceBlockingCpSatSolver(
                         lb_end + entity.offset + entity.constant_duration,
                         ub_end + entity.offset + entity.constant_duration,
                     )
+        elif isinstance(entity, ModuloTaskEntity):
+            # TODO : think about better end bounds.
+            modulo = entity.modulo_value
+            return 0, modulo - 1, 0, self.problem.get_makespan_lower_bound()
+        elif isinstance(entity, MultiplyTaskEntity):
+            lbs = self.problem.get_task_start_or_end_lower_bound(
+                entity.task, StartOrEnd.START
+            )
+            ubs = self.problem.get_task_start_or_end_upper_bound(
+                entity.task, StartOrEnd.START
+            )
+            lbe = self.problem.get_task_start_or_end_lower_bound(
+                entity.task, StartOrEnd.END
+            )
+            ube = self.problem.get_task_start_or_end_upper_bound(
+                entity.task, StartOrEnd.END
+            )
+            match entity.start_or_end:
+                case StartOrEnd.START:
+                    min_d = max(0, lbe - ubs)
+                    max_d = max(0, ube - lbs)
+                    return (
+                        lbs * entity.multiply_factor,
+                        ubs * entity.multiply_factor,
+                        lbs * entity.multiply_factor + min_d,
+                        ubs * entity.multiply_factor + max_d,
+                    )
+                case StartOrEnd.END:
+                    min_d = max(0, lbe - ubs)
+                    max_d = max(0, ube - lbs)
+                    return (
+                        lbe * entity.multiply_factor - max_d,
+                        ube * entity.multiply_factor - min_d,
+                        lbe * entity.multiply_factor,
+                        ube * entity.multiply_factor,
+                    )
         else:
             raise NotImplementedError
 
@@ -203,6 +223,10 @@ class ResourceBlockingCpSatSolver(
                 self.create_composite_entity_interval(entity)
             case ConstantDurationEntity():
                 self.create_constant_duration_interval(entity)
+            case ModuloTaskEntity():
+                self.create_modulo_entity_interval(entity)
+            case MultiplyTaskEntity():
+                self.create_multiply_entity_interval(entity)
             case _:
                 raise NotImplementedError()
 
@@ -228,7 +252,7 @@ class ResourceBlockingCpSatSolver(
                 is_present=is_present,
                 name=f"interval_{entity.entity_id}",
             )
-        self._intervals_entity[entity] = self.get_task_interval(task)
+        # self._intervals_entity[entity] = self.get_task_interval(task)
 
     def create_constant_duration_interval(self, entity: ConstantDurationEntity[Task]):
         # Defines first the other entity, it will be recursive.
@@ -306,8 +330,8 @@ class ResourceBlockingCpSatSolver(
         if only_task_based:
             self.create_group_entity_interval(entity)
         else:
-            for entity in entity.entities:
-                self.define_start_and_end_var_and_constraint(entity)
+            for ent in entity.entities:
+                self.define_start_and_end_var_and_constraint(ent)
             entities = list(entity.entities)
             start, end = create_span_start_end_from_vars(
                 solver=self,
@@ -327,7 +351,6 @@ class ResourceBlockingCpSatSolver(
                 ub=max(0, ub_end - lb_start),
                 name=f"duration_{entity.entity_id}",
             )
-            self._durations_entity[entity] = end
             is_present = self._get_entity_is_active_var(entity)
             if isinstance(is_present, int) and is_present == 1:
                 self._intervals_entity[entity] = self.cp_model.NewIntervalVar(
@@ -346,6 +369,78 @@ class ResourceBlockingCpSatSolver(
                         name=f"interval_{entity.entity_id}",
                     )
                 )
+
+    def create_modulo_entity_interval(self, entity: ModuloTaskEntity[Task]):
+        task = entity.task
+        lb_start, ub_start, lb_end, ub_end = self.get_lb_ub_entity(entity)
+        self._starts_entity[entity] = self.cp_model.NewIntVar(
+            lb=lb_start, ub=ub_start, name=f"start_{entity.entity_id}"
+        )
+        self._ends_entity[entity] = self.cp_model.NewIntVar(
+            lb=lb_end, ub=ub_end, name=f"end_{entity.entity_id}"
+        )
+        self._durations_entity[entity] = self.get_duration_variable(task)
+        is_present = self._get_entity_is_active_var(entity)
+        self.cp_model.add_modulo_equality(
+            self._starts_entity[entity],
+            self.get_task_start_or_end_variable(task, StartOrEnd.START),
+            entity.modulo_value,
+        )
+        if isinstance(is_present, int) and is_present == 1:
+            self._intervals_entity[entity] = self.cp_model.new_interval_var(
+                start=self._starts_entity[entity],
+                size=self._durations_entity[entity],
+                end=self._ends_entity[entity],
+                name=f"interval_{entity.entity_id}",
+            )
+        else:
+            self._intervals_entity[entity] = self.cp_model.new_optional_interval_var(
+                start=self._starts_entity[entity],
+                end=self._ends_entity[entity],
+                size=self._durations_entity[entity],
+                is_present=is_present,
+                name=f"interval_{entity.entity_id}",
+            )
+
+    def create_multiply_entity_interval(self, entity: MultiplyTaskEntity[Task]):
+        task = entity.task
+        lb_start, ub_start, lb_end, ub_end = self.get_lb_ub_entity(entity)
+        if entity.start_or_end == StartOrEnd.END:
+            self._starts_entity[entity] = self.cp_model.NewIntVar(
+                lb=lb_start, ub=ub_start, name=f"start_{entity.entity_id}"
+            )
+        if entity.start_or_end == StartOrEnd.START:
+            self._ends_entity[entity] = self.cp_model.NewIntVar(
+                lb=lb_end, ub=ub_end, name=f"end_{entity.entity_id}"
+            )
+        self._durations_entity[entity] = self.get_duration_variable(task)
+        is_present = self._get_entity_is_active_var(entity)
+        match entity.start_or_end:
+            case StartOrEnd.START:
+                self._starts_entity[entity] = (
+                    entity.multiply_factor
+                    * self.get_task_start_or_end_variable(task, StartOrEnd.START)
+                )
+            case StartOrEnd.END:
+                self._ends_entity[entity] = (
+                    entity.multiply_factor
+                    * self.get_task_start_or_end_variable(task, StartOrEnd.END)
+                )
+        if isinstance(is_present, int) and is_present == 1:
+            self._intervals_entity[entity] = self.cp_model.new_interval_var(
+                start=self._starts_entity[entity],
+                size=self._durations_entity[entity],
+                end=self._ends_entity[entity],
+                name=f"interval_{entity.entity_id}",
+            )
+        else:
+            self._intervals_entity[entity] = self.cp_model.new_optional_interval_var(
+                start=self._starts_entity[entity],
+                end=self._ends_entity[entity],
+                size=self._durations_entity[entity],
+                is_present=is_present,
+                name=f"interval_{entity.entity_id}",
+            )
 
     def create_entity_intervals(self) -> None:
         self._starts_entity = {}
@@ -478,6 +573,20 @@ class ResourceBlockingCpSatSolver(
                         self._entity_active[entity] = 1
                 case ConstantDurationEntity():
                     return self._get_entity_is_active_var(entity.other_entity)
+                case ModuloTaskEntity():
+                    if self.problem.is_optional(entity.task):
+                        self._entity_active[entity] = self.get_task_is_present_variable(
+                            task=entity.task
+                        )
+                    else:
+                        self._entity_active[entity] = 1
+                case MultiplyTaskEntity():
+                    if self.problem.is_optional(entity.task):
+                        self._entity_active[entity] = self.get_task_is_present_variable(
+                            task=entity.task
+                        )
+                    else:
+                        self._entity_active[entity] = 1
                 case _:
                     raise NotImplementedError()
         return self._entity_active[entity]

@@ -49,17 +49,6 @@ class CpSatRcAlbpSolver(
 
     problem: RCALBPProblem
 
-    # def get_binary_allocation_variable(self, task: Task, unary_resource: Station) -> LinearExprT:
-    #    if self.modeling == ModelingShared.FOLDED:
-    #        station_to_idx = {s: i for i, s in enumerate(self.problem.stations)}
-    #        return self.variables["task_station_binary"][task, station_to_idx[unary_resource]]
-    #    raise NotImplementedError
-
-    # def get_integer_allocation_variable(self, task: Task) -> LinearExprT:
-    #    if self.modeling == ModelingShared.FOLDED:
-    #        return self.variables["task_station"][task]
-    #    raise NotImplementedError
-
     def get_resource_consumption_intervals(
         self, resource: Resource
     ) -> list[tuple[IntervalVar, int]]:

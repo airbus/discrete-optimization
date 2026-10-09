@@ -116,6 +116,8 @@ class Objective(Enum):
     COST_ON_ALTERNATIVE_SUBPROBLEMS = "cost_on_alternatives_subproblem"
     CUMUL_COST = "cumulative_cost"
     TIME_PENALTY = "time_penalty"
+    # Generalize makespan notably.
+    WEIGHTED_SUM_START_OR_END = "weighted_sum_start_or_end"
 
     CUSTOM = "custom_objective"
 
