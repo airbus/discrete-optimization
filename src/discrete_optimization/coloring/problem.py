@@ -18,10 +18,12 @@ import numpy as np
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
+    UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.base import (
     Task,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override_implem
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveDoc,
@@ -292,6 +294,17 @@ class ColoringProblem(AllocationProblem[Node, Color]):
     def unary_resources_list(self) -> list[Color]:
         max_nb_colors = self.number_of_nodes
         return list(range(max_nb_colors))
+
+    @optional_override_implem
+    def is_compatible_task_unary_resource(
+        self, task: Task, unary_resource: UnaryResource
+    ) -> bool:
+        if self.has_constraints_coloring:
+            if task in self.constraints_coloring.nodes_fixed():
+                return (
+                    unary_resource == self.constraints_coloring.color_constraint[task]
+                )
+        return True
 
     def is_in_subset_index(self, index: int) -> bool:
         if not self.use_subset:
