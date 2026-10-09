@@ -11,7 +11,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     CumulativeResource,
 )
 from discrete_optimization.generic_tasks_tools.resource_usage_by_unary import (
-    ResourceUsageByUnaryResourceProblem,
+    CumulativeResourceUsageByUnaryResourceProblem,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
     MultimodeAllocationCpSatSolver,
@@ -34,7 +34,7 @@ class ResourceUsageByUnaryResourceCpSatSolver(
     ],
     Generic[Task, CumulativeResource, OtherCalendarResource, UnaryResource],
 ):
-    problem: ResourceUsageByUnaryResourceProblem[
+    problem: CumulativeResourceUsageByUnaryResourceProblem[
         Task, CumulativeResource, UnaryResource
     ]
     unary_dependent_demand_resource_task_initialized: bool = False

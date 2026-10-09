@@ -53,7 +53,7 @@ class GenericSchedulingCpSatSolver(
     NoOverlapCpSatSolver[Task],
     TimelagCpSatSolver[Task],
     PrecedenceSchedulingCpSatSolver[Task],
-    NonRenewableCpSatSolver[Task, NonRenewableResource],
+    NonRenewableCpSatSolver[Task, NonRenewableResource, UnaryResource],
     SkillSchedulingCpSatSolver[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, OtherCalendarResource
     ],

@@ -329,6 +329,19 @@ class GenericSchedulingImplProblem(
         return 0
 
     @optional_override_implem
+    def get_nr_resource_consumption_when_unary_resource_allocated(
+        self,
+        task: Task,
+        mode: int,
+        resource: NonRenewableResource,
+        unary_resource: UnaryResource,
+    ):
+        # Same data placeholder for both resource.
+        return self.get_resource_consumption_when_unary_resource_allocated(
+            task=task, mode=mode, resource=resource, unary_resource=unary_resource
+        )
+
+    @optional_override_implem
     def is_task_mode_excluding_others(
         self, task: Task, mode: int, resource: ExclusionResource
     ) -> bool:

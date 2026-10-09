@@ -83,7 +83,7 @@ class GenericSchedulingProblem(
     ExclusionProblem[Task, ExclusionResource],
     SkillProblem[Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource],
     CumulativeResourceGenericProblem[Task, CumulativeResource, UnaryResource],
-    NonRenewableResourceProblem[Task, NonRenewableResource],
+    NonRenewableResourceProblem[Task, NonRenewableResource, UnaryResource],
     PrecedenceSchedulingProblem[Task],
     TimelagProblem[Task],
     TimewindowProblem[Task],
@@ -678,7 +678,7 @@ class GenericSchedulingSolution(
     SkillSolution[
         Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource
     ],
-    NonRenewableResourceSolution[Task, NonRenewableResource],
+    NonRenewableResourceSolution[Task, NonRenewableResource, UnaryResource],
     PrecedenceSchedulingSolution[Task],
     TimelagSolution[Task],
     TimewindowSolution[Task],

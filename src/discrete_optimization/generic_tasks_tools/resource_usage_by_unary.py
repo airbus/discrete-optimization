@@ -22,7 +22,7 @@ from discrete_optimization.generic_tasks_tools.cumulative_resource import (
 from discrete_optimization.generic_tasks_tools.utils import optional_override
 
 
-class ResourceUsageByUnaryResourceProblem(
+class CumulativeResourceUsageByUnaryResourceProblem(
     MultimodeAllocationProblem[Task, UnaryResource],
     CumulativeResourceProblem[Task, CumulativeResource, UnaryResource],
     Generic[Task, CumulativeResource, UnaryResource],
@@ -69,11 +69,11 @@ class ResourceUsageByUnaryResourceProblem(
         ]
 
 
-class ResourceUsageByUnarySolution(
+class CumulativeResourceUsageByUnarySolution(
     MultiModeAllocationSolution[Task, UnaryResource],
     CumulativeResourceSolution[Task, CumulativeResource, UnaryResource],
 ):
-    problem: ResourceUsageByUnaryResourceProblem[
+    problem: CumulativeResourceUsageByUnaryResourceProblem[
         Task, CumulativeResource, UnaryResource
     ]
 

@@ -218,6 +218,61 @@ def problem_with_unary_dependent_resource_consumption():
 
 
 @fixture
+def problem_with_unary_dependent_nr_resource_consumption():
+    return GenericSchedulingImplProblem(
+        horizon=10,
+        durations_per_mode={
+            "task-1": {
+                0: 1,
+                1: 3,
+            },
+            "task-2": {
+                0: 4,
+            },
+        },
+        resource_consumptions={
+            "task-1": {
+                0: {
+                    "non_renewable_resource": 2,
+                },
+                1: {
+                    "non_renewable_resource": 1,
+                },
+            },
+            "task-2": {
+                0: {
+                    "cumulative_resource": 2,
+                },
+            },
+        },
+        successors={"task-1": {"task-2"}},
+        unary_resources={"worker1", "worker2"},
+        unary_resource_consumptions_dependent={
+            "task-1": {
+                0: {
+                    "cumulative_resource": {"worker1": 2, "worker2": 1},
+                    "non_renewable_resource": {"worker1": 1, "worker2": 2},
+                },
+                1: {
+                    "cumulative_resource": {"worker1": 1, "worker2": 1},
+                    "non_renewable_resource": {"worker1": 2, "worker2": 0},
+                },
+            }
+        },
+        non_skill_cumulative_resources={
+            "cumulative_resource": [
+                (3, 5, 1),
+                (5, 10, 2),
+            ],
+        },
+        non_renewable_resources={
+            "non_renewable_resource": 2,
+        },
+        list_objective_computer=[MakespanObjectiveComputer(weight_objective=1)],
+    )
+
+
+@fixture
 def problem_with_forbidden_task_mode_unary_resource():
     return GenericSchedulingImplProblem(
         horizon=10,
@@ -562,6 +617,61 @@ def test_unary_resource_consumption_dependent(
     )
     cons = consumption["cumulative_resource"]
     assert cons[3] == 1
+    sol1 = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            {
+                "task-1": TaskVariable(
+                    start=3, end=4, mode=0, allocated={"worker1": set()}
+                ),
+                "task-2": TaskVariable(start=6, end=10, mode=0, allocated={}),
+            }
+        ),
+    )
+    assert not problem.satisfy(sol1)
+
+
+def test_unary_nr_resource_consumption_dependent(
+    problem_with_unary_dependent_nr_resource_consumption,
+):
+    logging.basicConfig(level=logging.DEBUG)
+    problem: GenericSchedulingImplProblem = (
+        problem_with_unary_dependent_nr_resource_consumption
+    )
+    sol = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            {
+                "task-1": TaskVariable(
+                    start=3, end=6, mode=1, allocated={"worker2": set()}
+                ),
+                "task-2": TaskVariable(start=6, end=10, mode=0, allocated={}),
+            }
+        ),
+    )
+    assert problem.satisfy(sol)
+    consumption = sol._compute_calendar_resource_consumption_np(
+        resources=["cumulative_resource"]
+    )
+    nr_cons = sol.compute_non_renewable_resources_consumptions()
+    assert nr_cons["non_renewable_resource"] == 1
+    cons = consumption["cumulative_resource"]
+    assert cons[3] == 1
+    sol1 = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            {
+                "task-1": TaskVariable(
+                    start=3, end=6, mode=1, allocated={"worker1": set()}
+                ),
+                "task-2": TaskVariable(start=6, end=10, mode=0, allocated={}),
+            }
+        ),
+    )
+    assert not problem.satisfy(sol1)
+    nr_cons = sol1.compute_non_renewable_resources_consumptions()
+    assert nr_cons["non_renewable_resource"] == 3
+
     sol1 = GenericSchedulingImplSolution(
         problem=problem,
         raw_sol=RawSolution(
