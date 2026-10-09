@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 def cp_facility_example():
-    file = [f for f in get_data_available() if "fl_200_7" in f][0]
+    file = [f for f in get_data_available() if "fl_100_5" in f][0]
     problem: FacilityProblem = parse_file(file)
     print("customer : ", problem.customer_count, "facility : ", problem.facility_count)
     solver = CpSatFacilitySolver(problem=problem)
