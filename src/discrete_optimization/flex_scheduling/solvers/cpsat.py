@@ -79,7 +79,7 @@ class DurationEncodingEnum(Enum):
 class CpSatFlexSolver(
     PrecedenceSchedulingCpSatSolver[Task],
     CumulativeResourceSchedulingCpSatSolver[Task, CumulativeResource, NoUnaryResource],
-    NonRenewableCpSatSolver[Task, NonRenewableResource],
+    NonRenewableCpSatSolver[Task, NonRenewableResource, NoUnaryResource],
     WarmstartMixin,
 ):
     hyperparameters = [
