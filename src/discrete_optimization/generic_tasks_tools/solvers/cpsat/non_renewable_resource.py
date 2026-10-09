@@ -91,7 +91,7 @@ class NonRenewableCpSatSolver(
                             name=f"conso_{task}_{resource}",
                             mode2value=mode2value,
                             task=task,
-                            modeling=self.demand_non_renewable_modeling,
+                            modeling=self.mode_defined_non_renewable_modeling,
                         )
                     )
         self.mode_defined_nr_resource_initialized = True
