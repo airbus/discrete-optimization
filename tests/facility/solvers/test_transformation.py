@@ -4,9 +4,16 @@
 from discrete_optimization.facility.transformations.to_binpack import (
     FacilityToBinpackTransformation,
 )
+from discrete_optimization.facility.transformations.to_generic import (
+    FacilityToGenericSchedulingTransformation,
+)
 from discrete_optimization.facility.transformations.to_salbp import (
     FacilityToSalbpTransformation,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto_impl import (
+    GenericSchedulingAutoCpSatImplSolver,
+)
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.transformation.transformation_solver import (
     SubBrick,
     TransformationSolver,
@@ -39,3 +46,22 @@ def test_via_binpack(problem):
     solution, fit = solver.solve().get_best_solution_fit()
     print(problem.satisfy(solution))
     print(problem.evaluate(solution))
+
+
+def test_via_generic_scheduling(problem):
+    p = ParametersCp.default_cpsat()
+    p.nb_process = 1
+    solver = TransformationSolver(
+        transformation=FacilityToGenericSchedulingTransformation(),
+        solver_brick=SubBrick(
+            GenericSchedulingAutoCpSatImplSolver,
+            {
+                "exactly_one_unary_resource_per_task": True,
+                "time_limit": 10,
+                "parameters_cp": p,
+            },
+        ),
+        source_problem=problem,
+    )
+    solution, fit = solver.solve().get_best_solution_fit()
+    assert problem.satisfy(solution)
