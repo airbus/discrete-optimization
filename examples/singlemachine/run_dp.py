@@ -14,17 +14,17 @@ logging.basicConfig(level=logging.INFO)
 def run_dp():
     problems = parse_file(get_data_available()[0])
     print(len(problems), " problems in the file")
-    problem = parse_file(get_data_available()[0])[1]
+    problem = parse_file(get_data_available()[0])[0]
     subsolver = CpSatWTSolver(problem)
     subsolver.init_model()
     sol = subsolver.solve(time_limit=3).get_best_solution()
     print(problem.evaluate(sol), " value of warm-start")
     solver = DpWTSolver(problem)
-    solver.init_model()
+    solver.init_model(add_dominated_transition=True)
     # solver.set_warm_start(sol)
     res = solver.solve(
         time_limit=100,
-        threads=16,
+        threads=4,
         retrieve_intermediate_solutions=False,
         solver="CABS",
         callbacks=[

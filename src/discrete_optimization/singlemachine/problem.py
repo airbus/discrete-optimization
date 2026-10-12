@@ -7,10 +7,46 @@ from typing import List, Optional
 
 import numpy as np
 
-from discrete_optimization.generic_tasks_tools.enums import AbsentValue
+from discrete_optimization.generic_tasks_tools.allocation import (
+    NoUnaryResource,
+    WithoutAllocationProblem,
+)
+from discrete_optimization.generic_tasks_tools.calendar_resource import Resource
+from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    WithoutCumulativeResourceProblem,
+)
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
+from discrete_optimization.generic_tasks_tools.generic_scheduling import (
+    GenericSchedulingProblem,
+)
+from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
+    SinglemodeSchedulingProblem,
+)
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    NoNonRenewableResource,
+    WithoutNonRenewableResourceProblem,
+)
+from discrete_optimization.generic_tasks_tools.objectives.earliness_tardiness import (
+    EarlinessTardinessComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.precedence import (
+    WithoutPrecedenceProblem,
+)
 from discrete_optimization.generic_tasks_tools.scheduling import (
-    SchedulingProblem,
     SchedulingSolution,
+)
+from discrete_optimization.generic_tasks_tools.skill import (
+    NonSkillCumulativeResource,
+    NoSkill,
+    WithoutSkillProblem,
+)
+from discrete_optimization.generic_tasks_tools.utils import (
+    get_optional_methods_to_override,
+    optional_override_implem,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -86,10 +122,50 @@ class WTSolution(SchedulingSolution[Task]):
         self.compute_schedule_from_permutation()
 
 
-class WeightedTardinessProblem(SchedulingProblem[Task]):
+class WeightedTardinessProblem(
+    GenericSchedulingProblem[
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NoNonRenewableResource,
+        ExclusionResource,
+    ],
+    SinglemodeSchedulingProblem[Task],
+    WithoutPrecedenceProblem[Task],
+    WithoutSkillProblem[
+        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
+    ],
+    WithoutCumulativeResourceProblem[Task, NonSkillCumulativeResource],
+    WithoutNonRenewableResourceProblem[Task, NoUnaryResource],
+    WithoutAllocationProblem[Task],
+):
     """
     Represents a single instance of the single-machine weighted tardiness problem.
     """
+
+    def get_task_duration(self, task: Task) -> int:
+        return self.processing_times[task]
+
+    @optional_override_implem
+    def get_task_start_or_end_lower_bound(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> int:
+        if start_or_end == StartOrEnd.START:
+            return self.release_dates[task]
+        return 0
+
+    @property
+    def non_skill_cumulative_resources_list(self) -> list[Resource]:
+        return []
+
+    def get_no_overlap(self) -> set[frozenset[Task]]:
+        return {frozenset(set(self.tasks_list))}
+
+    def get_resource_availabilities(
+        self, resource: Resource
+    ) -> list[tuple[int, int, int]]:
+        return [(0, self.get_makespan_upper_bound(), 1)]
 
     def __init__(
         self,
@@ -181,3 +257,20 @@ class WeightedTardinessProblem(SchedulingProblem[Task]):
                 ),
             },
         )
+
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        return [
+            EarlinessTardinessComputer(
+                problem=self,
+                weight_objective=1,
+                max_start_and_weight_for_tardiness={},
+                max_end_and_weight_for_tardiness={
+                    t: (self.due_dates[t], self.weights[t]) for t in self.tasks_list
+                },
+                min_start_and_weight_for_earliness={},
+                min_end_and_weight_for_earliness={},
+            )
+        ]
+
+
+print(get_optional_methods_to_override(WeightedTardinessProblem))

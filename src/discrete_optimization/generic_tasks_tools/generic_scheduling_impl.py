@@ -235,6 +235,10 @@ class GenericSchedulingImplProblem(
     exclusion_resource_boolean: dict[Task, dict[int, dict[ExclusionResource, bool]]] = (
         field(default_factory=dict)
     )
+    """Specify custom constraint on presence of tasks"""
+    linear_cstrs_presence_tasks: list[
+        tuple[list[tuple[Task, int]], int | None, int | None]
+    ] = field(default_factory=list)
 
     def __post_init__(self, objective: Objective | Iterable[tuple[Objective, int]]):
         if self.list_objective_computer is None:
@@ -295,6 +299,12 @@ class GenericSchedulingImplProblem(
             "There are duplicates in resources list, "
             "potentially because calendar and non-renewable resources intersect."
         )
+
+    @optional_override_implem
+    def linear_constraints_presence_tasks(
+        self,
+    ) -> list[tuple[list[tuple[Task, int]], int | None, int | None]]:
+        return self.linear_cstrs_presence_tasks
 
     @optional_override_implem
     def is_compatible_task_mode_unary_resource(

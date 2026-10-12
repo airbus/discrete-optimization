@@ -71,7 +71,7 @@ def run_dip_solver_ws():
     solver.set_warm_start(sol_ws)
     res = solver.solve(
         solver=dp.LNBS,
-        callbacks=[NbIterationStopper(nb_iteration_max=1)],
+        callbacks=[NbIterationStopper(nb_iteration_max=100)],
         retrieve_intermediate_solutions=True,
         time_limit=100,
     )
@@ -82,4 +82,4 @@ def run_dip_solver_ws():
 
 
 if __name__ == "__main__":
-    run_dip_solver_ws()
+    run_dip_solver()

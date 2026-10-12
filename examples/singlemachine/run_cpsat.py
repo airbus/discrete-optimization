@@ -16,7 +16,7 @@ def run_cpsat():
     solver = CpSatWTSolver(problem)
     solver.init_model()
     res = solver.solve(
-        time_limit=10,
+        time_limit=30,
         parameters_cp=ParametersCp.default_cpsat(),
         callbacks=[
             ObjectiveLogger(
