@@ -10,6 +10,7 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
 from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
 from discrete_optimization.singlemachine.problem import WTSolution
 from discrete_optimization.singlemachine.solvers.cpsat import CpSatWTSolver
+from discrete_optimization.singlemachine.solvers.cpsat_auto import CpSatAutoWTSolver
 
 
 def test_cpsat(problem):
@@ -62,6 +63,13 @@ def test_cpsat(problem):
     solver.minimize_variable(objective)
     sol, _ = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])[-1]
     solver.solver.ObjectiveValue() == sol.get_max_end_time()
+
+
+def test_cpsatauto(problem):
+    solver = CpSatAutoWTSolver(problem)
+    res = solver.solve(callbacks=[NbIterationStopper(nb_iteration_max=1)])
+    sol = res.get_best_solution()
+    assert problem.satisfy(sol)
 
 
 @pytest.mark.parametrize(
