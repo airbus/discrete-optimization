@@ -585,6 +585,7 @@ class GenericSchedulingProblem(
         return (
             # presence of tasks
             (not optional_tasks or variable.check_present_tasks())
+            and (not optional_tasks or variable.check_present_tasks_relation())
             # duration consistency
             and (not duration or variable.check_duration_constraints())
             # calendar resources capacity violations (unary resources + skills + cumulative resources)

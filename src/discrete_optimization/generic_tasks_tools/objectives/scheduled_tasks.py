@@ -19,7 +19,7 @@ class ScheduledTasksComputer(ObjectiveComputer[Task], Generic[Task]):
 
     def __init__(
         self,
-        problem: SchedulingProblem[Task],
+        problem: SchedulingProblem[Task] = None,
         weight_objective: float = 1.0,
         weight_per_task: dict[Task, int] | None = None,
     ):

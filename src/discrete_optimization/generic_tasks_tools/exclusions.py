@@ -19,10 +19,14 @@ from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     MultimodeSchedulingProblem,
 )
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
-from discrete_optimization.generic_tasks_tools.utils import optional_override
+from discrete_optimization.generic_tasks_tools.utils import (
+    optional_override,
+    optional_override_implem,
+)
 
 logger = logging.getLogger(__name__)
 ExclusionResource = TypeVar("ExclusionResource", bound=Hashable)
+NoExclusionResource = None
 
 
 class ExclusionProblem(
@@ -162,4 +166,19 @@ class ExclusionSolution(
                             f"is over-reached between {st} and {end}: {capacity} vs {consumption[st:end]}"
                         )
                         return False
+        return True
+
+
+class WithoutExclusionProblem(
+    ExclusionProblem[Task, NoExclusionResource], Generic[Task]
+):
+    @optional_override_implem
+    def exclusion_resources_list(self) -> list[ExclusionResource]:
+        return []
+
+
+class WithoutExclusionSolution(
+    ExclusionSolution[Task, NoExclusionResource], Generic[Task]
+):
+    def check_exclusion_constraint(self):
         return True

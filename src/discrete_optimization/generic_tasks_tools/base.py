@@ -40,6 +40,12 @@ class TasksProblem(Problem, Generic[Task]):
         """
         return False
 
+    @optional_override
+    def linear_constraints_presence_tasks(
+        self,
+    ) -> list[tuple[list[tuple[Task, int]], int | None, int | None]]:
+        return []
+
     @property
     def optional_tasks_list(self) -> list[Task]:
         return [t for t in self.tasks_list if self.is_optional(t)]
@@ -98,6 +104,25 @@ class TasksSolution(Solution, Generic[Task]):
                     f"Task '{task}' is not present even though it is not optional."
                 )
                 return False
+        return True
+
+    def check_present_tasks_relation(self) -> bool:
+        for linear_constr in self.problem.linear_constraints_presence_tasks():
+            val = sum([self.is_present(x[0]) * x[1] for x in linear_constr[0]])
+            lb = linear_constr[1]
+            if lb:
+                if val < lb:
+                    logger.debug(
+                        f"Linear relation {linear_constr} violated: {val} < {lb}"
+                    )
+                    return False
+            ub = linear_constr[2]
+            if ub:
+                if val > ub:
+                    logger.debug(
+                        f"Linear relation {linear_constr} violated: {val} > {ub}"
+                    )
+                    return False
         return True
 
     def get_present_tasks(self):

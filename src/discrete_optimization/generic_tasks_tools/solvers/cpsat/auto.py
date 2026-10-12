@@ -921,7 +921,40 @@ class GenericSchedulingAutoCpSatSolver(
                 [self.modes_is_present[t][mode] for mode in self.modes_is_present[t]],
             )
 
+    def create_linear_constraint_optional_tasks(self):
+        for linear_constr in self.problem.linear_constraints_presence_tasks():
+            lb = linear_constr[1]
+            ub = linear_constr[2]
+            coefs = [x[1] for x in linear_constr[0]]
+            is_only_0_1 = all(c in {1, 0} for c in coefs)
+            if lb == ub == 1 and is_only_0_1:
+                tasks = [x[0] for x in linear_constr[0] if x[1] == 1]
+                presence = [self.get_task_is_present_variable(t) for t in tasks]
+                self.cp_model.add_exactly_one(presence)
+            elif ub == 1 and is_only_0_1:
+                tasks = [x[0] for x in linear_constr[0] if x[1] == 1]
+                presence = [self.get_task_is_present_variable(t) for t in tasks]
+                self.cp_model.add_at_most_one(presence)
+            elif lb == 1 and not is_only_0_1:
+                tasks = [x[0] for x in linear_constr[0] if x[1] == 1]
+                presence = [self.get_task_is_present_variable(t) for t in tasks]
+                self.cp_model.add_at_least_one(presence)
+            else:
+                expr = sum(
+                    [
+                        x[1] * self.get_task_is_present_variable(x[0])
+                        for x in linear_constr[0]
+                    ]
+                )
+                if lb:
+                    self.cp_model.add(expr >= lb)
+                if ub:
+                    self.cp_model.add(expr <= ub)
+
     def _add_constraints(self) -> None:
+        # define the constraint on presence of optional task
+        # (specified in linear_constraints_presence_tasks())
+        self.create_linear_constraint_optional_tasks()
         # Define the entity variables for resource blocking constraint
         self.create_resource_blocking_constraints()
         # Calendar preemptive duration constraint

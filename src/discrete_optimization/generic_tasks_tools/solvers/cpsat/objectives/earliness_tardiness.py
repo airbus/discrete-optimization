@@ -136,7 +136,7 @@ class EarlinessTardinessCpSatModeler(ObjectiveModelerCpSat, Generic[Task]):
             [
                 self.tardiness_end_vars[task]
                 * self.objective_computer.get_weight_end_for_tardiness(task)
-                for task in self.earliness_start_vars
+                for task in self.tardiness_end_vars
             ]
         )
         return (
