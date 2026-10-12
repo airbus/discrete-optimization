@@ -1,0 +1,21 @@
+discrete\_optimization.knapsack.transformations package
+=======================================================
+
+Submodules
+----------
+
+discrete\_optimization.knapsack.transformations.to\_generic module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.knapsack.transformations.to_generic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.knapsack.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

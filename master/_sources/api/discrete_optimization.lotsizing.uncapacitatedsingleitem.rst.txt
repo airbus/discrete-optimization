@@ -1,0 +1,29 @@
+discrete\_optimization.lotsizing.uncapacitatedsingleitem package
+================================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.lotsizing.uncapacitatedsingleitem.solvers
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.uncapacitatedsingleitem.problem module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.uncapacitatedsingleitem.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing.uncapacitatedsingleitem
+   :members:
+   :show-inheritance:
+   :undoc-members:

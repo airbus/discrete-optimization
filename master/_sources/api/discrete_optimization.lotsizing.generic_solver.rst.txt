@@ -1,0 +1,32 @@
+discrete\_optimization.lotsizing.generic\_solver package
+========================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.lotsizing.generic_solver.cpsat
+   discrete_optimization.lotsizing.generic_solver.dp
+   discrete_optimization.lotsizing.generic_solver.milp
+   discrete_optimization.lotsizing.generic_solver.toulbar
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.generic\_solver.lotsizing\_solver module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver.lotsizing_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:

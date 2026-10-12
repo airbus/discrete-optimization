@@ -1,0 +1,21 @@
+discrete\_optimization.rcpsp.mutations package
+==============================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp.mutations.mutation\_rcpsp module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.mutations.mutation_rcpsp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp.mutations
+   :members:
+   :undoc-members:
+   :show-inheritance:

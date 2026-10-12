@@ -1,0 +1,337 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.vrptw.transformations package &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.workforce package" href="discrete_optimization.workforce.html" />
+    <link rel="prev" title="discrete_optimization.vrptw.solvers package" href="discrete_optimization.vrptw.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.alb.html">discrete_optimization.alb package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.flex_scheduling.html">discrete_optimization.flex_scheduling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.shop.html">discrete_optimization.shop package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.vrptw.transformations package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-vrptw-transformations-package">
+<h1>discrete_optimization.vrptw.transformations package<a class="headerlink" href="#discrete-optimization-vrptw-transformations-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.vrptw.transformations.to_vrp">
+<span id="discrete-optimization-vrptw-transformations-to-vrp-module"></span><h2>discrete_optimization.vrptw.transformations.to_vrp module<a class="headerlink" href="#module-discrete_optimization.vrptw.transformations.to_vrp" title="Link to this heading"></a></h2>
+<p>Transformation from VRPTW to VRP (lossy - drops time windows).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrptw.transformations.to_vrp.</span></span><span class="sig-name descname"><span class="pre">VrptwToVrpTransformation</span></span><a class="reference internal" href="../_modules/discrete_optimization/vrptw/transformations/to_vrp.html#VrptwToVrpTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">VRPTWProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">VRPTWSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Customer2DVrpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">VrpSolution</span></code></a>]</p>
+<p>Transform VRPTW to VRP (LOSSY transformation).</p>
+<p>Mapping:
+- Vehicle routes with time windows → Vehicle routes (no time constraints)
+- Customer demands → Customer demands
+- Vehicle capacities → Vehicle capacities
+- Time windows → LOST
+- Service times → LOST</p>
+<p>This is a LOSSY transformation because:
+- Time window constraints are dropped
+- Service times are ignored
+- Solutions from VRP may violate time windows in original VRPTW</p>
+<p>Use cases:
+- Get initial solutions from VRP solvers (faster, simpler)
+- Benchmark VRP solvers on VRPTW instances (ignoring time)
+- Analyze impact of time windows by comparing with unconstrained VRP</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><span class="pre">VrpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><span class="pre">VRPTWProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><span class="pre">VRPTWSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrptw/transformations/to_vrp.html#VrptwToVrpTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform VRP solution back to VRPTW solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – VRP solution</p></li>
+<li><p><strong>source_problem</strong> – Original VRPTW problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>VRPTW solution (may violate time windows!)</p>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The returned solution may not satisfy time window constraints.
+Use problem.satisfy() to check feasibility.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><span class="pre">VRPTWSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><span class="pre">Customer2DVrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><span class="pre">VrpSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrptw/transformations/to_vrp.html#VrptwToVrpTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform VRPTW solution to VRP solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – VRPTW solution</p></li>
+<li><p><strong>target_problem</strong> – Target VRP problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent VRP solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrptw/transformations/to_vrp.html#VrptwToVrpTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward transformation (VRPTW → VRP).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><span class="pre">VRPTWProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><span class="pre">Customer2DVrpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrptw/transformations/to_vrp.html#VrptwToVrpTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrptw.transformations.to_vrp.VrptwToVrpTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform VRPTW to VRP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – VRPTW problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>VRP problem (time windows and service times dropped)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.vrptw.transformations">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.vrptw.transformations" title="Link to this heading"></a></h2>
+<p>Transformations from VRPTW to other problems.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.vrptw.transformations.VrptwToVrpTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.vrptw.transformations.</span></span><span class="sig-name descname"><span class="pre">VrptwToVrpTransformation</span></span><a class="reference internal" href="../_modules/discrete_optimization/vrptw/transformations/to_vrp.html#VrptwToVrpTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrptw.transformations.VrptwToVrpTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">VRPTWProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">VRPTWSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">Customer2DVrpProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">VrpSolution</span></code></a>]</p>
+<p>Transform VRPTW to VRP (LOSSY transformation).</p>
+<p>Mapping:
+- Vehicle routes with time windows → Vehicle routes (no time constraints)
+- Customer demands → Customer demands
+- Vehicle capacities → Vehicle capacities
+- Time windows → LOST
+- Service times → LOST</p>
+<p>This is a LOSSY transformation because:
+- Time window constraints are dropped
+- Service times are ignored
+- Solutions from VRP may violate time windows in original VRPTW</p>
+<p>Use cases:
+- Get initial solutions from VRP solvers (faster, simpler)
+- Benchmark VRP solvers on VRPTW instances (ignoring time)
+- Analyze impact of time windows by comparing with unconstrained VRP</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrptw.transformations.VrptwToVrpTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><span class="pre">VrpSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><span class="pre">VRPTWProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><span class="pre">VRPTWSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrptw/transformations/to_vrp.html#VrptwToVrpTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrptw.transformations.VrptwToVrpTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform VRP solution back to VRPTW solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – VRP solution</p></li>
+<li><p><strong>source_problem</strong> – Original VRPTW problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>VRPTW solution (may violate time windows!)</p>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The returned solution may not satisfy time window constraints.
+Use problem.satisfy() to check feasibility.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrptw.transformations.VrptwToVrpTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWSolution" title="discrete_optimization.vrptw.problem.VRPTWSolution"><span class="pre">VRPTWSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><span class="pre">Customer2DVrpProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.VrpSolution" title="discrete_optimization.vrp.problem.VrpSolution"><span class="pre">VrpSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrptw/transformations/to_vrp.html#VrptwToVrpTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrptw.transformations.VrptwToVrpTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform VRPTW solution to VRP solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – VRPTW solution</p></li>
+<li><p><strong>target_problem</strong> – Target VRP problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent VRP solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrptw.transformations.VrptwToVrpTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrptw/transformations/to_vrp.html#VrptwToVrpTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrptw.transformations.VrptwToVrpTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward transformation (VRPTW → VRP).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.vrptw.transformations.VrptwToVrpTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.vrptw.html#discrete_optimization.vrptw.problem.VRPTWProblem" title="discrete_optimization.vrptw.problem.VRPTWProblem"><span class="pre">VRPTWProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.vrp.html#discrete_optimization.vrp.problem.Customer2DVrpProblem" title="discrete_optimization.vrp.problem.Customer2DVrpProblem"><span class="pre">Customer2DVrpProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/vrptw/transformations/to_vrp.html#VrptwToVrpTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.vrptw.transformations.VrptwToVrpTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform VRPTW to VRP.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – VRPTW problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>VRP problem (time windows and service times dropped)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.vrptw.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.vrptw.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.workforce.html" class="btn btn-neutral float-right" title="discrete_optimization.workforce package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,353 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.singlebatch.transformations package &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.singlemachine package" href="discrete_optimization.singlemachine.html" />
+    <link rel="prev" title="discrete_optimization.singlebatch.solvers package" href="discrete_optimization.singlebatch.solvers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.alb.html">discrete_optimization.alb package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.flex_scheduling.html">discrete_optimization.flex_scheduling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.shop.html">discrete_optimization.shop package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.singlebatch.transformations package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-singlebatch-transformations-package">
+<h1>discrete_optimization.singlebatch.transformations package<a class="headerlink" href="#discrete-optimization-singlebatch-transformations-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.singlebatch.transformations.to_ovensched">
+<span id="discrete-optimization-singlebatch-transformations-to-ovensched-module"></span><h2>discrete_optimization.singlebatch.transformations.to_ovensched module<a class="headerlink" href="#module-discrete_optimization.singlebatch.transformations.to_ovensched" title="Link to this heading"></a></h2>
+<p>Transformation from SingleBatch to OvenSched.</p>
+<p>SingleBatch is a special case of OvenSched with:
+- 1 machine
+- 1 attribute (all jobs have same type)
+- No setup times/costs
+- No time windows
+- Fixed processing times (min_duration = max_duration)</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.singlebatch.transformations.to_ovensched.SinglebatchToOvenschedTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.singlebatch.transformations.to_ovensched.</span></span><span class="sig-name descname"><span class="pre">SinglebatchToOvenschedTransformation</span></span><a class="reference internal" href="../_modules/discrete_optimization/singlebatch/transformations/to_ovensched.html#SinglebatchToOvenschedTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.singlebatch.transformations.to_ovensched.SinglebatchToOvenschedTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem" title="discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleBatchProcessingProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.BatchProcessingSolution" title="discrete_optimization.singlebatch.problem.BatchProcessingSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchProcessingSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">OvenSchedulingProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">OvenSchedulingSolution</span></code></a>]</p>
+<p>Transform SingleBatch problem to OvenSched problem.</p>
+<p>SingleBatch is a special case of OvenSched, so this is a SUBSET transformation (exact).</p>
+<p>Mapping:
+- Single machine → 1 machine in OvenSched
+- Jobs → Tasks with:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Single attribute (all tasks have attribute=0)</p></li>
+<li><p>min_duration = max_duration = processing_time</p></li>
+<li><p>size → size</p></li>
+<li><p>earliest_start = 0</p></li>
+<li><p>latest_end = large value (no deadline)</p></li>
+<li><p>eligible_machines = {0} (only the single machine)</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Capacity → machine capacity</p></li>
+<li><p>No setup times → all setup_times[i][j] = 0</p></li>
+<li><p>No setup costs → all setup_costs[i][j] = 0</p></li>
+<li><p>Machine availability → [(0, large_value)] (always available)</p></li>
+</ul>
+<p>This is an EXACT transformation:
+- Forward: Every SingleBatch problem is a valid OvenSched problem
+- Backward: Solutions map directly (batch assignments are preserved)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.singlebatch.transformations.to_ovensched.SinglebatchToOvenschedTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem" title="discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem"><span class="pre">SingleBatchProcessingProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.BatchProcessingSolution" title="discrete_optimization.singlebatch.problem.BatchProcessingSolution"><span class="pre">BatchProcessingSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/singlebatch/transformations/to_ovensched.html#SinglebatchToOvenschedTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.singlebatch.transformations.to_ovensched.SinglebatchToOvenschedTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform OvenSched solution back to SingleBatch solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – OvenSched solution</p></li>
+<li><p><strong>source_problem</strong> – Original SingleBatch problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent SingleBatch solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.singlebatch.transformations.to_ovensched.SinglebatchToOvenschedTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.BatchProcessingSolution" title="discrete_optimization.singlebatch.problem.BatchProcessingSolution"><span class="pre">BatchProcessingSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/singlebatch/transformations/to_ovensched.html#SinglebatchToOvenschedTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.singlebatch.transformations.to_ovensched.SinglebatchToOvenschedTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform SingleBatch solution to OvenSched solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – SingleBatch solution</p></li>
+<li><p><strong>target_problem</strong> – Target OvenSched problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent OvenSched solution for warmstart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.singlebatch.transformations.to_ovensched.SinglebatchToOvenschedTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/singlebatch/transformations/to_ovensched.html#SinglebatchToOvenschedTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.singlebatch.transformations.to_ovensched.SinglebatchToOvenschedTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward problem transformation (SingleBatch → OvenSched).</p>
+<p>This is a SUBSET transformation: SingleBatch ⊂ OvenSched.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.singlebatch.transformations.to_ovensched.SinglebatchToOvenschedTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem" title="discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem"><span class="pre">SingleBatchProcessingProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/singlebatch/transformations/to_ovensched.html#SinglebatchToOvenschedTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.singlebatch.transformations.to_ovensched.SinglebatchToOvenschedTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform SingleBatch to OvenSched.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – SingleBatch problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent OvenSched problem with 1 machine and 1 attribute</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.singlebatch.transformations">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.singlebatch.transformations" title="Link to this heading"></a></h2>
+<p>Transformations for SingleBatch problem.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.singlebatch.transformations.SinglebatchToOvenschedTransformation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.singlebatch.transformations.</span></span><span class="sig-name descname"><span class="pre">SinglebatchToOvenschedTransformation</span></span><a class="reference internal" href="../_modules/discrete_optimization/singlebatch/transformations/to_ovensched.html#SinglebatchToOvenschedTransformation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.singlebatch.transformations.SinglebatchToOvenschedTransformation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation" title="discrete_optimization.generic_tools.transformation.problem_transformation.ProblemTransformation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemTransformation</span></code></a>[<a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem" title="discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">SingleBatchProcessingProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.BatchProcessingSolution" title="discrete_optimization.singlebatch.problem.BatchProcessingSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">BatchProcessingSolution</span></code></a>, <a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">OvenSchedulingProblem</span></code></a>, <a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">OvenSchedulingSolution</span></code></a>]</p>
+<p>Transform SingleBatch problem to OvenSched problem.</p>
+<p>SingleBatch is a special case of OvenSched, so this is a SUBSET transformation (exact).</p>
+<p>Mapping:
+- Single machine → 1 machine in OvenSched
+- Jobs → Tasks with:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Single attribute (all tasks have attribute=0)</p></li>
+<li><p>min_duration = max_duration = processing_time</p></li>
+<li><p>size → size</p></li>
+<li><p>earliest_start = 0</p></li>
+<li><p>latest_end = large value (no deadline)</p></li>
+<li><p>eligible_machines = {0} (only the single machine)</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Capacity → machine capacity</p></li>
+<li><p>No setup times → all setup_times[i][j] = 0</p></li>
+<li><p>No setup costs → all setup_costs[i][j] = 0</p></li>
+<li><p>Machine availability → [(0, large_value)] (always available)</p></li>
+</ul>
+<p>This is an EXACT transformation:
+- Forward: Every SingleBatch problem is a valid OvenSched problem
+- Backward: Solutions map directly (batch assignments are preserved)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.singlebatch.transformations.SinglebatchToOvenschedTransformation.back_transform_solution">
+<span class="sig-name descname"><span class="pre">back_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem" title="discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem"><span class="pre">SingleBatchProcessingProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.BatchProcessingSolution" title="discrete_optimization.singlebatch.problem.BatchProcessingSolution"><span class="pre">BatchProcessingSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/singlebatch/transformations/to_ovensched.html#SinglebatchToOvenschedTransformation.back_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.singlebatch.transformations.SinglebatchToOvenschedTransformation.back_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform OvenSched solution back to SingleBatch solution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – OvenSched solution</p></li>
+<li><p><strong>source_problem</strong> – Original SingleBatch problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent SingleBatch solution</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.singlebatch.transformations.SinglebatchToOvenschedTransformation.forward_transform_solution">
+<span class="sig-name descname"><span class="pre">forward_transform_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.BatchProcessingSolution" title="discrete_optimization.singlebatch.problem.BatchProcessingSolution"><span class="pre">BatchProcessingSolution</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingSolution" title="discrete_optimization.ovensched.problem.OvenSchedulingSolution"><span class="pre">OvenSchedulingSolution</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/singlebatch/transformations/to_ovensched.html#SinglebatchToOvenschedTransformation.forward_transform_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.singlebatch.transformations.SinglebatchToOvenschedTransformation.forward_transform_solution" title="Link to this definition"></a></dt>
+<dd><p>Transform SingleBatch solution to OvenSched solution (for warmstart).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>solution</strong> – SingleBatch solution</p></li>
+<li><p><strong>target_problem</strong> – Target OvenSched problem</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent OvenSched solution for warmstart</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.singlebatch.transformations.SinglebatchToOvenschedTransformation.get_forward_metadata">
+<span class="sig-name descname"><span class="pre">get_forward_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.transformation.html#discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata" title="discrete_optimization.generic_tools.transformation.transformation_metadata.TransformationMetadata"><span class="pre">TransformationMetadata</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/singlebatch/transformations/to_ovensched.html#SinglebatchToOvenschedTransformation.get_forward_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.singlebatch.transformations.SinglebatchToOvenschedTransformation.get_forward_metadata" title="Link to this definition"></a></dt>
+<dd><p>Metadata for forward problem transformation (SingleBatch → OvenSched).</p>
+<p>This is a SUBSET transformation: SingleBatch ⊂ OvenSched.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.singlebatch.transformations.SinglebatchToOvenschedTransformation.transform_problem">
+<span class="sig-name descname"><span class="pre">transform_problem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.singlebatch.html#discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem" title="discrete_optimization.singlebatch.problem.SingleBatchProcessingProblem"><span class="pre">SingleBatchProcessingProblem</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.ovensched.html#discrete_optimization.ovensched.problem.OvenSchedulingProblem" title="discrete_optimization.ovensched.problem.OvenSchedulingProblem"><span class="pre">OvenSchedulingProblem</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/singlebatch/transformations/to_ovensched.html#SinglebatchToOvenschedTransformation.transform_problem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.singlebatch.transformations.SinglebatchToOvenschedTransformation.transform_problem" title="Link to this definition"></a></dt>
+<dd><p>Transform SingleBatch to OvenSched.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>source_problem</strong> – SingleBatch problem instance</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Equivalent OvenSched problem with 1 machine and 1 attribute</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.singlebatch.solvers.html" class="btn btn-neutral float-left" title="discrete_optimization.singlebatch.solvers package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.singlemachine.html" class="btn btn-neutral float-right" title="discrete_optimization.singlemachine package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

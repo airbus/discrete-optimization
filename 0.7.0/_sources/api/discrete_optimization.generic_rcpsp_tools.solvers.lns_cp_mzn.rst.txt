@@ -1,0 +1,53 @@
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp\_mzn package
+=========================================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp\_mzn.neighbor\_builder module
+------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_builder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp\_mzn.neighbor\_tools module
+----------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp\_mzn.postpro\_ls module
+------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.postpro_ls
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp\_mzn.solution\_repair module
+-----------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solution_repair
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_rcpsp\_tools.solvers.lns\_cp\_mzn.solver module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn
+   :members:
+   :undoc-members:
+   :show-inheritance:

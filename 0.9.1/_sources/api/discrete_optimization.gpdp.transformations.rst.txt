@@ -1,0 +1,37 @@
+discrete\_optimization.gpdp.transformations package
+===================================================
+
+Submodules
+----------
+
+discrete\_optimization.gpdp.transformations.from\_tsp module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.gpdp.transformations.from_tsp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.gpdp.transformations.from\_vrp module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.gpdp.transformations.from_vrp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.gpdp.transformations.from\_vrptw module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.gpdp.transformations.from_vrptw
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.gpdp.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

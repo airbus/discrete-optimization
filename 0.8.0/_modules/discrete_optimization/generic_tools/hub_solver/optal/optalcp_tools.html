@@ -1,0 +1,462 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools &mdash; discrete-optimization 0.8.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=486e5634"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Generic optal-cp python wrapper.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Awaitable</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.callbacks.callback</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callback</span><span class="p">,</span>
+    <span class="n">CallbackList</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.cp_tools</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpSolver</span><span class="p">,</span>
+    <span class="n">ParametersCp</span><span class="p">,</span>
+    <span class="n">SignEnum</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParamsObjectiveFunction</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_solver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BoundsProviderMixin</span><span class="p">,</span>
+    <span class="n">StatusSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolveEarlyStop</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.hyperparameters.hyperparameter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CategoricalHyperparameter</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.result_storage.result_storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ResultStorage</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">optalcp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cp</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">optalcp_available</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">optalcp_available</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="OptalCpSolver">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OptalCpSolver</span><span class="p">(</span><span class="n">CpSolver</span><span class="p">,</span> <span class="n">BoundsProviderMixin</span><span class="p">):</span>
+    <span class="n">hyperparameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">CategoricalHyperparameter</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;searchType&quot;</span><span class="p">,</span>
+            <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Auto&quot;</span><span class="p">,</span> <span class="s2">&quot;LNS&quot;</span><span class="p">,</span> <span class="s2">&quot;FDS&quot;</span><span class="p">,</span> <span class="s2">&quot;FDSDual&quot;</span><span class="p">,</span> <span class="s2">&quot;SetTimes&quot;</span><span class="p">,</span> <span class="s2">&quot;FDSLB&quot;</span><span class="p">],</span>
+            <span class="n">default</span><span class="o">=</span><span class="s2">&quot;Auto&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">cp_model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;cp.Model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">early_stopping_exception</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">Exception</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">current_bound</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">current_obj</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">status_solver</span><span class="p">:</span> <span class="n">StatusSolver</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">use_warm_start</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">warm_start_solution</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;cp.Solution&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">,</span>
+        <span class="n">params_objective_function</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParamsObjectiveFunction</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">optalcp_available</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;You must install optalcp to use this solver.&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">params_objective_function</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OptalCpSolver.get_current_best_internal_objective_bound">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver.get_current_best_internal_objective_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_current_best_internal_objective_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_bound</span></div>
+
+
+<div class="viewcode-block" id="OptalCpSolver.get_current_best_internal_objective_value">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver.get_current_best_internal_objective_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_current_best_internal_objective_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_obj</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_solve_sync</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
+        <span class="n">parameters_cp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersCp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">kw</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;timeLimit&quot;</span><span class="p">:</span> <span class="n">time_limit</span><span class="p">,</span> <span class="s2">&quot;nbWorkers&quot;</span><span class="p">:</span> <span class="n">parameters_cp</span><span class="o">.</span><span class="n">nb_process</span><span class="p">}</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="n">cp</span><span class="o">.</span><span class="n">Parameters</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">))</span>
+        <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_solution</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">proof</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">OPTIMAL</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">SATISFIED</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">proof</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">([(</span><span class="n">sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">)])</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_solve_async</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
+        <span class="n">parameters_cp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersCp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">do_not_retrieve_solutions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">parameters_cp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parameters_cp</span> <span class="o">=</span> <span class="n">ParametersCp</span><span class="o">.</span><span class="n">default_cpsat</span><span class="p">()</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">complete_with_default_hyperparameters</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_bound</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">callback_do</span> <span class="o">=</span> <span class="n">CallbackList</span><span class="p">(</span><span class="n">callbacks</span><span class="p">)</span>
+        <span class="n">solver</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">Solver</span><span class="p">()</span>
+        <span class="n">callback_optal</span> <span class="o">=</span> <span class="n">OptalSolutionCallback</span><span class="p">(</span>
+            <span class="n">do_solver</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">optal_solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span>
+            <span class="n">callback</span><span class="o">=</span><span class="n">callback_do</span><span class="p">,</span>
+            <span class="n">do_not_retrieve_solutions</span><span class="o">=</span><span class="n">do_not_retrieve_solutions</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">callback_do</span><span class="o">.</span><span class="n">on_solve_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">solver</span><span class="o">.</span><span class="n">on_solution</span> <span class="o">=</span> <span class="n">callback_optal</span><span class="o">.</span><span class="n">on_solution</span>
+        <span class="n">solver</span><span class="o">.</span><span class="n">on_objective_bound</span> <span class="o">=</span> <span class="n">callback_optal</span><span class="o">.</span><span class="n">on_bound</span>
+        <span class="n">kw</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;timeLimit&quot;</span><span class="p">:</span> <span class="n">time_limit</span><span class="p">,</span> <span class="s2">&quot;nbWorkers&quot;</span><span class="p">:</span> <span class="n">parameters_cp</span><span class="o">.</span><span class="n">nb_process</span><span class="p">}</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">kw_params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="n">kw</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kw</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;lower_bound_method&quot;</span><span class="p">}</span>
+            <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cp</span><span class="o">.</span><span class="n">Parameters</span><span class="o">.</span><span class="vm">__annotations__</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">kw_params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_warm_start</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">warm_start_solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="p">,</span>
+                <span class="n">params</span><span class="o">=</span><span class="n">cp</span><span class="o">.</span><span class="n">Parameters</span><span class="p">(</span><span class="o">**</span><span class="n">kw_params</span><span class="p">),</span>
+                <span class="n">warm_start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">warm_start_solution</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">solver</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+                <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">cp</span><span class="o">.</span><span class="n">Parameters</span><span class="p">(</span><span class="o">**</span><span class="n">kw_params</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">solution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">proof</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">OPTIMAL</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">SATISFIED</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">proof</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNSATISFIABLE</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">status_solver</span> <span class="o">=</span> <span class="n">StatusSolver</span><span class="o">.</span><span class="n">UNKNOWN</span>
+        <span class="n">callback_do</span><span class="o">.</span><span class="n">on_solve_end</span><span class="p">(</span><span class="n">callback_optal</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">callback_optal</span><span class="o">.</span><span class="n">res</span>
+
+<div class="viewcode-block" id="OptalCpSolver.solve">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver.solve">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Callback</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
+        <span class="n">parameters_cp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ParametersCp</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">do_not_retrieve_solutions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ResultStorage</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Solve the cp model</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            callbacks:</span>
+<span class="sd">            time_limit:</span>
+<span class="sd">            parameters_cp:</span>
+<span class="sd">            do_not_retrieve_solutions: if True, do no try to retrieve solutions.</span>
+<span class="sd">                Useful when using preview version of optalcp.</span>
+<span class="sd">            **args:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">run_async_synchronously</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_solve_async</span><span class="p">(</span>
+                <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
+                <span class="n">time_limit</span><span class="o">=</span><span class="n">time_limit</span><span class="p">,</span>
+                <span class="n">parameters_cp</span><span class="o">=</span><span class="n">parameters_cp</span><span class="p">,</span>
+                <span class="n">do_not_retrieve_solutions</span><span class="o">=</span><span class="n">do_not_retrieve_solutions</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">args</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OptalCpSolver.minimize_variable">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver.minimize_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">minimize_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">var</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OptalCpSolver.add_bound_constraint">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver.add_bound_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_bound_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">sign</span><span class="p">:</span> <span class="n">SignEnum</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">LEQ</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&lt;=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">UEQ</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&gt;=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">UP</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&gt;</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">LESS</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">var</span> <span class="o">&lt;</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="n">sign</span> <span class="o">==</span> <span class="n">SignEnum</span><span class="o">.</span><span class="n">EQUAL</span><span class="p">:</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">var</span> <span class="o">==</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">expr</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="OptalCpSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalCpSolver.retrieve_solution">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="s2">&quot;cp.SolveResult&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a d-o solution from the variables computed by minizinc.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            result: output of the cp.solve</span>
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OptalSolutionCallback">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalSolutionCallback">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OptalSolutionCallback</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">do_solver</span><span class="p">:</span> <span class="n">OptalCpSolver</span><span class="p">,</span>
+        <span class="n">optal_solver</span><span class="p">:</span> <span class="s2">&quot;cp.Solver&quot;</span><span class="p">,</span>
+        <span class="n">callback</span><span class="p">:</span> <span class="n">Callback</span><span class="p">,</span>
+        <span class="n">do_not_retrieve_solutions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span> <span class="o">=</span> <span class="n">do_solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optal_solver</span> <span class="o">=</span> <span class="n">optal_solver</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callback</span> <span class="o">=</span> <span class="n">callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">do_solver</span><span class="o">.</span><span class="n">create_result_storage</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_solve_result</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">cp</span><span class="o">.</span><span class="n">SolveResult</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_not_retrieve_solutions</span> <span class="o">=</span> <span class="n">do_not_retrieve_solutions</span>
+
+<div class="viewcode-block" id="OptalSolutionCallback.on_solution">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalSolutionCallback.on_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="s2">&quot;cp.SolutionEvent&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">current_obj</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">solution</span><span class="o">.</span><span class="n">get_objective</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_not_retrieve_solutions</span><span class="p">:</span>
+            <span class="n">sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">retrieve_solution</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">aggreg_from_sol</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sol</span><span class="p">,</span> <span class="n">fit</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">stopping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span>
+                <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="n">e</span>
+            <span class="n">stopping</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;should stop&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">stopping</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">early_stopping_exception</span> <span class="o">=</span> <span class="n">SolveEarlyStop</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.solve() stopped by user callback.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="n">stopping</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;stopping&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optal_solver</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="s2">&quot;stopped by usr callback&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OptalSolutionCallback.on_bound">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.OptalSolutionCallback.on_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="s2">&quot;cp.ObjectiveBoundEntry&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span><span class="o">.</span><span class="n">current_bound</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">stopping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback</span><span class="o">.</span><span class="n">on_step_end</span><span class="p">(</span>
+            <span class="n">step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_solutions</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">do_solver</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="run_async_synchronously">
+<a class="viewcode-back" href="../../../../../api/discrete_optimization.generic_tools.hub_solver.optal.html#discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools.run_async_synchronously">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_async_synchronously</span><span class="p">(</span><span class="n">coroutine</span><span class="p">:</span> <span class="n">Awaitable</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Runs a coroutine synchronously, blocking until it completes.</span>
+
+<span class="sd">    This helper handles two cases:</span>
+<span class="sd">    1. No event loop is running (standard script): Uses asyncio.run()</span>
+<span class="sd">    2. An event loop is running (e.g., Jupyter): Runs the coroutine in a</span>
+<span class="sd">       separate thread to avoid blocking the existing loop/raising runtime errors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_running_loop</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+        <span class="n">loop</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">loop</span> <span class="ow">and</span> <span class="n">loop</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">exception</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">runner</span><span class="p">():</span>
+            <span class="k">nonlocal</span> <span class="n">result</span><span class="p">,</span> <span class="n">exception</span>
+            <span class="n">new_loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">new_event_loop</span><span class="p">()</span>
+            <span class="n">asyncio</span><span class="o">.</span><span class="n">set_event_loop</span><span class="p">(</span><span class="n">new_loop</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">new_loop</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">coroutine</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">exception</span> <span class="o">=</span> <span class="n">e</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="n">new_loop</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">runner</span><span class="p">)</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exception</span>
+        <span class="k">return</span> <span class="n">result</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Case 1: No loop running. Standard run.</span>
+        <span class="k">return</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">coroutine</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.8.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

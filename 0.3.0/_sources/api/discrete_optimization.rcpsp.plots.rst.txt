@@ -1,0 +1,21 @@
+discrete\_optimization.rcpsp.plots package
+==========================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp.plots.rcpsp\_utils\_preemptive module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp.plots.rcpsp_utils_preemptive
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp.plots
+   :members:
+   :undoc-members:
+   :show-inheritance:

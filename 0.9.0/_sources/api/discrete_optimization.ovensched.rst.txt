@@ -1,0 +1,53 @@
+discrete\_optimization.ovensched package
+========================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.ovensched.solvers
+
+Submodules
+----------
+
+discrete\_optimization.ovensched.parser module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.ovensched.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.ovensched.problem module
+-----------------------------------------------
+
+.. automodule:: discrete_optimization.ovensched.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.ovensched.solution\_vector module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.ovensched.solution_vector
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.ovensched.utils module
+---------------------------------------------
+
+.. automodule:: discrete_optimization.ovensched.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.ovensched
+   :members:
+   :show-inheritance:
+   :undoc-members:

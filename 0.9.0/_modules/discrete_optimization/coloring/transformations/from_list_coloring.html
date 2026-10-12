@@ -1,0 +1,342 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.coloring.transformations.from_list_coloring &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.coloring.transformations.from_list_coloring</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.coloring.transformations.from_list_coloring</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;Transformation from ListColoringProblem to ColoringProblem using dummy nodes.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.coloring.list_coloring_problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListColoringProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.coloring.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ColoringConstraints</span><span class="p">,</span>
+    <span class="n">ColoringProblem</span><span class="p">,</span>
+    <span class="n">ColoringSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.graph_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.problem_transformation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.transformation_metadata</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TransformationMetadata</span><span class="p">,</span>
+    <span class="n">exact_transformation</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="ListColoringToColoringTransformation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.transformations.html#discrete_optimization.coloring.transformations.from_list_coloring.ListColoringToColoringTransformation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ListColoringToColoringTransformation</span><span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">[</span>
+        <span class="n">ListColoringProblem</span><span class="p">,</span>
+        <span class="n">ColoringSolution</span><span class="p">,</span>
+        <span class="n">ColoringProblem</span><span class="p">,</span>
+        <span class="n">ColoringSolution</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform ListColoringProblem to ColoringProblem using dummy nodes.</span>
+
+<span class="sd">    Mapping:</span>
+<span class="sd">    - Create K dummy nodes (one per color)</span>
+<span class="sd">    - Dummy nodes form a complete clique (all connected)</span>
+<span class="sd">    - Dummy node k is fixed to color k</span>
+<span class="sd">    - Original node can use color k only if NOT connected to dummy node k</span>
+<span class="sd">    - Use subset_nodes to focus optimization on original nodes only</span>
+
+<span class="sd">    This encoding allows standard coloring solvers to solve list coloring problems.</span>
+
+<span class="sd">    This transformation is EXACT in both directions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize transformation with mapping storage.&quot;&quot;&quot;</span>
+        <span class="c1"># Store mapping between dummy nodes and colors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dummy_node_to_color</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color_to_dummy_node</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="ListColoringToColoringTransformation.get_forward_metadata">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.transformations.html#discrete_optimization.coloring.transformations.from_list_coloring.ListColoringToColoringTransformation.get_forward_metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_forward_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransformationMetadata</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Metadata for forward problem transformation (ListColoring → Coloring).</span>
+
+<span class="sd">        This direction is EXACT: list coloring can be perfectly encoded as standard coloring.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">exact_transformation</span><span class="p">(</span>
+            <span class="n">use_cases</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;Use standard ColoringProblem solvers for ListColoring&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Forbidden colors modeled as edges to dummy nodes&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Dummy nodes form a clique with fixed colors&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ListColoringToColoringTransformation.transform_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.transformations.html#discrete_optimization.coloring.transformations.from_list_coloring.ListColoringToColoringTransformation.transform_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">ListColoringProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColoringProblem</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform ListColoringProblem to ColoringProblem with dummy nodes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_problem: ListColoringProblem instance</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent ColoringProblem with dummy color nodes</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Determine number of colors needed</span>
+        <span class="n">max_color</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">get_max_color_index</span><span class="p">()</span>
+        <span class="n">nb_colors</span> <span class="o">=</span> <span class="n">max_color</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="c1"># Create dummy color nodes and store mapping</span>
+        <span class="n">dummy_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;__color_</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">__&quot;</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_colors</span><span class="p">)]</span>
+
+        <span class="c1"># Store mapping for later use</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dummy_node_to_color</span> <span class="o">=</span> <span class="p">{</span><span class="n">dummy_nodes</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_colors</span><span class="p">)}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color_to_dummy_node</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">dummy_nodes</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_colors</span><span class="p">)}</span>
+
+        <span class="c1"># Build new graph with original + dummy nodes</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">source_problem</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>  <span class="c1"># Copy original nodes</span>
+
+        <span class="c1"># Add dummy nodes</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">dummy</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dummy_nodes</span><span class="p">):</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">dummy</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;dummy&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fixed_color&quot;</span><span class="p">:</span> <span class="n">k</span><span class="p">}))</span>
+
+        <span class="c1"># Build edges</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">source_problem</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span>  <span class="c1"># Copy original edges</span>
+
+        <span class="c1"># Add clique edges between dummy nodes (all pairs)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dummy_nodes</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">dummy_nodes</span><span class="p">)):</span>
+                <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">dummy_nodes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dummy_nodes</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="p">{}))</span>
+                <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">dummy_nodes</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">dummy_nodes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">{}))</span>
+
+        <span class="c1"># Add forbidden edges: node → dummy color node</span>
+        <span class="c1"># If color k is NOT in allowed_colors[node], add edge node → dummy_k</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">:</span>
+            <span class="n">allowed</span> <span class="o">=</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">allowed_colors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_colors</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+                    <span class="c1"># Forbidden: add edge to prevent this color</span>
+                    <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">node</span><span class="p">,</span> <span class="n">dummy_nodes</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="p">{}))</span>
+                    <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">dummy_nodes</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">node</span><span class="p">,</span> <span class="p">{}))</span>
+
+        <span class="c1"># Create graph</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">Graph</span><span class="p">(</span>
+            <span class="n">nodes</span><span class="o">=</span><span class="n">nodes</span><span class="p">,</span>
+            <span class="n">edges</span><span class="o">=</span><span class="n">edges</span><span class="p">,</span>
+            <span class="n">undirected</span><span class="o">=</span><span class="n">source_problem</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">undirected</span><span class="p">,</span>
+            <span class="n">compute_predecessors</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create ColoringProblem with subset_nodes = original nodes only</span>
+        <span class="c1"># This ensures optimization focuses on original nodes, not dummy nodes</span>
+        <span class="n">subset_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">source_problem</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">)</span>
+
+        <span class="c1"># Build color constraints for dummy nodes (fix their colors)</span>
+        <span class="n">color_constraint</span> <span class="o">=</span> <span class="p">{</span><span class="n">dummy_nodes</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_colors</span><span class="p">)}</span>
+
+        <span class="c1"># Merge with existing constraints if any</span>
+        <span class="k">if</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">constraints_coloring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">color_constraint</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="n">source_problem</span><span class="o">.</span><span class="n">constraints_coloring</span><span class="o">.</span><span class="n">color_constraint</span>
+            <span class="p">)</span>
+
+        <span class="n">constraints_coloring</span> <span class="o">=</span> <span class="n">ColoringConstraints</span><span class="p">(</span><span class="n">color_constraint</span><span class="o">=</span><span class="n">color_constraint</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ColoringProblem</span><span class="p">(</span>
+            <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span>
+            <span class="n">subset_nodes</span><span class="o">=</span><span class="n">subset_nodes</span><span class="p">,</span>
+            <span class="n">constraints_coloring</span><span class="o">=</span><span class="n">constraints_coloring</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ListColoringToColoringTransformation.back_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.transformations.html#discrete_optimization.coloring.transformations.from_list_coloring.ListColoringToColoringTransformation.back_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">back_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">ColoringSolution</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">ListColoringProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColoringSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform Coloring solution back to ListColoring solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: Coloring solution (with dummy nodes)</span>
+<span class="sd">            source_problem: Original ListColoringProblem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent ListColoring solution (without dummy nodes)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract colors for original nodes only</span>
+        <span class="c1"># Dummy node colors are ignored</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">:</span>
+            <span class="n">node_idx</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="n">color</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="n">node_idx</span><span class="p">]</span>
+            <span class="n">colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ColoringSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">source_problem</span><span class="p">,</span>
+            <span class="n">colors</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span>
+            <span class="n">nb_color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Will be recomputed</span>
+            <span class="n">nb_violations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Will be recomputed</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ListColoringToColoringTransformation.forward_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.coloring.transformations.html#discrete_optimization.coloring.transformations.from_list_coloring.ListColoringToColoringTransformation.forward_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">ColoringSolution</span><span class="p">,</span> <span class="n">target_problem</span><span class="p">:</span> <span class="n">ColoringProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ColoringSolution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform ListColoring solution to Coloring solution (for warmstart).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: ListColoring solution</span>
+<span class="sd">            target_problem: Target ColoringProblem (with dummy nodes)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent Coloring solution (with dummy node colors added)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Build full color array: original nodes + dummy nodes</span>
+        <span class="c1"># Dummy nodes get their fixed colors</span>
+        <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">number_of_nodes</span>
+
+        <span class="c1"># Fill original node colors from solution</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">):</span>
+            <span class="n">target_idx</span> <span class="o">=</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="n">colors</span><span class="p">[</span><span class="n">target_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># Fill dummy node colors (fixed) using stored mapping</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">nodes_name</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dummy_node_to_color</span><span class="p">:</span>
+                <span class="c1"># Dummy node: use stored mapping</span>
+                <span class="n">color_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dummy_node_to_color</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                <span class="n">target_idx</span> <span class="o">=</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">index_nodes_name</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+                <span class="n">colors</span><span class="p">[</span><span class="n">target_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">color_idx</span>
+
+        <span class="k">return</span> <span class="n">ColoringSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">target_problem</span><span class="p">,</span>
+            <span class="n">colors</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span>
+            <span class="n">nb_color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Will be recomputed</span>
+            <span class="n">nb_violations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Will be recomputed</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

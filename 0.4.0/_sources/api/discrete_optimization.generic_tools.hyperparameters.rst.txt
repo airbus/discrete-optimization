@@ -1,0 +1,29 @@
+discrete\_optimization.generic\_tools.hyperparameters package
+=============================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.hyperparameters.hyperparameter module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.hyperparameters.hyperparameter
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.hyperparameters.hyperparametrizable module
+--------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.hyperparameters.hyperparametrizable
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.hyperparameters
+   :members:
+   :undoc-members:
+   :show-inheritance:

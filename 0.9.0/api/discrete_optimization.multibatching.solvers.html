@@ -1,0 +1,1111 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.multibatching.solvers package &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.ovensched package" href="discrete_optimization.ovensched.html" />
+    <link rel="prev" title="discrete_optimization.multibatching package" href="discrete_optimization.multibatching.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.alb.html">discrete_optimization.alb package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.binpack.html">discrete_optimization.binpack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.flex_scheduling.html">discrete_optimization.flex_scheduling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tasks_tools.html">discrete_optimization.generic_tasks_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.gpdp.html">discrete_optimization.gpdp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.maximum_independent_set.html">discrete_optimization.maximum_independent_set package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.ovensched.html">discrete_optimization.ovensched package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.shop.html">discrete_optimization.shop package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlebatch.html">discrete_optimization.singlebatch package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.singlemachine.html">discrete_optimization.singlemachine package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.top.html">discrete_optimization.top package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsptw.html">discrete_optimization.tsptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrptw.html">discrete_optimization.vrptw package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.workforce.html">discrete_optimization.workforce package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.multibatching.html">discrete_optimization.multibatching package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.multibatching.solvers package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-multibatching-solvers-package">
+<h1>discrete_optimization.multibatching.solvers package<a class="headerlink" href="#discrete-optimization-multibatching-solvers-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.multibatching.solvers.asp">
+<span id="discrete-optimization-multibatching-solvers-asp-module"></span><h2>discrete_optimization.multibatching.solvers.asp module<a class="headerlink" href="#module-discrete_optimization.multibatching.solvers.asp" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.asp.</span></span><span class="sig-name descname"><span class="pre">ClingconMultibatchingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/asp.html#ClingconMultibatchingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.all_dataframes">
+<span class="sig-name descname"><span class="pre">all_dataframes</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.all_dataframes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.extract_clingo_number">
+<span class="sig-name descname"><span class="pre">extract_clingo_number</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/asp.html#ClingconMultibatchingSolver.extract_clingo_number"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.extract_clingo_number" title="Link to this definition"></a></dt>
+<dd><p>Extract numeric value from Clingo symbols or convert to number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/asp.html#ClingconMultibatchingSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.modelAggregateTemplates">
+<span class="sig-name descname"><span class="pre">modelAggregateTemplates</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[{'columns':</span> <span class="pre">['from',</span> <span class="pre">'to',</span> <span class="pre">'transportresource',</span> <span class="pre">'freq',</span> <span class="pre">'total'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'route_freq_cap'},</span> <span class="pre">{'columns':</span> <span class="pre">['product',</span> <span class="pre">'location',</span> <span class="pre">'amount'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'flow_out'},</span> <span class="pre">{'columns':</span> <span class="pre">['product',</span> <span class="pre">'location',</span> <span class="pre">'amount'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'flow_in'},</span> <span class="pre">{'columns':</span> <span class="pre">['product',</span> <span class="pre">'location',</span> <span class="pre">'amount'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'req'},</span> <span class="pre">{'columns':</span> <span class="pre">['from',</span> <span class="pre">'to',</span> <span class="pre">'transportresource',</span> <span class="pre">'cost'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'route_cost_total'},</span> <span class="pre">{'columns':</span> <span class="pre">['from',</span> <span class="pre">'to',</span> <span class="pre">'transportresource',</span> <span class="pre">'product',</span> <span class="pre">'amount'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'load'},</span> <span class="pre">{'columns':</span> <span class="pre">['from',</span> <span class="pre">'to',</span> <span class="pre">'transportresource',</span> <span class="pre">'val'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'active_flow'}]</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.modelAggregateTemplates" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.modelAtomTemplates">
+<span class="sig-name descname"><span class="pre">modelAtomTemplates</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[{'columns':</span> <span class="pre">['product',</span> <span class="pre">'amount'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'totalSupply'},</span> <span class="pre">{'columns':</span> <span class="pre">['idx',</span> <span class="pre">'from',</span> <span class="pre">'to',</span> <span class="pre">'transportresource',</span> <span class="pre">'distance',</span> <span class="pre">'cost'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'route'},</span> <span class="pre">{'columns':</span> <span class="pre">['from',</span> <span class="pre">'to',</span> <span class="pre">'transportresource',</span> <span class="pre">'cost'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'routeCostTotal'},</span> <span class="pre">{'columns':</span> <span class="pre">['from',</span> <span class="pre">'to',</span> <span class="pre">'transportresource',</span> <span class="pre">'freq',</span> <span class="pre">'maxcapacity'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'routeFreq'},</span> <span class="pre">{'columns':</span> <span class="pre">['from',</span> <span class="pre">'to',</span> <span class="pre">'transportresource',</span> <span class="pre">'product'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'activeFlow'},</span> <span class="pre">{'columns':</span> <span class="pre">['product',</span> <span class="pre">'location',</span> <span class="pre">'amount'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'demandOffer'},</span> <span class="pre">{'columns':</span> <span class="pre">['product',</span> <span class="pre">'location',</span> <span class="pre">'amount'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'requiredNet'},</span> <span class="pre">{'columns':</span> <span class="pre">['product',</span> <span class="pre">'transportresource'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'productTR'},</span> <span class="pre">{'columns':</span> <span class="pre">['product',</span> <span class="pre">'size'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'productSize'},</span> <span class="pre">{'columns':</span> <span class="pre">['from',</span> <span class="pre">'to',</span> <span class="pre">'transportresource',</span> <span class="pre">'product'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'possibleFlow'},</span> <span class="pre">{'columns':</span> <span class="pre">['transportresource',</span> <span class="pre">'capacity'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'transportCapacity'},</span> <span class="pre">{'columns':</span> <span class="pre">['transportresource',</span> <span class="pre">'transportationCost'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'transportCost'},</span> <span class="pre">{'columns':</span> <span class="pre">['transportresource',</span> <span class="pre">'CO2'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'transportCO2'},</span> <span class="pre">{'columns':</span> <span class="pre">['from',</span> <span class="pre">'to',</span> <span class="pre">'transportresource',</span> <span class="pre">'product',</span> <span class="pre">'amount'],</span> <span class="pre">'filter':</span> <span class="pre">&lt;function</span> <span class="pre">ClingconMultibatchingSolver.&lt;lambda&gt;&gt;,</span> <span class="pre">'name':</span> <span class="pre">'productOnFlow'}]</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.modelAtomTemplates" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.modelIndex">
+<span class="sig-name descname"><span class="pre">modelIndex</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.modelIndex" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution"><span class="pre">MultibatchingSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/asp.html#ClingconMultibatchingSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.sanitize">
+<span class="sig-name descname"><span class="pre">sanitize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/asp.html#ClingconMultibatchingSolver.sanitize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.sanitize" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.sanitize_num">
+<span class="sig-name descname"><span class="pre">sanitize_num</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/asp.html#ClingconMultibatchingSolver.sanitize_num"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.sanitize_num" title="Link to this definition"></a></dt>
+<dd><p>Ensures input is a valid integer for Clingcon constraints.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/asp.html#ClingconMultibatchingSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.start_solving">
+<span class="sig-name descname"><span class="pre">start_solving</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.asp.ClingconMultibatchingSolver.start_solving" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.multibatching.solvers.benders">
+<span id="discrete-optimization-multibatching-solvers-benders-module"></span><h2>discrete_optimization.multibatching.solvers.benders module<a class="headerlink" href="#module-discrete_optimization.multibatching.solvers.benders" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.benders.</span></span><span class="sig-name descname"><span class="pre">CpsatBendersMultibatchingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/benders.html#CpsatBendersMultibatchingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[SubBrickHyperparameter(name='packing_solver',</span> <span class="pre">default=SubBrick(cls=&lt;class</span> <span class="pre">'discrete_optimization.multibatching.solvers.packing_subproblem.GreedyPackingForMultibatching'&gt;,</span> <span class="pre">kwargs=None,</span> <span class="pre">kwargs_from_solution=None),</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='packing_solver')]</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/benders.html#CpsatBendersMultibatchingSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit_first_iter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_solver_master</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/benders.html#CpsatBendersMultibatchingSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver.update_model_master">
+<span class="sig-name descname"><span class="pre">update_model_master</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">changed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.TransportLink" title="discrete_optimization.multibatching.problem.TransportLink"><span class="pre">TransportLink</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.Product" title="discrete_optimization.multibatching.problem.Product"><span class="pre">Product</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">best_lb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/benders.html#CpsatBendersMultibatchingSolver.update_model_master"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.benders.CpsatBendersMultibatchingSolver.update_model_master" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.multibatching.solvers.cp_mzn">
+<span id="discrete-optimization-multibatching-solvers-cp-mzn-module"></span><h2>discrete_optimization.multibatching.solvers.cp_mzn module<a class="headerlink" href="#module-discrete_optimization.multibatching.solvers.cp_mzn" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.cp_mzn.</span></span><span class="sig-name descname"><span class="pre">CpMultibatchingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent_solve_error</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cp_mzn.html#CpMultibatchingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.mzn_tools.MinizincCpSolver" title="discrete_optimization.generic_tools.mzn_tools.MinizincCpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MinizincCpSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.multibatching.solvers.MultibatchingSolver" title="discrete_optimization.multibatching.solvers.MultibatchingSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultibatchingSolver</span></code></a></p>
+<p>CP solver for the Multibatching problem using MiniZinc.</p>
+<p>This solver uses a flow formulation with network_flow constraints to model
+the multibatching problem. It computes the number of trips and the flow of
+each product on each transport link.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.problem" title="Link to this definition"></a></dt>
+<dd><p>The multibatching problem instance to solve.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem">MultibatchingProblem</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.params_objective_function">
+<span class="sig-name descname"><span class="pre">params_objective_function</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.params_objective_function" title="Link to this definition"></a></dt>
+<dd><p>Parameters for objective function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction">ParamsObjectiveFunction</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.cp_solver_name">
+<span class="sig-name descname"><span class="pre">cp_solver_name</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.cp_solver_name" title="Link to this definition"></a></dt>
+<dd><p>Backend CP solver to use with MiniZinc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CpSolverName" title="discrete_optimization.generic_tools.cp_tools.CpSolverName">CpSolverName</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.silent_solve_error">
+<span class="sig-name descname"><span class="pre">silent_solve_error</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.silent_solve_error" title="Link to this definition"></a></dt>
+<dd><p>If True, raise warning instead of error on solve crashes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='cp_solver_name',</span> <span class="pre">default=&lt;CpSolverName.CHUFFED:</span> <span class="pre">0&gt;,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='cp_solver_name'),</span> <span class="pre">CategoricalHyperparameter(name='restrict_to_shortest_paths',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='restrict_to_shortest_paths'),</span> <span class="pre">FloatHyperparameter(name='shortest_path_tolerance',</span> <span class="pre">default=0.1,</span> <span class="pre">depends_on=[('restrict_to_shortest_paths',</span> <span class="pre">[True])],</span> <span class="pre">name_in_kwargs='shortest_path_tolerance',</span> <span class="pre">low=0,</span> <span class="pre">high=5,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False)]</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cp_mzn.html#CpMultibatchingSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize the MiniZinc model with problem data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cp_solver_name</strong> (<a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.cp_tools.CpSolverName" title="discrete_optimization.generic_tools.cp_tools.CpSolverName"><em>CpSolverName</em></a>) – CP solver to use (default: CHUFFED)</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_output_item</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution"><span class="pre">MultibatchingSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cp_mzn.html#CpMultibatchingSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cp_mzn.CpMultibatchingSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Convert MiniZinc solution to MultibatchingSolution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_output_item</strong> – MiniZinc output string (unused)</p></li>
+<li><p><strong>**kwargs</strong> – Contains ‘nb_trips’ and ‘flow’ arrays from MiniZinc</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The solution object</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution">MultibatchingSolution</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.multibatching.solvers.cpsat">
+<span id="discrete-optimization-multibatching-solvers-cpsat-module"></span><h2>discrete_optimization.multibatching.solvers.cpsat module<a class="headerlink" href="#module-discrete_optimization.multibatching.solvers.cpsat" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">CpsatMultibatchingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver" title="discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatSolver</span></code></a>, <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.WarmstartMixin" title="discrete_optimization.generic_tools.do_solver.WarmstartMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">WarmstartMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.add_advanced_capacity_constraints">
+<span class="sig-name descname"><span class="pre">add_advanced_capacity_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flows_variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_trips_per_link</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpsat'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.add_advanced_capacity_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.add_advanced_capacity_constraints" title="Link to this definition"></a></dt>
+<dd><p>Adds improved lower bounds on the number of trips based on bin packing dual feasible functions.
+Adapted from the DP bounds for SALBP/BinPacking.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.add_advanced_capacity_constraints2">
+<span class="sig-name descname"><span class="pre">add_advanced_capacity_constraints2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flows_variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_trips_per_link</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpsat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.add_advanced_capacity_constraints2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.add_advanced_capacity_constraints2" title="Link to this definition"></a></dt>
+<dd><p>Adds generalized lower bound constraints on the number of trips.
+For each k in [2..max_k], we consider items with size &gt; Capacity/k.
+Since at most k-1 such items fit in one vehicle, we add the cut:</p>
+<blockquote>
+<div><p>(k-1) * NbTrips &gt;= Sum(Flows of these items)</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.add_global_flow_limit_constraints">
+<span class="sig-name descname"><span class="pre">add_global_flow_limit_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flows_variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpsat'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.add_global_flow_limit_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.add_global_flow_limit_constraints" title="Link to this definition"></a></dt>
+<dd><p>Limits the total volume of flow for each product across the entire network.
+Constraint: Sum(Flows_of_Product_P) &lt;= factor * TotalDemand_of_Product_P</p>
+<ul class="simple">
+<li><p>A factor of 1.0 implies direct shipments only (shortest path in terms of hops).</p></li>
+<li><p>A factor of 2.0 implies that, on average, each unit can traverse 2 links (1 transshipment).</p></li>
+<li><p>This prevents excessive detours without using binary variables.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.add_lexico_constraint">
+<span class="sig-name descname"><span class="pre">add_lexico_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.add_lexico_constraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.add_lexico_constraint" title="Link to this definition"></a></dt>
+<dd><p>Add a constraint on a computed sub-objective</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p></li>
+<li><p><strong>value</strong> – the limiting value.
+If the optimization direction is maximizing, this is a lower bound,
+else this is an upper bound.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the created constraints.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.add_limit_active_links_constraints">
+<span class="sig-name descname"><span class="pre">add_limit_active_links_constraints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flows_variables</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gurobi'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.add_limit_active_links_constraints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.add_limit_active_links_constraints" title="Link to this definition"></a></dt>
+<dd><p>Limits the number of transport links where a given product flows.
+Limit = factor * (Number of nodes with non-zero supply/demand for that product).
+This helps pruning the search space by forcing sparser paths (e.g. tree-like).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.compute_nb_trips_min">
+<span class="sig-name descname"><span class="pre">compute_nb_trips_min</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.Product" title="discrete_optimization.multibatching.problem.Product"><span class="pre">Product</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">demand_of_product</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.compute_nb_trips_min"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.compute_nb_trips_min" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.get_lexico_objective_value">
+<span class="sig-name descname"><span class="pre">get_lexico_objective_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.get_lexico_objective_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.get_lexico_objective_value" title="Link to this definition"></a></dt>
+<dd><p>Get best internal model objective value found by last call to <cite>solve()</cite>.</p>
+<p>The default implementation consists in using the fit of the last solution in result_storage.
+This assumes:
+- that the last solution is the best one for the objective considered
+- that no aggregation was performed but rather that the fitness is a TupleFitness</p>
+<blockquote>
+<div><p>with values in the same order as <cite>self.problem.get_objective_names()</cite>.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p></li>
+<li><p><strong>res</strong> – result storage returned by last call to solve().</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.get_lexico_objectives_available">
+<span class="sig-name descname"><span class="pre">get_lexico_objectives_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.get_lexico_objectives_available"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.get_lexico_objectives_available" title="Link to this definition"></a></dt>
+<dd><p>List objectives available for lexico optimization</p>
+<p>It corresponds to the labels accepted for obj argument for
+- <cite>set_lexico_objective()</cite>
+- <cite>add_lexico_constraint()</cite>
+- <cite>get_lexico_objective_value()</cite></p>
+<p>Default to <cite>self.problem.get_objective_names()</cite>.</p>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='modeling',</span> <span class="pre">default=&lt;ModelingMultiBatch.FLOW:</span> <span class="pre">0&gt;,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='modeling'),</span> <span class="pre">CategoricalHyperparameter(name='detailed_capacity_constraint',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=[('modeling',</span> <span class="pre">[&lt;ModelingMultiBatch.FLOW:</span> <span class="pre">0&gt;])],</span> <span class="pre">name_in_kwargs='detailed_capacity_constraint'),</span> <span class="pre">CategoricalHyperparameter(name='add_lb_constraint_nb_trips',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=[('modeling',</span> <span class="pre">[&lt;ModelingMultiBatch.FLOW:</span> <span class="pre">0&gt;])],</span> <span class="pre">name_in_kwargs='add_lb_constraint_nb_trips'),</span> <span class="pre">CategoricalHyperparameter(name='restrict_to_shortest_paths',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='restrict_to_shortest_paths'),</span> <span class="pre">FloatHyperparameter(name='shortest_path_tolerance',</span> <span class="pre">default=1.0,</span> <span class="pre">depends_on=[('restrict_to_shortest_paths',</span> <span class="pre">True)],</span> <span class="pre">name_in_kwargs='shortest_path_tolerance',</span> <span class="pre">low=0.0,</span> <span class="pre">high=30,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False),</span> <span class="pre">CategoricalHyperparameter(name='prevent_incoming_at_source',</span> <span class="pre">default=None,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='prevent_incoming_at_source')]</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.implements_lexico_api">
+<span class="sig-name descname"><span class="pre">implements_lexico_api</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.implements_lexico_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.implements_lexico_api" title="Link to this definition"></a></dt>
+<dd><p>Tell whether this solver is implementing the api for lexicographic optimization.</p>
+<p>Should return True only if</p>
+<ul class="simple">
+<li><p><cite>set_lexico_objective()</cite></p></li>
+<li><p><cite>add_lexico_constraint()</cite></p></li>
+<li><p><cite>get_lexico_objective_value()</cite></p></li>
+</ul>
+<p>have been really implemented, i.e.
+- calling <cite>set_lexico_objective()</cite> and <cite>add_lexico_constraint()</cite></p>
+<blockquote>
+<div><p>should actually change the next call to <cite>solve()</cite>,</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><cite>get_lexico_objective_value()</cite> should correspond to the internal model objective</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">single_batching</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.init_model_detailed_trips">
+<span class="sig-name descname"><span class="pre">init_model_detailed_trips</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.init_model_detailed_trips"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.init_model_detailed_trips" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.init_model_flows">
+<span class="sig-name descname"><span class="pre">init_model_flows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.init_model_flows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.init_model_flows" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.init_model_flows_single_batching">
+<span class="sig-name descname"><span class="pre">init_model_flows_single_batching</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.init_model_flows_single_batching"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.init_model_flows_single_batching" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.logs_solution">
+<span class="sig-name descname"><span class="pre">logs_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.logs_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.logs_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Construct a do solution from the cpsat solver internal solution.</p>
+<p>It will be called each time the cpsat solver find a new solution.
+At that point, value of internal variables are accessible via <cite>cpsolvercb.Value(VARIABLE_NAME)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpsolvercb</strong> – the ortools callback called when the cpsat solver finds a new solution.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the intermediate solution, at do format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.set_lexico_objective">
+<span class="sig-name descname"><span class="pre">set_lexico_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.set_lexico_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.set_lexico_objective" title="Link to this definition"></a></dt>
+<dd><p>Update internal model objective.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> – a string representing the desired objective.
+Should be one of <cite>self.get_lexico_objectives_available()</cite>.</p>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.set_warm_start">
+<span class="sig-name descname"><span class="pre">set_warm_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution"><span class="pre">MultibatchingSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.set_warm_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.set_warm_start" title="Link to this definition"></a></dt>
+<dd><p>Make the solver warm start from the given solution.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.set_warm_start_flow">
+<span class="sig-name descname"><span class="pre">set_warm_start_flow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution"><span class="pre">MultibatchingSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.set_warm_start_flow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.set_warm_start_flow" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.set_warm_start_from_prev_solve">
+<span class="sig-name descname"><span class="pre">set_warm_start_from_prev_solve</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.set_warm_start_from_prev_solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.set_warm_start_from_prev_solve" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.set_warm_start_unit_flow">
+<span class="sig-name descname"><span class="pre">set_warm_start_unit_flow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution"><span class="pre">MultibatchingSolution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#CpsatMultibatchingSolver.set_warm_start_unit_flow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver.set_warm_start_unit_flow" title="Link to this definition"></a></dt>
+<dd><p>Provides a warm start for the UNIT_FLOW modeling by hinting individual trip contents.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.ModelingMultiBatch">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.cpsat.</span></span><span class="sig-name descname"><span class="pre">ModelingMultiBatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/cpsat.html#ModelingMultiBatch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.ModelingMultiBatch" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.ModelingMultiBatch.FLOW">
+<span class="sig-name descname"><span class="pre">FLOW</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.ModelingMultiBatch.FLOW" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.cpsat.ModelingMultiBatch.UNIT_FLOW">
+<span class="sig-name descname"><span class="pre">UNIT_FLOW</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.cpsat.ModelingMultiBatch.UNIT_FLOW" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.multibatching.solvers.dp">
+<span id="discrete-optimization-multibatching-solvers-dp-module"></span><h2>discrete_optimization.multibatching.solvers.dp module<a class="headerlink" href="#module-discrete_optimization.multibatching.solvers.dp" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.dp.</span></span><span class="sig-name descname"><span class="pre">DpMultibatchingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/dp.html#DpMultibatchingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.dyn_prog_tools.DpSolver" title="discrete_optimization.generic_tools.dyn_prog_tools.DpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">DpSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.multibatching.solvers.MultibatchingSolver" title="discrete_optimization.multibatching.solvers.MultibatchingSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultibatchingSolver</span></code></a></p>
+<p>Dynamic Programming solver for multibatching problem.</p>
+<p>Simplified approach:
+- State: Current supply/demand at each (product, location) pair
+- Transitions: Send a batch on a transport link with specific products/quantities
+- Base case: All supply/demand balanced (net = 0)
+- Cost: Transport cost for each batch</p>
+<p>Note: This models each product flow separately and aggregates in solution retrieval.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/dp.html#DpMultibatchingSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize DP model for multibatching.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sol</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/dp.html#DpMultibatchingSolver.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Extract MultibatchingSolution from DP solution.</p>
+<p>Parses transition sequence: open_{link} -&gt; send_{product}_{link} -&gt; close
+and aggregates into batches. Simulates state changes to determine quantities
+for send_all transitions.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver.transitions">
+<span class="sig-name descname"><span class="pre">transitions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.dp.DpMultibatchingSolver.transitions" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.multibatching.solvers.lp">
+<span id="discrete-optimization-multibatching-solvers-lp-module"></span><h2>discrete_optimization.multibatching.solvers.lp module<a class="headerlink" href="#module-discrete_optimization.multibatching.solvers.lp" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.GurobiLazyCallback">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.lp.</span></span><span class="sig-name descname"><span class="pre">GurobiLazyCallback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">do_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver" title="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver"><span class="pre">GurobiMultibatchingSolver</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#GurobiLazyCallback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.GurobiLazyCallback" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Custom Gurobi callback to generate valid, flow-dependent cuts for the multibatching problem.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.lp.</span></span><span class="sig-name descname"><span class="pre">GurobiMultibatchingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#GurobiMultibatchingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver" title="discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">GurobiMilpSolver</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_BaseLpMultibatchingSolver</span></code></p>
+<p>Gurobi solver for the Multibatching problem, based on a flow formulation.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver.convert_to_variable_values">
+<span class="sig-name descname"><span class="pre">convert_to_variable_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">gurobipy.Var</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#GurobiMultibatchingSolver.convert_to_variable_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver.convert_to_variable_values" title="Link to this definition"></a></dt>
+<dd><p>Convert a solution to a mapping between model variables and their values.</p>
+<p>Will be used by <cite>set_warm_start()</cite>.</p>
+<p>Override it in subclasses to have a proper warm start. You can also override
+<cite>set_warm_start()</cite> if default behaviour is not sufficient.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='add_lb_constraint_nb_trips',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='add_lb_constraint_nb_trips'),</span> <span class="pre">CategoricalHyperparameter(name='restrict_to_shortest_paths',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='restrict_to_shortest_paths'),</span> <span class="pre">FloatHyperparameter(name='shortest_path_tolerance',</span> <span class="pre">default=0.2,</span> <span class="pre">depends_on=[('restrict_to_shortest_paths',</span> <span class="pre">True)],</span> <span class="pre">name_in_kwargs='shortest_path_tolerance',</span> <span class="pre">low=0,</span> <span class="pre">high=30,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False)]</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">single_batching</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#GurobiMultibatchingSolver.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverUnitFlow">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.lp.</span></span><span class="sig-name descname"><span class="pre">GurobiMultibatchingSolverUnitFlow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#GurobiMultibatchingSolverUnitFlow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverUnitFlow" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver" title="discrete_optimization.generic_tools.lp_tools.GurobiMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">GurobiMilpSolver</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_BaseLpMultibatchingSolverUnitFlow</span></code></p>
+<p>Gurobi solver for the Multibatching problem using unit flow formulation.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverUnitFlow.convert_to_variable_values">
+<span class="sig-name descname"><span class="pre">convert_to_variable_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution"><span class="pre">MultibatchingSolution</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#GurobiMultibatchingSolverUnitFlow.convert_to_variable_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverUnitFlow.convert_to_variable_values" title="Link to this definition"></a></dt>
+<dd><p>Convert a solution to a mapping between model variables and their values.</p>
+<p>Will be used by <cite>set_warm_start()</cite>.</p>
+<p>Override it in subclasses to have a proper warm start. You can also override
+<cite>set_warm_start()</cite> if default behaviour is not sufficient.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverUnitFlow.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_trips_per_link</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#GurobiMultibatchingSolverUnitFlow.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverUnitFlow.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initialize internal model used to solve.</p>
+<p>Can initialize a ortools, milp, gurobi, … model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverWithLazyConstraint">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.lp.</span></span><span class="sig-name descname"><span class="pre">GurobiMultibatchingSolverWithLazyConstraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#GurobiMultibatchingSolverWithLazyConstraint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverWithLazyConstraint" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver" title="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">GurobiMultibatchingSolver</span></code></a></p>
+<p>A Gurobi solver for the multi-batching problem that uses lazy constraints
+to iteratively refine the packing model.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverWithLazyConstraint.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#GurobiMultibatchingSolverWithLazyConstraint.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverWithLazyConstraint.init_model" title="Link to this definition"></a></dt>
+<dd><p>Initializes the standard multi-batching flow model and enables lazy constraints.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverWithLazyConstraint.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters_milp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.ParametersMilp" title="discrete_optimization.generic_tools.lp_tools.ParametersMilp"><span class="pre">ParametersMilp</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#GurobiMultibatchingSolverWithLazyConstraint.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.GurobiMultibatchingSolverWithLazyConstraint.solve" title="Link to this definition"></a></dt>
+<dd><p>Overrides the default solve method to use a custom callback for generating
+lazy constraints.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.lp.</span></span><span class="sig-name descname"><span class="pre">MathOptMultibatchingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#MathOptMultibatchingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver" title="discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsMathOptMilpSolver</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_BaseLpMultibatchingSolver</span></code></p>
+<p>MathOpt solver for the Multibatching problem, based on a flow formulation.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolver.convert_to_variable_values">
+<span class="sig-name descname"><span class="pre">convert_to_variable_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Solution" title="discrete_optimization.generic_tools.do_problem.Solution"><span class="pre">Solution</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">gurobipy.Var</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#MathOptMultibatchingSolver.convert_to_variable_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolver.convert_to_variable_values" title="Link to this definition"></a></dt>
+<dd><p>Convert a solution to a mapping between model variables and their values.</p>
+<p>Will be used by set_warm_start() to provide a suitable SolutionHint.variable_values.
+See <a class="reference external" href="https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint">https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint</a>
+for more information.</p>
+<p>Implement it in subclasses to have a proper warm start.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[EnumHyperparameter(name='mathopt_solver_type',</span> <span class="pre">default=None,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='mathopt_solver_type'),</span> <span class="pre">CategoricalHyperparameter(name='add_lb_constraint_nb_trips',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='add_lb_constraint_nb_trips'),</span> <span class="pre">CategoricalHyperparameter(name='restrict_to_shortest_paths',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='restrict_to_shortest_paths'),</span> <span class="pre">FloatHyperparameter(name='shortest_path_tolerance',</span> <span class="pre">default=0.2,</span> <span class="pre">depends_on=[('restrict_to_shortest_paths',</span> <span class="pre">True)],</span> <span class="pre">name_in_kwargs='shortest_path_tolerance',</span> <span class="pre">low=0,</span> <span class="pre">high=30,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False)]</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id9"><span class="problematic" id="id10">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolverUnitFlow">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.lp.</span></span><span class="sig-name descname"><span class="pre">MathOptMultibatchingSolverUnitFlow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#MathOptMultibatchingSolverUnitFlow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolverUnitFlow" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver" title="discrete_optimization.generic_tools.lp_tools.OrtoolsMathOptMilpSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsMathOptMilpSolver</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">_BaseLpMultibatchingSolverUnitFlow</span></code></p>
+<p>MathOpt solver for the Multibatching problem using unit flow formulation.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolverUnitFlow.convert_to_variable_values">
+<span class="sig-name descname"><span class="pre">convert_to_variable_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution"><span class="pre">MultibatchingSolution</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/lp.html#MathOptMultibatchingSolverUnitFlow.convert_to_variable_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.lp.MathOptMultibatchingSolverUnitFlow.convert_to_variable_values" title="Link to this definition"></a></dt>
+<dd><p>Convert a solution to a mapping between model variables and their values.</p>
+<p>Will be used by set_warm_start() to provide a suitable SolutionHint.variable_values.
+See <a class="reference external" href="https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint">https://or-tools.github.io/docs/pdoc/ortools/math_opt/python/model_parameters.html#SolutionHint</a>
+for more information.</p>
+<p>Implement it in subclasses to have a proper warm start.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.multibatching.solvers.netx">
+<span id="discrete-optimization-multibatching-solvers-netx-module"></span><h2>discrete_optimization.multibatching.solvers.netx module<a class="headerlink" href="#module-discrete_optimization.multibatching.solvers.netx" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.netx.NetxMultibatchingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.netx.</span></span><span class="sig-name descname"><span class="pre">NetxMultibatchingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/netx.html#NetxMultibatchingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.netx.NetxMultibatchingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.netx.NetxMultibatchingSolver.compute_optimal_flow_for_product">
+<span class="sig-name descname"><span class="pre">compute_optimal_flow_for_product</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">product</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.Product" title="discrete_optimization.multibatching.problem.Product"><span class="pre">Product</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_on_transport</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_on_emission</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/netx.html#NetxMultibatchingSolver.compute_optimal_flow_for_product"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.netx.NetxMultibatchingSolver.compute_optimal_flow_for_product" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.netx.NetxMultibatchingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='restrict_to_shortest_paths',</span> <span class="pre">default=False,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='restrict_to_shortest_paths'),</span> <span class="pre">FloatHyperparameter(name='shortest_path_tolerance',</span> <span class="pre">default=1.2,</span> <span class="pre">depends_on=[('restrict_to_shortest_paths',</span> <span class="pre">[True])],</span> <span class="pre">name_in_kwargs='shortest_path_tolerance',</span> <span class="pre">low=0,</span> <span class="pre">high=5,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False),</span> <span class="pre">FloatHyperparameter(name='weight_on_transport',</span> <span class="pre">default=1,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='weight_on_transport',</span> <span class="pre">low=0,</span> <span class="pre">high=1000,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False),</span> <span class="pre">FloatHyperparameter(name='weight_on_emission',</span> <span class="pre">default=1,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='weight_on_emission',</span> <span class="pre">low=0,</span> <span class="pre">high=1000,</span> <span class="pre">suggest_low=False,</span> <span class="pre">suggest_high=False,</span> <span class="pre">step=None,</span> <span class="pre">log=False)]</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.netx.NetxMultibatchingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id11"><span class="problematic" id="id12">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.netx.NetxMultibatchingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.netx.NetxMultibatchingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.netx.NetxMultibatchingSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/netx.html#NetxMultibatchingSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.netx.NetxMultibatchingSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.multibatching.solvers.packing_subproblem">
+<span id="discrete-optimization-multibatching-solvers-packing-subproblem-module"></span><h2>discrete_optimization.multibatching.solvers.packing_subproblem module<a class="headerlink" href="#module-discrete_optimization.multibatching.solvers.packing_subproblem" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.CpsatPackingSubproblem">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.packing_subproblem.</span></span><span class="sig-name descname"><span class="pre">CpsatPackingSubproblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/packing_subproblem.html#CpsatPackingSubproblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.CpsatPackingSubproblem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver" title="discrete_optimization.generic_tools.ortools_cpsat_tools.OrtoolsCpSatSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrtoolsCpSatSolver</span></code></a>, <a class="reference internal" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver" title="discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">PackingSubproblemSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.CpsatPackingSubproblem.init_model">
+<span class="sig-name descname"><span class="pre">init_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/packing_subproblem.html#CpsatPackingSubproblem.init_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.CpsatPackingSubproblem.init_model" title="Link to this definition"></a></dt>
+<dd><p>Init cp model and reset stored variables if any.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.CpsatPackingSubproblem.retrieve_solution">
+<span class="sig-name descname"><span class="pre">retrieve_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpsolvercb</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CpSolverSolutionCallback</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution"><span class="pre">MultibatchingSolution</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/packing_subproblem.html#CpsatPackingSubproblem.retrieve_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.CpsatPackingSubproblem.retrieve_solution" title="Link to this definition"></a></dt>
+<dd><p>Construct a do solution from the cpsat solver internal solution.</p>
+<p>It will be called each time the cpsat solver find a new solution.
+At that point, value of internal variables are accessible via <cite>cpsolvercb.Value(VARIABLE_NAME)</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpsolvercb</strong> – the ortools callback called when the cpsat solver finds a new solution.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>the intermediate solution, at do format.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.GreedyPackingForMultibatching">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.packing_subproblem.</span></span><span class="sig-name descname"><span class="pre">GreedyPackingForMultibatching</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/packing_subproblem.html#GreedyPackingForMultibatching"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.GreedyPackingForMultibatching" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver" title="discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">PackingSubproblemSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.GreedyPackingForMultibatching.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">single_batching</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/packing_subproblem.html#GreedyPackingForMultibatching.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.GreedyPackingForMultibatching.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.packing_subproblem.</span></span><span class="sig-name descname"><span class="pre">PackingSubproblemSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/packing_subproblem.html#PackingSubproblemSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.multibatching.solvers.MultibatchingSolver" title="discrete_optimization.multibatching.solvers.MultibatchingSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultibatchingSolver</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver.analyse_solution">
+<span class="sig-name descname"><span class="pre">analyse_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution"><span class="pre">MultibatchingSolution</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/packing_subproblem.html#PackingSubproblemSolver.analyse_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver.analyse_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver.base_solution">
+<span class="sig-name descname"><span class="pre">base_solution</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution"><span class="pre">MultibatchingSolution</span></a></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver.base_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver.helper_analyse_function">
+<span class="sig-name descname"><span class="pre">helper_analyse_function</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/packing_subproblem.html#PackingSubproblemSolver.helper_analyse_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver.helper_analyse_function" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver.init_from_solution">
+<span class="sig-name descname"><span class="pre">init_from_solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingSolution" title="discrete_optimization.multibatching.problem.MultibatchingSolution"><span class="pre">MultibatchingSolution</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/packing_subproblem.html#PackingSubproblemSolver.init_from_solution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver.init_from_solution" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.PackingViaBinPacking">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.packing_subproblem.</span></span><span class="sig-name descname"><span class="pre">PackingViaBinPacking</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/packing_subproblem.html#PackingViaBinPacking"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingViaBinPacking" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver" title="discrete_optimization.multibatching.solvers.packing_subproblem.PackingSubproblemSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">PackingSubproblemSolver</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.PackingViaBinPacking.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[CategoricalHyperparameter(name='round_flow',</span> <span class="pre">default='round',</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='round_flow'),</span> <span class="pre">SubBrickHyperparameter(name='bin_packing_solver',</span> <span class="pre">default=SubBrick(cls=&lt;class</span> <span class="pre">'discrete_optimization.binpack.solvers.cpsat.CpSatBinPackBinTypeSolver'&gt;,</span> <span class="pre">kwargs={'modeling':</span> <span class="pre">&lt;ModelingBinPack.SCHEDULING:</span> <span class="pre">1&gt;,</span> <span class="pre">'parameters_cp':</span> <span class="pre">&lt;discrete_optimization.generic_tools.cp_tools.ParametersCp</span> <span class="pre">object&gt;},</span> <span class="pre">kwargs_from_solution=None),</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='bin_packing_solver')]</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingViaBinPacking.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.packing_subproblem.PackingViaBinPacking.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_limit_per_link</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="discrete_optimization.generic_tools.result_storage.html#discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage" title="discrete_optimization.generic_tools.result_storage.result_storage.ResultStorage"><span class="pre">ResultStorage</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/packing_subproblem.html#PackingViaBinPacking.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.packing_subproblem.PackingViaBinPacking.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.multibatching.solvers.solver_utils">
+<span id="discrete-optimization-multibatching-solvers-solver-utils-module"></span><h2>discrete_optimization.multibatching.solvers.solver_utils module<a class="headerlink" href="#module-discrete_optimization.multibatching.solvers.solver_utils" title="Link to this heading"></a></h2>
+<p>Utility functions shared across multibatching solvers.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.solver_utils.precompute_valid_links">
+<span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.solver_utils.</span></span><span class="sig-name descname"><span class="pre">precompute_valid_links</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Set</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/solver_utils.html#precompute_valid_links"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.solver_utils.precompute_valid_links" title="Link to this definition"></a></dt>
+<dd><p>Robust Heuristic: Identifies which transport links are relevant for each product.</p>
+<p>This function builds a specific graph G_p for each product P, containing only
+the TransportLinks compatible with P (i.e. link.transport_type in p.valid_transports).</p>
+<p>A link (u, v) is relevant for product P if there exists ANY pair of
+(Source s, Sink d) for P such that:</p>
+<blockquote>
+<div><p>dist_p(s, u) + link_len(u, v) + dist_p(v, d) &lt;= (1 + tolerance) * dist_p(s, d)</p>
+</div></blockquote>
+<p>This heuristic helps reduce the search space by eliminating links that are
+unlikely to be part of optimal solutions (e.g., links that create long detours).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>problem</strong> – The multibatching problem instance</p></li>
+<li><p><strong>tolerance</strong> – Tolerance for path length relaxation (default: 0.1 = 10% longer than optimal)
+- 0.0 = only shortest paths allowed
+- 0.2 = paths up to 20% longer than optimal allowed
+- Higher values = more links considered valid</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary mapping product IDs to sets of valid transport link indices.
+Format: {product.id: {link_index_1, link_index_2, …}}</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.multibatching.solvers.two_steps">
+<span id="discrete-optimization-multibatching-solvers-two-steps-module"></span><h2>discrete_optimization.multibatching.solvers.two_steps module<a class="headerlink" href="#module-discrete_optimization.multibatching.solvers.two_steps" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.two_steps.TwoStepMultibatchingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.two_steps.</span></span><span class="sig-name descname"><span class="pre">TwoStepMultibatchingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/two_steps.html#TwoStepMultibatchingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.two_steps.TwoStepMultibatchingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.two_steps.TwoStepMultibatchingSolver.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.hyperparameters.html#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[SubBrickHyperparameter(name='flow_solver',</span> <span class="pre">default=SubBrick(cls=&lt;class</span> <span class="pre">'discrete_optimization.multibatching.solvers.cpsat.CpsatMultibatchingSolver'&gt;,</span> <span class="pre">kwargs={'modeling':</span> <span class="pre">&lt;ModelingMultiBatch.FLOW:</span> <span class="pre">0&gt;},</span> <span class="pre">kwargs_from_solution=None),</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='flow_solver'),</span> <span class="pre">SubBrickHyperparameter(name='packing_solver',</span> <span class="pre">default=SubBrick(cls=&lt;class</span> <span class="pre">'discrete_optimization.multibatching.solvers.packing_subproblem.GreedyPackingForMultibatching'&gt;,</span> <span class="pre">kwargs=None,</span> <span class="pre">kwargs_from_solution=None),</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='packing_solver'),</span> <span class="pre">IntegerHyperparameter(name='best_n_flow_solution',</span> <span class="pre">default=1,</span> <span class="pre">depends_on=None,</span> <span class="pre">name_in_kwargs='best_n_flow_solution',</span> <span class="pre">low=1,</span> <span class="pre">high=10,</span> <span class="pre">step=1,</span> <span class="pre">log=False)]</span></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.two_steps.TwoStepMultibatchingSolver.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id15"><span class="problematic" id="id16">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.two_steps.TwoStepMultibatchingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.two_steps.TwoStepMultibatchingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.two_steps.TwoStepMultibatchingSolver.solve">
+<span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="discrete_optimization.generic_tools.callbacks.html#discrete_optimization.generic_tools.callbacks.callback.Callback" title="discrete_optimization.generic_tools.callbacks.callback.Callback"><span class="pre">Callback</span></a><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers/two_steps.html#TwoStepMultibatchingSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.two_steps.TwoStepMultibatchingSolver.solve" title="Link to this definition"></a></dt>
+<dd><p>Generic solving function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>callbacks</strong> – list of callbacks used to hook into the various stage of the solve</p></li>
+<li><p><strong>**kwargs</strong> – any argument specific to the solver</p></li>
+</ul>
+</dd>
+</dl>
+<p>Solvers deriving from SolverDo should use callbacks methods .on_step_end(), …
+during solve(). But some solvers are not yet updated and are just ignoring it.</p>
+<p>Returns (ResultStorage): a result object containing potentially a pool of solutions
+to a discrete-optimization problem</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.multibatching.solvers">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.multibatching.solvers" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.MultibatchingSolver">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">discrete_optimization.multibatching.solvers.</span></span><span class="sig-name descname"><span class="pre">MultibatchingSolver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">problem</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.Problem" title="discrete_optimization.generic_tools.do_problem.Problem"><span class="pre">Problem</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_objective_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction" title="discrete_optimization.generic_tools.do_problem.ParamsObjectiveFunction"><span class="pre">ParamsObjectiveFunction</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/multibatching/solvers.html#MultibatchingSolver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.multibatching.solvers.MultibatchingSolver" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="discrete_optimization.generic_tools.html#discrete_optimization.generic_tools.do_solver.SolverDO" title="discrete_optimization.generic_tools.do_solver.SolverDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverDO</span></code></a></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.multibatching.solvers.MultibatchingSolver.problem">
+<span class="sig-name descname"><span class="pre">problem</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="discrete_optimization.multibatching.html#discrete_optimization.multibatching.problem.MultibatchingProblem" title="discrete_optimization.multibatching.problem.MultibatchingProblem"><span class="pre">MultibatchingProblem</span></a></span><a class="headerlink" href="#discrete_optimization.multibatching.solvers.MultibatchingSolver.problem" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.multibatching.html" class="btn btn-neutral float-left" title="discrete_optimization.multibatching package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.ovensched.html" class="btn btn-neutral float-right" title="discrete_optimization.ovensched package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

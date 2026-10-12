@@ -1,0 +1,21 @@
+discrete\_optimization.tsp.mutation package
+===========================================
+
+Submodules
+----------
+
+discrete\_optimization.tsp.mutation.mutation\_tsp module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.mutation.mutation_tsp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.tsp.mutation
+   :members:
+   :undoc-members:
+   :show-inheritance:

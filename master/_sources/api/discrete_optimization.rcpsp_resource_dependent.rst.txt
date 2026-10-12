@@ -1,0 +1,37 @@
+discrete\_optimization.rcpsp\_resource\_dependent package
+=========================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.rcpsp_resource_dependent.solvers
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_resource\_dependent.generator module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_resource_dependent.generator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_resource\_dependent.problem module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_resource_dependent.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_resource_dependent
+   :members:
+   :show-inheritance:
+   :undoc-members:

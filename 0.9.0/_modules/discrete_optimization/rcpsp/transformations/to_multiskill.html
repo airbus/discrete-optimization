@@ -1,0 +1,288 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.rcpsp.transformations.to_multiskill &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.rcpsp.transformations.to_multiskill</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.rcpsp.transformations.to_multiskill</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="sd">&quot;&quot;&quot;Transformation from RCPSP to RCPSP Multiskill.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.transformation.problem_transformation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.problem</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspProblem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp.solution</span><span class="w"> </span><span class="kn">import</span> <span class="n">RcpspSolution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.rcpsp_multiskill.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultiskillRcpspProblem</span><span class="p">,</span>
+    <span class="n">MultiskillRcpspSolution</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="RcpspToMultiskillTransformation">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.transformations.html#discrete_optimization.rcpsp.transformations.to_multiskill.RcpspToMultiskillTransformation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RcpspToMultiskillTransformation</span><span class="p">(</span>
+    <span class="n">ProblemTransformation</span><span class="p">[</span>
+        <span class="n">RcpspProblem</span><span class="p">,</span> <span class="n">RcpspSolution</span><span class="p">,</span> <span class="n">MultiskillRcpspProblem</span><span class="p">,</span> <span class="n">MultiskillRcpspSolution</span>
+    <span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform RCPSP to RCPSPMultiskill.</span>
+
+<span class="sd">    Mapping strategy:</span>
+<span class="sd">    - RCPSP resources map directly to MultiskillRCPSP cumulative resources</span>
+<span class="sd">    - No employees or skills needed (MultiskillRCPSP can work with just resources)</span>
+<span class="sd">    - Same mode details and precedence constraints</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        # &gt;&gt;&gt; problem = RcpspProblem(</span>
+<span class="sd">        # ...     resources={&quot;R1&quot;: 5, &quot;R2&quot;: 2},</span>
+<span class="sd">        # ...     ...</span>
+<span class="sd">        # ... )</span>
+<span class="sd">        # &gt;&gt;&gt; transformation = RcpspToMultiskillTransformation()</span>
+<span class="sd">        # &gt;&gt;&gt; ms_problem = transformation.transform_problem(problem)</span>
+<span class="sd">        # &gt;&gt;&gt; # ms_problem uses resources R1, R2 directly (no fake employees)</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="RcpspToMultiskillTransformation.transform_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.transformations.html#discrete_optimization.rcpsp.transformations.to_multiskill.RcpspToMultiskillTransformation.transform_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultiskillRcpspProblem</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert RCPSP to Multiskill RCPSP.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_problem: Original RCPSP problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Equivalent MultiskillRcpspProblem</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rcpsp</span> <span class="o">=</span> <span class="n">source_problem</span>
+
+        <span class="c1"># Use resources directly (no skills/employees needed)</span>
+        <span class="n">resources_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">rcpsp</span><span class="o">.</span><span class="n">resources_list</span><span class="p">)</span>
+        <span class="n">skills_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>  <span class="c1"># Empty skills</span>
+        <span class="n">employees</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># No employees</span>
+
+        <span class="c1"># Resources availability (convert int to list if needed)</span>
+        <span class="n">resources_availability</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rcpsp</span><span class="o">.</span><span class="n">resources_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rcpsp</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">],</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">resources_availability</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">rcpsp</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">]]</span> <span class="o">*</span> <span class="n">rcpsp</span><span class="o">.</span><span class="n">horizon</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">resources_availability</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">rcpsp</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="n">r</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">MultiskillRcpspProblem</span><span class="p">(</span>
+            <span class="n">skills_set</span><span class="o">=</span><span class="n">skills_set</span><span class="p">,</span>  <span class="c1"># Empty</span>
+            <span class="n">resources_set</span><span class="o">=</span><span class="n">resources_set</span><span class="p">,</span>
+            <span class="n">non_renewable_resources</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">rcpsp</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">),</span>
+            <span class="n">resources_availability</span><span class="o">=</span><span class="n">resources_availability</span><span class="p">,</span>
+            <span class="n">employees</span><span class="o">=</span><span class="n">employees</span><span class="p">,</span>  <span class="c1"># Empty</span>
+            <span class="n">mode_details</span><span class="o">=</span><span class="n">rcpsp</span><span class="o">.</span><span class="n">mode_details</span><span class="p">,</span>  <span class="c1"># Same modes</span>
+            <span class="n">successors</span><span class="o">=</span><span class="n">rcpsp</span><span class="o">.</span><span class="n">successors</span><span class="p">,</span>  <span class="c1"># Same precedence</span>
+            <span class="n">horizon</span><span class="o">=</span><span class="n">rcpsp</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span>
+            <span class="n">source_task</span><span class="o">=</span><span class="n">rcpsp</span><span class="o">.</span><span class="n">source_task</span><span class="p">,</span>
+            <span class="n">sink_task</span><span class="o">=</span><span class="n">rcpsp</span><span class="o">.</span><span class="n">sink_task</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RcpspToMultiskillTransformation.back_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.transformations.html#discrete_optimization.rcpsp.transformations.to_multiskill.RcpspToMultiskillTransformation.back_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">back_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">MultiskillRcpspSolution</span><span class="p">,</span> <span class="n">source_problem</span><span class="p">:</span> <span class="n">RcpspProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RcpspSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert Multiskill solution back to RCPSP solution.</span>
+
+<span class="sd">        We only need the schedule (start times) and modes.</span>
+<span class="sd">        Employee assignments are not relevant (empty in this transformation).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: Solution in multiskill problem space</span>
+<span class="sd">            source_problem: Original RCPSP problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Corresponding RCPSP solution</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract schedule (convert to RCPSP format if needed)</span>
+        <span class="n">rcpsp_schedule</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">details</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">details</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="c1"># Already in correct format</span>
+                <span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="n">details</span><span class="p">[</span><span class="s2">&quot;start_time&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;end_time&quot;</span><span class="p">:</span> <span class="n">details</span><span class="p">[</span><span class="s2">&quot;end_time&quot;</span><span class="p">],</span>
+                <span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Handle other formats if necessary</span>
+                <span class="n">rcpsp_schedule</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">details</span>
+
+        <span class="c1"># Extract modes (convert dict to list in correct order)</span>
+        <span class="n">rcpsp_modes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">solution</span><span class="o">.</span><span class="n">modes</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">source_problem</span><span class="o">.</span><span class="n">tasks_list_non_dummy</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">RcpspSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">source_problem</span><span class="p">,</span>
+            <span class="n">rcpsp_schedule</span><span class="o">=</span><span class="n">rcpsp_schedule</span><span class="p">,</span>
+            <span class="n">rcpsp_modes</span><span class="o">=</span><span class="n">rcpsp_modes</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RcpspToMultiskillTransformation.forward_transform_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.rcpsp.transformations.html#discrete_optimization.rcpsp.transformations.to_multiskill.RcpspToMultiskillTransformation.forward_transform_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward_transform_solution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">RcpspSolution</span><span class="p">,</span> <span class="n">target_problem</span><span class="p">:</span> <span class="n">MultiskillRcpspProblem</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultiskillRcpspSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert RCPSP solution to Multiskill solution.</span>
+
+<span class="sd">        Since we don&#39;t use employees, this is straightforward.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution: Solution in RCPSP problem space</span>
+<span class="sd">            target_problem: Transformed multiskill problem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Corresponding multiskill solution (without employee assignments)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract schedule and modes from RCPSP solution</span>
+        <span class="n">schedule</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_schedule</span>
+        <span class="n">modes</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">task</span><span class="p">:</span> <span class="n">solution</span><span class="o">.</span><span class="n">rcpsp_modes</span><span class="p">[</span><span class="n">target_problem</span><span class="o">.</span><span class="n">index_task_non_dummy</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">target_problem</span><span class="o">.</span><span class="n">tasks_list_non_dummy</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Add source and sink with their modes</span>
+        <span class="n">modes</span><span class="p">[</span><span class="n">target_problem</span><span class="o">.</span><span class="n">source_task</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">modes</span><span class="p">[</span><span class="n">target_problem</span><span class="o">.</span><span class="n">sink_task</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># No employee assignments needed</span>
+        <span class="n">employee_usage</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">return</span> <span class="n">MultiskillRcpspSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">target_problem</span><span class="p">,</span>
+            <span class="n">modes</span><span class="o">=</span><span class="n">modes</span><span class="p">,</span>
+            <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span>
+            <span class="n">employee_usage</span><span class="o">=</span><span class="n">employee_usage</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

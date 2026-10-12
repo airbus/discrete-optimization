@@ -1,0 +1,101 @@
+discrete\_optimization.tsp.solvers package
+==========================================
+
+Submodules
+----------
+
+discrete\_optimization.tsp.solvers.cp\_mzn module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers.cp_mzn
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.solvers.cpsat module
+-----------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.solvers.dp module
+--------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.solvers.gpdp module
+----------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers.gpdp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.solvers.lns\_cpsat module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers.lns_cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.solvers.lp\_iterative module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers.lp_iterative
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.solvers.optal module
+-----------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.solvers.ortools\_routing module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers.ortools_routing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.solvers.quantum module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers.quantum
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.solvers.toulbar module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers.toulbar
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.tsp.solvers.tsp\_solver module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.tsp.solvers.tsp_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.tsp.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

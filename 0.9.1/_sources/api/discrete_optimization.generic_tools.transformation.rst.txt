@@ -1,0 +1,61 @@
+discrete\_optimization.generic\_tools.transformation package
+============================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.transformation.composite module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.transformation.composite
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.transformation.problem\_transformation module
+-----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.transformation.problem_transformation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.transformation.solver\_discovery module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.transformation.solver_discovery
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.transformation.transformation\_graph module
+---------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.transformation.transformation_graph
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.transformation.transformation\_metadata module
+------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.transformation.transformation_metadata
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tools.transformation.transformation\_solver module
+----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.transformation.transformation_solver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.transformation
+   :members:
+   :show-inheritance:
+   :undoc-members:

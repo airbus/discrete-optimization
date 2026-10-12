@@ -1,0 +1,37 @@
+discrete\_optimization.alb.salbp.transformations package
+========================================================
+
+Submodules
+----------
+
+discrete\_optimization.alb.salbp.transformations.to\_binpack module
+-------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.salbp.transformations.to_binpack
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.alb.salbp.transformations.to\_facility module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.salbp.transformations.to_facility
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.alb.salbp.transformations.to\_rcalbp\_l module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.salbp.transformations.to_rcalbp_l
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.alb.salbp.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:
