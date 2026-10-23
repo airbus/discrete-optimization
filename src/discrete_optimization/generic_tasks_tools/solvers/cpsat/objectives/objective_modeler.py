@@ -30,7 +30,12 @@ if TYPE_CHECKING:
 
 class ObjectiveModelerCpSat(
     Generic[
-        Task, UnaryResource, Skill, NonSkillCumulativeResource, NonRenewableResource
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
     ],
     ABC,
 ):

@@ -9,6 +9,7 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.ovensched.problem import (
     OvenSchedulingSolution,
 )
@@ -138,9 +139,9 @@ def plot_solution(
     evaluation = problem.evaluate(solution)
     kpi_names = ["Processing\nTime", "Late\nJobs", "Setup\nCost"]
     kpi_values = [
-        evaluation["processing_time"],
-        evaluation["nb_late_jobs"],
-        evaluation["setup_cost"],
+        evaluation[Objective.WEIGHTED_SUM_START_OR_END],
+        evaluation[Objective.WEIGHTED_NB_LATE_TASKS_BATCH],
+        evaluation[Objective.ROUTING_COSTS],
     ]
 
     # Create bar chart for KPIs

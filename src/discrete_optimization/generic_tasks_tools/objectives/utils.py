@@ -48,6 +48,10 @@ from discrete_optimization.generic_tasks_tools.objectives.soft_time_penalty impo
 from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used import (
     UnaryResourcesUsedComputer,
 )
+from discrete_optimization.generic_tasks_tools.objectives.weighted_number_late_tasks import (
+    WeightedNumberLateComputer,
+    WeightedNumberLateTasksInBatchComputer,
+)
 
 
 def get_mapping():
@@ -67,6 +71,8 @@ def get_mapping():
         CumulCostComputer,
         ScheduledTasksComputer,
         CalendarPreemptedComputer,
+        WeightedNumberLateComputer,
+        WeightedNumberLateTasksInBatchComputer,
     ]
     mapping = {}
     for objective_computer in list_available:

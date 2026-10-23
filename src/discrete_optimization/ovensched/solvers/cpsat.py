@@ -14,6 +14,7 @@ from ortools.sat.python.cp_model import (
 )
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
     AllocationCpSatSolver,
 )
@@ -507,20 +508,28 @@ class OvenSchedulingCpSatSolver(
         }
 
         # Processing time: sum of all batch durations
-        if "processing_time" in weights_dict and weights_dict["processing_time"] > 0:
+        if (
+            Objective.WEIGHTED_SUM_START_OR_END in weights_dict
+            and weights_dict[Objective.WEIGHTED_SUM_START_OR_END] > 0
+        ):
             total_processing = sum(
                 self.variables["batch_duration"][m][b]
                 for m in range(self.problem.n_machines)
                 for b in range(self.max_nb_batch)
             )
-            self.variables["objectives"]["processing_time"] = total_processing
+            self.variables["objectives"][Objective.WEIGHTED_SUM_START_OR_END] = (
+                total_processing
+            )
             objective_terms.append(
-                weights_dict["processing_time"]
-                * self.variables["objectives"]["processing_time"]
+                weights_dict[Objective.WEIGHTED_SUM_START_OR_END]
+                * self.variables["objectives"][Objective.WEIGHTED_SUM_START_OR_END]
             )
 
         # Tardiness: number of jobs finishing after their deadline
-        if "nb_late_jobs" in weights_dict and weights_dict["nb_late_jobs"] > 0:
+        if (
+            Objective.WEIGHTED_NB_LATE_TASKS_BATCH in weights_dict
+            and weights_dict[Objective.WEIGHTED_NB_LATE_TASKS_BATCH] > 0
+        ):
             late_jobs = []
             self.variables["late_tasks"] = {}
             for t in range(self.problem.n_jobs):
@@ -537,14 +546,21 @@ class OvenSchedulingCpSatSolver(
                     late_jobs.append(is_late)
 
             if late_jobs:
-                self.variables["objectives"]["nb_late_jobs"] = LinearExpr.sum(late_jobs)
+                self.variables["objectives"][Objective.WEIGHTED_NB_LATE_TASKS_BATCH] = (
+                    LinearExpr.sum(late_jobs)
+                )
                 objective_terms.append(
-                    weights_dict["nb_late_jobs"]
-                    * self.variables["objectives"]["nb_late_jobs"]
+                    weights_dict[Objective.WEIGHTED_NB_LATE_TASKS_BATCH]
+                    * self.variables["objectives"][
+                        Objective.WEIGHTED_NB_LATE_TASKS_BATCH
+                    ]
                 )
 
         # Setup cost: sum of all setup costs
-        if "setup_cost" in weights_dict and weights_dict["setup_cost"] > 0:
+        if (
+            Objective.ROUTING_COSTS in weights_dict
+            and weights_dict[Objective.ROUTING_COSTS] > 0
+        ):
             total_setup_cost = LinearExpr.sum(
                 [
                     self.variables["setup_cost"][m][b]
@@ -552,10 +568,10 @@ class OvenSchedulingCpSatSolver(
                     for b in range(self.max_nb_batch)
                 ]
             )
-            self.variables["objectives"]["setup_cost"] = total_setup_cost
+            self.variables["objectives"][Objective.ROUTING_COSTS] = total_setup_cost
             objective_terms.append(
-                int(weights_dict["setup_cost"])
-                * self.variables["objectives"]["setup_cost"]
+                int(weights_dict[Objective.ROUTING_COSTS])
+                * self.variables["objectives"][Objective.ROUTING_COSTS]
             )
 
         if objective_terms:

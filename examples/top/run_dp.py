@@ -13,7 +13,8 @@ logging.basicConfig(level=logging.INFO)
 def run_dp():
     files, files_dict = get_data_available()
     print(files[0])
-    problem = parse_file(files[1])
+    file = [f for f in files if "pr299_gen1_m3.txt" in f][0]
+    problem = parse_file(file)
     print(problem)
     solver = DpTopSolver(problem)
     solver.init_model(scaling=100)

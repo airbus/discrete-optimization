@@ -26,6 +26,7 @@ class TaskVariable(Generic[UnaryResource, Skill]):
     allocated: dict[UnaryResource, set[Skill]] = field(
         default_factory=dict
     )  # resources allocated to the task
+    batch_assignment: Any | None = None  # batch ID if task is assigned to a batch
     info: dict[str, Any] = field(
         default_factory=dict
     )  # additional information if needed
@@ -118,7 +119,12 @@ class Objective(Enum):
     TIME_PENALTY = "time_penalty"
     # Generalize makespan notably.
     WEIGHTED_SUM_START_OR_END = "weighted_sum_start_or_end"
+    WEIGHTED_SUM_START_OR_END_ENTITIES = "weighted_sum_start_or_end_entities"
 
+    WEIGHTED_NB_LATE_TASKS = "weighted_nb_late_tasks"
+    # correct the end of task when part of a batch: different cpsat modeling
+    WEIGHTED_NB_LATE_TASKS_BATCH = "weighted_nb_late_tasks_batch"
+    ROUTING_COSTS = "routing_costs"
     CUSTOM = "custom_objective"
 
 

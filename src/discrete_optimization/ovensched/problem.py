@@ -4,17 +4,76 @@
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
 from copy import deepcopy
 from dataclasses import dataclass
 
+import numpy as np
+
 from discrete_optimization.generic_tasks_tools.allocation import (
-    AllocationProblem,
     AllocationSolution,
+    NoUnaryResource,
+    WithoutAllocationProblem,
 )
-from discrete_optimization.generic_tasks_tools.enums import AbsentValue
+from discrete_optimization.generic_tasks_tools.batching import (
+    BatchingProblem,
+)
+from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    Resource,
+)
+from discrete_optimization.generic_tasks_tools.cumulative_resource import (
+    CumulativeResource,
+)
+from discrete_optimization.generic_tasks_tools.entities import (
+    DummyEntity,
+    VariableBatchEntity,
+)
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
+from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
+from discrete_optimization.generic_tasks_tools.generic_scheduling import (
+    GenericSchedulingProblem,
+)
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
+from discrete_optimization.generic_tasks_tools.multimode import (
+    SinglemodeProblem,
+)
+from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
+    WithoutNonRenewableResourceProblem,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.routing_costs import (
+    RoutingCostComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.weighted_number_late_tasks import (
+    WeightedNumberLateTasksInBatchComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.weighted_sum_start_or_end import (
+    WeightedSumStartEndObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.precedence import (
+    WithoutPrecedenceProblem,
+)
+from discrete_optimization.generic_tasks_tools.resource_blocking import (
+    BlockingConstraintMetadata,
+    BlockingMode,
+    SpanBlockingConstraint,
+)
+from discrete_optimization.generic_tasks_tools.routing import (
+    OrderedRoutingEntity,
+    RoutingEntity,
+)
 from discrete_optimization.generic_tasks_tools.scheduling import (
-    SchedulingProblem,
     SchedulingSolution,
+)
+from discrete_optimization.generic_tasks_tools.skill import (
+    NoSkill,
+    Skill,
+    WithoutSkillProblem,
+)
+from discrete_optimization.generic_tasks_tools.utils import (
+    optional_override_implem,
 )
 from discrete_optimization.generic_tools.do_problem import (
     EncodingRegister,
@@ -33,6 +92,8 @@ TaskAttribute = int
 Machine = int
 Batch = int
 UnaryResource = tuple[Machine, Batch]
+NonRenewableResource = str
+NonSkillCumulativeResource = str
 
 
 @dataclass
@@ -105,9 +166,13 @@ class OvenSchedulingSolution(
         # Evaluate the solution
         evaluation = self.problem.evaluate(self)
         lines.append("\nObjective Values:")
-        lines.append(f"  Processing time: {evaluation['processing_time']}")
-        lines.append(f"  Late jobs: {evaluation['nb_late_jobs']}")
-        lines.append(f"  Setup cost: {evaluation['setup_cost']}")
+        lines.append(
+            f"  Processing time: {evaluation[Objective.WEIGHTED_SUM_START_OR_END]}"
+        )
+        lines.append(
+            f"  Late jobs: {evaluation[Objective.WEIGHTED_NB_LATE_TASKS_BATCH]}"
+        )
+        lines.append(f"  Setup cost: {evaluation[Objective.ROUTING_COSTS]}")
 
         # Feasibility check
         is_feasible = self.problem.satisfy(self)
@@ -202,28 +267,86 @@ class MachineData:
 
 
 class OvenSchedulingProblem(
-    SchedulingProblem[Task],
-    AllocationProblem[Task, UnaryResource],
+    GenericSchedulingProblem[
+        Task,
+        NoUnaryResource,
+        NoSkill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        NoExclusionResource,
+    ],
+    WithoutSkillProblem[
+        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
+    ],
+    SinglemodeProblem[Task],
+    WithoutNonRenewableResourceProblem[Task, NoUnaryResource],
+    WithoutAllocationProblem[Task],
+    WithoutPrecedenceProblem[Task],
+    BatchingProblem[Task],
 ):
-    """Defines an instance of the Oven Scheduling Problem (OSP) and its evaluation logic."""
+    """Defines an instance of the Oven Scheduling Problem (OSP) and its evaluation logic.
 
-    def get_makespan_upper_bound(self) -> int:
-        return 100000
+    Now inherits from GenericSchedulingProblem with full batching support including:
+    - Task attributes (product types)
+    - Setup times/costs between batches
+    - Batch capacity constraints
+    - Variable batch durations based on task min/max durations
+    - Multiple machines with different capacities
+    - Machine availability intervals
 
-    @property
-    def unary_resources_list(self) -> list[UnaryResource]:
-        return [
-            (machine, task)
-            for machine in range(self.n_machines)
-            for task in range(self.n_jobs)
-        ]
+    Batch IDs are encoded as (machine_id, batch_index) tuples.
+    """
 
-    @property
-    def tasks_list(self) -> list[Task]:
-        return list(range(self.n_jobs))
+    def get_routing_entities(self) -> list[RoutingEntity]:
+        return []
 
-    def get_set_task_attributes(self) -> set[TaskAttribute]:
-        return set([td.attribute for td in self.tasks_data])
+    def get_ordered_routing_entities(self) -> list[OrderedRoutingEntity]:
+        return self.ordered_routing_entities
+
+    @optional_override_implem
+    def get_task_start_or_end_lower_bound(
+        self, task: Task, start_or_end: StartOrEnd
+    ) -> int:
+        match start_or_end:
+            case StartOrEnd.START:
+                return self.tasks_data[task].earliest_start
+            case StartOrEnd.END:
+                return (
+                    self.tasks_data[task].earliest_start
+                    + self.tasks_data[task].min_duration
+                )
+
+    def get_cumulative_resource_consumption(
+        self, resource: CumulativeResource, task: Task, mode: int
+    ) -> int:
+        return 0
+
+    def get_resource_availabilities(
+        self, resource: Resource
+    ) -> list[tuple[int, int, int]]:
+        from_res_to_index = {f"m_{i}": i for i in range(self.n_machines)}
+        machine_data = self.machines_data[from_res_to_index[resource]]
+        return [(st, end, 1) for st, end in machine_data.availability]
+
+    def get_span_blocking_constraints(
+        self,
+    ) -> list[SpanBlockingConstraint[CumulativeResource]]:
+        list_span_blocking_constraints = []
+        for i in range(self.n_machines):
+            for entity in self._entities_per_machine[i]:
+                list_span_blocking_constraints.append(
+                    SpanBlockingConstraint(
+                        metadata=BlockingConstraintMetadata(
+                            mode=BlockingMode.ACTIVE,
+                            description=f"consume_machine_{i}_{entity.entity_id}",
+                            name_choice="",
+                        ),
+                        default_resource_blocked={f"m_{i}": 1},
+                        choice_resource_blocked={},
+                        entity=entity,
+                    )
+                )
+        return list_span_blocking_constraints
 
     def __init__(
         self,
@@ -233,8 +356,19 @@ class OvenSchedulingProblem(
         machines_data: list[MachineData],
         setup_costs: list[list[int]],
         setup_times: list[list[int]],
+        max_batches_per_machine: int = 10,
     ):
-        """Initializes the problem with all its parameters."""
+        """Initializes the problem with all its parameters.
+
+        Args:
+            n_jobs: Number of tasks/jobs
+            n_machines: Number of machines/ovens
+            tasks_data: List of TaskData for each task
+            machines_data: List of MachineData for each machine
+            setup_costs: Matrix of setup costs between attributes
+            setup_times: Matrix of setup times between attributes
+            max_batches_per_machine: Maximum number of batches per machine (default: 10)
+        """
         self.n_jobs = n_jobs
         self.n_machines = n_machines
         self.tasks_data = tasks_data
@@ -242,7 +376,124 @@ class OvenSchedulingProblem(
         self.fix_availability_intervals()
         self.setup_costs = setup_costs
         self.setup_times = setup_times
+        self.max_batches_per_machine = max_batches_per_machine
         self.additional_data = {}
+
+        # Create batch entities: (machine_id, batch_index) for each machine
+        self._batch_entities = []
+        self._entities_per_machine = {}
+        self.ordered_routing_entities = []
+        for machine in range(n_machines):
+            # Get tasks eligible for this machine
+            self._entities_per_machine[machine] = []
+            eligible_tasks = frozenset(
+                task
+                for task in range(n_jobs)
+                if machine in tasks_data[task].eligible_machines
+            )
+
+            for batch_idx in range(max_batches_per_machine):
+                batch_id = (machine, batch_idx)
+                entity = VariableBatchEntity(
+                    batch_id=batch_id, candidate_tasks=eligible_tasks
+                )
+                self._entities_per_machine[machine].append(entity)
+                self._batch_entities.append(entity)
+            d = DummyEntity(
+                start=0,
+                end=0,
+                attribute=self.machines_data[machine].initial_attribute,
+                id_entity=f"init_entity_{machine}",
+            )
+            list_entities = [d] + self._entities_per_machine[machine]
+            attributes = list(range(len(self.setup_costs)))
+            self.ordered_routing_entities.append(
+                OrderedRoutingEntity(
+                    entities=frozenset(list_entities),
+                    list_entities=list_entities,
+                    attributes=list(range(len(self.setup_costs))),
+                    cumul_dimensions=["cost"],
+                    possible_attributes={
+                        ent: {d.attribute} if ent == d else set(attributes)
+                        for ent in list_entities
+                    },
+                    transition_times=np.array(self.setup_times),
+                    cumul_matrix={"cost": np.array(self.setup_costs)},
+                    has_to_be_visited={ent: False for ent in list_entities},
+                )
+            )
+
+    @optional_override_implem
+    def get_min_task_duration_in_batch(self, task: Task) -> int:
+        return self.tasks_data[task].min_duration
+
+    @optional_override_implem
+    def get_max_task_duration_in_batch(self, task: Task) -> int:
+        return self.tasks_data[task].max_duration
+
+    @optional_override_implem
+    def get_entity_precedence_constraints(self):
+        """Enforce temporal precedence: batch[i] must finish before batch[i+1] starts."""
+        succ = defaultdict(list)
+        batch_entities = self.get_batch_entities()
+        for i in range(len(batch_entities) - 1):
+            succ[batch_entities[i]] = [batch_entities[i + 1]]
+        for machine in self._entities_per_machine:
+            batch_entities = self._entities_per_machine[machine]
+            for i in range(len(batch_entities) - 1):
+                succ[batch_entities[i]].append(batch_entities[i + 1])
+        return succ
+
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        dict_weight = {}
+        for b in self._batch_entities:
+            dict_weight[b] = {StartOrEnd.END: 1, StartOrEnd.START: -1}
+        add = self.additional_data
+        list_obj = list()
+        list_obj.append(
+            WeightedSumStartEndObjectiveComputer(
+                problem=self,
+                weight_objective=add.get("weight_processing", 1),
+                dict_weight=dict_weight,
+            )
+        )
+        list_obj.append(
+            WeightedNumberLateTasksInBatchComputer(
+                problem=self,
+                weight_objective=add.get("weight_tardiness", 1),
+                max_end_and_weight={
+                    task: (self.tasks_data[task].latest_end, 1)
+                    for task in self.tasks_list
+                },
+            )
+        )
+        list_obj.append(
+            RoutingCostComputer(
+                problem=self,
+                weight_objective=add.get("weight_setup_cost", 1),
+                weight_per_routing_entities={
+                    r_ent: {"cost": 1} for r_ent in self.ordered_routing_entities
+                },
+            )
+        )
+        return list_obj
+
+    @property
+    def non_skill_cumulative_resources_list(self) -> list[Skill]:
+        return [f"m_{i}" for i in range(self.n_machines)]
+
+    def get_task_mode_duration(self, task: Task, mode: int) -> int:
+        return self.tasks_data[task].min_duration
+
+    def get_makespan_upper_bound(self) -> int:
+        return 100000
+
+    @property
+    def tasks_list(self) -> list[Task]:
+        return list(range(self.n_jobs))
+
+    def get_set_task_attributes(self) -> set[TaskAttribute]:
+        return set([td.attribute for td in self.tasks_data])
 
     def fix_availability_intervals(self):
         for m_data in self.machines_data:
@@ -253,6 +504,87 @@ class OvenSchedulingProblem(
                 else:
                     fixed_m.append(slot)
             m_data.availability = fixed_m
+
+    def get_task_modes(self, task: Task) -> list[int]:
+        """Single mode problem."""
+        return [1]
+
+    # BatchingProblem implementation
+    def get_batch_entities(self) -> list[VariableBatchEntity[Task]]:
+        """Return all batch entities."""
+        return self._batch_entities
+
+    def get_candidate_tasks_for_batch(
+        self, batch_id: tuple[int, int]
+    ) -> frozenset[Task]:
+        """Get tasks eligible for this batch (based on machine eligibility)."""
+        machine, _ = batch_id
+        return frozenset(
+            task
+            for task in range(self.n_jobs)
+            if machine in self.tasks_data[task].eligible_machines
+        )
+
+    def get_task_attribute(self, task: Task) -> TaskAttribute:
+        """Return product type/attribute of a task."""
+        return self.tasks_data[task].attribute
+
+    def get_task_size(self, task: Task) -> int:
+        """Return size of a task (for capacity constraint)."""
+        return self.tasks_data[task].size
+
+    def get_batch_capacity(self, batch_id: tuple[int, int]) -> int:
+        """Return capacity of a batch (machine-dependent)."""
+        machine, _ = batch_id
+        return self.machines_data[machine].capacity
+
+    def is_batch_optional(self, batch_id: tuple[int, int]) -> bool:
+        """Batches can be empty (unused)."""
+        return True
+
+    def must_be_batched(self, task: Task) -> bool:
+        """All tasks must be assigned to a batch."""
+        return True
+
+    def can_be_batched(self, task: Task) -> bool:
+        """All tasks can be batched."""
+        return True
+
+    def can_batch_together(self, task1: Task, task2: Task) -> bool:
+        """Tasks can batch together if they have the same attribute."""
+        return self.get_task_attribute(task1) == self.get_task_attribute(task2)
+
+    def get_batch_duration_bounds(
+        self, batch_id: tuple[int, int], tasks: frozenset[Task]
+    ) -> tuple[int | None, int | None]:
+        """Batch duration must accommodate all tasks' min/max duration constraints."""
+        if not tasks:
+            return None, None
+
+        # Minimum duration: max of all task min_durations
+        min_duration = max(self.tasks_data[task].min_duration for task in tasks)
+        # Maximum duration: min of all task max_durations
+        max_duration = min(self.tasks_data[task].max_duration for task in tasks)
+
+        return min_duration, max_duration
+
+    def get_batch_presence_chains(self) -> list[list[tuple[int, int]]]:
+        """One presence chain per machine for symmetry breaking."""
+        chains = []
+        for machine in range(self.n_machines):
+            chain = [
+                (machine, batch_idx)
+                for batch_idx in range(self.max_batches_per_machine)
+            ]
+            chains.append(chain)
+        return chains
+
+    # TimeWindowProblem implementation
+    def get_task_time_window_start_lower_bound(self, task: Task) -> int | None:
+        return self.tasks_data[task].earliest_start
+
+    def get_task_time_window_end_upper_bound(self, task: Task) -> int | None:
+        return self.tasks_data[task].latest_end
 
     def get_solution_type(self) -> type[Solution]:
         """Returns the solution class type."""
@@ -270,15 +602,15 @@ class OvenSchedulingProblem(
                 objective_sense=ModeOptim.MINIMIZATION,
                 objective_handling=ObjectiveHandling.AGGREGATE,
                 dict_objective_to_doc={
-                    "processing_time": ObjectiveDoc(
+                    Objective.WEIGHTED_SUM_START_OR_END: ObjectiveDoc(
                         type=TypeObjective.OBJECTIVE,
                         default_weight=add.get("weight_processing", 1),
                     ),
-                    "nb_late_jobs": ObjectiveDoc(
+                    Objective.WEIGHTED_NB_LATE_TASKS_BATCH: ObjectiveDoc(
                         type=TypeObjective.OBJECTIVE,
                         default_weight=add.get("weight_tardiness", 1),
                     ),
-                    "setup_cost": ObjectiveDoc(
+                    Objective.ROUTING_COSTS: ObjectiveDoc(
                         type=TypeObjective.OBJECTIVE,
                         default_weight=add.get("weight_setup_cost", 1),
                     ),
@@ -289,13 +621,13 @@ class OvenSchedulingProblem(
                 objective_sense=ModeOptim.MINIMIZATION,
                 objective_handling=ObjectiveHandling.AGGREGATE,
                 dict_objective_to_doc={
-                    "processing_time": ObjectiveDoc(
+                    Objective.WEIGHTED_SUM_START_OR_END: ObjectiveDoc(
                         type=TypeObjective.OBJECTIVE, default_weight=1
                     ),
-                    "nb_late_jobs": ObjectiveDoc(
+                    Objective.WEIGHTED_NB_LATE_TASKS_BATCH: ObjectiveDoc(
                         type=TypeObjective.OBJECTIVE, default_weight=1
                     ),
-                    "setup_cost": ObjectiveDoc(
+                    Objective.ROUTING_COSTS: ObjectiveDoc(
                         type=TypeObjective.OBJECTIVE, default_weight=1
                     ),
                 },
@@ -457,7 +789,7 @@ class OvenSchedulingProblem(
                     prev_attribute = self.machines_data[m].initial_attribute
                 setup_cost += self.setup_costs[prev_attribute][attribute_i_batch]
         return {
-            "processing_time": processing_time,
-            "nb_late_jobs": nb_late_tasks,
-            "setup_cost": setup_cost,
+            Objective.WEIGHTED_SUM_START_OR_END: processing_time,
+            Objective.WEIGHTED_NB_LATE_TASKS_BATCH: nb_late_tasks,
+            Objective.ROUTING_COSTS: setup_cost,
         }

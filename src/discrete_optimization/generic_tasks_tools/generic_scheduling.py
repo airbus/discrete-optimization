@@ -17,6 +17,10 @@ from discrete_optimization.generic_tasks_tools.alternative_subproblems import (
     AlternativeSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.batching import (
+    BatchingProblem,
+    BatchingSolution,
+)
 from discrete_optimization.generic_tasks_tools.cumulative_resource_generic import (
     CumulativeResourceGenericProblem,
 )
@@ -46,6 +50,10 @@ from discrete_optimization.generic_tasks_tools.precedence_scheduling import (
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     ResourceBlockingProblem,
     ResourceBlockingSolution,
+)
+from discrete_optimization.generic_tasks_tools.routing import (
+    RoutingProblem,
+    RoutingSolution,
 )
 from discrete_optimization.generic_tasks_tools.skill import (
     NonSkillCumulativeResource,
@@ -79,6 +87,9 @@ AnyResource = NonRenewableResource | Resource
 class GenericSchedulingProblem(
     # ResourceBlockingProblem[Task, CumulativeResource, UnaryResource],
     # CalendarPreemptiveProblem[Task, CumulativeResource, UnaryResource],
+    # EntityConstraintsProblem[Task],
+    RoutingProblem[Task],
+    BatchingProblem[Task],
     ResourceBlockingProblem[Task, CumulativeResource, UnaryResource],
     ExclusionProblem[Task, ExclusionResource],
     SkillProblem[Task, UnaryResource, Skill, NonSkillCumulativeResource, UnaryResource],
@@ -110,6 +121,8 @@ class GenericSchedulingProblem(
     - non-renewable: the tasks consume non-renewable resources according to the chosen mode
     - precedence: precedence constraints between tasks
     - resource blocking: resources blocked during non-execution periods (gaps, spans)
+    - entity constraints: precedence, time lags, and time windows for any SchedulingEntity (tasks, groups, batches, etc.)
+    - batching: tasks grouped into batches with capacity, compatibility, and setup constraints
     - cost: the choice of a mode or of an allocation has a given cost
 
     Even though this class is generic but encompasses also more specific cases:
@@ -121,6 +134,8 @@ class GenericSchedulingProblem(
     - no non-renewable ressources: if non_renewable_resources_list empty
     - no precedence constraints: precedence constraints empty
     - no resource blocking: no blocking constraints defined
+    - no entity constraints: no entity precedence/time lags/time windows defined
+    - no batching: no batch entities or variable batch assignment
     - no cost: cost = 0
 
     We suppose that all renewable resources are
@@ -557,6 +572,9 @@ class GenericSchedulingProblem(
         optional_tasks: bool = True,
         alternative_scheduling: bool = True,
         exclusion_resources: bool = True,
+        entity_constraints: bool = True,
+        batching: bool = True,
+        routing: bool = True,
     ) -> bool:
         """Partial checks on solution.
 
@@ -579,6 +597,8 @@ class GenericSchedulingProblem(
             optional_tasks:
             alternative_scheduling:
             exclusion_resources:
+            entity_constraints:
+            batching:
         Returns:
 
         """
@@ -628,6 +648,27 @@ class GenericSchedulingProblem(
             )
             and (not exclusion_resources or variable.check_exclusion_constraint())
             and (not allocation or variable.check_forbidden_mode_unary_resource())
+            # entity constraints
+            and (
+                not entity_constraints
+                or (
+                    variable.check_entity_precedence_constraints()
+                    and variable.check_entity_time_lags()
+                    and variable.check_entity_time_windows()
+                )
+            )
+            # batching constraints
+            and (
+                not batching
+                or (
+                    variable.check_batch_size_constraints()
+                    and variable.check_task_batch_uniqueness()
+                    and variable.check_batch_compatibility()
+                    and variable.check_batch_attributes()
+                    and variable.check_batch_capacity()
+                )
+            )
+            and (not routing or variable.check_transition_time_constraint())
         )
 
     @abstractmethod
@@ -672,6 +713,9 @@ class GenericSchedulingProblem(
 
 
 class GenericSchedulingSolution(
+    # EntityConstraintsSolution[Task],
+    RoutingSolution[Task],
+    BatchingSolution[Task],
     ResourceBlockingSolution[Task, CumulativeResource, UnaryResource],
     # CalendarPreemptiveSolution[Task, CumulativeResource, UnaryResource],
     # CumulativeResourceGenericSolution[Task, CumulativeResource, UnaryResource],

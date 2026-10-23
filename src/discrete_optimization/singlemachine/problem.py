@@ -71,8 +71,7 @@ class WTSolution(SchedulingSolution[Task]):
     def __init__(
         self,
         problem: WeightedTardinessProblem,
-        schedule: list[tuple[int | AbsentValue.ABSENT, int | AbsentValue.ABSENT]]
-        | None = None,
+        schedule: list[tuple[int | AbsentValue, int | AbsentValue]] | None = None,
         permutation: list[int] | None = None,
     ):
         super().__init__(problem=problem)

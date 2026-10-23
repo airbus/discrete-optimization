@@ -11,6 +11,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     AvailabilityIntervals,
+    BatchingData,
     CumulativeResource,
     GenericSchedulingImplProblem,
     GenericSchedulingImplSolution,
@@ -252,6 +253,45 @@ class ToGenericSchedulingImpl(
             }
             for t in source_problem.tasks_list
         }
+
+        # Extract batching data
+        batching_data = _extract_batching_data(source_problem)
+
+        # Extract entity constraints
+        entity_precedence_constraints = (
+            source_problem.get_entity_precedence_constraints()
+        )
+        entity_start_to_start_min_time_lags = source_problem.get_entity_time_lags(
+            StartOrEnd.START, StartOrEnd.START, MinOrMax.MIN
+        )
+        entity_start_to_start_max_time_lags = source_problem.get_entity_time_lags(
+            StartOrEnd.START, StartOrEnd.START, MinOrMax.MAX
+        )
+        entity_start_to_end_min_time_lags = source_problem.get_entity_time_lags(
+            StartOrEnd.START, StartOrEnd.END, MinOrMax.MIN
+        )
+        entity_start_to_end_max_time_lags = source_problem.get_entity_time_lags(
+            StartOrEnd.START, StartOrEnd.END, MinOrMax.MAX
+        )
+        entity_end_to_start_min_time_lags = source_problem.get_entity_time_lags(
+            StartOrEnd.END, StartOrEnd.START, MinOrMax.MIN
+        )
+        entity_end_to_start_max_time_lags = source_problem.get_entity_time_lags(
+            StartOrEnd.END, StartOrEnd.START, MinOrMax.MAX
+        )
+        entity_end_to_end_min_time_lags = source_problem.get_entity_time_lags(
+            StartOrEnd.END, StartOrEnd.END, MinOrMax.MIN
+        )
+        entity_end_to_end_max_time_lags = source_problem.get_entity_time_lags(
+            StartOrEnd.END, StartOrEnd.END, MinOrMax.MAX
+        )
+
+        # Extract entity time window bounds
+        entity_time_window_bounds = _extract_entity_time_window_bounds(source_problem)
+
+        # Get batch entities
+        batch_entities = source_problem.get_batch_entities()
+
         return GenericSchedulingImplProblem(
             horizon=horizon,
             durations_per_mode=durations_per_mode,
@@ -283,6 +323,20 @@ class ToGenericSchedulingImpl(
             exclusion_resource_capacity=exclusion_resource_capacity,
             exclusion_resource_consumptions=exclusion_resource_consumptions,
             exclusion_resource_boolean=exclusion_resource_boolean,
+            # Batching data
+            batch_entities=batch_entities,
+            batching_data=batching_data,
+            # Entity constraints
+            entity_precedence_constraints=entity_precedence_constraints,
+            entity_start_to_start_min_time_lags=entity_start_to_start_min_time_lags,
+            entity_start_to_start_max_time_lags=entity_start_to_start_max_time_lags,
+            entity_start_to_end_min_time_lags=entity_start_to_end_min_time_lags,
+            entity_start_to_end_max_time_lags=entity_start_to_end_max_time_lags,
+            entity_end_to_start_min_time_lags=entity_end_to_start_min_time_lags,
+            entity_end_to_start_max_time_lags=entity_end_to_start_max_time_lags,
+            entity_end_to_end_min_time_lags=entity_end_to_end_min_time_lags,
+            entity_end_to_end_max_time_lags=entity_end_to_end_max_time_lags,
+            entity_time_window_bounds=entity_time_window_bounds,
         )
 
     def forward_transform_solution(
@@ -316,6 +370,158 @@ def _construct_min_only_time_lags_from_min_and_max_time_lags(
             min_or_max=MinOrMax.MAX,
         )
     ]
+
+
+def _extract_entity_time_window_bounds(
+    source_problem: GenericSchedulingProblem,
+) -> dict:
+    """Extract entity time window bounds from a scheduling problem.
+
+    Tries to get time window bounds for all entities mentioned in entity constraints.
+
+    Returns:
+        Dictionary mapping (entity, StartOrEnd) to (lower_bound, upper_bound)
+    """
+
+    # Collect all entities from entity constraints
+    entities = set()
+
+    # From precedence constraints
+    for (
+        entity1,
+        successors,
+    ) in source_problem.get_entity_precedence_constraints().items():
+        entities.add(entity1)
+        entities.update(successors)
+
+    # From time lag constraints (all 8 types)
+    for entity1_se, entity2_se, min_max in [
+        (StartOrEnd.START, StartOrEnd.START, MinOrMax.MIN),
+        (StartOrEnd.START, StartOrEnd.START, MinOrMax.MAX),
+        (StartOrEnd.START, StartOrEnd.END, MinOrMax.MIN),
+        (StartOrEnd.START, StartOrEnd.END, MinOrMax.MAX),
+        (StartOrEnd.END, StartOrEnd.START, MinOrMax.MIN),
+        (StartOrEnd.END, StartOrEnd.START, MinOrMax.MAX),
+        (StartOrEnd.END, StartOrEnd.END, MinOrMax.MIN),
+        (StartOrEnd.END, StartOrEnd.END, MinOrMax.MAX),
+    ]:
+        for entity1, entity2, _ in source_problem.get_entity_time_lags(
+            entity1_se, entity2_se, min_max
+        ):
+            entities.add(entity1)
+            entities.add(entity2)
+
+    # Get batch entities
+    entities.update(source_problem.get_batch_entities())
+
+    # Extract time window bounds for each entity
+    entity_time_window_bounds = {}
+    for entity in entities:
+        for start_or_end in [StartOrEnd.START, StartOrEnd.END]:
+            lower_bound = source_problem.get_entity_time_window_lower_bound(
+                entity, start_or_end
+            )
+            upper_bound = source_problem.get_entity_time_window_upper_bound(
+                entity, start_or_end
+            )
+            if lower_bound is not None or upper_bound is not None:
+                entity_time_window_bounds[(entity, start_or_end)] = (
+                    lower_bound,
+                    upper_bound,
+                )
+
+    return entity_time_window_bounds
+
+
+def _extract_batching_data(
+    source_problem: GenericSchedulingProblem,
+) -> BatchingData:
+    """Extract batching data from a scheduling problem.
+
+    Queries all batching-related methods and builds a BatchingData object.
+
+    Returns:
+        BatchingData containing all batching parameters
+    """
+
+    # Get batch IDs
+    batch_ids = source_problem.get_batch_ids()
+
+    # Fixed batches
+    fixed_batches = source_problem.get_fixed_batches()
+
+    # Batch size bounds (min/max number of tasks)
+    batch_size_bounds = {
+        batch_id: source_problem.get_batch_size_bounds(batch_id)
+        for batch_id in batch_ids
+    }
+
+    # Batch optional flags
+    batch_optional = {
+        batch_id: source_problem.is_batch_optional(batch_id) for batch_id in batch_ids
+    }
+
+    # Task sizes
+    task_sizes = {
+        task: source_problem.get_task_size(task)
+        for task in source_problem.tasks_list
+        if source_problem.get_task_size(task) != 1  # Only store non-default
+    }
+
+    # Task attributes
+    task_attributes = {
+        task: attr
+        for task in source_problem.tasks_list
+        if (attr := source_problem.get_task_attribute(task)) is not None
+    }
+
+    # Task batching requirements
+    task_batching_mandatory = {
+        task
+        for task in source_problem.tasks_list
+        if source_problem.must_be_batched(task)
+    }
+    task_batching_forbidden = {
+        task
+        for task in source_problem.tasks_list
+        if not source_problem.can_be_batched(task)
+    }
+
+    # Batch capacities
+    batch_capacities = {
+        batch_id: source_problem.get_batch_capacity(batch_id)
+        for batch_id in batch_ids
+        if source_problem.get_batch_capacity(batch_id)
+        != float("inf")  # Only store non-default
+    }
+
+    # Batch duration bounds (if any have been set)
+    # This is complex as it depends on task assignments, so we skip it in transformation
+    batch_duration_bounds = {}
+
+    # Task compatibility (find incompatible pairs)
+    incompatible_task_pairs = set()
+    tasks = source_problem.tasks_list
+    for i, task1 in enumerate(tasks):
+        for task2 in tasks[i + 1 :]:
+            if not source_problem.can_batch_together(task1, task2):
+                incompatible_task_pairs.add(frozenset([task1, task2]))
+    # Batch presence chains
+    batch_presence_chains = source_problem.get_batch_presence_chains()
+
+    return BatchingData(
+        fixed_batches=fixed_batches,
+        batch_size_bounds=batch_size_bounds,
+        batch_optional=batch_optional,
+        task_sizes=task_sizes,
+        task_attributes=task_attributes,
+        task_batching_mandatory=task_batching_mandatory,
+        task_batching_forbidden=task_batching_forbidden,
+        batch_capacities=batch_capacities,
+        batch_duration_bounds=batch_duration_bounds,
+        incompatible_task_pairs=incompatible_task_pairs,
+        batch_presence_chains=batch_presence_chains,
+    )
 
 
 def _extract_resource_consumptions(
