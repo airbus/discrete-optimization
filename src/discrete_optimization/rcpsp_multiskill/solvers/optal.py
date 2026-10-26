@@ -9,14 +9,11 @@ from typing import Any, Hashable, Optional
 
 import numpy as np
 
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation import (
-    AllocationOptalSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode import (
-    MultimodeOptalSolver,
-)
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
-    SchedulingOptalSolver,
+from discrete_optimization.generic_tasks_tools.solvers.optal.multimode_scheduling import (
+    MultimodeSchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -44,9 +41,8 @@ logger = logging.getLogger(__name__)
 
 
 class OptalMSRcpspSolver(
-    SchedulingOptalSolver[Task],
-    MultimodeOptalSolver[Task],
-    AllocationOptalSolver[Task, UnaryResource],
+    MultimodeSchedulingOptalSolver[Task],
+    AllocationCpBaseSolver[Task, UnaryResource],
 ):
     hyperparameters = [
         CategoricalHyperparameter(
@@ -143,8 +139,8 @@ class OptalMSRcpspSolver(
         for t in self.problem.successors:
             for t_succ in self.problem.successors[t]:
                 self.cp_model.end_before_start(
-                    self.get_task_interval_variable(t),
-                    self.get_task_interval_variable(t_succ),
+                    self.get_task_interval(t),
+                    self.get_task_interval(t_succ),
                 )
 
     def all_skills_for_task(self, task: Task) -> list[Hashable]:
@@ -259,7 +255,7 @@ class OptalMSRcpspSolver(
                             )
             if one_worker_per_task:
                 self.cp_model.alternative(
-                    self.get_task_interval_variable(task),
+                    self.get_task_interval(task),
                     [
                         opt_interval_var[task][worker]
                         for worker in opt_interval_var[task]
@@ -564,15 +560,11 @@ class OptalMSRcpspSolver(
 
         self.variables["cost"] = sum([cost_per_tasks[t] for t in cost_per_tasks])
 
-    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables["interval_var"][task]
 
-    def get_task_mode_is_present_variable(self, task: Task, mode: int) -> cp.BoolExpr:
-        if mode in self.variables["opt_interval_var"][task]:
-            return self.cp_model.presence(
-                self.variables["opt_interval_var"][task][mode]
-            )
-        return False
+    def get_task_mode_interval(self, task: Task, mode: int) -> cp.IntervalVar:
+        return self.variables["opt_interval_var"][task][mode]
 
     def get_task_unary_resource_is_present_variable(
         self, task: Task, unary_resource: UnaryResource
@@ -590,7 +582,7 @@ class OptalMSRcpspSolver(
         schedule = {}
         employee_usage = {}
         for task in self.variables["interval_var"]:
-            itv = self.get_task_interval_variable(task)
+            itv = self.get_task_interval(task)
             schedule[task] = {
                 "start_time": result.solution.get_start(itv),
                 "end_time": result.solution.get_end(itv),

@@ -7,8 +7,11 @@ from typing import Any, Dict, Optional
 from ortools.sat.python.cp_model import CpSolverSolutionCallback, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
-    SchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.scheduling import (
+    SchedulingCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -21,7 +24,9 @@ from discrete_optimization.vrptw.problem import (
 logger = logging.getLogger(__name__)
 
 
-class CpSatVRPTWSolver(SchedulingCpSatSolver[Task], WarmstartMixin):
+class CpSatVRPTWSolver(
+    SchedulingCpBaseSolver[Task], TasksCpSatSolver[Task], WarmstartMixin
+):
     """
     CP-SAT solver for the Vehicle Routing Problem with Time Windows (VRPTW).
 

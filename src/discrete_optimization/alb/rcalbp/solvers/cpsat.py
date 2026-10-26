@@ -26,8 +26,11 @@ from discrete_optimization.alb.rcalbp.problem import (
     Task,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
-    AllocationCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     EnumHyperparameter,
@@ -40,7 +43,8 @@ class ModelingShared(Enum):
 
 
 class CpSatRcAlbpSolver(
-    AllocationCpSatSolver[Task, Station],
+    AllocationCpBaseSolver[Task, Station],
+    TasksCpSatSolver[Task],
 ):
     """
     CP-SAT Solver for RC-ALBP with shared resources.

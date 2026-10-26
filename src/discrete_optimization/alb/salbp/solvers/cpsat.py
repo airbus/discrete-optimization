@@ -16,11 +16,14 @@ from discrete_optimization.alb.salbp.problem import (
 )
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
-    AllocationCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
-    SchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.scheduling import (
+    SchedulingCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -39,7 +42,10 @@ class ModelingCpSatSalbp(Enum):
 
 
 class CpSatSalbpSolver(
-    AllocationCpSatSolver[Task, Resource], SchedulingCpSatSolver[Task], WarmstartMixin
+    AllocationCpBaseSolver[Task, Resource],
+    SchedulingCpBaseSolver[Task],
+    TasksCpSatSolver[Task],
+    WarmstartMixin,
 ):
     problem: SalbpProblem
     hyperparameters = [
@@ -197,7 +203,10 @@ class CpSatSalbpSolver(
 
 
 class CpSatSalbp12Solver(
-    AllocationCpSatSolver[Task, Resource], SchedulingCpSatSolver[Task], WarmstartMixin
+    AllocationCpBaseSolver[Task, Resource],
+    SchedulingCpBaseSolver[Task],
+    TasksCpSatSolver[Task],
+    WarmstartMixin,
 ):
     problem: SalbpProblem_1_2
     hyperparameters = [

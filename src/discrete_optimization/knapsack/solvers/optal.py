@@ -7,8 +7,11 @@ import logging
 from typing import Optional
 
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation import (
-    AllocationOptalSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.optal.base import (
+    TasksOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -34,7 +37,9 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class OptalKnapsackSolver(AllocationOptalSolver[Item, Knapsack], KnapsackSolver):
+class OptalKnapsackSolver(
+    AllocationCpBaseSolver[Item, Knapsack], TasksOptalSolver[Task], KnapsackSolver
+):
     problem: KnapsackProblem
 
     def __init__(

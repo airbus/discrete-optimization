@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Optional
 
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -37,7 +37,7 @@ class OptalVRPTWSolver(SchedulingOptalSolver[Task]):
 
     """
 
-    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables["intervals_per_node"][task]
 
     problem: VRPTWProblem

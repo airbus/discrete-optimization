@@ -2,16 +2,14 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
+from collections.abc import Callable
 from typing import Any
-
-from ortools.sat.python.cp_model import (
-    CpSolverSolutionCallback,
-)
 
 from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
 )
+from discrete_optimization.generic_tasks_tools.solvers.base.typing import CpVar
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
 )
@@ -78,28 +76,26 @@ class CpSatMultiskillRcpspSolver(
         return sol
 
     def retrieve_tasks_variables(
-        self, cpsolvercb: CpSolverSolutionCallback
+        self, solution_value_fn: Callable[[CpVar], int | bool]
     ) -> RawSolution[Task, UnaryResource, Skill]:
         """Construct each task variable from the cpsat solver internal solution.
 
         It will be called each time the cpsat solver find a new solution.
-        At that point, value of internal variables are accessible via `cpsolvercb.value(VARIABLE_NAME)`.
-
         We override the method from generic auto solver to add internal objective value.
 
         Args:
-            cpsolvercb: the ortools callback called when the cpsat solver finds a new solution.
+            solution_value_fn: callable returning the solution value for each cp variable given as argument
 
         Returns:
             the task variables for the intermediate solution
 
         """
         raw_sol: RawSolution[Task, UnaryResource, Skill] = (
-            super().retrieve_tasks_variables(cpsolvercb)
+            super().retrieve_tasks_variables(solution_value_fn)
         )
 
         # internal objective
-        raw_sol.metadata["makespan"] = cpsolvercb.value(
+        raw_sol.metadata["makespan"] = solution_value_fn(
             self.get_global_makespan_variable()
         )
 

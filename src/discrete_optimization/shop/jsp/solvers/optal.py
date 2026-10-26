@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -66,7 +66,7 @@ class OptalJspSolver(SchedulingOptalSolver[Task]):
         # Objective: minimize makespan (max of end times of last operations)
         self.cp_model.minimize(self.cp_model.max(ends))
 
-    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self._all_intervals[task[0]][task[1]]
 
     def retrieve_solution(self, result: cp.SolveResult) -> Solution:
@@ -75,7 +75,7 @@ class OptalJspSolver(SchedulingOptalSolver[Task]):
             sched_i = []
             for k in range(self.problem.nb_subjob_per_job[i]):
                 sched_i.append(
-                    result.solution.get_value(self.get_task_interval_variable((i, k)))
+                    result.solution.get_value(self.get_task_interval((i, k)))
                 )
             schedule.append(sched_i)
         return JobShopSolution(problem=self.problem, schedule=schedule)

@@ -1,0 +1,160 @@
+#  Copyright (c) 2026 AIRBUS and its affiliates.
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+
+from __future__ import annotations
+
+import logging
+from collections.abc import Callable
+from typing import Any, Optional
+
+from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
+from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
+    GenericSchedulingImplProblem,
+    GenericSchedulingImplSolution,
+    NonRenewableResource,
+    NonSkillCumulativeResource,
+    Skill,
+    Task,
+    UnaryResource,
+)
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
+    Objective,
+    RawSolution,
+)
+from discrete_optimization.generic_tasks_tools.solvers.base.auto import (
+    GenericSchedulingAutoCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.base.typing import (
+    LinearExpr,
+)
+from discrete_optimization.generic_tools.do_problem import (
+    ModeOptim,
+    ParamsObjectiveFunction,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class GenericSchedulingAutoCpBaseImplSolver(
+    GenericSchedulingAutoCpBaseSolver[
+        Task,
+        UnaryResource,
+        Skill,
+        NonSkillCumulativeResource,
+        NonRenewableResource,
+        ExclusionResource,
+    ]
+):
+    """Generic cp solver for scheduling problems (with or without allocation) applied to `GenericSchedulingImplProblem`."""
+
+    problem: GenericSchedulingImplProblem
+    objective = Objective.CUSTOM  # do not set the objective during super().init_model()
+
+    def __init__(
+        self,
+        problem: GenericSchedulingImplProblem,
+        params_objective_function: Optional[ParamsObjectiveFunction] = None,
+        objective: Optional[Objective] = None,
+        custom_objective_factory: Optional[
+            Callable[[GenericSchedulingAutoCpBaseImplSolver], LinearExpr]
+        ] = None,
+        **kwargs: Any,
+    ):
+        """
+
+        Args:
+            problem: GenericSchedulingProblem to optimize
+            params_objective_function: Objective function settings to optimize
+            objective: Objective param, only used when it is CUSTOM, otherwise the params_objective_function is considered.
+            custom_objective_factory: callable constructing the custom objective variable using this solver variables.
+                It should correspond to `problem.custom_evaluate_fn`. It will be used as a way to compute
+                the subobjective "custom" if appearing in `params_objective_function.objectives`.
+            **kwargs:
+        """
+        super().__init__(
+            problem=problem,
+            params_objective_function=params_objective_function,
+            **kwargs,
+        )
+        self.objective = objective
+        self.custom_objective_factory = custom_objective_factory
+
+    def get_makespan_upper_bound(self) -> int:
+        if self.new_horizon is None:
+            return super().get_makespan_upper_bound()
+        else:
+            return min(self.new_horizon, super().get_makespan_upper_bound())
+
+    def init_model(
+        self,
+        new_horizon: Optional[int] = None,
+        tasks_bounds: Optional[dict[Task, tuple[int, int, int, int]]] = None,
+        use_cpm_for_task_bounds: Optional[bool] = None,
+        avoid_interval_optional_for_unary_resources: Optional[bool] = None,
+        avoid_interval_optional_for_cumulative_resources: Optional[bool] = None,
+        use_demand_variables_for_non_renewable_resources: Optional[bool] = None,
+        duplicate_start_var_per_mode: Optional[bool] = None,
+        use_energy_constraints: Optional[bool] = None,
+        keep_only_most_nested_energy_constraints: Optional[bool] = None,
+        add_redundant_skill_cumulative_constraints: Optional[bool] = None,
+        exactly_one_unary_resource_per_task: Optional[bool] = None,
+        at_most_one_unary_resource_per_task: Optional[bool] = None,
+        use_exact_skill: Optional[bool] = None,
+        use_slack_for_skill: Optional[bool] = None,
+        max_slack_for_skill: Optional[int] = None,
+        use_only_skill_to_allocate: Optional[bool] = None,
+        use_no_overlap_for_capa_1: Optional[bool] = None,
+        use_cumulative_for_capa_1: Optional[bool] = None,
+        **kwargs: Any,
+    ) -> None:
+        self.new_horizon = new_horizon
+
+        # override default parameters if given, for those not already managed by parent class
+        if exactly_one_unary_resource_per_task is not None:
+            self.exactly_one_unary_resource_per_task = (
+                exactly_one_unary_resource_per_task
+            )
+        if at_most_one_unary_resource_per_task is not None:
+            self.at_most_one_unary_resource_per_task = (
+                at_most_one_unary_resource_per_task
+            )
+        if use_exact_skill is not None:
+            self.use_exact_skill = use_exact_skill
+        if use_slack_for_skill is not None:
+            self.use_slack_for_skill = use_slack_for_skill
+        if max_slack_for_skill is not None:
+            self.max_slack_for_skill = max_slack_for_skill
+        if use_only_skill_to_allocate is not None:
+            self.use_only_skill_to_allocate = use_only_skill_to_allocate
+        if use_no_overlap_for_capa_1 is not None:
+            self.use_no_overlap_for_capa_1 = use_no_overlap_for_capa_1
+        if use_cumulative_for_capa_1 is not None:
+            self.use_cumulative_for_capa_1 = use_cumulative_for_capa_1
+
+        super().init_model(
+            tasks_bounds=tasks_bounds,
+            use_cpm_for_task_bounds=use_cpm_for_task_bounds,
+            avoid_interval_optional_for_unary_resources=avoid_interval_optional_for_unary_resources,
+            avoid_interval_optional_for_cumulative_resources=avoid_interval_optional_for_cumulative_resources,
+            use_demand_variables_for_non_renewable_resources=use_demand_variables_for_non_renewable_resources,
+            duplicate_start_var_per_mode=duplicate_start_var_per_mode,
+            use_energy_constraints=use_energy_constraints,
+            keep_only_most_nested_energy_constraints=keep_only_most_nested_energy_constraints,
+            add_redundant_skill_cumulative_constraints=add_redundant_skill_cumulative_constraints,
+            **kwargs,
+        )
+        if self.objective == Objective.CUSTOM:
+            if self.custom_objective_factory is not None:
+                match self.params_objective_function.sense_function:
+                    case ModeOptim.MINIMIZATION:
+                        self.minimize_variable(self.custom_objective_factory(self))
+                    case ModeOptim.MAXIMIZATION:
+                        self.maximize_variable(self.custom_objective_factory(self))
+                    case _:
+                        raise NotImplementedError()
+
+    def convert_task_variables_to_solution(
+        self, raw_sol: RawSolution[Task, UnaryResource, Skill]
+    ) -> GenericSchedulingImplSolution:
+        return GenericSchedulingImplSolution(problem=self.problem, raw_sol=raw_sol)

@@ -21,11 +21,14 @@ from discrete_optimization.binpack.problem import (
     Item,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
-    AllocationCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
-    SchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.scheduling import (
+    SchedulingCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -51,7 +54,10 @@ class ModelingError(Exception):
 
 
 class CpSatBinPackBinTypeSolver(
-    AllocationCpSatSolver[Item, BinPack], SchedulingCpSatSolver[Item], WarmstartMixin
+    AllocationCpBaseSolver[Item, BinPack],
+    SchedulingCpBaseSolver[Item],
+    TasksCpSatSolver[Item],
+    WarmstartMixin,
 ):
     hyperparameters = [
         EnumHyperparameter(

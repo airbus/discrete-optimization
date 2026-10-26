@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, Optional
 
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -95,7 +95,7 @@ class OptalFJspSolver(SchedulingOptalSolver[Task]):
             )
         )
 
-    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables["intervals"][task]
 
     def retrieve_solution(self, result: cp.SolveResult) -> Solution:

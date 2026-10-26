@@ -19,11 +19,14 @@ from discrete_optimization.alb.rcalbp_l.problem import (
     WorkStation,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
-    AllocationCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
-    SchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.scheduling import (
+    SchedulingCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 
@@ -31,8 +34,9 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatRCALBPLSolver(
-    AllocationCpSatSolver[Task, WorkStation],
-    SchedulingCpSatSolver[Task],
+    AllocationCpBaseSolver[Task, WorkStation],
+    SchedulingCpBaseSolver[Task],
+    TasksCpSatSolver[Task],
     WarmstartMixin,
 ):
     problem: RCALBPLProblem

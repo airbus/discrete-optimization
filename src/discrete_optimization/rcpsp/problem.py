@@ -476,9 +476,9 @@ class RcpspProblem(
     ) -> int:
         capacity = self.resources[resource]
         if np.isscalar(capacity):
-            return capacity
+            return int(capacity)
         else:
-            return capacity[0]
+            return int(capacity[0])
 
     def get_non_renewable_resource_consumption(
         self, resource: NonRenewableResource, task: Task, mode: int

@@ -8,8 +8,11 @@ from typing import Any, Optional, Union
 from ortools.sat.python.cp_model import IntVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.scheduling import (
-    SchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.scheduling import (
+    SchedulingCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -26,7 +29,9 @@ from discrete_optimization.tsp.utils import build_matrice_distance
 logger = logging.getLogger(__name__)
 
 
-class CpSatTspSolver(SchedulingCpSatSolver[Node], TspSolver, WarmstartMixin):
+class CpSatTspSolver(
+    SchedulingCpBaseSolver[Node], TasksCpSatSolver[Node], TspSolver, WarmstartMixin
+):
     problem: TspProblem
 
     def __init__(

@@ -4,8 +4,9 @@
 import logging
 from abc import abstractmethod
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
+import numpy as np
 from ortools.sat.python.cp_model import (
     FEASIBLE,
     INFEASIBLE,
@@ -14,8 +15,10 @@ from ortools.sat.python.cp_model import (
     Constraint,
     CpModel,
     CpSolverSolutionCallback,
+    Domain,
 )
 from ortools.sat.python.cp_model import CpSolver as OrtoolsInternalCpSolver
+from ortools.sat.python.cp_model_helper import Literal
 
 from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
@@ -24,7 +27,6 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 from discrete_optimization.generic_tools.cp_tools import (
     CpSolver,
     ParametersCp,
-    SignEnum,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import (
@@ -181,28 +183,134 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
         """Init cp model and reset stored variables if any."""
         self.cp_model = CpModel()
 
-    def add_bound_constraint(self, var: Any, sign: SignEnum, value: int) -> list[Any]:
-        return [self.add_bound_constraint_cpsat(var=var, sign=sign, value=value)]
+    def add_bool_constraint(self, cstr: Any) -> Any:
+        return self.cp_model.add(cstr)
 
-    def add_bound_constraint_cpsat(
-        self, var: Any, sign: SignEnum, value: int
-    ) -> Constraint:
-        if sign == SignEnum.LEQ:
-            cstr_tmp = var <= value
-        elif sign == SignEnum.UEQ:
-            cstr_tmp = var >= value
-        elif sign == SignEnum.EQUAL:
-            cstr_tmp = var == value
-        elif sign == SignEnum.LESS:
-            cstr_tmp = var < value
-        elif sign == SignEnum.UP:
-            cstr_tmp = var > value
-        else:
-            raise NotImplementedError(sign)
-        return self.cp_model.add(cstr_tmp)
+    def create_int_var(self, lb: int, ub: int, name: str) -> Any:
+        return self.cp_model.new_int_var(lb=lb, ub=ub, name=name)
+
+    def create_bool_var(self, name: str) -> Any:
+        return self.cp_model.new_bool_var(name)
+
+    def add_max_equality(self, target: Any, variables: Iterable[Any]) -> list[Any]:
+        return [self.cp_model.add_max_equality(target=target, exprs=variables)]
 
     def minimize_variable(self, var: Any) -> None:
         self.cp_model.minimize(var)
+
+    def maximize_variable(self, var: Any) -> None:
+        self.cp_model.maximize(var)
+
+    def create_int_var_from_possible_values(
+        self, possible_values: Iterable[int], name: str
+    ) -> Any:
+        return self.cp_model.new_int_var_from_domain(
+            domain=Domain.from_values(list(possible_values)), name=name
+        )
+
+    def create_int_var_from_flat_intervals(
+        self, flat_intervals: list[int], name: str
+    ) -> Any:
+        return self.cp_model.new_int_var_from_domain(
+            domain=Domain.from_flat_intervals(flat_intervals), name=name
+        )
+
+    def add_min_equality(self, target: Any, variables: Iterable[Any]) -> list[Any]:
+        return [self.cp_model.add_min_equality(target, variables)]
+
+    def add_abs_equality(self, target: Any, expr: Any) -> list[Any]:
+        return [self.cp_model.add_abs_equality(target, expr)]
+
+    def add_element(
+        self, index: Any, expressions: Sequence[Any], target: Any
+    ) -> list[Any]:
+        return [
+            self.cp_model.add_element(
+                index=index, expressions=expressions, target=target
+            )
+        ]
+
+    def add_modulo_equality(self, target: Any, expr: Any, mod: Any) -> list[Any]:
+        return [self.cp_model.add_modulo_equality(target=target, expr=expr, mod=mod)]
+
+    def add_implication(self, left_bool_expr: Any, right_bool_expr: Any) -> list[Any]:
+        if isinstance(left_bool_expr, Literal) and isinstance(right_bool_expr, Literal):
+            return [self.cp_model.add_implication(left_bool_expr, right_bool_expr)]
+        elif isinstance(right_bool_expr, Constraint) or (
+            isinstance(right_bool_expr, list)
+            and all(isinstance(cstr, Constraint) for cstr in right_bool_expr)
+        ):
+            if isinstance(right_bool_expr, Constraint):
+                right_bool_expr = [right_bool_expr]
+            if isinstance(left_bool_expr, Literal) or np.isscalar(left_bool_expr):
+                # single condition
+                return [
+                    cstr.only_enforce_if(left_bool_expr) for cstr in right_bool_expr
+                ]
+            else:
+                # left hand side is an iterable of conditions
+                return [
+                    cstr.only_enforce_if(*left_bool_expr) for cstr in right_bool_expr
+                ]
+        else:
+            constraint = self.cp_model.add(right_bool_expr)
+            return self.add_implication(left_bool_expr, constraint)
+
+    def add_implication_bool_and(
+        self, left_bool_expr: Any, right_bool_exprs: Sequence[Any]
+    ) -> list[Any]:
+        return [
+            self.cp_model.add_bool_and(right_bool_exprs).only_enforce_if(left_bool_expr)
+        ]
+
+    def add_implication_exactly_one(
+        self, left_bool_expr: Any, right_bool_exprs: Iterable[Any]
+    ) -> list[Any]:
+        return [
+            self.cp_model.add_exactly_one(right_bool_exprs).only_enforce_if(
+                left_bool_expr
+            )
+        ]
+
+    def add_implication_at_least_one(
+        self, left_bool_expr: Any, right_bool_exprs: Iterable[Any]
+    ) -> list[Any]:
+        return [
+            self.cp_model.add_at_least_one(right_bool_exprs).only_enforce_if(
+                left_bool_expr
+            )
+        ]
+
+    def add_implication_in_intervals(
+        self, left_bool_expr: Any, right_expr: Any, intervals: Iterable[tuple[int, int]]
+    ) -> list[Any]:
+        return [
+            self.cp_model.add_linear_expression_in_domain(
+                linear_expr=right_expr,
+                domain=Domain.from_intervals(
+                    list(list(interval) for interval in intervals)
+                ),
+            ).only_enforce_if(left_bool_expr)
+        ]
+
+    def add_allowed_assignments(
+        self, variables: Sequence[Any], values: Iterable[Sequence[int]]
+    ) -> list[Any]:
+        pass
+
+    def add_exactly_one(self, exprs: Iterable[Any]) -> list[Any]:
+        return [self.cp_model.add_exactly_one(exprs)]
+
+    def add_at_most_one(self, exprs: Iterable[Any]) -> list[Any]:
+        return [self.cp_model.add_at_most_one(exprs)]
+
+    def add_at_least_one(self, exprs: Iterable[Any]) -> list[Any]:
+        return [self.cp_model.add_at_least_one(exprs)]
+
+    def hint_solution(self, hints: dict[Any, int | bool]) -> None:
+        self.cp_model.clear_hints()
+        for var, value in hints.items():
+            self.cp_model.add_hint(var, value)
 
 
 class OrtoolsCpSatCallback(CpSolverSolutionCallback):

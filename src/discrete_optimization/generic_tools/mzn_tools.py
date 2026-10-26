@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from datetime import timedelta
-from typing import Any, Optional
+from typing import Any, Iterable, Optional, Sequence
 
 import minizinc
 from minizinc import Instance, Status
@@ -19,7 +19,6 @@ from discrete_optimization.generic_tools.cp_tools import (
     CpSolver,
     CpSolverName,
     ParametersCp,
-    SignEnum,
     logger,
     map_cp_solver_name,
 )
@@ -92,13 +91,6 @@ class MinizincCpSolver(CpSolver):
     instance: Optional[Instance] = None
     silent_solve_error: bool = False
     """If True and `solve` should raise an error, a warning is raised instead and an empty ResultStorage returned."""
-
-    def minimize_variable(self, var: Any) -> None:
-        """Set the cp solver objective as minimizing `var`."""
-        raise NotImplementedError()
-
-    def add_bound_constraint(self, var: Any, sign: SignEnum, value: int) -> list[Any]:
-        raise NotImplementedError()
 
     def solve(
         self,
@@ -199,6 +191,90 @@ class MinizincCpSolver(CpSolver):
 
         """
         ...
+
+    # minizinc solver is not yet ready for generic scheduling/allocation tools:
+    # raise NotImplementedError() for all abstract methods
+    def minimize_variable(self, var: Any) -> None:
+        raise NotImplementedError()
+
+    def maximize_variable(self, var: Any) -> None:
+        raise NotImplementedError()
+
+    def add_bool_constraint(self, cstr: Any) -> Any:
+        raise NotImplementedError()
+
+    def create_int_var(self, lb: int, ub: int, name: str) -> Any:
+        raise NotImplementedError()
+
+    def create_int_var_from_possible_values(
+        self, possible_values: Iterable[int], name: str
+    ) -> Any:
+        raise NotImplementedError()
+
+    def create_int_var_from_flat_intervals(
+        self, flat_intervals: list[int], name: str
+    ) -> Any:
+        raise NotImplementedError()
+
+    def create_bool_var(self, name: str) -> Any:
+        raise NotImplementedError()
+
+    def add_max_equality(self, target: Any, variables: Iterable[Any]) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_min_equality(self, target: Any, variables: Iterable[Any]) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_abs_equality(self, target: Any, expr: Any) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_element(
+        self, index: Any, expressions: Sequence[Any], target: Any
+    ) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_modulo_equality(self, target: Any, expr: Any, mod: Any) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_implication(self, left_bool_expr: Any, right_bool_expr: Any) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_implication_bool_and(
+        self, left_bool_expr: Any, right_bool_exprs: Sequence[Any]
+    ) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_implication_exactly_one(
+        self, left_bool_expr: Any, right_bool_exprs: Iterable[Any]
+    ) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_implication_at_least_one(
+        self, left_bool_expr: Any, right_bool_exprs: Iterable[Any]
+    ) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_implication_in_intervals(
+        self, left_bool_expr: Any, right_expr: Any, intervals: Iterable[tuple[int, int]]
+    ) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_allowed_assignments(
+        self, variables: Sequence[Any], values: Iterable[Sequence[int]]
+    ) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_exactly_one(self, exprs: Iterable[Any]) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_at_most_one(self, exprs: Iterable[Any]) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_at_least_one(self, exprs: Iterable[Any]) -> list[Any]:
+        raise NotImplementedError()
+
+    def hint_solution(self, hints: dict[Any, int | bool]) -> None:
+        raise NotImplementedError()
 
 
 class MinizincCpSolution:

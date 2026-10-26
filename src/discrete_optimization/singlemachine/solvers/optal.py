@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -66,13 +66,11 @@ class OptalSingleMachineSolver(SchedulingOptalSolver[Task]):
         self.cp_model.minimize(weighted_tardiness)
         self.variables["intervals"] = intervals
 
-    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables["intervals"][task]
 
     def retrieve_solution(self, result: cp.SolveResult) -> WTSolution:
         schedule = []
         for i in self.problem.tasks_list:
-            schedule.append(
-                result.solution.get_value(self.get_task_interval_variable(i))
-            )
+            schedule.append(result.solution.get_value(self.get_task_interval(i)))
         return WTSolution(problem=self.problem, schedule=schedule)

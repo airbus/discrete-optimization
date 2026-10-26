@@ -10,7 +10,7 @@ from typing import Any
 import numpy as np
 
 from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
@@ -174,13 +174,13 @@ class OptalTspSolver(SchedulingOptalSolver[Node]):
         self.cp_model.minimize(tour_end.start())
         self.variables["visits"] = visit_intervals
 
-    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables["visits"][task]
 
     def retrieve_solution(self, result: cp.SolveResult) -> TspSolution:
         logger.info(f"Current obj {result.solution.get_objective()}")
         starts = [
-            result.solution.get_start(self.get_task_interval_variable(i))
+            result.solution.get_start(self.get_task_interval(i))
             for i in range(self.problem.node_count)
         ]
         ordered = sorted(range(len(starts)), key=lambda i: starts[i])

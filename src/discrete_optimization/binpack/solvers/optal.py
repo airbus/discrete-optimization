@@ -14,10 +14,10 @@ from discrete_optimization.binpack.problem import (
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation import (
-    AllocationOptalSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -35,7 +35,7 @@ else:
 
 
 class OptalBinPackSolver(
-    AllocationOptalSolver[Item, BinPack],
+    AllocationCpBaseSolver[Item, BinPack],
     SchedulingOptalSolver[Item],
 ):
     problem: BinPackProblem
@@ -92,12 +92,12 @@ class OptalBinPackSolver(
             == index
         )
 
-    def get_task_interval_variable(self, task: Task) -> "cp.IntervalVar":
+    def get_task_interval(self, task: Task) -> "cp.IntervalVar":
         return self.variables["intervals"][task]
 
     def retrieve_solution(self, result: cp.SolveResult) -> Solution:
         allocation = [
-            int(result.solution.get_start(self.get_task_interval_variable(t)))
+            int(result.solution.get_start(self.get_task_interval(t)))
             for t in self.problem.tasks_list
         ]
         return BinPackSolution(problem=self.problem, allocation=allocation)

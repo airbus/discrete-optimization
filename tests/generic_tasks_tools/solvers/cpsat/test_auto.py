@@ -432,7 +432,13 @@ def test_problem(caplog):
     assert problem.satisfy(sol)
 
 
-@pytest.mark.parametrize("objective", Objective)
+@pytest.mark.parametrize(
+    "objective",
+    [
+        computer.get_objective_name()
+        for computer in MyProblem().get_list_objective_computer()
+    ],
+)
 @pytest.mark.parametrize(
     "avoid_interval_optional_for_cumulative_resources, duplicate_start_var_per_mode",
     [(True, False), (False, False), (False, True)],
