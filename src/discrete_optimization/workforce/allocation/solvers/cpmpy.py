@@ -214,7 +214,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
                     problem=self.problem,
                     **{key: attr},
                 )
-            self.model += constraints
+            self.cp_model += constraints
 
     def init_model(self, **args: Any) -> None:
         super().init_model(**args)
@@ -253,7 +253,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
         symmbreak_on_used = kwargs["symmbreak_on_used"]
         add_lower_bound_nb_teams = kwargs["add_lower_bound_nb_teams"]
         assert include_pair_overlap or overlapping_advanced
-        self.model = Model()
+        self.cp_model = Model()
         domains_for_task: list[list[int]] = (
             self.problem.compute_allowed_team_index_all_task()
         )
@@ -269,7 +269,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
             allocation_binary = kwargs["allocation_binary"]
         for i in range(len(allocation_binary)):
             # One and only one allocation
-            self.model += [
+            self.cp_model += [
                 sum([allocation_binary[i][j] for j in allocation_binary[i]]) == 1
             ]
         if include_pair_overlap:
@@ -277,19 +277,19 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
             for i1, i2 in overlaps_pair:
                 for team in allocation_binary[i1]:
                     if team in allocation_binary[i2]:
-                        self.model += (
+                        self.cp_model += (
                             ~allocation_binary[i1][team] | ~allocation_binary[i2][team]
                         )
                         # cannot be both assigned
         used = boolvar(shape=(self.problem.number_of_teams,), name="used")
         for i in range(len(allocation_binary)):
             for j in allocation_binary[i]:  # if a team has a task, it is used
-                self.model += [allocation_binary[i][j].implies(used[j])]
+                self.cp_model += [allocation_binary[i][j].implies(used[j])]
         if overlapping_advanced or add_lower_bound_nb_teams:
             set_overlaps = compute_all_overlapping(team_allocation_problem=self.problem)
             if add_lower_bound_nb_teams:
                 max_ = max([len(o) for o in set_overlaps])
-                self.model += [cp.sum(used) >= max_]
+                self.cp_model += [cp.sum(used) >= max_]
             if overlapping_advanced:
                 for overlapping in set_overlaps:
                     if not (
@@ -314,10 +314,10 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
                             )
                             <= 1
                         )
-                        self.model += [overlap_clique]
+                        self.cp_model += [overlap_clique]
 
         if symmbreak_on_used:  # some teams may be equivalent
-            self.add_symm_breaking_constraint(model=self.model, used_variable=used)
+            self.add_symm_breaking_constraint(model=self.cp_model, used_variable=used)
         self.variables["obj_dict"] = {}
         if self.problem.number_of_teams >= 2:
             objectives_expr = [sum(used)]
@@ -341,7 +341,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
                 keys_variable_to_log += [key]
         self.variables["allocation_binary"] = allocation_binary
         self.variables["used"] = used
-        self.model.minimize(objectives_expr[0])
+        self.cp_model.minimize(objectives_expr[0])
         self.variables["objectives_expr"] = objectives_expr
         self.variables["keys_variable_to_log"] = keys_variable_to_log
 
@@ -354,7 +354,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
         assert include_pair_overlap or overlapping_advanced
         number_of_activities = self.problem.number_of_activity
         number_of_teams = self.problem.number_of_teams
-        self.model = cpmpy.Model()
+        self.cp_model = cpmpy.Model()
         if "allocation" in kwargs:
             allocation = kwargs["allocation"]
         else:
@@ -367,17 +367,17 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
         domains_for_tasks = self.problem.compute_allowed_team_index_all_task()
         for i in range(number_of_activities):
             if len(domains_for_tasks[i]) < number_of_teams:
-                self.model += [cpmpy.InDomain(allocation[i], domains_for_tasks[i])]
+                self.cp_model += [cpmpy.InDomain(allocation[i], domains_for_tasks[i])]
         used = cpmpy.boolvar(shape=(number_of_teams,), name="used")
         if include_pair_overlap:
             overlaps_pair = self.problem.compute_pair_overlap_index_task()
             for i1, i2 in overlaps_pair:
-                self.model += [allocation[i1] != allocation[i2]]
+                self.cp_model += [allocation[i1] != allocation[i2]]
         if overlapping_advanced or add_lower_bound_nb_teams:
             set_overlaps = compute_all_overlapping(team_allocation_problem=self.problem)
             if add_lower_bound_nb_teams:
                 max_ = max([len(o) for o in set_overlaps])
-                self.model += [sum(used) >= max_]
+                self.cp_model += [sum(used) >= max_]
             if overlapping_advanced:
                 for overlapping in set_overlaps:
                     if not (
@@ -386,7 +386,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
                     ):
                         # not needed to include constraint.
                         continue
-                    self.model += [
+                    self.cp_model += [
                         AllDifferent(
                             [
                                 allocation[self.problem.index_activities_name[ac]]
@@ -395,15 +395,15 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
                         )
                     ]
         for i in range(number_of_teams):
-            self.model += [cpmpy.any(allocation == i).implies(used[i])]
+            self.cp_model += [cpmpy.any(allocation == i).implies(used[i])]
         if symmbreak_on_used:
-            self.add_symm_breaking_constraint(model=self.model, used_variable=used)
-        # self.model.minimize(cpmpy.sum(used))
+            self.add_symm_breaking_constraint(model=self.cp_model, used_variable=used)
+        # self.cp_model.minimize(cpmpy.sum(used))
         objectives_expr = [sum(used)]
         self.variables["obj_dict"] = {"nb_teams": objectives_expr[0]}
         self.variables["allocation"] = allocation
         self.variables["used"] = used
-        self.model.minimize(sum(used))
+        self.cp_model.minimize(sum(used))
         self.variables["objectives_expr"] = objectives_expr
         self.variables["keys_variable_to_log"] = []
 
@@ -486,7 +486,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
             name_value=key_objective,
         )
         for c in dict_modeling_dispersion["constraints"]:
-            self.model += c
+            self.cp_model += c
 
         self.variables[f"cumulated_value_{key_objective}"] = dict_modeling_dispersion[
             "cumulated_value"
@@ -550,7 +550,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
 
     def set_lexico_objective(self, obj: str) -> None:
         if self.cpm_solver is None:  # first objective, just add it to the model then
-            self.model.minimize(self.variables["obj_dict"][obj])
+            self.cp_model.minimize(self.variables["obj_dict"][obj])
         else:
             self.cpm_solver.minimize(self.variables["obj_dict"][obj])
 
@@ -570,7 +570,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
         return [c]
 
     def get_lexico_objectives_available(self) -> list[str]:
-        if self.model is not None:
+        if self.cp_model is not None:
             return list(self.variables["obj_dict"].keys())
         objs = ["nb_teams"]
         if isinstance(self.problem, TeamAllocationProblemMultiobj):
@@ -624,7 +624,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
         symmbreak_on_used = kwargs["symmbreak_on_used"]
         add_lower_bound_nb_teams = kwargs["add_lower_bound_nb_teams"]
         assert include_pair_overlap or overlapping_advanced
-        self.model = Model()
+        self.cp_model = Model()
         if include_all_binary_vars:
             alloc = cpmpy.boolvar(
                 shape=(self.problem.number_of_activity, self.problem.number_of_teams),
@@ -647,7 +647,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                             metadata={"type": "allowed_team", "task_index": i},
                         )
                     )
-                    self.model += [c]
+                    self.cp_model += [c]
             # reorganizing the variable, to be same structure as the other option.
             allocation_binary = [
                 {j: alloc[i, j] for j in range(self.problem.number_of_teams)}
@@ -680,7 +680,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                     metadata={"type": "allocated_task", "task_index": i},
                 )
             )
-            self.model += [c_i]
+            self.cp_model += [c_i]
         used = boolvar(shape=(self.problem.number_of_teams,), name="used")
 
         if include_pair_overlap:
@@ -697,7 +697,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                     overlap_pair: Expression = (
                         ~allocation_binary[ind1][team] | ~allocation_binary[ind2][team]
                     )
-                    self.model += [overlap_pair]
+                    self.cp_model += [overlap_pair]
                     list_const.append(overlap_pair)
                     if not cnf_comp:
                         overlap_pair_red: Expression = (
@@ -705,7 +705,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                             + allocation_binary[ind2][team]
                             <= 1
                         )
-                        self.model += [overlap_pair_red]
+                        self.cp_model += [overlap_pair_red]
                         list_const.append(list_const)
                 self.meta_constraints.append(
                     MetaCpmpyConstraint(
@@ -718,7 +718,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
             set_overlaps = compute_all_overlapping(team_allocation_problem=self.problem)
             if add_lower_bound_nb_teams:
                 max_ = max([len(o) for o in set_overlaps])
-                self.model += [sum(used) >= max_]
+                self.cp_model += [sum(used) >= max_]
             for overlapping in set_overlaps:
                 if not (
                     (include_pair_overlap and len(overlapping) > 2)
@@ -758,22 +758,22 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                         },
                     )
                 )
-                self.model += [cpmpy.all(no_overlap_conj)]
+                self.cp_model += [cpmpy.all(no_overlap_conj)]
 
         dict_team_used = defaultdict(lambda: list())
         for i in range(len(allocation_binary)):
             for j in allocation_binary[i]:
                 if self.problem.number_of_teams == 1:
                     if cnf_comp:
-                        self.model += [allocation_binary[i][j].implies(used)]
+                        self.cp_model += [allocation_binary[i][j].implies(used)]
                     else:
-                        self.model += [used >= allocation_binary[i][j]]
+                        self.cp_model += [used >= allocation_binary[i][j]]
 
                 else:
                     if cnf_comp:
-                        self.model += [allocation_binary[i][j].implies(used[j])]
+                        self.cp_model += [allocation_binary[i][j].implies(used[j])]
                     else:
-                        self.model += [used[j] >= allocation_binary[i][j]]
+                        self.cp_model += [used[j] >= allocation_binary[i][j]]
                 if self.problem.number_of_teams > 1:
                     used_j: Expression = used[j] >= allocation_binary[i][j]
                     used_j_red: Expression = allocation_binary[i][j].implies(used[j])
@@ -781,7 +781,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                     used_j: Expression = used >= allocation_binary[i][j]
                     used_j_red: Expression = allocation_binary[i][j].implies(used)
                 if cnf_comp:
-                    self.model += [used_j_red]
+                    self.cp_model += [used_j_red]
                     self.meta_constraints.append(
                         MetaCpmpyConstraint(
                             name=f"team_{j}_is_used",
@@ -791,7 +791,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                     )
                     dict_team_used[j].append(used_j_red)
                 else:
-                    self.model += [used_j, used_j_red]
+                    self.cp_model += [used_j, used_j_red]
                     self.meta_constraints.append(
                         MetaCpmpyConstraint(
                             name=f"team_{j}_is_used",
@@ -820,7 +820,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
                         symm_group += [sym_constr]
                     else:
                         symm_group += [sym_constr, sym_constr_red]
-                self.model += [cpmpy.all(symm_group)]
+                self.cp_model += [cpmpy.all(symm_group)]
                 self.meta_constraints.append(
                     MetaCpmpyConstraint(
                         name=f"symmetry_{group}",
@@ -850,7 +850,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
         self.variables["allocation_binary"] = allocation_binary
         self.variables["used"] = used
         if not cnf_comp:
-            self.model.minimize(objectives_expr[0])
+            self.cp_model.minimize(objectives_expr[0])
         self.variables["objectives_expr"] = objectives_expr
         self.variables["keys_variable_to_log"] = keys_variable_to_log
 

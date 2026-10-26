@@ -36,7 +36,7 @@ def test_knapsack_cpmpy_explain(method):
 
     # add impossible constraint "improve optimal bound"
     values = [item.value for item in problem.list_items]
-    solver.model += [
+    solver.cp_model += [
         sum(solver.variables["x"] * values)
         > sum(solver.variables["x"] * values).value()
     ]
@@ -62,8 +62,8 @@ def test_knapsack_cpmpy_explain(method):
 
     # NB: solver.model.constraints.remove(cstr) not working as expected
     constraints_ids = {id(c) for c in constraints}
-    solver.model.constraints = [
-        c for c in solver.model.constraints if id(c) not in constraints_ids
+    solver.cp_model.constraints = [
+        c for c in solver.cp_model.constraints if id(c) not in constraints_ids
     ]
     solver.reset_cpm_solver()  # so that model changes are take into account in next solve
     solver.solve()
@@ -91,7 +91,7 @@ def test_knapsack_cpmpy_correct(method):
 
     # add impossible constraint "improve optimal bound"
     values = [item.value for item in problem.list_items]
-    solver.model += [
+    solver.cp_model += [
         sum(solver.variables["x"] * values)
         > sum(solver.variables["x"] * values).value()
     ]
@@ -110,8 +110,8 @@ def test_knapsack_cpmpy_correct(method):
 
     # NB: solver.model.constraints.remove(cstr) not working as expected
     constraints_ids = {id(c) for c in constraints}
-    solver.model.constraints = [
-        c for c in solver.model.constraints if id(c) not in constraints_ids
+    solver.cp_model.constraints = [
+        c for c in solver.cp_model.constraints if id(c) not in constraints_ids
     ]
     solver.reset_cpm_solver()  # take into account model changes
     solver.solve()

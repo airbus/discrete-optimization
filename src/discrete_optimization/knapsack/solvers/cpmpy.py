@@ -44,7 +44,7 @@ class CpmpyKnapsackSolver(CpmpySolver, KnapsackSolver):
         capacity = self.problem.max_capacity
         # Construct the model.
         x = boolvar(shape=(self.problem.nb_items,), name="x")
-        self.model = Model(sum(x * weights) <= capacity, maximize=sum(x * values))
+        self.cp_model = Model(sum(x * weights) <= capacity, maximize=sum(x * values))
         self.variables["x"] = x
 
     def retrieve_current_solution(self) -> Solution:

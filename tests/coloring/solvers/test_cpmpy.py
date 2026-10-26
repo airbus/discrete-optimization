@@ -64,8 +64,8 @@ def test_cpmpy_solver():
     subconstraints_mcs_ids = set()
     for meta in meta_mcs:
         subconstraints_mcs_ids.update({id(c) for c in meta.constraints})
-    solver_model_constraints_bak = solver.model.constraints
-    solver.model.constraints = [
+    solver_model_constraints_bak = solver.cp_model.constraints
+    solver.cp_model.constraints = [
         c for c in solver_model_constraints_bak if id(c) not in subconstraints_mcs_ids
     ]  # NB: solver.model.constraints.remove(cstr) not working as expected
     solver.reset_cpm_solver()
@@ -75,14 +75,14 @@ def test_cpmpy_solver():
     solver.status_solver = (
         StatusSolver.UNSATISFIABLE
     )  # reset status solver to allow next method
-    solver.model.constraints = solver_model_constraints_bak
+    solver.cp_model.constraints = solver_model_constraints_bak
     meta_mcs = solver.correct_unsat_deduced_meta()
     assert 0 < len(meta_mcs) < len(solver.get_soft_meta_constraints())
     subconstraints_mcs_ids = set()
     for meta in meta_mcs:
         subconstraints_mcs_ids.update({id(c) for c in meta.constraints})
-    solver_model_constraints_bak = solver.model.constraints
-    solver.model.constraints = [
+    solver_model_constraints_bak = solver.cp_model.constraints
+    solver.cp_model.constraints = [
         c for c in solver_model_constraints_bak if id(c) not in subconstraints_mcs_ids
     ]  # NB: solver.model.constraints.remove(cstr) not working as expected
     solver.reset_cpm_solver()
@@ -118,14 +118,14 @@ def test_explainability_with_False_constraints():
     # add False constraint and unsatifiable condition on nb colors
     solver = CpmpyColoringSolver(color_problem)
     solver.init_model(nb_colors=nb_colors_optimal - 1)
-    solver.model.constraints.extend([False, False])
+    solver.cp_model.constraints.extend([False, False])
     solver.reset_cpm_solver()
     solver.solve()
     assert solver.status_solver == StatusSolver.UNSATISFIABLE
     # fine
-    mus = solver.explain_unsat_fine(soft=solver.model.constraints)
+    mus = solver.explain_unsat_fine(soft=solver.cp_model.constraints)
     assert mus == [BoolVal(False)]
-    mcs = solver.correct_unsat_fine(soft=solver.model.constraints)
+    mcs = solver.correct_unsat_fine(soft=solver.cp_model.constraints)
     assert any(is_trivially_false(cstr) for cstr in mcs)
     assert len(mcs) > 1
     # meta

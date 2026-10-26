@@ -48,7 +48,7 @@ class CpmpyShopSolver(CpmpySolver):
         self._max_time: int | None = kwargs.get(
             "max_time", None
         )  # update the upper bound for makespan
-        self.model = cp.Model()
+        self.cp_model = cp.Model()
         # Decision `start[j]`: integer start time for each job `j`
         start = cp.intvar(
             0,
@@ -72,13 +72,13 @@ class CpmpyShopSolver(CpmpySolver):
             for m in self.problem.get_task_modes(t):
                 modes[(t, m)] = cp.boolvar(1, name=f"mode_{t}_{m}")
                 if link_mode_to_duration:
-                    self.model += [
+                    self.cp_model += [
                         modes[(t, m)].implies(
                             duration[self.problem.get_index_from_task(t)]
                             == self.problem.get_task_mode_duration(t, m)
                         )
                     ]
-            self.model += [
+            self.cp_model += [
                 cp.sum([modes[(t, m)] for m in self.problem.get_task_modes(t)]) == 1
             ]
         self.variables["start"] = start
@@ -87,12 +87,12 @@ class CpmpyShopSolver(CpmpySolver):
         successors = self.problem.get_precedence_constraints()
         for pred in successors:
             for succ in successors[pred]:
-                self.model += [
+                self.cp_model += [
                     start[self.problem.get_index_from_task(succ)]
                     >= end[self.problem.get_index_from_task(pred)]
                 ]
         for set_task in self.problem.get_no_overlap():
-            self.model += [
+            self.cp_model += [
                 cp.NoOverlap(
                     start=[
                         start[self.problem.get_index_from_task(task)]
@@ -113,7 +113,7 @@ class CpmpyShopSolver(CpmpySolver):
                 for t, m in modes
                 if self.problem.get_cumulative_resource_consumption(machine, t, m) > 0
             ]
-            self.model += [
+            self.cp_model += [
                 cp.NoOverlapOptional(
                     start=[
                         start[self.problem.get_index_from_task(tm[0])]
@@ -127,7 +127,7 @@ class CpmpyShopSolver(CpmpySolver):
                     is_present=[modes[tm] for tm, _ in task_mode],
                 )
             ]
-        self.model.minimize(cp.max(end))
+        self.cp_model.minimize(cp.max(end))
 
     def retrieve_current_solution(self) -> AnyShopSolution:
         starts = self.variables["start"].value()

@@ -75,9 +75,9 @@ class InteractSolve:
         self.current_soft_str = set([str(c) for c in self.current_soft])
         self.dropped_const = []
         self.dropped_tasks = []
-        self.solver.model.constraints = []
+        self.solver.cp_model.constraints = []
         for m in self.solver.meta_constraints:
-            self.solver.model.constraints.extend(m.constraints)
+            self.solver.cp_model.constraints.extend(m.constraints)
 
     def get_current_soft_constraints(self):
         return self.current_soft
@@ -96,7 +96,7 @@ class InteractSolve:
             cstrs.extend(h.constraints)
             chard.append(h)
         self.current_hard = chard
-        self.solver.model.constraints = cstrs
+        self.solver.cp_model.constraints = cstrs
         for c in constraints:
             if c.metadata.get("type", None) == "allocated_task":
                 self.dropped_tasks.append(c.metadata["task_index"])
@@ -119,12 +119,12 @@ class InteractSolve:
             cstrs.extend(m.constraints)
         for m in self.current_hard:
             cstrs.extend(m.constraints)
-        self.solver.model.constraints = cstrs
+        self.solver.cp_model.constraints = cstrs
 
     def solve_current_problem(self, **kwargs) -> tuple[StatusSolver, ResultStorage]:
         # temporary fix
         self.solver.cpm_solver = SolverLookup.get(
-            self.solver.solver_name, self.solver.model
+            self.solver.solver_name, self.solver.cp_model
         )
         res = self.solver.solve(**kwargs)
         status = self.solver.status_solver
@@ -182,7 +182,7 @@ class InteractSolve:
         self.current_hard = deepcopy(self.hard)
         self.current_hard_str = set([str(c) for c in self.current_hard])
         self.current_soft_str = set([str(c) for c in self.current_soft])
-        self.solver.model.constraints = self.current_soft + self.current_hard
+        self.solver.cp_model.constraints = self.current_soft + self.current_hard
 
 
 def run_disruption_creation():
@@ -375,16 +375,16 @@ def interactive_solving():
             # - remove meta-constraint from list of meta-constraints
             meta = meta_mus[i_meta]
             subconstraints_ids = {id(c_) for c_ in meta.constraints}
-            print("Before", len(solver.model.constraints))
+            print("Before", len(solver.cp_model.constraints))
 
-            solver.model.constraints = []
+            solver.cp_model.constraints = []
             for m in meta_constraints:
                 if m is meta:
                     continue
-                solver.model.constraints.extend(m.constraints)
+                solver.cp_model.constraints.extend(m.constraints)
             for h in hard:
-                solver.model.constraints.extend(h.constraints)
-            print("After", len(solver.model.constraints))
+                solver.cp_model.constraints.extend(h.constraints)
+            print("After", len(solver.cp_model.constraints))
             print("Before", len(meta_constraints))
             meta_constraints = [m for m in meta_constraints if m is not meta]
             print("After", len(meta_constraints))
@@ -490,16 +490,16 @@ def interactive_solving_mcs():
             # - remove meta-constraint from list of meta-constraints
             meta = meta_mus[i_meta]
             subconstraints_ids = {id(c_) for c_ in meta.constraints}
-            print("Before", len(solver.model.constraints))
+            print("Before", len(solver.cp_model.constraints))
 
-            solver.model.constraints = []
+            solver.cp_model.constraints = []
             for m in meta_constraints:
                 if m is meta:
                     continue
-                solver.model.constraints.extend(m.constraints)
+                solver.cp_model.constraints.extend(m.constraints)
             for h in hard:
-                solver.model.constraints.extend(h.constraints)
-            print("After", len(solver.model.constraints))
+                solver.cp_model.constraints.extend(h.constraints)
+            print("After", len(solver.cp_model.constraints))
             print("Before", len(meta_constraints))
             meta_constraints = [m for m in meta_constraints if m is not meta]
             print("After", len(meta_constraints))

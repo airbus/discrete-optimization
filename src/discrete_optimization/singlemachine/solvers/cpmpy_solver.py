@@ -106,11 +106,11 @@ class CpmpySingleMachineSolver(CpmpySolver):
                         "description": f"deadline of {deadline} for task 0 and 1"
                     },
                 )
-                self.model += impossible_constraints
+                self.cp_model += impossible_constraints
 
     def _init_cp_model(self) -> None:
         """Initializes the Constraint Programming (CP) model."""
-        self.model = cpmpy.Model()
+        self.cp_model = cpmpy.Model()
 
         num_jobs = self.problem.num_jobs
         p = self.problem.processing_times
@@ -125,7 +125,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
         self.meta_constraints["release"] = MetaCpmpyConstraint(
             name="release", constraints=bound_constraints
         )
-        self.model += bound_constraints
+        self.cp_model += bound_constraints
         ends = starts + p
         tardiness = cpmpy.intvar(lb=0, ub=horizon, shape=num_jobs, name="tardiness")
         self.variables = {"starts": starts, "ends": ends, "tardiness": tardiness}
@@ -148,7 +148,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
             name="no_overlap", constraints=no_overlap_constraints
         )
 
-        self.model += no_overlap_constraints
+        self.cp_model += no_overlap_constraints
 
         # 2. Tardiness Definition: Tardiness is the time a job is completed after its due date.
         tardiness_def_constraints = [
@@ -157,8 +157,8 @@ class CpmpySingleMachineSolver(CpmpySolver):
         self.meta_constraints["tardiness_def"] = MetaCpmpyConstraint(
             name="tardiness_def", constraints=tardiness_def_constraints
         )
-        self.model += tardiness_def_constraints
-        self.model.minimize(
+        self.cp_model += tardiness_def_constraints
+        self.cp_model.minimize(
             cpmpy.sum(
                 [
                     self.problem.weights[i] * tardiness[i]
@@ -169,7 +169,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
 
     def _init_lp_model(self) -> None:
         """Initializes the Mixed-Integer Linear Programming (LP) model."""
-        self.model = cpmpy.Model()
+        self.cp_model = cpmpy.Model()
         num_jobs = self.problem.num_jobs
         p = self.problem.processing_times
         d = self.problem.due_dates
@@ -194,7 +194,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
         self.meta_constraints["release"] = MetaCpmpyConstraint(
             name="release", constraints=release_date_constraints
         )
-        self.model += release_date_constraints
+        self.cp_model += release_date_constraints
         # T_i = tardiness of job i.
         tardiness = cpmpy.intvar(lb=0, ub=horizon, shape=num_jobs, name="tardiness")
         self.variables = {
@@ -213,7 +213,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
         self.meta_constraints["ordering"] = MetaCpmpyConstraint(
             name="ordering", constraints=ordering_constraints
         )
-        self.model += ordering_constraints
+        self.cp_model += ordering_constraints
 
         # 2. Completion Time Constraints (using big-M for non-overlap)
         completion_time_constraints = []
@@ -234,7 +234,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
         self.meta_constraints["completion_time"] = MetaCpmpyConstraint(
             name="completion_time", constraints=completion_time_constraints
         )
-        self.model += completion_time_constraints
+        self.cp_model += completion_time_constraints
         # 3. Tardiness Definition: T_i >= C_i - d_i
         tardiness_def_constraints = [
             tardiness[i] >= completion_times[i] - d[i] for i in range(num_jobs)
@@ -242,7 +242,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
         self.meta_constraints["tardiness_def"] = MetaCpmpyConstraint(
             name="tardiness_def", constraints=tardiness_def_constraints
         )
-        self.model += tardiness_def_constraints
+        self.cp_model += tardiness_def_constraints
 
         transitivity_constraints = [
             x[i, j] + x[j, k] + x[k, i] <= 2
@@ -255,8 +255,8 @@ class CpmpySingleMachineSolver(CpmpySolver):
         self.meta_constraints["transitivity"] = MetaCpmpyConstraint(
             name="transitivity", constraints=transitivity_constraints
         )
-        self.model += transitivity_constraints
-        self.model.minimize(
+        self.cp_model += transitivity_constraints
+        self.cp_model.minimize(
             cpmpy.sum(
                 [
                     self.problem.weights[i] * tardiness[i]
@@ -291,7 +291,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
         Returns the list of soft meta-constraints for explanation purposes.
         These are constraints that can potentially be relaxed if the model is UNSAT.
         """
-        if self.model is None:
+        if self.cp_model is None:
             self.init_model()
 
         soft_constraints = []
@@ -311,7 +311,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
         Returns the list of hard meta-constraints.
         These constraints define the core logic of the problem and should not be relaxed.
         """
-        if self.model is None:
+        if self.cp_model is None:
             self.init_model()
 
         if self.model_type == SingleMachineModel.CP:

@@ -126,7 +126,7 @@ class _CpmpyCbClass:
 class CpmpySolver(CpSolver):
     """Generic cpmpy solver."""
 
-    model: Optional[Model] = None
+    cp_model: Optional[Model] = None
     cpm_status: SolverStatus = SolverStatus("Model")
     cpm_solver: Optional[SolverInterface] = None
 
@@ -147,7 +147,7 @@ class CpmpySolver(CpSolver):
         self.cb_object: _CpmpyCbClass = None
 
     def minimize_variable(self, var: Any) -> None:
-        self.model.minimize(var)
+        self.cp_model.minimize(var)
 
     def add_bound_constraint(self, var: Any, sign: SignEnum, value: int) -> list[Any]:
         if sign == SignEnum.LEQ:
@@ -162,7 +162,7 @@ class CpmpySolver(CpSolver):
             cstr = var > value
         else:
             raise NotImplementedError(sign)
-        self.model.add(cstr)
+        self.cp_model.add(cstr)
         return [cstr]
 
     def create_callback_function(self, callback: Callback):
@@ -190,9 +190,9 @@ class CpmpySolver(CpSolver):
     ) -> ResultStorage:
         if parameters_cp is None:
             parameters_cp = ParametersCp.default_cpsat()
-        if self.model is None:
+        if self.cp_model is None:
             self.init_model(**kwargs)
-            if self.model is None:  # for mypy
+            if self.cp_model is None:  # for mypy
                 raise RuntimeError(
                     "self.model must not be None after self.init_model()."
                 )
@@ -201,7 +201,7 @@ class CpmpySolver(CpSolver):
 
         solver_kwargs = dict(kwargs)
         if self.cpm_solver is None:  # this is the first solve call
-            self.cpm_solver = SolverLookup.get(self.solver_name, self.model)
+            self.cpm_solver = SolverLookup.get(self.solver_name, self.cp_model)
         solver_allowed_params = inspect.signature(self.cpm_solver.solve).parameters
         if "display" in solver_allowed_params.keys():
             solver_kwargs["display"] = self.create_callback_function(
@@ -576,7 +576,7 @@ class CpmpySolver(CpSolver):
             meta_constraints = (
                 self.get_soft_meta_constraints() + self.get_hard_meta_constraints()
             )
-        solver_constraints = _get_normalized_constraints(self.model.constraints)
+        solver_constraints = _get_normalized_constraints(self.cp_model.constraints)
         constraints_from_meta = _convert_normalized_metaconstraints_to_constraints(
             _normalize_metaconstraints(meta_constraints)
         )
@@ -597,7 +597,7 @@ class CpmpySolver(CpSolver):
             default set of soft constraints defining the problem
 
         """
-        return self.model.constraints
+        return self.cp_model.constraints
 
     def get_hard_constraints(self) -> list[Expression]:
         """Get hard fine constraints defining the internal model.

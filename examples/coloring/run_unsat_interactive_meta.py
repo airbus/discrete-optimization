@@ -48,8 +48,10 @@ if __name__ == "__main__":
             # - remove meta-constraint from list of meta-constraints
             meta = meta_mus[i_meta]
             subconstraints_ids = {id(c_) for c_ in meta.constraints}
-            solver.model.constraints = [
-                c for c in solver.model.constraints if id(c) not in subconstraints_ids
+            solver.cp_model.constraints = [
+                c
+                for c in solver.cp_model.constraints
+                if id(c) not in subconstraints_ids
             ]
             solver.reset_cpm_solver()  # so that model changes are take into account in next solve
             meta_constraints = [m for m in meta_constraints if m is not meta]

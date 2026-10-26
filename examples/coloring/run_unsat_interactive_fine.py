@@ -44,8 +44,8 @@ if __name__ == "__main__":
             )
             # remove constraint from model and soft constraints
             cstr = mus[i_cstr]
-            solver.model.constraints = [
-                c for c in solver.model.constraints if c is not cstr
+            solver.cp_model.constraints = [
+                c for c in solver.cp_model.constraints if c is not cstr
             ]
             solver.reset_cpm_solver()  # so that model changes are take into account in next solve
             soft_constraints = [c for c in soft_constraints if c is not cstr]

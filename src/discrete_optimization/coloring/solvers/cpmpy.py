@@ -55,7 +55,7 @@ class CpmpyColoringSolver(
         self._hard_constraint: Expression = x <= nbc
         constraints = soft_constraints + [self._hard_constraint]
 
-        self.model = Model(constraints, minimize=nbc)
+        self.cp_model = Model(constraints, minimize=nbc)
 
         self.variables["x"] = x
         self.variables["nb_colors"] = nbc
