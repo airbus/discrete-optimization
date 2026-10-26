@@ -34,6 +34,7 @@ class CpmpyKnapsackSolver(CpmpySolver, KnapsackSolver):
         self.variables: dict[str, Any] = {}
 
     def init_model(self, **kwargs: Any) -> None:
+        super().init_model(**kwargs)
         values = [
             self.problem.list_items[i].value for i in range(self.problem.nb_items)
         ]

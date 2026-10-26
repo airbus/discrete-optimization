@@ -178,6 +178,9 @@ class CpmpySolver(CpSolver):
         """
         self.cpm_solver = None
 
+    def init_model(self, **args: Any) -> None:
+        self.reset_cpm_solver()
+
     def solve(
         self,
         callbacks: Optional[list[Callback]] = None,

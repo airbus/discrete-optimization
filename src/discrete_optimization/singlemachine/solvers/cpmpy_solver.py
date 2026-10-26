@@ -63,6 +63,7 @@ class CpmpySingleMachineSolver(CpmpySolver):
         Builds the CPMpy model based on the chosen formalism (CP or LP).
         It defines variables, constraints, meta-constraints, and the objective function.
         """
+        super().init_model(**kwargs)
         self.model_type = model_type
         if self.model_type == SingleMachineModel.CP:
             self._init_cp_model()

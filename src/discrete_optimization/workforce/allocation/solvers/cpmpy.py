@@ -217,6 +217,7 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
             self.model += constraints
 
     def init_model(self, **args: Any) -> None:
+        super().init_model(**args)
         args = self.complete_with_default_hyperparameters(args)
         logger.info("Initializing model with following args:")
         for key, val in args.items():
@@ -589,6 +590,7 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
         return {mc.metadata["type"] for mc in self.meta_constraints}
 
     def init_model(self, **args: Any) -> None:
+        CpmpySolver.init_model(self, **args)
         args = self.complete_with_default_hyperparameters(args)
         if self.solver_name == "pysat":
             logger.debug(args["modelisation_allocation"])

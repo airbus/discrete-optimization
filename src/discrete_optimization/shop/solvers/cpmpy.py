@@ -41,6 +41,7 @@ class CpmpyShopSolver(CpmpySolver):
             return min(self._max_time, self.problem.get_makespan_upper_bound())
 
     def init_model(self, **kwargs: Any) -> None:
+        super().init_model(**kwargs)
         # optional parameters
         kwargs = self.complete_with_default_hyperparameters(kwargs)
         link_mode_to_duration = kwargs["link_mode_to_duration"]
