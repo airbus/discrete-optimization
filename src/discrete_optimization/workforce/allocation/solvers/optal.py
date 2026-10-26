@@ -6,8 +6,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation import (
-    AllocationOptalSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.optal.base import (
+    TasksOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -34,7 +37,9 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class OptalTeamAllocationSolver(AllocationOptalSolver[Task, UnaryResource]):
+class OptalTeamAllocationSolver(
+    AllocationCpBaseSolver[Task, UnaryResource], TasksOptalSolver[Task]
+):
     problem: TeamAllocationProblem
 
     def __init__(

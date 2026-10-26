@@ -11,10 +11,10 @@ from typing import Any, Optional, Union
 
 import numpy as np
 
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation import (
-    AllocationOptalSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
@@ -68,7 +68,7 @@ logger = logging.getLogger(__name__)
 
 class OptalAllocSchedulingSolver(
     SchedulingOptalSolver[Task],
-    AllocationOptalSolver[Task, UnaryResource],
+    AllocationCpBaseSolver[Task, UnaryResource],
     SolverAllocScheduling,
     WarmstartMixin,
 ):
@@ -112,7 +112,7 @@ class OptalAllocSchedulingSolver(
     time_bounds: float = 0
     status_bound: StatusSolver = None
 
-    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables["interval_var"][self.problem.tasks_to_index[task]]
 
     def get_task_unary_resource_is_present_variable(

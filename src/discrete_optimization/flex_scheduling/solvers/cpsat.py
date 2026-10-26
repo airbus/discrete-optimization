@@ -40,14 +40,17 @@ from discrete_optimization.flex_scheduling.problem import (
 )
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.cumulative_resource import (
-    CumulativeResourceSchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.cumulative_resource import (
+    CumulativeResourceSchedulingCpBaseSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.non_renewable_resource import (
-    NonRenewableCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.non_renewable_resource import (
+    NonRenewableCpBaseSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduling import (
-    PrecedenceSchedulingCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.precedence_scheduling import (
+    PrecedenceSchedulingCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -77,9 +80,10 @@ class DurationEncodingEnum(Enum):
 
 
 class CpSatFlexSolver(
-    PrecedenceSchedulingCpSatSolver[Task],
-    CumulativeResourceSchedulingCpSatSolver[Task, CumulativeResource, NoUnaryResource],
-    NonRenewableCpSatSolver[Task, NonRenewableResource, NoUnaryResource],
+    PrecedenceSchedulingCpBaseSolver[Task],
+    CumulativeResourceSchedulingCpBaseSolver[Task, CumulativeResource, NoUnaryResource],
+    NonRenewableCpBaseSolver[Task, NonRenewableResource, NoUnaryResource],
+    TasksCpSatSolver[Task],
     WarmstartMixin,
 ):
     hyperparameters = [

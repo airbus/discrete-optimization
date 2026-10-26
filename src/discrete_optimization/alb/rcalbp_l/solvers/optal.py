@@ -11,10 +11,10 @@ from discrete_optimization.alb.rcalbp_l.problem import (
     Task,
     WorkStation,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.allocation import (
-    AllocationOptalSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
     SchedulingOptalSolver,
 )
 
@@ -25,7 +25,7 @@ except ImportError:
 
 
 class OptalRCALBPLSolver(
-    AllocationOptalSolver[Task, WorkStation], SchedulingOptalSolver[Task]
+    AllocationCpBaseSolver[Task, WorkStation], SchedulingOptalSolver[Task]
 ):
     problem: RCALBPLProblem
     variables: dict
@@ -379,7 +379,7 @@ class OptalRCALBPLSolver(
     ) -> "cp.BoolExpr":
         return self.variables["allocations"][(task[0], task[1], unary_resource)]
 
-    def get_task_interval_variable(self, task: Task) -> "cp.IntervalVar":
+    def get_task_interval(self, task: Task) -> "cp.IntervalVar":
         return self.variables["main_intervals"][task]
 
     def retrieve_solution(self, result: "cp.SolveResult") -> RCALBPLSolution:
@@ -427,7 +427,7 @@ class OptalRCALBPLSolver(
 
 
 class OptalRCALBPLSolverV2(
-    AllocationOptalSolver[Task, WorkStation], SchedulingOptalSolver[Task]
+    AllocationCpBaseSolver[Task, WorkStation], SchedulingOptalSolver[Task]
 ):
     problem: RCALBPLProblem
     variables: dict
@@ -788,7 +788,7 @@ class OptalRCALBPLSolverV2(
     ) -> "cp.BoolExpr":
         return self.variables["allocations"][(task[0], task[1], unary_resource)]
 
-    def get_task_interval_variable(self, task: Task) -> "cp.IntervalVar":
+    def get_task_interval(self, task: Task) -> "cp.IntervalVar":
         return self.variables["main_intervals"][task]
 
     def retrieve_solution(self, result: "cp.SolveResult") -> RCALBPLSolution:

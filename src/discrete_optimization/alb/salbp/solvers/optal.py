@@ -3,7 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from typing import Any, Iterable
 
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -93,12 +93,12 @@ class OptalSalbpSolver(SchedulingOptalSolver[Task], WarmstartMixin):
 
     def retrieve_solution(self, result: "cp.SolveResult") -> Solution:
         allocation = [
-            int(result.solution.get_start(self.get_task_interval_variable(task)))
+            int(result.solution.get_start(self.get_task_interval(task)))
             for task in self.problem.tasks
         ]
         return SalbpSolution(problem=self.problem, allocation_to_station=allocation)
 
-    def get_task_interval_variable(self, task: Task) -> "cp.IntervalVar":
+    def get_task_interval(self, task: Task) -> "cp.IntervalVar":
         return self.variables["intervals"][task]
 
     def set_warm_start(self, solution: SalbpSolution) -> None:
@@ -106,7 +106,7 @@ class OptalSalbpSolver(SchedulingOptalSolver[Task], WarmstartMixin):
         self.warm_start_solution = cp.Solution()
         for t in self.problem.tasks:
             self.warm_start_solution.set_value(
-                self.get_task_interval_variable(t),
+                self.get_task_interval(t),
                 solution.get_start_time(t),
                 solution.get_end_time(t),
             )
@@ -190,7 +190,7 @@ class OptalSalbp12Solver(SchedulingOptalSolver[Task], WarmstartMixin):
 
     def retrieve_solution(self, result: "cp.SolveResult") -> Solution:
         allocation = [
-            int(result.solution.get_start(self.get_task_interval_variable(task)))
+            int(result.solution.get_start(self.get_task_interval(task)))
             for task in self.problem.tasks
         ]
         return SalbpSolution(problem=self.problem, allocation_to_station=allocation)
@@ -213,7 +213,7 @@ class OptalSalbp12Solver(SchedulingOptalSolver[Task], WarmstartMixin):
     def add_lexico_constraint(self, obj: str, value: float) -> Iterable[Any]:
         self.cp_model.enforce(self.variables["objs"][obj] <= value)
 
-    def get_task_interval_variable(self, task: Task) -> "cp.IntervalVar":
+    def get_task_interval(self, task: Task) -> "cp.IntervalVar":
         return self.variables["intervals"][task]
 
     def set_warm_start(self, solution: SalbpSolution) -> None:
@@ -221,7 +221,7 @@ class OptalSalbp12Solver(SchedulingOptalSolver[Task], WarmstartMixin):
         self.warm_start_solution = cp.Solution()
         for t in self.problem.tasks:
             self.warm_start_solution.set_value(
-                self.get_task_interval_variable(t),
+                self.get_task_interval(t),
                 solution.get_start_time(t),
                 solution.get_end_time(t),
             )

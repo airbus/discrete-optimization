@@ -14,8 +14,11 @@ from ortools.sat.python.cp_model import (
     ObjLinearExprT,
 )
 
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
-    AllocationCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -34,7 +37,10 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatKnapsackSolver(
-    AllocationCpSatSolver[Item, Knapsack], KnapsackSolver, WarmstartMixin
+    AllocationCpBaseSolver[Item, Knapsack],
+    TasksCpSatSolver[Item],
+    KnapsackSolver,
+    WarmstartMixin,
 ):
     def __init__(
         self,

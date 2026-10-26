@@ -24,6 +24,7 @@ from discrete_optimization.generic_tasks_tools.skill import NoSkill
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     SinglemodeGenericSchedulingAutoCpSatSolver,
 )
+from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     EnumHyperparameter,
@@ -200,21 +201,12 @@ class CPSatAllocSchedulingSolver(
         sol = transform_solution_from_raw_generic_to_wf_sched(
             raw_sol=raw_sol, problem=self.problem
         )
-        sol._intern_obj = raw_sol.metadata
         return sol
 
-    def retrieve_tasks_variables(
-        self, cpsolvercb: CpSolverSolutionCallback
-    ) -> RawSolution[Task, UnaryResource, NoSkill]:
-        """Create solution at temporary format from cpsat variables.
+    def retrieve_solution(self, cpsolvercb: CpSolverSolutionCallback) -> Solution:
+        # retrieve solution
+        sol = super().retrieve_solution(cpsolvercb)
 
-        Override it to
-        - add logs
-        - store objective variables values in metadata
-
-        """
-        # retrieve main tasks variables
-        raw_sol = super().retrieve_tasks_variables(cpsolvercb)
         # log objectives
         logger.info(f"Objs = {[cpsolvercb.value(x) for x in self.variables['objs']]}")
         logger.info(
@@ -227,9 +219,12 @@ class CPSatAllocSchedulingSolver(
                     f"Value : {cpsolvercb.value(self.variables['resched_objs'][obj])}"
                 )
         # store objectives
-        for obj in self.variables["objectives"]:
-            raw_sol.metadata[obj] = cpsolvercb.value(self.variables["objectives"][obj])
-        return raw_sol
+        sol._intern_obj = {
+            obj: cpsolvercb.value(self.variables["objectives"][obj])
+            for obj in self.variables["objectives"]
+        }
+
+        return sol
 
     def is_compatible_task_unary_resource(
         self, task: Task, unary_resource: UnaryResource

@@ -15,8 +15,11 @@ from discrete_optimization.facility.problem import (
     FacilityProblem,
     FacilitySolution,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.allocation import (
-    AllocationCpSatSolver,
+from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
+    AllocationCpBaseSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+    TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import WarmstartMixin
@@ -24,7 +27,11 @@ from discrete_optimization.generic_tools.do_solver import WarmstartMixin
 logger = logging.getLogger(__name__)
 
 
-class CpSatFacilitySolver(AllocationCpSatSolver[Customer, Facility], WarmstartMixin):
+class CpSatFacilitySolver(
+    AllocationCpBaseSolver[Customer, Facility],
+    TasksCpSatSolver[Customer],
+    WarmstartMixin,
+):
     def set_warm_start(self, solution: FacilitySolution) -> None:
         self.cp_model.ClearHints()
         alloc = {

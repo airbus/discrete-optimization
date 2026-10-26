@@ -5,11 +5,8 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.multimode import (
-    MultimodeOptalSolver,
-)
-from discrete_optimization.generic_tasks_tools.solvers.optalcp.scheduling import (
-    SchedulingOptalSolver,
+from discrete_optimization.generic_tasks_tools.solvers.optal.multimode_scheduling import (
+    MultimodeSchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -30,7 +27,7 @@ else:
 
 
 class OptalRcpspSolver(
-    SchedulingOptalSolver[Task], MultimodeOptalSolver[Task], RcpspSolver, WarmstartMixin
+    MultimodeSchedulingOptalSolver[Task], RcpspSolver, WarmstartMixin
 ):
     problem: RcpspProblem
 
@@ -151,11 +148,11 @@ class OptalRcpspSolver(
                             )
                 self.cp_model.enforce(self.cp_model.sum(list_conso) <= capa)
 
-    def get_task_interval_variable(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables_dict["intervals"][task]
 
-    def get_task_mode_is_present_variable(self, task: Task, mode: int) -> cp.BoolExpr:
-        return self.cp_model.presence(self.variables_dict["opt_intervals"][task][mode])
+    def get_task_mode_interval(self, task: Task, mode: int) -> cp.IntervalVar:
+        return self.variables_dict["opt_intervals"][task][mode]
 
     def set_warm_start(self, solution: RcpspSolution) -> None:
         solution_optal = cp.Solution()
@@ -163,7 +160,7 @@ class OptalRcpspSolver(
             st = solution.get_start_time(task)
             end = solution.get_end_time(task)
             mode = solution.get_mode(task)
-            solution_optal.set_value(self.get_task_interval_variable(task), st, end)
+            solution_optal.set_value(self.get_task_interval(task), st, end)
             modes = self.problem.get_task_modes(task)
             if len(modes) > 0:
                 solution_optal.set_value(

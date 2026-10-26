@@ -5,12 +5,11 @@
 #  Note : Model could most likely be improved with
 #  https://github.com/google/or-tools/blob/stable/examples/python/rcpsp_sat.py
 import logging
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import Any
 
 from ortools.sat.python.cp_model import (
     Constraint,
-    CpSolverSolutionCallback,
     LinearExprT,
     ObjLinearExprT,
 )
@@ -29,12 +28,13 @@ from discrete_optimization.generic_tasks_tools.objectives.resource_levels import
     NonRenewableResourceLevelObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.skill import NoSkill
+from discrete_optimization.generic_tasks_tools.solvers.base.objectives.resource_levels import (
+    CalendarRenewableResourceLevelModelerCpBase,
+    NonRenewableResourceLevelModelerCpBase,
+)
+from discrete_optimization.generic_tasks_tools.solvers.base.typing import CpVar
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
-)
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.resource_levels import (
-    CalendarRenewableResourceLevelModelerCpSat,
-    NonRenewableResourceLevelModelerCpSat,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -175,8 +175,8 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
     objective = (
         Objective.CUSTOM
     )  # custom objective (linear combination of makespan and nb_used_resources)
-    renewable_obj_modeler: CalendarRenewableResourceLevelModelerCpSat = None
-    non_renewable_obj_modeler: NonRenewableResourceLevelModelerCpSat = None
+    renewable_obj_modeler: CalendarRenewableResourceLevelModelerCpBase = None
+    non_renewable_obj_modeler: NonRenewableResourceLevelModelerCpBase = None
     resources_level_obj_var: LinearExprT = None
 
     def init_model(self, **kwargs):
@@ -203,7 +203,7 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
                     weight_objective=1,
                 )
             )
-            renewable_objective_cpsat = CalendarRenewableResourceLevelModelerCpSat(
+            renewable_objective_cpsat = CalendarRenewableResourceLevelModelerCpBase(
                 solver=self, objective_computer=renewable_objective_computer
             )
             non_renewable_objective_computer = (
@@ -215,7 +215,7 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
                     weight_objective=1,
                 )
             )
-            non_renewable_objective_cpsat = NonRenewableResourceLevelModelerCpSat(
+            non_renewable_objective_cpsat = NonRenewableResourceLevelModelerCpBase(
                 solver=self, objective_computer=non_renewable_objective_computer
             )
             resources_level_var = (
@@ -268,27 +268,25 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
         return True
 
     def retrieve_tasks_variables(
-        self, cpsolvercb: CpSolverSolutionCallback
+        self, solution_value_fn: Callable[[CpVar], int | bool]
     ) -> RawSolution[Task, NoUnaryResource, NoSkill]:
         """Construct each task variable from the cpsat solver internal solution.
 
         It will be called each time the cpsat solver find a new solution.
-        At that point, value of internal variables are accessible via `cpsolvercb.value(VARIABLE_NAME)`.
-
         We override the method from generic auto solver to add the internal objective value.
 
         Args:
-            cpsolvercb: the ortools callback called when the cpsat solver finds a new solution.
+            solution_value_fn: callable returning the solution value for each cp variable given as argument
 
         Returns:
             the task variables for the intermediate solution
 
         """
-        raw_sol = super().retrieve_tasks_variables(cpsolvercb)
+        raw_sol = super().retrieve_tasks_variables(solution_value_fn)
 
         raw_sol.metadata.update(
             {
-                obj: cpsolvercb.value(self._internal_objective(obj))
+                obj: solution_value_fn(self._internal_objective(obj))
                 for obj in self.get_lexico_objectives_available()
             }
         )

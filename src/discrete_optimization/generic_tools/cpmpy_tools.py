@@ -8,12 +8,20 @@ import inspect
 from abc import abstractmethod
 from collections.abc import Callable
 from enum import Enum
-from typing import Any, Optional
+from typing import Any, Iterable, Optional, Sequence
 
 import cpmpy
-from cpmpy import SolverLookup
+import numpy as np
+from cpmpy import InDomain, Maximum, Minimum, SolverLookup
 from cpmpy.expressions.core import BoolVal, Expression
-from cpmpy.expressions.variables import NDVarArray, _BoolVarImpl
+from cpmpy.expressions.utils import implies
+from cpmpy.expressions.variables import (
+    NDVarArray,
+    _BoolVarImpl,
+    _IntVarImpl,
+    boolvar,
+    intvar,
+)
 from cpmpy.model import Model
 from cpmpy.solvers.solver_interface import ExitStatus, SolverInterface, SolverStatus
 from cpmpy.tools import make_assump_model
@@ -36,7 +44,6 @@ from discrete_optimization.generic_tools.callbacks.callback import (
 from discrete_optimization.generic_tools.cp_tools import (
     CpSolver,
     ParametersCp,
-    SignEnum,
 )
 from discrete_optimization.generic_tools.do_problem import (
     ParamsObjectiveFunction,
@@ -145,25 +152,7 @@ class CpmpySolver(CpSolver):
         else:
             self.solver_name = solver_name
         self.cb_object: _CpmpyCbClass = None
-
-    def minimize_variable(self, var: Any) -> None:
-        self.cp_model.minimize(var)
-
-    def add_bound_constraint(self, var: Any, sign: SignEnum, value: int) -> list[Any]:
-        if sign == SignEnum.LEQ:
-            cstr = var <= value
-        elif sign == SignEnum.UEQ:
-            cstr = var >= value
-        elif sign == SignEnum.EQUAL:
-            cstr = var == value
-        elif sign == SignEnum.LESS:
-            cstr = var < value
-        elif sign == SignEnum.UP:
-            cstr = var > value
-        else:
-            raise NotImplementedError(sign)
-        self.cp_model.add(cstr)
-        return [cstr]
+        self.hints: dict[_IntVarImpl | _BoolVarImpl, int | bool] = {}
 
     def create_callback_function(self, callback: Callback):
         self.cb_object = _CpmpyCbClass(do_solver=self, callback=callback)
@@ -235,6 +224,11 @@ class CpmpySolver(CpSolver):
                     else 1
                 )
             )
+        # warmstart?
+        if self.hints:
+            cpm_vars, values = tuple(zip(*self.hints.items()))
+            self.cpm_solver.solution_hint(cpm_vars=list(cpm_vars), vals=list(values))
+        # solve
         self.cpm_solver.solve(time_limit=time_limit, **solver_kwargs)
         self.cpm_status = self.cpm_solver.status()
         self.status_solver = map_exitstatus2statussolver[self.cpm_status.exitstatus]
@@ -650,6 +644,167 @@ class CpmpySolver(CpSolver):
 
         """
         ...
+
+    def minimize_variable(self, var: Any) -> None:
+        self.cp_model.minimize(var)
+
+    def maximize_variable(self, var: Any) -> None:
+        self.cp_model.maximize(var)
+
+    def add_bool_constraint(self, cstr: Any) -> Any:
+        self.cp_model.add(cstr)
+        return cstr
+
+    def create_int_var(self, lb: int, ub: int, name: str) -> Any:
+        return intvar(lb=lb, ub=ub, name=name)
+
+    def create_bool_var(self, name: str) -> Any:
+        return boolvar(name=name)
+
+    def add_max_equality(self, target: Any, variables: Iterable[Any]) -> list[Any]:
+        cstr = target == Maximum(list(variables))
+        self.cp_model.add(cstr)
+        return [cstr]
+
+    def add_min_equality(self, target: Any, variables: Iterable[Any]) -> list[Any]:
+        cstr = target == Minimum(list(variables))
+        self.cp_model.add(cstr)
+        return [cstr]
+
+    def add_abs_equality(self, target: Any, expr: Any) -> list[Any]:
+        cstr = target == abs(expr)
+        self.cp_model.add(cstr)
+        return [cstr]
+
+    def create_int_var_from_possible_values(
+        self, possible_values: Iterable[int], name: str
+    ) -> Any:
+        lb = min(possible_values)
+        ub = max(possible_values)
+        var = intvar(lb=lb, ub=ub, name=name)
+        self.cp_model.add(InDomain(var, tuple(possible_values)))
+        return var
+
+    def create_int_var_from_flat_intervals(
+        self, flat_intervals: list[int], name: str
+    ) -> Any:
+        lb = min(flat_intervals)
+        ub = max(flat_intervals)
+        var = intvar(lb=lb, ub=ub, name=name)
+        self.cp_model.add(
+            cpmpy.any(
+                (flat_intervals[i * 2] <= var) & (var <= flat_intervals[i * 2 + 1])
+                for i in range(len(flat_intervals) // 2)
+            )
+        )
+        return var
+
+    def add_element(
+        self, index: Any, expressions: Sequence[Any], target: Any
+    ) -> list[Any]:
+        cstr = target == cpmpy.Element(arr=expressions, idx=index)
+        self.cp_model.add(cstr)
+        return [cstr]
+
+    def add_modulo_equality(self, target: Any, expr: Any, mod: Any) -> list[Any]:
+        cstr = target == (expr % mod)
+        self.cp_model.add(cstr)
+        return [cstr]
+
+    def add_implication(self, left_bool_expr: Any, right_bool_expr: Any) -> list[Any]:
+        if isinstance(right_bool_expr, list):
+            # add implication for each right member
+            return [
+                cstr
+                for right in right_bool_expr
+                for cstr in self.add_implication(left_bool_expr, right)
+            ]
+        # From now, right hand is an expression or a literal
+        if isinstance(left_bool_expr, Expression):
+            cstr = left_bool_expr.implies(right_bool_expr)
+        elif np.isscalar(left_bool_expr):
+            left_eval = bool(left_bool_expr)
+            cstr = implies(left_eval, right_bool_expr)
+        else:
+            # multiple left hand: all must be true to imply right hand
+            aggregated_left_hand = cpmpy.all(
+                expr if isinstance(expr, Expression) else bool(expr)
+                for expr in left_bool_expr
+            )
+            return self.add_implication(aggregated_left_hand, right_bool_expr)
+        # remove right_bool_expr from constraints if there (e.g. if constructed via `self.add_exactly_one()`),
+        # as only the implication must be in the constraints
+        if isinstance(right_bool_expr, Expression):
+            self.cp_model.constraints = [
+                constraint
+                for constraint in self.cp_model.constraints
+                if id(constraint) != id(right_bool_expr)
+            ]
+        # add newly constructed constraint
+        self.cp_model.add(cstr)
+        return [cstr]
+
+    def add_implication_bool_and(
+        self, left_bool_expr: Any, right_bool_exprs: Sequence[Any]
+    ) -> list[Any]:
+        return super().add_implication_bool_and(
+            left_bool_expr=left_bool_expr, right_bool_exprs=right_bool_exprs
+        )
+
+    def add_implication_exactly_one(
+        self, left_bool_expr: Any, right_bool_exprs: Iterable[Any]
+    ) -> list[Any]:
+        return super().add_implication_exactly_one(
+            left_bool_expr=left_bool_expr, right_bool_exprs=right_bool_exprs
+        )
+
+    def add_implication_at_least_one(
+        self, left_bool_expr: Any, right_bool_exprs: Iterable[Any]
+    ) -> list[Any]:
+        return super().add_implication_at_least_one(
+            left_bool_expr=left_bool_expr, right_bool_exprs=right_bool_exprs
+        )
+
+    def add_implication_in_intervals(
+        self, left_bool_expr: Any, right_expr: Any, intervals: Iterable[tuple[int, int]]
+    ) -> list[Any]:
+        return super().add_implication_in_intervals(
+            left_bool_expr=left_bool_expr, right_expr=right_expr, intervals=intervals
+        )
+
+    def add_allowed_assignments(
+        self, variables: Sequence[Any], values: Iterable[Sequence[int]]
+    ) -> list[Any]:
+        cstr = cpmpy.Table(array=variables, table=list(values))
+        self.cp_model.add(cstr)
+        return [cstr]
+
+    def bool_and(self, exprs: Sequence[Any]) -> Any:
+        return cpmpy.all(exprs)
+
+    def at_least_one(self, exprs: Iterable[Any]) -> Any:
+        return cpmpy.any(exprs)
+
+    def add_exactly_one(self, exprs: Iterable[Any]) -> list[Any]:
+        return super().add_exactly_one(exprs)
+
+    def add_at_most_one(self, exprs: Iterable[Any]) -> list[Any]:
+        return super().add_at_most_one(exprs)
+
+    def add_at_least_one(self, exprs: Iterable[Any]) -> list[Any]:
+        return super().add_at_least_one(exprs)
+
+    def hint_solution(self, hints: dict[Any, int | bool]) -> None:
+        self.hints = hints
+
+    def remove_constraints(self, constraints: Iterable[Any]) -> None:
+        constraints_to_remove_ids = {id(constraint) for constraint in constraints}
+        self.cp_model.constraints = [
+            cstr
+            for cstr in self.cp_model.constraints
+            if id(cstr) not in constraints_to_remove_ids
+        ]
+        self.reset_cpm_solver()
 
 
 class MetaCpmpyConstraint(MetaConstraint[Expression]):
