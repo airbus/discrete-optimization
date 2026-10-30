@@ -48,7 +48,6 @@ class CpmpyShopSolver(CpmpySolver):
         self._max_time: int | None = kwargs.get(
             "max_time", None
         )  # update the upper bound for makespan
-        self.cp_model = cp.Model()
         # Decision `start[j]`: integer start time for each job `j`
         start = cp.intvar(
             0,

@@ -11,7 +11,7 @@ from typing import Any, Optional, Union
 
 import cpmpy
 import cpmpy as cp
-from cpmpy import AllDifferent, AllEqual, Model, boolvar
+from cpmpy import AllDifferent, AllEqual, boolvar
 from cpmpy.expressions.variables import NDVarArray
 from cpmpy.model import Expression
 from cpmpy.solvers.ortools import OrtSolutionCounter
@@ -253,7 +253,6 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
         symmbreak_on_used = kwargs["symmbreak_on_used"]
         add_lower_bound_nb_teams = kwargs["add_lower_bound_nb_teams"]
         assert include_pair_overlap or overlapping_advanced
-        self.cp_model = Model()
         domains_for_task: list[list[int]] = (
             self.problem.compute_allowed_team_index_all_task()
         )
@@ -354,7 +353,6 @@ class CPMpyTeamAllocationSolver(CpmpySolver, TeamAllocationSolver):
         assert include_pair_overlap or overlapping_advanced
         number_of_activities = self.problem.number_of_activity
         number_of_teams = self.problem.number_of_teams
-        self.cp_model = cpmpy.Model()
         if "allocation" in kwargs:
             allocation = kwargs["allocation"]
         else:
@@ -624,7 +622,6 @@ class CPMpyTeamAllocationSolverStoreConstraintInfo(CPMpyTeamAllocationSolver):
         symmbreak_on_used = kwargs["symmbreak_on_used"]
         add_lower_bound_nb_teams = kwargs["add_lower_bound_nb_teams"]
         assert include_pair_overlap or overlapping_advanced
-        self.cp_model = Model()
         if include_all_binary_vars:
             alloc = cpmpy.boolvar(
                 shape=(self.problem.number_of_activity, self.problem.number_of_teams),
