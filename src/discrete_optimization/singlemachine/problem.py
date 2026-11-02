@@ -78,10 +78,16 @@ class WTSolution(SchedulingSolution[Task]):
         super().__init__(problem=problem)
         self.schedule = schedule
         self.permutation = permutation
-        self.compute_schedule_from_permutation()
+        if self.schedule is None and self.permutation is not None:
+            self.compute_schedule_from_permutation()
+        elif self.permutation is None and self.schedule is not None:
+            self.compute_permutation_from_schedule()
 
     def is_present(self, task: Task) -> bool:
-        return self.schedule[task][0] is not None
+        if self.schedule is None or task >= len(self.schedule):
+            return False
+        start = self.schedule[task][0]
+        return start is not None and start is not AbsentValue.ABSENT
 
     def compute_schedule_from_permutation(self):
         if self.schedule is None:
@@ -99,11 +105,22 @@ class WTSolution(SchedulingSolution[Task]):
                 current_time = schedule[j][1]
             self.schedule = schedule
 
+    def compute_permutation_from_schedule(self):
+        if self.schedule is not None:
+            scheduled_tasks = [
+                (t, self.schedule[t][0])
+                for t in range(len(self.schedule))
+                if self.schedule[t][0] is not None
+                and self.schedule[t][0] is not AbsentValue.ABSENT
+            ]
+            scheduled_tasks.sort(key=lambda x: (x[1], x[0]))
+            self.permutation = [t for t, _ in scheduled_tasks]
+
     def lazy_copy(self) -> "Solution":
         return WTSolution(
             problem=self.problem,
-            # schedule=self.schedule,
-            permutation=self.permutation,
+            schedule=list(self.schedule) if self.schedule is not None else None,
+            permutation=list(self.permutation) if self.permutation is not None else None,
         )
 
     def copy(self) -> "Solution":
@@ -118,8 +135,11 @@ class WTSolution(SchedulingSolution[Task]):
     def change_problem(self, new_problem: Problem) -> None:
         super().change_problem(new_problem)
         # invalidate evaluation results
-        self.schedule = None
-        self.compute_schedule_from_permutation()
+        if self.permutation is not None:
+            self.schedule = None
+            self.compute_schedule_from_permutation()
+        elif self.schedule is not None:
+            self.compute_permutation_from_schedule()
 
 
 class WeightedTardinessProblem(
