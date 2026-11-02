@@ -446,10 +446,6 @@ def test_problem(caplog):
     [False, True],
 )
 @pytest.mark.parametrize(
-    "use_demand_variables_for_non_renewable_resources",
-    [False, True],
-)
-@pytest.mark.parametrize(
     "use_energy_constraints, keep_only_most_nested_energy_constraints",
     [(False, False), (True, False), (True, True)],
 )
@@ -457,7 +453,6 @@ def test_auto(
     objective,
     avoid_interval_optional_for_cumulative_resources,
     avoid_interval_optional_for_unary_resources,
-    use_demand_variables_for_non_renewable_resources,
     duplicate_start_var_per_mode,
     use_energy_constraints,
     keep_only_most_nested_energy_constraints,
@@ -483,7 +478,6 @@ def test_auto(
         solver.init_model(
             avoid_interval_optional_for_cumulative_resources=avoid_interval_optional_for_cumulative_resources,
             avoid_interval_optional_for_unary_resources=avoid_interval_optional_for_unary_resources,
-            use_demand_variables_for_non_renewable_resources=use_demand_variables_for_non_renewable_resources,
             duplicate_start_var_per_mode=duplicate_start_var_per_mode,
             use_energy_constraints=use_energy_constraints,
             keep_only_most_nested_energy_constraints=keep_only_most_nested_energy_constraints,

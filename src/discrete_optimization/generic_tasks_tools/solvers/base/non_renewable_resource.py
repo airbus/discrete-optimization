@@ -152,7 +152,6 @@ class NonRenewableCpBaseSolver(
         If demand variables are indeed created in the cp_model, this should be overriden to return it
         so that non renewable resource constraints are constraining these variables.
 
-        Needed if `self.use_demand_variables_for_non_renewable_resources` is set to True.
 
         Args:
             task:
