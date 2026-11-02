@@ -124,11 +124,6 @@ class GenericSchedulingAutoCpBaseSolver(
             default=True,
         ),
         CategoricalHyperparameter(
-            name="use_demand_variables_for_non_renewable_resources",
-            choices=[True, False],
-            default=False,
-        ),
-        CategoricalHyperparameter(
             name="add_redundant_skill_cumulative_constraints",
             choices=[True, False],
             default=False,
@@ -168,9 +163,6 @@ class GenericSchedulingAutoCpBaseSolver(
     # Multimode settings
     duplicate_start_var_per_mode = False
     """Whether adding a start variable for each task mode."""
-    # Non-renewable resource settings
-    use_demand_variables_for_non_renewable_resources: bool = False
-    """Whether using dedicated demand variables or a linear combination with is_present variables to compute demand."""
     # Energy constraints settings
     use_energy_constraints = False
     """Whether using energy constraints."""
@@ -363,7 +355,6 @@ class GenericSchedulingAutoCpBaseSolver(
         use_cpm_for_task_bounds: Optional[bool] = None,
         avoid_interval_optional_for_unary_resources: Optional[bool] = None,
         avoid_interval_optional_for_cumulative_resources: Optional[bool] = None,
-        use_demand_variables_for_non_renewable_resources: Optional[bool] = None,
         duplicate_start_var_per_mode: Optional[bool] = None,
         use_energy_constraints: Optional[bool] = None,
         keep_only_most_nested_energy_constraints: Optional[bool] = None,
@@ -401,10 +392,6 @@ class GenericSchedulingAutoCpBaseSolver(
         if avoid_interval_optional_for_cumulative_resources is not None:
             self.avoid_interval_optional_for_cumulative_resources = (
                 avoid_interval_optional_for_cumulative_resources
-            )
-        if use_demand_variables_for_non_renewable_resources is not None:
-            self.use_demand_variables_for_non_renewable_resources = (
-                use_demand_variables_for_non_renewable_resources
             )
         if duplicate_start_var_per_mode is not None:
             self.duplicate_start_var_per_mode = duplicate_start_var_per_mode

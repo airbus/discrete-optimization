@@ -124,22 +124,16 @@ def base_rcpsp_problem():
     "avoid_interval_optional_for_cumulative_resources",
     [True, False],
 )
-@pytest.mark.parametrize(
-    "use_demand_variables_for_non_renewable_resources",
-    [True, False],
-)
 def test_cpsat_with_different_model_options(
     toy_problem,
     avoid_interval_optional_for_unary_resources,
     avoid_interval_optional_for_cumulative_resources,
-    use_demand_variables_for_non_renewable_resources,
 ):
     """Test CP-SAT solver with different model configuration options."""
     solver = CpSatRcpspResourceDependentSolver(toy_problem)
     solver.init_model(
         avoid_interval_optional_for_unary_resources=avoid_interval_optional_for_unary_resources,
         avoid_interval_optional_for_cumulative_resources=avoid_interval_optional_for_cumulative_resources,
-        use_demand_variables_for_non_renewable_resources=use_demand_variables_for_non_renewable_resources,
     )
 
     res = solver.solve(time_limit=10)
