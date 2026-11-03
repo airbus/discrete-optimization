@@ -138,7 +138,7 @@ class CalendarPreemptiveCpBaseSolver(
                     self.get_duration_variable(task) == int(possible_duration),
                 )
             self.add_bool_constraint(
-                sum([dictionary_indicators[k] for k in dictionary_indicators])
+                self.sum([dictionary_indicators[k] for k in dictionary_indicators])
                 == is_present_mode
             )
         return dictionary_indicators
@@ -229,7 +229,7 @@ class CalendarPreemptiveCpBaseSolver(
                         )
 
             self._is_preempted = is_preempted_task_mode
-            self._nb_preempted_tasks = sum(
+            self._nb_preempted_tasks = self.sum(
                 [is_preempted_task_mode[k] for k in is_preempted_task_mode]
             )
         return self._nb_preempted_tasks

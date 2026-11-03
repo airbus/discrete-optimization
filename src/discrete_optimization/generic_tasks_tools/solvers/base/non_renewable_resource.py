@@ -140,7 +140,7 @@ class NonRenewableCpBaseSolver(
                 if len(keys) == 1:
                     return d[keys[0]]
                 else:
-                    return sum([d[k] for k in keys])
+                    return self.sum([d[k] for k in keys])
         return 0
 
     def get_non_renewable_resource_demand_variable(
@@ -174,7 +174,7 @@ class NonRenewableCpBaseSolver(
 
         """
         self.add_bool_constraint(
-            sum(
+            self.sum(
                 self.get_non_renewable_resource_demand_variable(
                     task=task, resource=resource
                 )

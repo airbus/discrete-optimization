@@ -74,7 +74,7 @@ class AllocationSwitchModelerCpBase(
     def get_objective_expr(self) -> LinearExpr:
         if not self.allocation_change_variables_initialized:
             self.create_allocation_change_variables()
-        return sum(
+        return self.solver.sum(
             [
                 self.allocation_change_variables[task, unary_resource]
                 * (

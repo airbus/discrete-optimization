@@ -59,14 +59,14 @@ class MultimodeCpBaseSolver(TasksCpBaseSolver[Task], MultimodeCpSolver[Task]):
             if mode_constraint == ModeConstraintType.SORTED_IMPLICATION:
                 # All true if vars[0] is true.
                 self.add_implication_bool_and(vars[0], vars)
-                self.add_implication(vars[0], sum(vars) == len(vars))
+                self.add_implication(vars[0], self.sum(vars) == len(vars))
                 for i in range(1, len(vars)):
                     self.add_implication(vars[i - 1], vars[i])
             if mode_constraint == ModeConstraintType.UNORDERED:
                 or_ = self.create_bool_var(f"constraint_mode_active_{i}")
                 self.add_implication_bool_and(or_, vars)
-                self.add_implication(or_, sum(vars) == len(vars))
-                self.add_implication(~or_, sum(vars) == 0)
+                self.add_implication(or_, self.sum(vars) == len(vars))
+                self.add_implication(~or_, self.sum(vars) == 0)
         self.add_mode_subset_constraints()
 
     def add_mode_subset_constraints(self):
@@ -79,7 +79,7 @@ class MultimodeCpBaseSolver(TasksCpBaseSolver[Task], MultimodeCpSolver[Task]):
                     # Deactivate the constraint when not present
                     self.add_bool_constraint(
                         vars[k]
-                        == sum(
+                        == self.sum(
                             [
                                 self.get_task_mode_is_present_variable(
                                     task=list_task_mode[k][0], mode=m
@@ -92,7 +92,7 @@ class MultimodeCpBaseSolver(TasksCpBaseSolver[Task], MultimodeCpSolver[Task]):
                 else:
                     self.add_bool_constraint(
                         vars[k]
-                        == sum(
+                        == self.sum(
                             [
                                 self.get_task_mode_is_present_variable(
                                     task=list_task_mode[k][0], mode=m
@@ -104,14 +104,14 @@ class MultimodeCpBaseSolver(TasksCpBaseSolver[Task], MultimodeCpSolver[Task]):
             if mode_constraint == ModeConstraintType.SORTED_IMPLICATION:
                 # All true if vars[0] is true.
                 self.add_implication_bool_and(vars[0], vars)
-                self.add_implication(vars[0], sum(vars) == len(vars))
+                self.add_implication(vars[0], self.sum(vars) == len(vars))
                 for k in range(1, len(vars)):
                     self.add_implication(vars[k - 1], vars[k])
             if mode_constraint == ModeConstraintType.UNORDERED:
                 or_ = self.create_bool_var(f"constraint_mode_active_{i}")
                 self.add_implication_bool_and(or_, vars)
-                self.add_implication(or_, sum(vars) == len(vars))
-                self.add_implication(~or_, sum(vars) == 0)
+                self.add_implication(or_, self.sum(vars) == len(vars))
+                self.add_implication(~or_, self.sum(vars) == 0)
 
 
 class SinglemodeCpBaseSolver(MultimodeCpBaseSolver[Task]):

@@ -16,7 +16,7 @@ class ModeCostModelerCpBase(ObjectiveModelerCpBase):
     def get_objective_expr(self) -> LinearExpr:
         if not self.objective_computer.has_any_mode_cost():
             return 0
-        return sum(
+        return self.solver.sum(
             self.solver.get_task_mode_is_present_variable(task, mode) * mode_cost
             for task in self.solver.problem.tasks_list
             for mode in self.solver.problem.get_task_modes(task)

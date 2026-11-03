@@ -19,7 +19,7 @@ class ScheduledTasksCpBaseModeler(ObjectiveModelerCpBase):
     objective_computer: ScheduledTasksComputer
 
     def get_objective_expr(self) -> LinearExpr:
-        return sum(
+        return self.solver.sum(
             self.objective_computer.weight_per_task[t]
             * self.solver.get_task_is_present_variable(t)
             for t in self.objective_computer.weight_per_task

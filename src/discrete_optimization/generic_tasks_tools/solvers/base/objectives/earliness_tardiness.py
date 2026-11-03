@@ -109,28 +109,28 @@ class EarlinessTardinessCpBaseModeler(ObjectiveModelerCpBase, Generic[Task]):
     def get_objective_expr(self) -> LinearExpr:
         if not self.earliness_tardiness_vars_initialized:
             self._create_earliness_tardiness_vars()
-        sum_start_earliness = sum(
+        sum_start_earliness = self.solver.sum(
             [
                 self.earliness_start_vars[task]
                 * self.objective_computer.get_weight_start_for_earliness(task)
                 for task in self.earliness_start_vars
             ]
         )
-        sum_end_earliness = sum(
+        sum_end_earliness = self.solver.sum(
             [
                 self.earliness_end_vars[task]
                 * self.objective_computer.get_weight_end_for_earliness(task)
                 for task in self.earliness_end_vars
             ]
         )
-        sum_start_tardiness = sum(
+        sum_start_tardiness = self.solver.sum(
             [
                 self.tardiness_start_vars[task]
                 * self.objective_computer.get_weight_start_for_tardiness(task)
                 for task in self.tardiness_start_vars
             ]
         )
-        sum_end_tardiness = sum(
+        sum_end_tardiness = self.solver.sum(
             [
                 self.tardiness_end_vars[task]
                 * self.objective_computer.get_weight_end_for_tardiness(task)

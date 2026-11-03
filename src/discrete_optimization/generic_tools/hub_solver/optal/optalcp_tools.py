@@ -333,17 +333,8 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
     ) -> list[Any]:
         return super().add_allowed_assignments(variables=variables, values=values)
 
-    def bool_and(self, exprs: Sequence[Any]) -> Any:
-        return self.cp_model.sum(exprs) == len(exprs)
-
-    def exactly_one(self, exprs: Iterable[Any]) -> Any:
-        return self.cp_model.sum(exprs) == 1
-
-    def at_most_one(self, exprs: Iterable[Any]) -> Any:
-        return self.cp_model.sum(exprs) <= 1
-
-    def at_least_one(self, exprs: Iterable[Any]) -> Any:
-        return self.cp_model.sum(exprs) >= 1
+    def sum(self, exprs: Iterable[Any]) -> Any:
+        return self.cp_model.sum(exprs)
 
     def add_exactly_one(self, exprs: Iterable[Any]) -> list[Any]:
         return super().add_exactly_one(exprs)

@@ -166,4 +166,10 @@ class SoftTimePenaltyModelerCpBase(ObjectiveModelerCpBase):
     def get_objective_expr(self) -> LinearExpr:
         if not self.initialized_variables:
             self._create_vars()
-        return sum([sum(self.variables[k].values()) for k in self.variables])
+        return self.solver.sum(
+            tuple(
+                var
+                for subcategory_variables in self.variables.values()
+                for var in subcategory_variables.values()
+            )
+        )

@@ -77,13 +77,13 @@ class ScheduleChangesModelerCpBase(ObjectiveModelerCpBase):
     def get_objective_expr(self) -> LinearExpr:
         if not self.schedule_changes_initialized:
             self._create_vars_schedule_changes()
-        return sum(
+        return self.solver.sum(
             [
                 self.variables["is_shifted"][tt]
                 * self.objective_computer.cost_any_shift(tt)
                 for tt in self.variables["is_shifted"].keys()
             ]
-        ) + sum(
+        ) + self.solver.sum(
             [
                 self.variables["delta_starts_abs"][tt]
                 * self.objective_computer.cost_unit_deviation(tt)

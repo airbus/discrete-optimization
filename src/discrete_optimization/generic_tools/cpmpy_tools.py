@@ -785,6 +785,9 @@ class CpmpySolver(CpSolver):
     def at_least_one(self, exprs: Iterable[Any]) -> Any:
         return cpmpy.any(exprs)
 
+    def sum(self, exprs: Iterable[Any]) -> Any:
+        return cpmpy.sum(exprs)
+
     def add_exactly_one(self, exprs: Iterable[Any]) -> list[Any]:
         return super().add_exactly_one(exprs)
 

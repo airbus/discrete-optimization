@@ -19,7 +19,7 @@ class AllocationCostModelerCpBase(ObjectiveModelerCpBase):
     objective_computer: AllocationCostComputer
 
     def get_objective_expr(self) -> LinearExpr:
-        return sum(
+        return self.solver.sum(
             [
                 self.solver.get_task_unary_resource_is_present_variable(
                     task=task, unary_resource=unary
@@ -65,7 +65,7 @@ class AllocationCostMultimodeModelerCpBase(ObjectiveModelerCpBase):
                         no_constraint=False,
                     )
                 )
-        return sum(
+        return self.solver.sum(
             self.solver.unary_resource_cost_variables[task][unary_resource]
             for task in self.solver.unary_resource_cost_variables
             for unary_resource in self.solver.unary_resource_cost_variables[task]
