@@ -212,7 +212,7 @@ class ResourceBlockingCpBaseSolver(
         return None, None
 
     def define_start_and_end_var_and_constraint(self, entity: SchedulingEntity):
-        if entity in self._starts_entity:
+        if entity in self._intervals_entity:
             # Already defined.
             return
         match entity:
@@ -262,27 +262,33 @@ class ResourceBlockingCpBaseSolver(
         self.define_start_and_end_var_and_constraint(entity.other_entity)
         # Now we have access to start/end of the other entity :)
         if entity.start_or_end == StartOrEnd.START:
-            self._starts_entity[entity] = self._starts_entity[entity.other_entity]
-            self._ends_entity[entity] = (
-                self._starts_entity[entity.other_entity] + entity.constant_duration
+            self._starts_entity[entity] = (
+                self._starts_entity[entity.other_entity] + entity.offset
             )
-            self._durations_entity[entity] = entity.constant_duration
-            is_present = self._get_entity_is_active_var(entity)
-            if isinstance(is_present, int) and is_present == 1:
-                self._intervals_entity[entity] = self.create_interval_var(
-                    start=self._starts_entity[entity],
-                    duration=self._durations_entity[entity],
-                    end=self._ends_entity[entity],
-                    name=f"interval_{entity.entity_id}",
-                )
-            else:
-                self._intervals_entity[entity] = self.create_interval_var(
-                    start=self._starts_entity[entity],
-                    duration=self._durations_entity[entity],
-                    end=self._ends_entity[entity],
-                    presence=is_present,
-                    name=f"interval_{entity.entity_id}",
-                )
+        else:
+            self._starts_entity[entity] = (
+                self._ends_entity[entity.other_entity] + entity.offset
+            )
+        self._ends_entity[entity] = (
+            self._starts_entity[entity.other_entity] + entity.constant_duration
+        )
+        self._durations_entity[entity] = entity.constant_duration
+        is_present = self._get_entity_is_active_var(entity)
+        if isinstance(is_present, int) and is_present == 1:
+            self._intervals_entity[entity] = self.create_interval_var(
+                start=self._starts_entity[entity],
+                duration=self._durations_entity[entity],
+                end=self._ends_entity[entity],
+                name=f"interval_{entity.entity_id}",
+            )
+        else:
+            self._intervals_entity[entity] = self.create_interval_var(
+                start=self._starts_entity[entity],
+                duration=self._durations_entity[entity],
+                end=self._ends_entity[entity],
+                presence=is_present,
+                name=f"interval_{entity.entity_id}",
+            )
 
     def create_group_entity_interval(self, entity: GroupEntity[Task]):
         lb_start, ub_start, lb_end, ub_end = self.get_lb_ub_entity(entity)
@@ -454,8 +460,7 @@ class ResourceBlockingCpBaseSolver(
             all_entities.append(span_constraint.entity)
 
         for entity in all_entities:
-            if entity not in self._starts_entity:
-                self.define_start_and_end_var_and_constraint(entity)
+            self.define_start_and_end_var_and_constraint(entity)
 
     def constrain_group_entity_times(self, entity: GroupEntity) -> None:
         """Add constraints for group entity start/end times.
@@ -471,35 +476,14 @@ class ResourceBlockingCpBaseSolver(
         # TODO : extract this into an entity module
         if any(self.problem.is_optional(t) for t in entity.tasks):
             for task in entity.tasks:
-                if self.problem.is_optional(task):
-                    (
-                        self.add_implication(
-                            self.get_task_is_present_variable(task),
-                            group_start
-                            <= self.get_task_start_or_end_variable(
-                                task, StartOrEnd.START
-                            ),
-                        )
-                    )
+                for expr in (
+                    group_start
+                    <= self.get_task_start_or_end_variable(task, StartOrEnd.START),
+                    group_end
+                    >= self.get_task_start_or_end_variable(task, StartOrEnd.END),
+                ):
+                    self.enforce_only_if_tasks_present(expr=expr, tasks=(task,))
 
-                    (
-                        self.add_implication(
-                            self.get_task_is_present_variable(task),
-                            group_end
-                            >= self.get_task_start_or_end_variable(
-                                task, StartOrEnd.END
-                            ),
-                        )
-                    )
-                else:
-                    self.add_bool_constraint(
-                        group_start
-                        <= self.get_task_start_or_end_variable(task, StartOrEnd.START)
-                    )
-                    self.add_bool_constraint(
-                        group_end
-                        >= self.get_task_start_or_end_variable(task, StartOrEnd.END)
-                    )
         else:
             self.add_min_equality(
                 group_start,
