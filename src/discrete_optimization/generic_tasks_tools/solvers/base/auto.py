@@ -878,7 +878,7 @@ class GenericSchedulingAutoCpBaseSolver(
                 self.resource_level_variables[resource] = level_var
             # non-renewable resources
             for resource in self.problem.non_renewable_resources_list:
-                self.resource_level_variables[resource] = sum(
+                self.resource_level_variables[resource] = self.sum(
                     self.get_non_renewable_resource_demand_variable(
                         task=task, resource=resource
                     )
@@ -923,7 +923,7 @@ class GenericSchedulingAutoCpBaseSolver(
                 presence = [self.get_task_is_present_variable(t) for t in tasks]
                 self.add_at_least_one(presence)
             else:
-                expr = sum(
+                expr = self.sum(
                     [
                         x[1] * self.get_task_is_present_variable(x[0])
                         for x in linear_constr[0]
@@ -1021,7 +1021,7 @@ class GenericSchedulingAutoCpBaseSolver(
             ) not in self.dict_objective_expr:
                 self.dict_objective_expr[key] = 0
             self.dict_objective_expr[key] += obj_modeler.get_objective_expr()
-        obj = sum(
+        obj = self.sum(
             [
                 weight * self.dict_objective_expr[obj]
                 for obj, weight in zip(
@@ -1472,7 +1472,7 @@ class GenericSchedulingAutoCpBaseSolver(
         for local_start_task, local_end_task, common in branches:
             for resource in self.problem.cumulative_resources_list:
                 self.add_bool_constraint(
-                    sum(self.energy_variables[task][resource] for task in common)
+                    self.sum(self.energy_variables[task][resource] for task in common)
                     <= self.problem.get_resource_max_capacity(resource=resource)
                     * (
                         self.get_task_start_or_end_variable(
@@ -1485,7 +1485,7 @@ class GenericSchedulingAutoCpBaseSolver(
                 )
             for resource in self.problem.unary_resources_list:
                 self.add_bool_constraint(
-                    sum(self.energy_variables[task][resource] for task in common)
+                    self.sum(self.energy_variables[task][resource] for task in common)
                     <= (
                         self.get_task_start_or_end_variable(
                             task=local_end_task, start_or_end=StartOrEnd.START
@@ -1503,7 +1503,7 @@ class GenericSchedulingAutoCpBaseSolver(
         self, obj: Union[str | Objective, list[tuple[Union[str | Objective], float]]]
     ):
         if isinstance(obj, list):
-            obj_expr = sum(
+            obj_expr = self.sum(
                 [weight * self.dict_objective_expr[obj] for obj, weight in obj]
             )
         else:
@@ -1532,7 +1532,7 @@ class GenericSchedulingAutoCpBaseSolver(
         sol = res[-1][0]
         kpis = self.problem.evaluate(sol)
         if isinstance(obj, list):
-            val = sum([weight * kpis[o] for o, weight in obj])
+            val = self.sum([weight * kpis[o] for o, weight in obj])
         else:
             val = kpis[obj]
         return int(val)

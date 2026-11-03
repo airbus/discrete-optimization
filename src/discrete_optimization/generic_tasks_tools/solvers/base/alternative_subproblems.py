@@ -54,7 +54,7 @@ class AlternativeSubproblemCpBaseSolver(
                     )
                 else:
                     self.add_bool_constraint(
-                        sum([self.get_task_is_present_variable(p[0]) for p in ps])
+                        self.sum([self.get_task_is_present_variable(p[0]) for p in ps])
                         == nb_to_do
                     )
             if alternative_problem.is_path_successors:
@@ -106,7 +106,7 @@ class AlternativeSubproblemCpBaseSolver(
             if nb_to_do == 1:
                 self.add_exactly_one(path_taken)
             else:
-                self.add_bool_constraint(sum(path_taken) == nb_to_do)
+                self.add_bool_constraint(self.sum(path_taken) == nb_to_do)
             if alternative_problem.is_path_successors:
                 for i in range(len(alternative_problem.list_paths)):
                     path = alternative_problem.list_paths[i]
@@ -157,5 +157,5 @@ class AlternativeSubproblemCpBaseSolver(
                     [self.get_task_is_present_variable(p) for p in ps[i]],
                 )
             self.add_bool_constraint(
-                sum(path_used) <= alternative_problem.nb_path_to_do
+                self.sum(path_used) <= alternative_problem.nb_path_to_do
             )

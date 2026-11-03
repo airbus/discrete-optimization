@@ -112,7 +112,7 @@ class TasksCpBaseSolver(TasksCpSolver[Task]):
         Enforces that:
 
             for all t:
-              sum(demands[i]
+              self.sum(demands[i]
                 if (start(intervals[i]) <= t < end(intervals[i])) and
                 (intervals[i] is present)) <= capacity
 

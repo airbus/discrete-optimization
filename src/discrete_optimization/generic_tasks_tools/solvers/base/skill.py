@@ -63,7 +63,7 @@ class SkillSchedulingCpBaseSolver(
         """Create constraints on skills using variable on skill contribution of each unary resource."""
         for task in self.problem.tasks_list:
             for skill in self.problem.get_skills_of_task(task):
-                skill_value_put_on_task = sum(
+                skill_value_put_on_task = self.sum(
                     skill_value * skill_used_var
                     for unary_resource in self.problem.get_unary_resource_with_skill(
                         skill
@@ -113,7 +113,7 @@ class SkillSchedulingCpBaseSolver(
         """Create constraints on skills using only task allocation of each unary resource."""
         for task in self.problem.tasks_list:
             for skill in self.problem.get_skills_of_task(task):
-                skill_value_put_on_task = sum(
+                skill_value_put_on_task = self.sum(
                     skill_value * is_present_var
                     for unary_resource in self.problem.get_unary_resource_with_skill(
                         skill

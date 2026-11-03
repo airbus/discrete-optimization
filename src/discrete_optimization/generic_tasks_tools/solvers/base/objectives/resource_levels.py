@@ -20,7 +20,7 @@ class CalendarRenewableResourceLevelModelerCpBase(ObjectiveModelerCpBase):
             return 0
         else:
             self.solver._create_resource_level_variables()
-            return sum(
+            return self.solver.sum(
                 self.solver.resource_level_variables[res]
                 * self.objective_computer.get_weight_resource(res)
                 for res in self.objective_computer.weight_resource
@@ -36,7 +36,7 @@ class NonRenewableResourceLevelModelerCpBase(ObjectiveModelerCpBase):
             return 0
         else:
             self.solver._create_resource_level_variables()
-            return sum(
+            return self.solver.sum(
                 self.solver.resource_level_variables[res]
                 * self.objective_computer.get_weight_resource(res)
                 for res in self.objective_computer.weight_resource

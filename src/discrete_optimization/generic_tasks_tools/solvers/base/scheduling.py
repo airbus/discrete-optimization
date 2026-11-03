@@ -157,7 +157,7 @@ class SchedulingCpBaseSolver(TasksCpBaseSolver[Task], SchedulingCpSolver[Task]):
         self, subtasks: Iterable[Task]
     ) -> LinearExpr:
         self.remove_constraints_on_objective()
-        return sum(
+        return self.sum(
             self.get_task_start_or_end_variable(task, StartOrEnd.END)
             for task in subtasks
         )
@@ -166,7 +166,7 @@ class SchedulingCpBaseSolver(TasksCpBaseSolver[Task], SchedulingCpSolver[Task]):
         self, subtasks: Iterable[Task]
     ) -> LinearExpr:
         self.remove_constraints_on_objective()
-        return sum(
+        return self.sum(
             self.get_task_start_or_end_variable(task, StartOrEnd.START)
             for task in subtasks
         )

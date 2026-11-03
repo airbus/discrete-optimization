@@ -93,5 +93,5 @@ class ResourceUsageByUnaryResourceCpBaseSolver(
                 if len(keys) == 1:
                     return d[keys[0]]
                 else:
-                    return sum([d[k] for k in keys])
+                    return self.sum([d[k] for k in keys])
         return 0

@@ -16,7 +16,7 @@ class UnaryResourcesUsedModelerCpBase(ObjectiveModelerCpBase):
 
     def get_objective_expr(self) -> LinearExpr:
         self.solver.create_used_variables()
-        return sum(
+        return self.solver.sum(
             [
                 self.solver.used_variables[ur] * weight
                 for ur in self.solver.used_variables

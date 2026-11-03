@@ -463,19 +463,23 @@ class CpSolver(SolverDO):
 
     def bool_and(self, exprs: Sequence[Any]) -> Any:
         """Construct conjunction of boolean expressions."""
-        return sum(exprs) == len(exprs)
+        return self.sum(exprs) == len(exprs)
 
     def exactly_one(self, exprs: Iterable[Any]) -> Any:
         """Construct boolean expression true iff exactly one expression is true."""
-        return sum(exprs) == 1
+        return self.sum(exprs) == 1
 
     def at_most_one(self, exprs: Iterable[Any]) -> Any:
         """Construct boolean expression true iff at most expression is true."""
-        return sum(exprs) <= 1
+        return self.sum(exprs) <= 1
 
     def at_least_one(self, exprs: Iterable[Any]) -> Any:
         """Construct boolean expression true iff at least expression is true."""
-        return sum(exprs) >= 1
+        return self.sum(exprs) >= 1
+
+    def sum(self, exprs: Iterable[Any]) -> Any:
+        """Construct integer expression corresponding to sum of variables or expressions."""
+        return sum(exprs)
 
     def hint_solution(self, hints: dict[Any, int | bool]) -> None:
         """Warm-start the underlying cp-solver with hints on some variables

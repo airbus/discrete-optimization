@@ -95,7 +95,7 @@ def create_variable_function_of_mode_on_solver(
                 raise ValueError(
                     "Cannot model as a linear combination if conditioned by an other variable (conditional_var is not None)"
                 )
-            return sum(
+            return solver.sum(
                 mode2value[mode]
                 * solver.get_task_mode_is_present_variable(task=task, mode=mode)
                 for mode in mode2value

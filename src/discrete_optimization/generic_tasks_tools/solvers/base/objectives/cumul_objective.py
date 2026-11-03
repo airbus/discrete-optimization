@@ -144,7 +144,7 @@ class CumulativeObjective:
                             contrib_t == 0,
                         )
                     contribution_per_task.append(contrib_t)
-            load = sum(contribution_per_task)
+            load = self.solver.sum(contribution_per_task)
             self.solver.add_implication(
                 self.solver.used_variables[self.problem.unary_resources_list[index_ur]],
                 cumul_value_per_ur[index_ur] == load,
@@ -208,7 +208,7 @@ class CumulativeObjective:
                             contrib_t == 0,
                         )
                     contribution_per_task.append(contrib_t)
-            load = sum(contribution_per_task)
+            load = self.solver.sum(contribution_per_task)
             self.solver.add_bool_constraint(cumul_value_per_ur[index_ur] == load)
             self.solver.add_implication(
                 self.solver.used_variables[self.problem.unary_resources_list[index_ur]],
@@ -302,7 +302,7 @@ class CumulativeObjective:
                         - self.cumul_value_per_ur_implication[name_value][j],
                     )
 
-            return sum(
+            return self.solver.sum(
                 [
                     abs_deltas[i][j]
                     for i in range(len(abs_deltas))
@@ -386,4 +386,4 @@ class CumulCostModelerCpBase(ObjectiveModelerCpBase):
             )
             self.cumul_objective.append(cumul_obj)
             self.objs.append(obj)
-        return sum(self.objs)
+        return self.solver.sum(self.objs)
