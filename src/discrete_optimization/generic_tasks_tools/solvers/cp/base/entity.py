@@ -238,7 +238,7 @@ class EntityIntervalsMixin(
         """Get or create the presence/active variable for an entity.
 
         Returns:
-            LinearExprT: Either an IntVar (BoolVar) or the constant 1 if always active
+            Either an IntVar (BoolVar) or the constant 1 if always active
         """
         if entity not in self._entity_active:
             match entity:

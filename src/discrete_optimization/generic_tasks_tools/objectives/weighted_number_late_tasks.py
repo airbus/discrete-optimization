@@ -24,7 +24,7 @@ class WeightedNumberLateComputer(ObjectiveComputer[Task]):
     def __init__(
         self,
         problem: SchedulingProblem[Task],
-        weight_objective: float = 1.0,
+        weight_objective: float | int = 1,
         max_end_and_weight: dict[Task, tuple[int | None, int | None]] = None,
     ):
         super().__init__(problem, weight_objective)
@@ -33,7 +33,7 @@ class WeightedNumberLateComputer(ObjectiveComputer[Task]):
         else:
             self.max_end_and_weight = max_end_and_weight
 
-    def compute_objective(self, solution: SchedulingSolution) -> float:
+    def compute_objective(self, solution: SchedulingSolution) -> float | int:
         val = 0
         for task in self.max_end_and_weight:
             if solution.is_present(task):

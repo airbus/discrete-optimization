@@ -214,6 +214,8 @@ class CalendarPreemptiveProblem(
                     r: resource_consumption[r]
                     for r in resource_consumption
                     if resource_consumption[r] > 0
+                    and len(self.get_resource_availabilities(r))
+                    > 1  # actual variable resource ;)
                 }
                 # Create a hashable key for this resource consumption pattern
                 if len(resource_consumption) == 0:

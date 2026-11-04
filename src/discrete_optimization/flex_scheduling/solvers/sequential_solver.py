@@ -13,7 +13,6 @@ from discrete_optimization.flex_scheduling.problem import (
     ConstraintsTask,
     FlexProblem,
     ObjectiveParams,
-    ObjectivesEnum,
     ScheduleSolution,
 )
 from discrete_optimization.flex_scheduling.solvers.cpsat import CpSatFlexSolver
@@ -81,7 +80,7 @@ class SequentialFlexSolver(SolverDO):
                 )
 
             # D. Solve
-            solver.set_lexico_objective("makespan")
+            solver.set_lexico_objective(("makespan", 1, "earliness", 1))
 
             params_cp = ParametersCp.default_cpsat()
             params_cp.nb_process = kwargs.get("nb_process", 8)
@@ -326,8 +325,8 @@ class SequentialFlexSolver(SolverDO):
                 obj.weight_per_groups = {
                     g: w for g, w in obj.weight_per_groups.items() if g in groups
                 }
-        if ObjectivesEnum.EARLINESS in new_p.params_obj:
-            new_p.params_obj.pop(ObjectivesEnum.EARLINESS)
+        # if ObjectivesEnum.EARLINESS in new_p.params_obj:
+        #    new_p.params_obj.pop(ObjectivesEnum.EARLINESS)
         return new_p
 
     def _create_task_batches(self, nb_batches: int) -> List[List[TASK_KEY]]:
