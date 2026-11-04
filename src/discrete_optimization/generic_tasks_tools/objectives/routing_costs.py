@@ -23,9 +23,9 @@ class RoutingCostComputer(ObjectiveComputer[Task]):
     def __init__(
         self,
         problem: RoutingProblem[Task] = None,
-        weight_objective: float = 1.0,
+        weight_objective: float | int = 1,
         weight_per_routing_entities: dict[
-            RoutingEntity, dict[CumulDimensions, float]
+            RoutingEntity, dict[CumulDimensions, float | int]
         ] = None,
     ):
         super().__init__(problem, weight_objective)
@@ -34,7 +34,7 @@ class RoutingCostComputer(ObjectiveComputer[Task]):
         else:
             self.weight_per_routing_entities = weight_per_routing_entities
 
-    def compute_objective(self, solution: RoutingSolution) -> float:
+    def compute_objective(self, solution: RoutingSolution) -> float | int:
         merged_val = 0
         for r in self.weight_per_routing_entities:
             path = solution.get_routing_path(routing_entity=r)

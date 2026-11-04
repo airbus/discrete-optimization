@@ -309,6 +309,57 @@ class ResourceBlockingCpSolver(
                 active_blocking.append((interval, demand))
         return reservation_blocking, active_blocking
 
+    def get_individual_task_consumption_resource_to_be_included(
+        self, resource: CumulativeResource
+    ):
+        # return tasks that should be included in resource constraint
+        # I.e not covered by span constraints
+        task_conso = {}
+        if self.problem.is_cumulative_resource(resource):
+            if (
+                self.avoid_interval_optional_for_cumulative_resources
+                or self.problem.has_any_cumulative_consumption_dependent()
+            ):
+                # no optional interval, use rather demand variables
+                task_conso = {
+                    task: (self.get_task_interval(task=task), conso)
+                    for task in self.problem.tasks_list
+                    if not isinstance(
+                        (
+                            conso := self.get_cumulative_resource_demand_variable(
+                                task=task, resource=resource
+                            )
+                        ),
+                        int,
+                    )
+                    or conso > 0
+                }
+            else:
+                task_conso = {
+                    task: (self.get_task_mode_interval(task=task, mode=mode), conso)
+                    for task in self.problem.tasks_list
+                    for mode in self.problem.get_task_modes(task=task)
+                    if (
+                        conso := self.problem.get_cumulative_resource_consumption(
+                            resource=resource, task=task, mode=mode
+                        )
+                    )
+                    > 0
+                }
+        remove = set()
+        for sc in self.problem.get_span_blocking_constraints():
+            tasks = sc.entity.get_tasks()
+            if resource in sc.default_resource_blocked:
+                val = sc.default_resource_blocked[resource]
+                if val >= 1:
+                    if sc.remove_individual_task_contrib:
+                        for t in tasks:
+                            if t in task_conso:
+                                remove.add(t)
+        for t in remove:
+            task_conso.pop(t)
+        return list(task_conso.values()), remove
+
     def create_cumulative_constraint_including_blocking(
         self, resource: CumulativeResource
     ) -> None:
@@ -334,8 +385,10 @@ class ResourceBlockingCpSolver(
             resource: The cumulative resource to constrain
         """
         # Get task consumption intervals
-        task_intervals = self.get_resource_consumption_intervals(resource)
-
+        # task_intervals = self.get_resource_consumption_intervals(resource)
+        task_intervals, _ = (
+            self.get_individual_task_consumption_resource_to_be_included(resource)
+        )
         # Get fake tasks for calendar gaps
         fake_tasks_intervals = [
             (
