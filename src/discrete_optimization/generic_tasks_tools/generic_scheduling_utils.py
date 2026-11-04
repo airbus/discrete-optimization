@@ -111,6 +111,8 @@ class Objective(Enum):
     ALLOCATION_COST = "allocation_cost"
     MODE_COST = "mode_cost"
     EARLINESS_TARDINESS = "earliness_tardiness"
+    EARLINESS_ONLY = "earliness_only"
+    TARDINESS_ONLY = "tardiness_only"
     SCHEDULE_CHANGES = "scheduling_changes"
 
     NB_CAL_PREEMPTED_TASKS = "nb_cal_preempted_tasks"

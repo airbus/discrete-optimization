@@ -370,11 +370,13 @@ class GenericSchedulingAutoCpSatSolver(
         demand_non_renewable_modeling: Optional[ModeToValueModeling] = None,
         create_present_task_variables_for_all_tasks: Optional[bool] = None,
         calendar_preemptive_modeling: Optional[ModelingCalendarPreemptive] = None,
+        logging_objectives: bool = None,
         **kwargs: Any,
     ) -> None:
         """Init cp model and reset stored variables if any."""
         super().init_model(**kwargs)
-
+        if logging_objectives is not None:
+            self.logging_objectives = logging_objectives
         # update default settings
         if create_present_task_variables_for_all_tasks is not None:
             self.create_present_task_variables_for_all_tasks = (
@@ -803,6 +805,7 @@ class GenericSchedulingAutoCpSatSolver(
             for resource in self.problem.unary_resources_list:
                 self.resource_level_variables[resource] = self.used_variables[resource]
             # cumulative resources
+            # TODO : put it in calendar_generic
             for resource in self.problem.cumulative_resources_list:
                 max_capacity = self.problem.get_resource_max_capacity(resource)
                 level_var = self.cp_model.new_int_var(

@@ -289,70 +289,87 @@ class CpSatFlexSolver(
 
     def from_solution_to_hint_earliness(self, solution: ScheduleSolution):
         list_variables_value = []
-        for id_task in self.variables["tardiness"]["tasks"]:
-            index = self.problem.task_id_to_index[id_task]
-            deadline = self.problem.task_id_dict[id_task].max_ending_date
-            end = solution.schedule[index, 1]
-            if end > deadline:
-                list_variables_value.append(
-                    (
-                        self.variables["tardiness"]["tasks"][id_task]["tardiness"],
-                        end - deadline,
-                    )
-                )
-                if "earliness" in self.variables["tardiness"]["tasks"][id_task]:
-                    list_variables_value.append(
-                        (self.variables["tardiness"]["tasks"][id_task]["earliness"], 0)
-                    )
-            else:
-                list_variables_value.append(
-                    (self.variables["tardiness"]["tasks"][id_task]["tardiness"], 0)
-                )
-                if "earliness" in self.variables["tardiness"]["tasks"][id_task]:
+        if "tardiness" in self.variables:
+            for id_task in self.variables["tardiness"]["tasks"]:
+                index = self.problem.task_id_to_index[id_task]
+                deadline = self.problem.task_id_dict[id_task].max_ending_date
+                end = solution.schedule[index, 1]
+                if end > deadline:
                     list_variables_value.append(
                         (
-                            self.variables["tardiness"]["tasks"][id_task]["earliness"],
-                            deadline - end,
+                            self.variables["tardiness"]["tasks"][id_task]["tardiness"],
+                            end - deadline,
                         )
                     )
-        for id_group in self.variables["tardiness"]["groups"]:
-            group = self.problem.tasks_group[self.problem.group_id_to_index[id_group]]
-            deadline = group.max_ending_date
-            end = max(
-                [
-                    solution.schedule[self.problem.task_id_to_index[id_task], 1]
-                    for id_task in group.tasks_group
-                ]
-            )
-            if end > deadline:
-                list_variables_value.append(
-                    (
-                        self.variables["tardiness"]["groups"][id_group]["tardiness"],
-                        end - deadline,
+                    if "earliness" in self.variables["tardiness"]["tasks"][id_task]:
+                        list_variables_value.append(
+                            (
+                                self.variables["tardiness"]["tasks"][id_task][
+                                    "earliness"
+                                ],
+                                0,
+                            )
+                        )
+                else:
+                    list_variables_value.append(
+                        (self.variables["tardiness"]["tasks"][id_task]["tardiness"], 0)
                     )
+                    if "earliness" in self.variables["tardiness"]["tasks"][id_task]:
+                        list_variables_value.append(
+                            (
+                                self.variables["tardiness"]["tasks"][id_task][
+                                    "earliness"
+                                ],
+                                deadline - end,
+                            )
+                        )
+            for id_group in self.variables["tardiness"]["groups"]:
+                group = self.problem.tasks_group[
+                    self.problem.group_id_to_index[id_group]
+                ]
+                deadline = group.max_ending_date
+                end = max(
+                    [
+                        solution.schedule[self.problem.task_id_to_index[id_task], 1]
+                        for id_task in group.tasks_group
+                    ]
                 )
-                if "earliness" in self.variables["tardiness"]["groups"][id_group]:
+                if end > deadline:
                     list_variables_value.append(
                         (
                             self.variables["tardiness"]["groups"][id_group][
-                                "earliness"
+                                "tardiness"
+                            ],
+                            end - deadline,
+                        )
+                    )
+                    if "earliness" in self.variables["tardiness"]["groups"][id_group]:
+                        list_variables_value.append(
+                            (
+                                self.variables["tardiness"]["groups"][id_group][
+                                    "earliness"
+                                ],
+                                0,
+                            )
+                        )
+                else:
+                    list_variables_value.append(
+                        (
+                            self.variables["tardiness"]["groups"][id_group][
+                                "tardiness"
                             ],
                             0,
                         )
                     )
-            else:
-                list_variables_value.append(
-                    (self.variables["tardiness"]["groups"][id_group]["tardiness"], 0)
-                )
-                if "earliness" in self.variables["tardiness"]["groups"][id_group]:
-                    list_variables_value.append(
-                        (
-                            self.variables["tardiness"]["groups"][id_group][
-                                "earliness"
-                            ],
-                            deadline - end,
+                    if "earliness" in self.variables["tardiness"]["groups"][id_group]:
+                        list_variables_value.append(
+                            (
+                                self.variables["tardiness"]["groups"][id_group][
+                                    "earliness"
+                                ],
+                                deadline - end,
+                            )
                         )
-                    )
         return list_variables_value
 
     def from_solution_to_hint_non_released_delta(self, solution: ScheduleSolution):

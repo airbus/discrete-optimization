@@ -19,6 +19,8 @@ from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
 )
 from discrete_optimization.generic_tasks_tools.objectives.earliness_tardiness import (
     EarlinessTardinessComputer,
+    OnlyEarlinessComputer,
+    OnlyTardinessComputer,
 )
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
@@ -110,6 +112,8 @@ mapping_computer_to_modeler = {
     AllocatedTasksObjective: AllocatedTasksObjectiveCpSatModeler,
     AllocationSwitchObjectiveComputer: AllocationSwitchModelerCpSat,
     EarlinessTardinessComputer: EarlinessTardinessCpSatModeler,
+    OnlyEarlinessComputer: EarlinessTardinessCpSatModeler,
+    OnlyTardinessComputer: EarlinessTardinessCpSatModeler,
     MakespanObjectiveComputer: MakespanObjectiveModelCpSat,
     ModeCostComputer: ModeCostModelerCpSat,
     NonRenewableResourceLevelObjectiveComputer: NonRenewableResourceLevelModelerCpSat,

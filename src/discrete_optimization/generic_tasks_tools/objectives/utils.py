@@ -22,6 +22,8 @@ from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
 )
 from discrete_optimization.generic_tasks_tools.objectives.earliness_tardiness import (
     EarlinessTardinessComputer,
+    OnlyEarlinessComputer,
+    OnlyTardinessComputer,
 )
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
@@ -61,6 +63,8 @@ def get_mapping():
         AllocationCostComputer,
         AllocationCostComputerMultimode,
         EarlinessTardinessComputer,
+        OnlyEarlinessComputer,
+        OnlyTardinessComputer,
         MakespanObjectiveComputer,
         ModeCostComputer,
         NonRenewableResourceLevelObjectiveComputer,

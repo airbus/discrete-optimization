@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 from copy import deepcopy
-from dataclasses import field
+from dataclasses import dataclass, field
 from functools import cache
 from typing import Dict, Hashable, List, Set, Tuple, Type
 
@@ -26,15 +26,24 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
 )
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.multimode import MultimodeSolution
+from discrete_optimization.generic_tasks_tools.objectives.earliness_tardiness import (
+    OnlyEarlinessComputer,
+    OnlyTardinessComputer,
+)
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
     ObjectiveComputer,
 )
+from discrete_optimization.generic_tasks_tools.objectives.resource_levels import (
+    CalendarRenewableResourceLevelObjectiveComputer,
+)
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
+    BlockingMode,
     FlexibleGapBlockingConstraint,
     SpanBlockingConstraint,
 )
@@ -46,6 +55,7 @@ from discrete_optimization.generic_tasks_tools.skill import (
     WithoutSkillProblem,
     WithoutSkillSolution,
 )
+from discrete_optimization.generic_tasks_tools.utils import optional_override_implem
 from discrete_optimization.generic_tools.do_problem import *
 
 RESOURCE_KEY = Hashable
@@ -411,16 +421,16 @@ class FlexProblem(
                 resources,
             ) in self.constraints.successor_with_res_release_at_start_of_successor:
                 constraint = FlexibleGapBlockingConstraint(
-                    (
-                        TaskEntity(task1),
-                        StartOrEnd.END,
-                        TaskEntity(task2),
-                        StartOrEnd.START,
-                        resources,
-                        BlockingConstraintMetadata(
-                            description=f"Resource release from {task1} to {task2}"
-                        ),
-                    )
+                    metadata=BlockingConstraintMetadata(
+                        mode=BlockingMode.RESERVATION,
+                        description=f"Resource blocked from {task1} to {task2}",
+                    ),
+                    default_resource_blocked=resources,
+                    choice_resource_blocked={},
+                    left_entity=TaskEntity(task1),
+                    start_or_end_left_entity=StartOrEnd.END,
+                    right_entity=TaskEntity(task2),
+                    start_or_end_right_entity=StartOrEnd.START,
                 )
                 constraints.append(constraint)
 
@@ -432,16 +442,15 @@ class FlexProblem(
                 resources,
             ) in self.constraints.successor_with_res_release_at_start_of_successor_mode:
                 constraint = FlexibleGapBlockingConstraint(
-                    (
-                        TaskModeEntity(task1, mode1),
-                        StartOrEnd.END,
-                        TaskEntity(task2),
-                        StartOrEnd.START,
-                        resources,
-                        BlockingConstraintMetadata(
-                            description=f"Resource release from {task1} (mode {mode1}) to {task2}"
-                        ),
-                    )
+                    metadata=BlockingConstraintMetadata(
+                        mode=BlockingMode.RESERVATION,
+                        description=f"Resource release from {task1} (mode {mode1}) to {task2}",
+                    ),
+                    default_resource_blocked=resources,
+                    left_entity=TaskModeEntity(task1, mode1),
+                    right_entity=TaskEntity(task2),
+                    start_or_end_left_entity=StartOrEnd.END,
+                    start_or_end_right_entity=StartOrEnd.START,
                 )
                 constraints.append(constraint)
 
@@ -461,16 +470,16 @@ class FlexProblem(
                 )
 
                 constraint = FlexibleGapBlockingConstraint(
-                    (
-                        entity1,
-                        StartOrEnd.END,
-                        entity2,
-                        StartOrEnd.START,
-                        resources,
-                        BlockingConstraintMetadata(
-                            description=f"Generic resource release constraint"
-                        ),
-                    )
+                    metadata=BlockingConstraintMetadata(
+                        mode=BlockingMode.RESERVATION,
+                        description=f"Generic resource release constraint from {entity1.entity_id} "
+                        f"to {entity2.entity_id}",
+                    ),
+                    left_entity=entity1,
+                    start_or_end_left_entity=StartOrEnd.END,
+                    right_entity=entity2,
+                    start_or_end_right_entity=StartOrEnd.START,
+                    default_resource_blocked=resources,
                 )
                 constraints.append(constraint)
 
@@ -500,17 +509,69 @@ class FlexProblem(
                 and group.res_not_released is not None
             ):
                 constraint = SpanBlockingConstraint(
-                    (
-                        GroupEntity(frozenset(group.tasks_group)),
-                        group.res_not_released,
-                        BlockingConstraintMetadata(
-                            description=f"Group {group.name or group.id} span blocking"
-                        ),
-                    )
+                    metadata=BlockingConstraintMetadata(
+                        mode=BlockingMode.RESERVATION,
+                        description=f"Group {group.name or group.id} span blocking",
+                    ),
+                    entity=GroupEntity(frozenset(group.tasks_group)),
+                    default_resource_blocked=group.res_not_released,
+                    remove_individual_task_contrib=True,
                 )
                 constraints.append(constraint)
 
         return constraints
+
+    def validate_resource_usage_with_regard_to_span_constraints(self):
+        span_constraints: list[SpanBlockingConstraint] = (
+            self.get_span_blocking_constraints()
+        )
+        for sc in span_constraints:
+            tasks = sc.entity.get_tasks()
+            resource = sc.default_resource_blocked
+            for r in resource:
+                max_capa = self.get_resource_max_capacity(r)
+                val = resource[r]
+                for t in tasks:
+                    conso = min(
+                        [
+                            self.get_cumulative_resource_consumption(r, t, m)
+                            for m in self.get_task_modes(t)
+                        ]
+                    )
+                    if conso + val > max_capa:
+                        logger.info(
+                            f"{t} in {sc.entity} is consuming the same resource than "
+                            f"the span constraint ..."
+                        )
+
+    def fix_resource_usage_with_regard_to_span_constraints(self):
+        span_constraints: list[SpanBlockingConstraint] = (
+            self.get_span_blocking_constraints()
+        )
+        for sc in span_constraints:
+            tasks = sc.entity.get_tasks()
+            resource = sc.default_resource_blocked
+            for r in resource:
+                max_capa = self.get_resource_max_capacity(r)
+                val = resource[r]
+                for t in tasks:
+                    conso = min(
+                        [
+                            self.get_cumulative_resource_consumption(r, t, m)
+                            for m in self.get_task_modes(t)
+                        ]
+                    )
+                    if conso + val > max_capa:
+                        for m in self.get_task_modes(t):
+                            self.task_id_dict[t].modes[m].resource_consumption[r] = 0
+                        logger.info(
+                            f"{t} in {sc.entity} is consuming the same resource than "
+                            f"the span constraint ..."
+                        )
+
+    @optional_override_implem
+    def is_task_calendar_preempted(self, task: Task) -> bool:
+        return True
 
     def _convert_task_group_abstraction_to_entity(
         self, abstraction: TaskGroupAbstraction
@@ -601,16 +662,93 @@ class FlexProblem(
         return 0
 
     def get_list_objective_computer(self) -> list[ObjectiveComputer]:
-        return [MakespanObjectiveComputer(problem=self, weight_objective=1)]
+        list_objective_computer = []
+        list_objective_computer.append(
+            MakespanObjectiveComputer(problem=self, weight_objective=1)
+        )
+        if ObjectivesEnum.TARDINESS in self.objective_params.params_obj:
+            max_end_and_weight_for_tardiness = {}
+            obj_param = self.objective_params.params_obj[ObjectivesEnum.TARDINESS]
+            for t_id, weight in obj_param.weight_per_task.items():
+                if weight > 0:
+                    idx = self.task_id_to_index[t_id]
+                    deadline = self.tasks[idx].max_ending_date
+                    max_end_and_weight_for_tardiness[t_id] = (deadline, weight)
+            for g_id, weight in obj_param.weight_per_groups.items():
+                if weight > 0:
+                    g_idx = self.group_id_to_index[g_id]
+                    group = self.tasks_group[g_idx]
+                    deadline = group.max_ending_date
+                    group_entity = GroupEntity(
+                        frozenset(group.tasks_group), group_id=g_id
+                    )
+                    max_end_and_weight_for_tardiness[group_entity] = (deadline, weight)
+            list_objective_computer.append(
+                OnlyTardinessComputer(
+                    problem=self,
+                    weight_objective=1,
+                    max_end_and_weight_for_tardiness=max_end_and_weight_for_tardiness,
+                )
+            )
+        if ObjectivesEnum.EARLINESS in self.objective_params.params_obj:
+            obj_param = self.objective_params.params_obj[ObjectivesEnum.EARLINESS]
+            # Task Earliness: sum(max(0, deadline - end) * weight)
+            min_end_and_weight_for_earliness = {}
+            for t_id, weight in obj_param.weight_per_task.items():
+                if weight > 0:
+                    idx = self.task_id_to_index[t_id]
+                    deadline = self.tasks[idx].max_ending_date
+                    if deadline is not None:
+                        min_end_and_weight_for_earliness[t_id] = (deadline, weight)
+                    # Group Earliness
+            for g_id, weight in obj_param.weight_per_groups.items():
+                if weight > 0:
+                    g_idx = self.group_id_to_index[g_id]
+                    group = self.tasks_group[g_idx]
+                    deadline = group.max_ending_date
+                    if deadline is not None:
+                        group_entity = GroupEntity(
+                            frozenset(group.tasks_group), group_id=g_id
+                        )
+                        min_end_and_weight_for_earliness[group_entity] = (
+                            deadline,
+                            weight,
+                        )
+            list_objective_computer.append(
+                OnlyEarlinessComputer(
+                    problem=self,
+                    weight_objective=1,
+                    min_end_and_weight_for_earliness=min_end_and_weight_for_earliness,
+                )
+            )
+        if ObjectivesEnum.RESOURCE_COST in self.objective_params.params_obj:
+            obj_param = self.objective_params.params_obj[ObjectivesEnum.RESOURCE_COST]
+            weight_resource = {}
+            for res_id, weight in obj_param.weight_per_resource_unit.items():
+                if weight == 0:
+                    continue
+                # Skip if resource is explicitly excluded from objectives
+                if (
+                    res_id in obj_param.consider_in_objectives
+                    and not obj_param.consider_in_objectives[res_id]
+                ):
+                    continue
+                weight_resource[res_id] = weight
+            list_objective_computer.append(
+                CalendarRenewableResourceLevelObjectiveComputer(
+                    problem=self, weight_objective=1, weight_resource=weight_resource
+                )
+            )
+        return list_objective_computer
 
-    def get_task_start_or_end_upper_bound(
-        self, task: Task, start_or_end: StartOrEnd
-    ) -> int:
-        if start_or_end == StartOrEnd.START:
-            return self.max_start_time[self.task_id_to_index[task]]
-        if start_or_end == StartOrEnd.END:
-            return self.max_end_time[self.task_id_to_index[task]]
-        return self.get_makespan_upper_bound()
+    # def get_task_start_or_end_upper_bound(
+    #     self, task: Task, start_or_end: StartOrEnd
+    # ) -> int:
+    #     if start_or_end == StartOrEnd.START:
+    #         return self.max_start_time[self.task_id_to_index[task]]
+    #     if start_or_end == StartOrEnd.END:
+    #         return self.max_end_time[self.task_id_to_index[task]]
+    #     return self.get_makespan_upper_bound()
 
     def get_task_modes(self, task: Task) -> set[int]:
         return set(self.task_id_dict[task].modes)
@@ -672,6 +810,23 @@ class FlexProblem(
             self.min_end_time,
             self.max_end_time,
         ) = get_lb_ub_start_end_date(self)
+
+    @optional_override_implem
+    def get_start_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
+        l = []
+        if self.constraints.start_after_start_plus_offset:
+            for t1, t2, offset in self.constraints.start_after_start_plus_offset:
+                l.append((t2, t1, offset))
+        return l
+
+    @optional_override_implem
+    def get_end_to_start_min_time_lags(self) -> list[tuple[Task, Task, int]]:
+        l = []
+        if self.constraints.start_after_end_plus_offset:
+            for t0, t1, offset in self.constraints.start_after_end_plus_offset:
+                # start[t0]>=end[t1]+offset
+                l.append((t1, t0, offset))
+        return l
 
     def update_data_placeholders(self):
         """If data has been changed in place, we should change the other utils attributes"""
@@ -743,6 +898,7 @@ class FlexProblem(
         - resource_cost (if applicable)
         - wip_cost (if applicable)
         """
+        print("Calling evaluate")
         from .fsp_utils import SolutionDetails
 
         if isinstance(variable, ScheduleSolutionPreemptive):
@@ -755,10 +911,10 @@ class FlexProblem(
 
             # Initialize all objectives
             evaluation = {
-                "makespan": makespan,
-                "tardiness": 0.0,
-                "earliness": 0.0,
-                "resource_cost": 0.0,
+                Objective.MAKESPAN: makespan,
+                Objective.TARDINESS_ONLY: 0.0,
+                Objective.EARLINESS_ONLY: 0.0,
+                Objective.CALENDAR_RESOURCES_LEVELS: 0.0,
                 "wip_cost": 0.0,
             }
 
@@ -789,7 +945,7 @@ class FlexProblem(
                             )
                             tardiness += max(0, group_end - deadline) * weight
 
-                evaluation["tardiness"] = tardiness
+                evaluation[Objective.TARDINESS_ONLY] = tardiness
 
             # --- Earliness ---
             if ObjectivesEnum.EARLINESS in self.objective_params.params_obj:
@@ -818,7 +974,7 @@ class FlexProblem(
                             )
                             earliness += max(0, deadline - group_end) * weight
 
-                evaluation["earliness"] = earliness
+                evaluation[Objective.EARLINESS_ONLY] = earliness
 
             # --- Resource Cost ---
             if ObjectivesEnum.RESOURCE_COST in self.objective_params.params_obj:
@@ -836,7 +992,7 @@ class FlexProblem(
                         continue
                     max_usage = np.max(resource_consumption[res_id])
                     cost += max_usage * weight
-                evaluation["resource_cost"] = cost
+                evaluation[Objective.CALENDAR_RESOURCES_LEVELS] = cost
 
             # --- WIP Cost ---
             # WIP (Work In Progress) = maximum number of concurrent groups in progress
@@ -900,95 +1056,13 @@ class FlexProblem(
         )
         resource_consumption = sd.resource_usage
         sd.compute_details()
-        # Initialize all objectives declared in get_objective_register()
-        evaluation = {
-            "makespan": makespan,
-            "tardiness": 0.0,
-            "earliness": 0.0,
-            "resource_cost": 0.0,
-            "wip_cost": 0.0,
-        }
-        # 2. Objective-based Metrics
-        # We iterate through the objective parameters to calculate specific costs
-        # matching the logic in the CP solvers (e.g., fsp_cpsat_solver.py)
-
-        # --- Tardiness ---
-        if ObjectivesEnum.TARDINESS in self.objective_params.params_obj:
-            obj_param = self.objective_params.params_obj[ObjectivesEnum.TARDINESS]
-            tardiness = 0.0
-
-            # Task Tardiness: sum(max(0, end - deadline) * weight)
-            for t_id, weight in obj_param.weight_per_task.items():
-                if weight > 0:
-                    idx = self.task_id_to_index[t_id]
-                    deadline = self.tasks[idx].max_ending_date
-                    if deadline is not None:
-                        end_time = variable.schedule[idx, 1]
-                        tardiness += max(0, end_time - deadline) * weight
-
-            # Group Tardiness: sum(max(0, group_end - deadline) * weight)
-            for g_id, weight in obj_param.weight_per_groups.items():
-                if weight > 0:
-                    g_idx = self.group_id_to_index[g_id]
-                    group = self.tasks_group[g_idx]
-                    deadline = group.max_ending_date
-                    if deadline is not None:
-                        # Group end is the max end time of all tasks in the group
-                        task_indices = [
-                            self.task_id_to_index[t] for t in group.tasks_group
-                        ]
-                        group_end = np.max(variable.schedule[task_indices, 1])
-                        tardiness += max(0, group_end - deadline) * weight
-
-            evaluation["tardiness"] = tardiness
-
-        # --- Earliness ---
-        if ObjectivesEnum.EARLINESS in self.objective_params.params_obj:
-            obj_param = self.objective_params.params_obj[ObjectivesEnum.EARLINESS]
-            earliness = 0.0
-
-            # Task Earliness: sum(max(0, deadline - end) * weight)
-            for t_id, weight in obj_param.weight_per_task.items():
-                if weight > 0:
-                    idx = self.task_id_to_index[t_id]
-                    deadline = self.tasks[idx].max_ending_date
-                    if deadline is not None:
-                        end_time = variable.schedule[idx, 1]
-                        earliness += max(0, deadline - end_time) * weight
-
-            # Group Earliness
-            for g_id, weight in obj_param.weight_per_groups.items():
-                if weight > 0:
-                    g_idx = self.group_id_to_index[g_id]
-                    group = self.tasks_group[g_idx]
-                    deadline = group.max_ending_date
-                    if deadline is not None:
-                        task_indices = [
-                            self.task_id_to_index[t] for t in group.tasks_group
-                        ]
-                        group_end = np.max(variable.schedule[task_indices, 1])
-                        earliness += max(0, deadline - group_end) * weight
-
-            evaluation["earliness"] = earliness
-
-        # --- Resource Cost ---
-        if ObjectivesEnum.RESOURCE_COST in self.objective_params.params_obj:
-            obj_param = self.objective_params.params_obj[ObjectivesEnum.RESOURCE_COST]
-            cost = 0.0
-            for res_id, weight in obj_param.weight_per_resource_unit.items():
-                if weight == 0:
-                    continue
-                # Skip if resource is explicitly excluded from objectives
-                if (
-                    res_id in obj_param.consider_in_objectives
-                    and not obj_param.consider_in_objectives[res_id]
-                ):
-                    continue
-                max_usage = np.max(resource_consumption[res_id])
-                cost += max_usage * weight
-            evaluation["resource_cost"] = cost
-        # --- WIP Cost ---
-        # WIP (Work In Progress) = maximum number of concurrent groups in progress
+        evaluation = super().evaluate(variable)
+        if Objective.EARLINESS_ONLY not in evaluation:
+            evaluation[Objective.EARLINESS_ONLY] = 0.0
+        if Objective.TARDINESS_ONLY not in evaluation:
+            evaluation[Objective.TARDINESS_ONLY] = 0.0
+        if Objective.CALENDAR_RESOURCES_LEVELS not in evaluation:
+            evaluation[Objective.CALENDAR_RESOURCES_LEVELS] = 0.0
         if ObjectivesEnum.WORK_IN_PROGRESS in self.objective_params.params_obj:
             obj_param = self.objective_params.params_obj[
                 ObjectivesEnum.WORK_IN_PROGRESS
@@ -1037,12 +1111,12 @@ class FlexProblem(
                     )
 
             evaluation["wip_cost"] = wip_cost
-
         return evaluation
 
     def satisfy(self, variable: ScheduleSolution) -> bool:
         from .fsp_utils import SolutionDetails
 
+        print("Calling satisfy")
         # TODO: implement proper satisfaction checking for preemptive schedules
         #  Should check:
         #  - Task durations (sum of intervals = required duration)
@@ -1066,9 +1140,13 @@ class FlexProblem(
             return sat
         # l_violation += satisfy_task_duration(variable, usage, self) # covered by the solution details
         l_violation += satisfy_precedence(variable, self)
+        print(l_violation, "precedence")
         l_violation += satisfy_precedence_group(variable, self)
+        print(l_violation, "precedence group")
         l_violation += satisfy_release_and_date(variable, self)
+        print(l_violation, "release group")
         l_violation += satisfy_generic_precedence_constraint(variable, self)
+        print(l_violation, "generic precedence constraint")
         return len(l_violation) == 0
 
     def get_attribute_register(self) -> EncodingRegister:
@@ -1082,16 +1160,16 @@ class FlexProblem(
             objective_sense=ModeOptim.MINIMIZATION,
             objective_handling=ObjectiveHandling.AGGREGATE,
             dict_objective_to_doc={
-                "makespan": ObjectiveDoc(
+                Objective.MAKESPAN: ObjectiveDoc(
                     type=TypeObjective.OBJECTIVE, default_weight=1
                 ),
-                "tardiness": ObjectiveDoc(
+                Objective.TARDINESS_ONLY: ObjectiveDoc(
                     type=TypeObjective.OBJECTIVE, default_weight=1
                 ),
-                "earliness": ObjectiveDoc(
+                Objective.EARLINESS_ONLY: ObjectiveDoc(
                     type=TypeObjective.OBJECTIVE, default_weight=1
                 ),
-                "resource_cost": ObjectiveDoc(
+                Objective.CALENDAR_RESOURCES_LEVELS: ObjectiveDoc(
                     type=TypeObjective.OBJECTIVE, default_weight=1
                 ),
                 "wip_cost": ObjectiveDoc(
