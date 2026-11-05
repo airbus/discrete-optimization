@@ -446,8 +446,8 @@ class OptalAllocSchedulingSolver(
                     sol.set_value(self.variables["used"][team], 1)
                 else:
                     sol.set_value(self.variables["used"][team], 0)
-            self.cur_sol = solution
-            self.warm_start_solution = solution
+            self.cur_sol = sol
+            self.warm_start_solution = sol
             self.use_warm_start = True
 
     def init_model(
