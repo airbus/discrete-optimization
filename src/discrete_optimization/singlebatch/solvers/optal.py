@@ -1,6 +1,8 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 import logging
 from typing import Any, Optional
 
@@ -147,12 +149,12 @@ class OptalSingleBatchSolver(OptalCpSolver, WarmstartMixin):
             "makespan": makespan,
         }
 
-    def retrieve_solution(self, result: "cp.SolutionEvent") -> BatchProcessingSolution:
+    def retrieve_solution(self, solution: cp.Solution) -> BatchProcessingSolution:
         """Constructs a DO solution from the OptalCP solver's internal state."""
-        if result.solution is None:
+        if solution is None:
             return self.problem.get_dummy_solution()
 
-        solution = result.solution
+        solution = solution
         logger.info(f"Objective: {solution.get_objective()}")
 
         n = self.problem.nb_jobs

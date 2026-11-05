@@ -171,18 +171,16 @@ class OptalRcpspSolver(
         self.warm_start_solution = solution_optal
         self.use_warm_start = True
 
-    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         schedule = {}
         modes_dict = {}
-        if result.solution is not None:
+        if solution is not None:
             for t in self.variables_dict["intervals"]:
-                start = result.solution.get_start(self.variables_dict["intervals"][t])
-                end = result.solution.get_end(self.variables_dict["intervals"][t])
+                start = solution.get_start(self.variables_dict["intervals"][t])
+                end = solution.get_end(self.variables_dict["intervals"][t])
                 schedule[t] = {"start_time": start, "end_time": end}
                 for m in self.variables_dict["opt_intervals"][t]:
-                    if result.solution.is_present(
-                        self.variables_dict["opt_intervals"][t][m]
-                    ):
+                    if solution.is_present(self.variables_dict["opt_intervals"][t][m]):
                         modes_dict[t] = m
             return RcpspSolution(
                 problem=self.problem,

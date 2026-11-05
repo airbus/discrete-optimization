@@ -382,7 +382,7 @@ class OptalRCALBPLSolver(
     def get_task_interval(self, task: Task) -> "cp.IntervalVar":
         return self.variables["main_intervals"][task]
 
-    def retrieve_solution(self, result: "cp.SolveResult") -> RCALBPLSolution:
+    def retrieve_solution(self, solution: cp.Solution) -> RCALBPLSolution:
         """
         Parses the OptalCP result back into a native RCALBPLSolution, translating
         absolute unfolded times back to relative workstation times.
@@ -396,29 +396,27 @@ class OptalRCALBPLSolver(
         for t in self.problem.tasks:
             for w in self.problem.stations:
                 # Task allocation is constant, so we can just check period 0
-                if result.solution.is_present(
-                    self.variables["opt_intervals"][(t, 0, w)]
-                ):
+                if solution.is_present(self.variables["opt_intervals"][(t, 0, w)]):
                     wks[t] = w
                     break
 
         # Retrieve resource dispatch bounds
         for r in self.problem.resources:
             for w in self.problem.stations:
-                raw[(r, w)] = result.solution.get_value(
+                raw[(r, w)] = solution.get_value(
                     self.variables["resource_dispatch"][(r, w)]
                 )
 
         # Retrieve cycle times chosen
         for p in self.problem.periods:
-            cyc[p] = result.solution.get_value(self.variables["cycle_time_chosen"][p])
+            cyc[p] = solution.get_value(self.variables["cycle_time_chosen"][p])
 
         # Retrieve relative task start times
         for p in self.problem.periods:
             for t in self.problem.tasks:
                 w = wks[t]
                 # Fetch absolute start time and subtract baseline offset
-                start[(t, p)] = result.solution.get_start(
+                start[(t, p)] = solution.get_start(
                     self.variables["opt_intervals"][(t, p, w)]
                 )
         return RCALBPLSolution(
@@ -791,7 +789,7 @@ class OptalRCALBPLSolverV2(
     def get_task_interval(self, task: Task) -> "cp.IntervalVar":
         return self.variables["main_intervals"][task]
 
-    def retrieve_solution(self, result: "cp.SolveResult") -> RCALBPLSolution:
+    def retrieve_solution(self, solution: cp.Solution) -> RCALBPLSolution:
         """
         Parses the OptalCP result back into a native RCALBPLSolution, translating
         absolute unfolded times back to relative workstation times.
@@ -804,29 +802,27 @@ class OptalRCALBPLSolverV2(
         # Retrieve allocations
         for t in self.problem.tasks:
             # Task allocation is constant, so we can just check period 0
-            start_ = result.solution.get_start(self.variables["main_intervals"][(t, 0)])
+            start_ = solution.get_start(self.variables["main_intervals"][(t, 0)])
             wks[t] = start_ // self.problem.c_max
             print(start_, self.problem.c_max)
             print(wks[t])
         # Retrieve resource dispatch bounds
         for r in self.problem.resources:
             for w in self.problem.stations:
-                raw[(r, w)] = result.solution.get_value(
+                raw[(r, w)] = solution.get_value(
                     self.variables["resource_dispatch"][(r, w)]
                 )
 
         # Retrieve cycle times chosen
         for p in self.problem.periods:
-            cyc[p] = result.solution.get_value(self.variables["cycle_time_chosen"][p])
+            cyc[p] = solution.get_value(self.variables["cycle_time_chosen"][p])
 
         # Retrieve relative task start times
         for p in self.problem.periods:
             # Baseline offset for period (reflecting the new unfolded timeline)
             for t in self.problem.tasks:
                 # Fetch absolute start time and subtract baseline offset
-                abs_start = result.solution.get_start(
-                    self.variables["main_intervals"][(t, p)]
-                )
+                abs_start = solution.get_start(self.variables["main_intervals"][(t, p)])
                 start[(t, p)] = abs_start % self.problem.c_max
 
         return RCALBPLSolution(

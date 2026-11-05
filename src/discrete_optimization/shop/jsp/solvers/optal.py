@@ -69,13 +69,11 @@ class OptalJspSolver(SchedulingOptalSolver[Task]):
     def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self._all_intervals[task[0]][task[1]]
 
-    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         schedule = []
         for i in range(self.problem.n_jobs):
             sched_i = []
             for k in range(self.problem.nb_subjob_per_job[i]):
-                sched_i.append(
-                    result.solution.get_value(self.get_task_interval((i, k)))
-                )
+                sched_i.append(solution.get_value(self.get_task_interval((i, k))))
             schedule.append(sched_i)
         return JobShopSolution(problem=self.problem, schedule=schedule)

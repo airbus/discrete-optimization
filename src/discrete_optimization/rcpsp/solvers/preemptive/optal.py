@@ -320,18 +320,16 @@ class OptalPreemptiveRcpspSolver(OptalCpSolver):
             <= capa
         )
 
-    def retrieve_solution(self, result: cp.SolveResult) -> PreemptiveRcpspSolution:
-        # self.warm_start_solution = result.solution
-        self.warm_start_solution = result.solution
+    def retrieve_solution(self, solution: cp.Solution) -> PreemptiveRcpspSolution:
+        # self.warm_start_solution = solution
+        self.warm_start_solution = solution
         modes_dict = {}
         schedule = {}
         for t in self.variables["intervals"]:
             sched = []
             for i in range(len(self.variables["intervals"][t])):
-                if result.solution.is_present(self.variables["intervals"][t][i]):
-                    sched.append(
-                        result.solution.get_value(self.variables["intervals"][t][i])
-                    )
+                if solution.is_present(self.variables["intervals"][t][i]):
+                    sched.append(solution.get_value(self.variables["intervals"][t][i]))
             schedule[t] = {
                 "starts": [x[0] for x in sched],
                 "ends": [x[1] for x in sched],
@@ -339,7 +337,7 @@ class OptalPreemptiveRcpspSolver(OptalCpSolver):
             for m in self.variables["modes"][t]:
                 if isinstance(self.variables["modes"][t][m], int):
                     modes_dict[t] = m
-                elif result.solution.get_value(self.variables["modes"][t][m]):
+                elif solution.get_value(self.variables["modes"][t][m]):
                     modes_dict[t] = m
         modes = [modes_dict[t] for t in self.problem.tasks_list_non_dummy]
         sol = PreemptiveRcpspSolution(
@@ -591,23 +589,21 @@ class OptalCalendarPreemptiveRcpspSolver(OptalCpSolver):
         #                                                                     q)
         #                                         for t,m,q in potential_tasks]) <= capa)
 
-    def retrieve_solution(self, result: cp.SolveResult) -> PreemptiveRcpspSolution:
-        # self.warm_start_solution = result.solution
-        self.warm_start_solution = result.solution
+    def retrieve_solution(self, solution: cp.Solution) -> PreemptiveRcpspSolution:
+        # self.warm_start_solution = solution
+        self.warm_start_solution = solution
         modes_dict = {}
         schedule = {}
         for t in self.variables["intervals"]:
             sched = []
-            st, end = result.solution.get_value(self.variables["intervals"][t])
+            st, end = solution.get_value(self.variables["intervals"][t])
             schedule[t] = {"starts": [st], "ends": [end]}
             modes = list(self.problem.mode_details[t].keys())
             if len(modes) == 1:
                 modes_dict[t] = modes[0]
             else:
                 for m in self.variables["opt_intervals"][t]:
-                    if result.solution.is_present(
-                        self.variables["opt_intervals"][t][m]
-                    ):
+                    if solution.is_present(self.variables["opt_intervals"][t][m]):
                         modes_dict[t] = m
         modes = [modes_dict[t] for t in self.problem.tasks_list_non_dummy]
         sol = PreemptiveRcpspSolution(

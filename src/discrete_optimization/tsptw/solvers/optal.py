@@ -77,7 +77,7 @@ class OptalTspTwSolver(OptalCpSolver):
         self._nodes_in_sequence = nodes_in_sequence
         self.cp_model = model
 
-    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         """Extracts the tour from the OptalCP solution and constructs a TSPTWSolution."""
         sequenced_nodes_with_times = []
         # Extract the start times of the visit intervals for the nodes in the sequence
@@ -85,9 +85,7 @@ class OptalTspTwSolver(OptalCpSolver):
             sequenced_nodes_with_times.append(
                 {
                     "index": node_index,
-                    "startTime": result.solution.get_start(
-                        self._visit_intervals[node_index]
-                    ),
+                    "startTime": solution.get_start(self._visit_intervals[node_index]),
                 }
             )
         # Sort the nodes by their start times to get the correct tour order

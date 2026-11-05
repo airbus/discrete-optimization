@@ -190,13 +190,13 @@ class OptalVrpSolver(OptalCpSolver):
             self.cp_model.sum([w * expr for w, expr in zip(obj_weight, obj_expr)])
         )
 
-    def retrieve_solution(self, result: cp.SolveResult) -> VrpSolution:
+    def retrieve_solution(self, solution: cp.Solution) -> VrpSolution:
         paths = []
         for v in range(self.problem.vehicle_count):
             path = []
             for n in self.variables["intervals"][v]:
-                if result.solution.is_present(self.variables["intervals"][v][n]):
-                    start_time, end_time = result.solution.get_value(
+                if solution.is_present(self.variables["intervals"][v][n]):
+                    start_time, end_time = solution.get_value(
                         self.variables["intervals"][v][n]
                     )
                     path.append((start_time, end_time, n))

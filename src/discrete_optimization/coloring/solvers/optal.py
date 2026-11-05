@@ -70,9 +70,9 @@ class OptalColoringSolver(
     def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables["intervals"][task]
 
-    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         color = [
-            result.solution.get_start(self.get_task_interval(t))
+            solution.get_start(self.get_task_interval(t))
             for t in self.problem.tasks_list
         ]
         return ColoringSolution(problem=self.problem, colors=color)

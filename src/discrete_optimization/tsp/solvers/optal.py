@@ -177,10 +177,10 @@ class OptalTspSolver(SchedulingOptalSolver[Node]):
     def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables["visits"][task]
 
-    def retrieve_solution(self, result: cp.SolveResult) -> TspSolution:
-        logger.info(f"Current obj {result.solution.get_objective()}")
+    def retrieve_solution(self, solution: cp.Solution) -> TspSolution:
+        logger.info(f"Current obj {solution.get_objective()}")
         starts = [
-            result.solution.get_start(self.get_task_interval(i))
+            solution.get_start(self.get_task_interval(i))
             for i in range(self.problem.node_count)
         ]
         ordered = sorted(range(len(starts)), key=lambda i: starts[i])

@@ -93,19 +93,21 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
         kw = {"timeLimit": time_limit, "nbWorkers": parameters_cp.nb_process}
         kw.update(args)
         result = self.cp_model.solve(parameters=cp.Parameters(**kw))
-        sol = self.retrieve_solution(result)
-        fit = self.aggreg_from_sol(sol)
         if result.solution is not None:
             if result.proof:
                 self.status_solver = StatusSolver.OPTIMAL
             else:
                 self.status_solver = StatusSolver.SATISFIED
+            self.current_solution = result.solution
+            sol = self.retrieve_solution(result.solution)
+            fit = self.aggreg_from_sol(sol)
+            return self.create_result_storage([(sol, fit)])
         else:
             if result.proof:
                 self.status_solver = StatusSolver.UNSATISFIABLE
             else:
                 self.status_solver = StatusSolver.UNKNOWN
-        return self.create_result_storage([(sol, fit)])
+            return self.create_result_storage()
 
     async def _solve_async(
         self,
@@ -196,12 +198,14 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
         )
 
     @abstractmethod
-    def retrieve_solution(self, result: "cp.SolveResult") -> Solution:
-        """Return a d-o solution from the variables computed by minizinc.
+    def retrieve_solution(self, result: "cp.Solution") -> Solution:
+        """Construct a d-o solution from OptalCP solver solution.
 
         Args:
-            result: output of the cp.solve
+            solution: OptalCP solution
+
         Returns:
+            d-o solution
 
         """
         ...
@@ -371,11 +375,11 @@ class OptalSolutionCallback:
         self.current_solve_result: Optional[cp.SolveResult] = None
         self.do_not_retrieve_solutions = do_not_retrieve_solutions
 
-    def on_solution(self, solution: "cp.SolutionEvent") -> None:
-        self.do_solver.current_obj = solution.solution.get_objective()
+    def on_solution(self, event: "cp.SolutionEvent") -> None:
+        self.do_solver.current_obj = event.solution.get_objective()
         if not self.do_not_retrieve_solutions:
-            self.do_solver.current_solution = solution.solution
-            sol = self.do_solver.retrieve_solution(solution)
+            self.do_solver.current_solution = event.solution
+            sol = self.do_solver.retrieve_solution(event.solution)
             fit = self.do_solver.aggreg_from_sol(sol)
             self.res.append((sol, fit))
         self.nb_solutions += 1
@@ -398,6 +402,7 @@ class OptalSolutionCallback:
 
     def on_bound(self, event: "cp.ObjectiveBoundEntry") -> None:
         self.do_solver.current_bound = event.value
+        logger.debug("on_bound")
         stopping = self.callback.on_step_end(
             step=self.nb_solutions, res=self.res, solver=self.do_solver
         )

@@ -69,8 +69,8 @@ class OptalSingleMachineSolver(SchedulingOptalSolver[Task]):
     def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables["intervals"][task]
 
-    def retrieve_solution(self, result: cp.SolveResult) -> WTSolution:
+    def retrieve_solution(self, solution: cp.Solution) -> WTSolution:
         schedule = []
         for i in self.problem.tasks_list:
-            schedule.append(result.solution.get_value(self.get_task_interval(i)))
+            schedule.append(solution.get_value(self.get_task_interval(i)))
         return WTSolution(problem=self.problem, schedule=schedule)

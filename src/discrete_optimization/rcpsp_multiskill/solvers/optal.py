@@ -576,16 +576,16 @@ class OptalMSRcpspSolver(
         else:
             return 0
 
-    def retrieve_solution(self, result: cp.SolveResult) -> MultiskillRcpspSolution:
-        logger.info(f"Current obj {result.solution.get_objective()}")
+    def retrieve_solution(self, solution: cp.Solution) -> MultiskillRcpspSolution:
+        logger.info(f"Current obj {solution.get_objective()}")
         modes_dict = {}
         schedule = {}
         employee_usage = {}
         for task in self.variables["interval_var"]:
             itv = self.get_task_interval(task)
             schedule[task] = {
-                "start_time": result.solution.get_start(itv),
-                "end_time": result.solution.get_end(itv),
+                "start_time": solution.get_start(itv),
+                "end_time": solution.get_end(itv),
             }
         for task in self.problem.tasks_list:
             modes = list(self.problem.mode_details[task].keys())
@@ -593,7 +593,7 @@ class OptalMSRcpspSolver(
                 modes_dict[task] = modes[0]
             else:
                 for mode in self.variables["opt_interval_var"][task]:
-                    if result.solution.is_present(
+                    if solution.is_present(
                         self.variables["opt_interval_var"][task][mode]
                     ):
                         modes_dict[task] = mode
@@ -610,7 +610,7 @@ class OptalMSRcpspSolver(
             employee_usage[task] = {}
             if task in self.variables["worker_variable"]["opt_intervals"]:
                 for worker in self.variables["worker_variable"]["opt_intervals"][task]:
-                    if result.solution.is_present(
+                    if solution.is_present(
                         self.variables["worker_variable"]["opt_intervals"][task][worker]
                     ):
                         sk_nz = self.problem.employees[worker].get_non_zero_skills()
@@ -619,7 +619,7 @@ class OptalMSRcpspSolver(
                             for s in self.variables["worker_variable"]["skills_used"][
                                 task
                             ][worker]:
-                                if result.solution.get_value(
+                                if solution.get_value(
                                     self.variables["worker_variable"]["skills_used"][
                                         task
                                     ][worker][s]

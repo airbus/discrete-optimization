@@ -95,9 +95,9 @@ class OptalBinPackSolver(
     def get_task_interval(self, task: Task) -> "cp.IntervalVar":
         return self.variables["intervals"][task]
 
-    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         allocation = [
-            int(result.solution.get_start(self.get_task_interval(t)))
+            int(solution.get_start(self.get_task_interval(t)))
             for t in self.problem.tasks_list
         ]
         return BinPackSolution(problem=self.problem, allocation=allocation)

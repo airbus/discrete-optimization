@@ -98,7 +98,7 @@ class OptalFJspSolver(SchedulingOptalSolver[Task]):
     def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables["intervals"][task]
 
-    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         schedule = []
         machine_index = []
         recipe_index = []
@@ -110,10 +110,10 @@ class OptalFJspSolver(SchedulingOptalSolver[Task]):
                 for index_opt, opt in enumerate(
                     self.problem.list_jobs[i].subjobs[k].recipes
                 ):
-                    if result.solution.is_present(
+                    if solution.is_present(
                         self.variables["opt_intervals"][(i, k, opt.machine_index)]
                     ):
-                        st, end = result.solution.get_value(
+                        st, end = solution.get_value(
                             self.variables["opt_intervals"][(i, k, opt.machine_index)]
                         )
                         sched_i.append((st, end))

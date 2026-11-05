@@ -189,7 +189,7 @@ class OptalFlexProblemSolver(OptalCpSolver):
         if self.status_solver is None:
             return
         self.cur_sol: cp.Solution
-        sol = self.retrieve_sol_from_solver_solution(self.cur_sol)
+        sol = self.retrieve_solution(self.cur_sol)
         self.cur_sol.set_objective(sol._intern_obj[self.current_objective])
         print("Current objective", self.current_objective, self.cur_sol.get_objective())
         self.warm_start_solution = self.cur_sol
@@ -328,7 +328,7 @@ class OptalFlexProblemSolver(OptalCpSolver):
         self.warm_start_solution = sol_cp
         self.use_warm_start = True
 
-    def retrieve_sol_from_solver_solution(self, solution: "cp.Solution"):
+    def retrieve_solution(self, solution: "cp.Solution") -> ScheduleSolution:
         schedule = np.zeros((self.problem.nb_tasks, 2))
         allocation = np.zeros(self.problem.nb_tasks)
         schedule_l = {}
@@ -348,14 +348,7 @@ class OptalFlexProblemSolver(OptalCpSolver):
             details_subobj[name] = solution.get_value(self.variables_dict["obj_var"][i])
             # details_subobj[name] = int(kpis[name])
         sol._intern_obj = details_subobj
-        self.cur_sol = solution
         return sol
-
-    def retrieve_solution(self, result: "cp.SolveResult") -> ScheduleSolution:
-        # return ScheduleSolution(problem=self.problem,
-        #                        schedule = np.zeros((self.problem.nb_tasks, 2)),
-        #                        modes = np.ones(self.problem.nb_tasks))
-        return self.retrieve_sol_from_solver_solution(result.solution)
 
     def init_model(self, params: ConstraintIncludingParams = None, **args: Any) -> None:
         if params is None:
