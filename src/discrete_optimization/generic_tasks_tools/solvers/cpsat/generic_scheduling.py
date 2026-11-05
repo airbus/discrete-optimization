@@ -39,6 +39,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.non_renewable_resou
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.precedence_scheduling import (
     PrecedenceSchedulingCpSatSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.routing import (
+    RoutingCpSatProblem,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.skill import (
     SkillSchedulingCpSatSolver,
 )
@@ -48,6 +51,8 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.timelag import (
 
 
 class GenericSchedulingCpSatSolver(
+    # EntityConstraintsCpSatSolver[Task],
+    RoutingCpSatProblem[Task],
     ExclusionCpSatSolver[Task, ExclusionResource],
     AlternativeSubproblemCpSatSolver[Task],
     NoOverlapCpSatSolver[Task],
@@ -69,12 +74,14 @@ class GenericSchedulingCpSatSolver(
 ):
     """Mixin for cpsat solver dealing with scheduling + allocation problems.
 
-    Has access to helping methods to create constraints for
+    Has access to helping methods to create constraints for:
     - precedence
     - renewable resource with calendar (unary resource to allocate, or cumulative resource)
     - non-renewable resource capacity
     - skills brought to tasks by allocated unary resources
     - resource blocking (gaps and spans)
+    - entity constraints (precedence, time lags, time windows on any SchedulingEntity)
+    - batching (variable task-to-batch assignment)
 
     For a more all-in-one version actually creating variables, constraints and objectives,
     see `GenericSchedulingAutoCpSatSolver`.

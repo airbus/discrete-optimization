@@ -9,7 +9,8 @@ from discrete_optimization.top.solvers.cpsat import CpSatTopSolver
 def run():
     files, files_dict = get_data_available()
     print(files[0])
-    problem = parse_file(files[2])
+    file = [f for f in files if "pr299_gen1_m3.txt" in f][0]
+    problem = parse_file(file)
     solver = CpSatTopSolver(problem)
     solver.init_model(scaling=100)
     res = solver.solve(

@@ -19,6 +19,8 @@ from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
 )
 from discrete_optimization.generic_tasks_tools.objectives.earliness_tardiness import (
     EarlinessTardinessComputer,
+    OnlyEarlinessComputer,
+    OnlyTardinessComputer,
 )
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
@@ -29,6 +31,9 @@ from discrete_optimization.generic_tasks_tools.objectives.mode_cost import (
 from discrete_optimization.generic_tasks_tools.objectives.resource_levels import (
     CalendarRenewableResourceLevelObjectiveComputer,
     NonRenewableResourceLevelObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.routing_costs import (
+    RoutingCostComputer,
 )
 from discrete_optimization.generic_tasks_tools.objectives.schedule_changes import (
     ScheduleChangesComputer,
@@ -41,6 +46,13 @@ from discrete_optimization.generic_tasks_tools.objectives.soft_time_penalty impo
 )
 from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used import (
     UnaryResourcesUsedComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.weighted_number_late_tasks import (
+    WeightedNumberLateComputer,
+    WeightedNumberLateTasksInBatchComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.weighted_sum_start_or_end import (
+    WeightedSumStartEndObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.allocated_tasks import (
     AllocatedTasksObjectiveCpSatModeler,
@@ -71,6 +83,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.resource
     CalendarRenewableResourceLevelModelerCpSat,
     NonRenewableResourceLevelModelerCpSat,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.routing_costs import (
+    RoutingCostsCpSatModeler,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.schedule_changes import (
     ScheduleChangesModelerCpSat,
 )
@@ -83,6 +98,13 @@ from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.soft_tim
 from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.unary_resource_used import (
     UnaryResourcesUsedModelerCpSat,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.weighted_number_late_tasks import (
+    WeightedNumberLateCpSatModeler,
+    WeightedNumberLateInBatchCpSatModeler,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cpsat.objectives.weighted_sum_start_or_end import (
+    WeightedSumStartEndCpSatModeler,
+)
 
 mapping_computer_to_modeler = {
     AllocationCostComputerMultimode: AllocationCostMultimodeModelerCpSat,
@@ -90,6 +112,8 @@ mapping_computer_to_modeler = {
     AllocatedTasksObjective: AllocatedTasksObjectiveCpSatModeler,
     AllocationSwitchObjectiveComputer: AllocationSwitchModelerCpSat,
     EarlinessTardinessComputer: EarlinessTardinessCpSatModeler,
+    OnlyEarlinessComputer: EarlinessTardinessCpSatModeler,
+    OnlyTardinessComputer: EarlinessTardinessCpSatModeler,
     MakespanObjectiveComputer: MakespanObjectiveModelCpSat,
     ModeCostComputer: ModeCostModelerCpSat,
     NonRenewableResourceLevelObjectiveComputer: NonRenewableResourceLevelModelerCpSat,
@@ -100,4 +124,8 @@ mapping_computer_to_modeler = {
     CumulCostComputer: CumulCostModelerCpSat,
     ScheduledTasksComputer: ScheduledTasksCpSatModeler,
     CalendarPreemptedComputer: CalendarPreemptedModelerCpSat,
+    WeightedSumStartEndObjectiveComputer: WeightedSumStartEndCpSatModeler,
+    WeightedNumberLateComputer: WeightedNumberLateCpSatModeler,
+    WeightedNumberLateTasksInBatchComputer: WeightedNumberLateInBatchCpSatModeler,
+    RoutingCostComputer: RoutingCostsCpSatModeler,
 }

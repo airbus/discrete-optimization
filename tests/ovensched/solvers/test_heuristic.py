@@ -5,6 +5,7 @@
 
 import pytest
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.ovensched.problem import (
     MachineData,
     OvenSchedulingProblem,
@@ -117,13 +118,13 @@ def test_heuristic_solution_evaluable(tiny_problem):
     evaluation = tiny_problem.evaluate(solution)
 
     assert isinstance(evaluation, dict)
-    assert "processing_time" in evaluation
-    assert "nb_late_jobs" in evaluation
-    assert "setup_cost" in evaluation
+    assert Objective.WEIGHTED_SUM_START_OR_END in evaluation
+    assert Objective.WEIGHTED_NB_LATE_TASKS_BATCH in evaluation
+    assert Objective.ROUTING_COSTS in evaluation
 
     # Solution should have reasonable values
-    assert evaluation["processing_time"] > 0
-    assert evaluation["setup_cost"] >= 0
+    assert evaluation[Objective.WEIGHTED_SUM_START_OR_END] > 0
+    assert evaluation[Objective.ROUTING_COSTS] >= 0
 
 
 def test_heuristic_produces_schedule(tiny_problem):

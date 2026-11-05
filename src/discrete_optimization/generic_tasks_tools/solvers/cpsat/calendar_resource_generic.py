@@ -85,6 +85,9 @@ class CalendarResourceGenericCpSatSolver(
         self, resource: Resource
     ) -> list[tuple[IntervalVar, LinearExprT]]:
         if self.problem.is_cumulative_resource(resource):
+            _, remove = self.get_individual_task_consumption_resource_to_be_included(
+                resource
+            )
             if (
                 self.avoid_interval_optional_for_cumulative_resources
                 or self.problem.has_any_cumulative_consumption_dependent()
@@ -114,6 +117,50 @@ class CalendarResourceGenericCpSatSolver(
                         )
                     )
                     > 0
+                ]
+        else:
+            raise NotImplementedError(
+                f"{resource} is not a cumulative resource whose consumption depends only on task mode."
+            )
+
+    def get_resource_consumption_intervals_with_removal(
+        self, resource: Resource, apply_remove: bool = True
+    ) -> list[tuple[IntervalVar, LinearExprT]]:
+        if self.problem.is_cumulative_resource(resource):
+            _, remove = self.get_individual_task_consumption_resource_to_be_included(
+                resource
+            )
+            if (
+                self.avoid_interval_optional_for_cumulative_resources
+                or self.problem.has_any_cumulative_consumption_dependent()
+                or self.problem.has_any_resource_consumption_depend_on_unary_resource()
+            ):
+                # no optional interval, use rather demand variables
+                return [
+                    (self.get_task_interval(task=task), conso)
+                    for task in self.problem.tasks_list
+                    if not isinstance(
+                        (conso := self.merged_demand_var_for_task[(task, resource)]),
+                        int,
+                    )
+                    or conso > 0
+                    and (not apply_remove or task not in remove)
+                ]
+            else:
+                return [
+                    (
+                        self.get_task_mode_interval(task=task, mode=mode),
+                        conso,
+                    )
+                    for task in self.problem.tasks_list
+                    for mode in self.problem.get_task_modes(task=task)
+                    if (
+                        conso := self.problem.get_cumulative_resource_consumption(
+                            resource=resource, task=task, mode=mode
+                        )
+                    )
+                    > 0
+                    and (not apply_remove or task not in remove)
                 ]
         else:
             raise NotImplementedError(
@@ -200,13 +247,22 @@ class CalendarResourceGenericCpSatSolver(
         tasks_of_interest_with_unary_dependent = (
             self.problem.get_tasks_of_interest_for_resource(resource)
         )
+        _, to_remove = self.get_individual_task_consumption_resource_to_be_included(
+            resource
+        )
         for decomp in decomposition:
-            subset_tasks = set([x[0] for x in decomp["set_task_mode_conso"]])
-            task_mode_of_interest = set(
+            subset_tasks_all = set([x[0] for x in decomp["set_task_mode_conso"]])
+            subset_tasks = set([x for x in subset_tasks_all if x not in to_remove])
+            task_mode_of_interest_all = set(
                 [(x[0], x[1]) for x in decomp["set_task_mode_conso"]]
+            )
+            task_mode_of_interest = set(
+                [x for x in task_mode_of_interest_all if x[0] not in to_remove]
             )
             task_to_include_as_one = set()
             task_mode_to_include = set()
+            task_to_include_as_one_all = set()
+            task_mode_to_include_as_one_all = set()
             for t in subset_tasks:
                 modes = self.problem.get_task_modes(t)
                 if all((t, m) in task_mode_of_interest for m in modes):
@@ -215,7 +271,17 @@ class CalendarResourceGenericCpSatSolver(
                     for m in modes:
                         if (t, m) in task_mode_of_interest:
                             task_mode_to_include.add((t, m))
+            for t in subset_tasks_all:
+                modes = self.problem.get_task_modes(t)
+                if all((t, m) in task_to_include_as_one_all for m in modes):
+                    task_to_include_as_one_all.add(t)
+                else:
+                    for m in modes:
+                        if (t, m) in task_to_include_as_one_all:
+                            task_mode_to_include_as_one_all.add((t, m))
+            task_to_include_as_one_all.update(tasks_of_interest_with_unary_dependent)
             task_to_include_as_one.update(tasks_of_interest_with_unary_dependent)
+            # Include with blocking
             itvs = [
                 self.get_resource_interval_and_consumption_for_task(
                     resource=resource, task=t
@@ -271,10 +337,47 @@ class CalendarResourceGenericCpSatSolver(
                         [x[1] for x in all_intervals],
                         capacity,
                     )
+            # without removed task =
+            itvs = [
+                self.get_resource_interval_and_consumption_for_task(
+                    resource=resource, task=t
+                )
+                for t in task_to_include_as_one_all
+            ]
+            itvs.extend(
+                [
+                    self.get_resource_interval_and_consumption_for_task_and_mode(
+                        resource=resource, task=x[0], mode=x[1]
+                    )
+                    for x in task_mode_to_include_as_one_all
+                ]
+            )
+            all_intervals = []
+            all_intervals.extend(itvs)
+            all_intervals.extend(calendar_intervals)
+            if capacity == 1 and all(
+                isinstance(v[1], int) and v[1] == 1 for v in all_intervals
+            ):
+                if self.use_no_overlap_for_capa_1 or not self.use_cumulative_for_capa_1:
+                    self.cp_model.add_no_overlap([x[0] for x in all_intervals])
+                if self.use_cumulative_for_capa_1:
+                    self.cp_model.add_cumulative(
+                        intervals=[x[0] for x in all_intervals],
+                        demands=[x[1] for x in all_intervals],
+                        capacity=capacity,
+                    )
+            else:
+                self.cp_model.add_cumulative(
+                    [x[0] for x in all_intervals],
+                    [x[1] for x in all_intervals],
+                    capacity,
+                )
 
         if self.problem.has_any_blocking():
             actual_tasks_intervals_n_consumptions = (
-                self.get_resource_consumption_intervals(resource)
+                self.get_resource_consumption_intervals_with_removal(
+                    resource, apply_remove=True
+                )
             )
             # MORE
             # CLASSICAL
@@ -311,6 +414,40 @@ class CalendarResourceGenericCpSatSolver(
                         intervals=intervals_1, demands=demands_1, capacity=capacity
                     )
             # Get fake tasks for calendar gaps
+            actual_tasks_intervals_n_consumptions = (
+                self.get_resource_consumption_intervals_with_removal(
+                    resource, apply_remove=False
+                )
+            )
+            intervals_no_calendar = []
+            intervals_no_calendar.extend(actual_tasks_intervals_n_consumptions)
+            intervals_1 = [
+                interval
+                for interval, demand in intervals_no_calendar
+                if not isinstance(demand, int) or demand > 0
+            ]
+            demands_1 = [
+                demand
+                for interval, demand in intervals_no_calendar
+                if not isinstance(demand, int) or demand > 0
+            ]
+            if len(intervals_1) > 0:
+                if capacity == 1 and all(
+                    isinstance(v, int) and v == 1 for v in demands_1
+                ):
+                    if (
+                        self.use_no_overlap_for_capa_1
+                        or not self.use_cumulative_for_capa_1
+                    ):
+                        self.cp_model.add_no_overlap(intervals_1)
+                    if self.use_cumulative_for_capa_1:
+                        self.cp_model.add_cumulative(
+                            intervals=intervals_1, demands=demands_1, capacity=capacity
+                        )
+                else:
+                    self.cp_model.add_cumulative(
+                        intervals=intervals_1, demands=demands_1, capacity=capacity
+                    )
             fake_tasks_intervals = [
                 (
                     self.cp_model.NewFixedSizeIntervalVar(
@@ -333,6 +470,7 @@ class CalendarResourceGenericCpSatSolver(
                         )
                         for task in self.problem.tasks_list
                         if not self.problem.is_task_calendar_preempted(task)
+                        and task not in to_remove
                     ]
                 )
                 intervals_with_calendar.extend(active_blocking)

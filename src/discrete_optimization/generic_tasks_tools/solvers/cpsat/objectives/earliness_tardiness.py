@@ -62,14 +62,13 @@ class EarlinessTardinessCpSatModeler(ObjectiveModelerCpSat, Generic[Task]):
                 lb=0, ub=max_earliness, name=f"earliness_end_{task}"
             )
             cp_model.add_max_equality(
-                self.earliness_start_vars[task],
+                self.earliness_end_vars[task],
                 [
                     0,
                     end_for_earliness
                     - self.solver.get_task_start_or_end_variable(task, StartOrEnd.END),
                 ],
             )
-
         for task in self.objective_computer.get_tasks_having_max_start_for_tardiness():
             start_for_tardiness = self.objective_computer.get_max_start_for_tardiness(
                 task

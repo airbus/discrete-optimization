@@ -104,6 +104,7 @@ class BlockingConstraint(Generic[CumulativeResource]):
 @dataclass(frozen=True)
 class SpanBlockingConstraint(BlockingConstraint[CumulativeResource]):
     entity: SchedulingEntity = field(default_factory=SchedulingEntity)
+    remove_individual_task_contrib: bool = field(default=False)
 
 
 @dataclass(frozen=True)

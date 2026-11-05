@@ -90,9 +90,15 @@ class CalendarPreemptiveCpSatSolver(
         self._indicator_variables = dictionary_indicators
         for task in self.problem.get_all_tasks_calendar_preempted():
             all_key = [x for x in self._indicator_variables if x[0][0] == task]
-            self.cp_model.add_exactly_one(
-                [self._indicator_variables[x] for x in all_key]
-            )
+            if not self.problem.is_optional(task):
+                self.cp_model.add_exactly_one(
+                    [self._indicator_variables[x] for x in all_key]
+                )
+            else:
+                self.cp_model.add(
+                    sum([self._indicator_variables[x] for x in all_key])
+                    == self.get_task_is_present_variable(task)
+                )
 
     def constraint_duration_of_task_indicator(
         self,

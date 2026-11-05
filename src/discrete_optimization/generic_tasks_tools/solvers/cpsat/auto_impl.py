@@ -109,10 +109,10 @@ class GenericSchedulingAutoCpSatImplSolver(
         use_only_skill_to_allocate: Optional[bool] = None,
         use_no_overlap_for_capa_1: Optional[bool] = None,
         use_cumulative_for_capa_1: Optional[bool] = None,
+        logging_objectives: Optional[bool] = None,
         **kwargs: Any,
     ) -> None:
         self.new_horizon = new_horizon
-
         # override default parameters if given, for those not already managed by parent class
         if exactly_one_unary_resource_per_task is not None:
             self.exactly_one_unary_resource_per_task = (
@@ -145,6 +145,7 @@ class GenericSchedulingAutoCpSatImplSolver(
             use_energy_constraints=use_energy_constraints,
             keep_only_most_nested_energy_constraints=keep_only_most_nested_energy_constraints,
             add_redundant_skill_cumulative_constraints=add_redundant_skill_cumulative_constraints,
+            logging_objectives=logging_objectives,
             **kwargs,
         )
         if self.objective == Objective.CUSTOM:
