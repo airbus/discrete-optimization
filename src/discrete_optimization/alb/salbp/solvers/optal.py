@@ -1,6 +1,8 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+from __future__ import annotations
+
 from typing import Any, Iterable
 
 from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
@@ -91,9 +93,9 @@ class OptalSalbpSolver(SchedulingOptalSolver[Task], WarmstartMixin):
             makespan = self.get_global_makespan_variable()
         self.cp_model.minimize(makespan)
 
-    def retrieve_solution(self, result: "cp.SolveResult") -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         allocation = [
-            int(result.solution.get_start(self.get_task_interval(task)))
+            int(solution.get_start(self.get_task_interval(task)))
             for task in self.problem.tasks
         ]
         return SalbpSolution(problem=self.problem, allocation_to_station=allocation)
@@ -188,9 +190,9 @@ class OptalSalbp12Solver(SchedulingOptalSolver[Task], WarmstartMixin):
             self.cp_model.sum([w * o for w, o in zip(objs, weights)])
         )
 
-    def retrieve_solution(self, result: "cp.SolveResult") -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         allocation = [
-            int(result.solution.get_start(self.get_task_interval(task)))
+            int(solution.get_start(self.get_task_interval(task)))
             for task in self.problem.tasks
         ]
         return SalbpSolution(problem=self.problem, allocation_to_station=allocation)

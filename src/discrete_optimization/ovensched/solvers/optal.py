@@ -947,23 +947,24 @@ class OvenSchedulingOptalSolver(OptalCpSolver, WarmstartMixin):
         if objective_terms:
             self.cp_model.minimize(self.cp_model.sum(objective_terms))
 
-    def retrieve_solution(self, result: "cp.SolutionEvent") -> OvenSchedulingSolution:
-        """Construct a solution from OptalCP solver results.
+    def retrieve_solution(self, solution: "cp.Solution") -> OvenSchedulingSolution:
+        """Construct a d-o solution from OptalCP solver solution.
 
         Args:
-            result: The OptalCP solution event
+            solution: OptalCP solution
 
         Returns:
             An OvenSchedulingSolution
+
         """
-        if result.solution is None:
+        if solution is None:
             # Return empty solution if no solution found
             return OvenSchedulingSolution(
                 problem=self.problem,
                 schedule_per_machine={m: [] for m in range(self.problem.n_machines)},
             )
 
-        solution = result.solution
+        solution = solution
 
         # Log objective values
         logger.info(f"Objective: {solution.get_objective()}")
@@ -1035,7 +1036,7 @@ class OvenSchedulingOptalSolver(OptalCpSolver, WarmstartMixin):
         logger.info(f"Feasible: {self.problem.satisfy(oven_solution)}")
 
         # Store current solution for warm start
-        self.current_solution = result.solution
+        self.current_solution = solution
 
         return oven_solution
 

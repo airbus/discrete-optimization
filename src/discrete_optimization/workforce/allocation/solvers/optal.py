@@ -285,13 +285,13 @@ class OptalTeamAllocationSolver(
             )
         return 0
 
-    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         allocation = [None for _ in range(len(self.problem.tasks_list))]
         for task in self.problem.tasks_list:
             i_task = self.problem.tasks_list.index(task)
             for res in self.variables["intervals_per_team"]:
                 if task in self.variables["intervals_per_team"][res]:
-                    if result.solution.is_present(
+                    if solution.is_present(
                         self.variables["intervals_per_team"][res][task]
                     ):
                         allocation[i_task] = self.problem.get_index_from_unary_resource(

@@ -106,7 +106,6 @@ class OptalAllocSchedulingSolver(
     ]
     problem: AllocSchedulingProblem
     variables: dict[str, dict[Any, Any]]
-    cur_sol: cp.Solution
 
     bound_teams: int = None
     time_bounds: float = 0
@@ -383,19 +382,19 @@ class OptalAllocSchedulingSolver(
             )
         )
 
-    def retrieve_solution(self, result: cp.SolutionEvent) -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         schedule = np.zeros((self.problem.number_tasks, 2), dtype=int)
         allocation = -np.ones(self.problem.number_tasks, dtype=int)
-        logger.info(f"Obj = {result.solution.get_objective()}")
+        logger.info(f"Obj = {solution.get_objective()}")
         if "resched_objs" in self.variables:
             for obj in self.variables["resched_objs"]:
                 logger.info(f"Obj :{obj}")
                 logger.info(
-                    f"Value : {result.solution.get_value(self.variables['resched_objs'][obj])}"
+                    f"Value : {solution.get_value(self.variables['resched_objs'][obj])}"
                 )
         for t in range(self.problem.number_tasks):
-            start = result.solution.get_start(self.variables["interval_var"][t])
-            end = result.solution.get_end(self.variables["interval_var"][t])
+            start = solution.get_start(self.variables["interval_var"][t])
+            end = solution.get_end(self.variables["interval_var"][t])
             if start is None:
                 schedule[t, 0] = self.problem.original_start[self.problem.tasks_list[t]]
             else:
@@ -405,7 +404,7 @@ class OptalAllocSchedulingSolver(
             else:
                 schedule[t, 1] = end
             for index_team in self.variables["opt_interval_var"][t]:
-                if result.solution.is_present(
+                if solution.is_present(
                     self.variables["opt_interval_var"][t][index_team]
                 ):
                     allocation[t] = index_team
@@ -414,10 +413,7 @@ class OptalAllocSchedulingSolver(
         )
         sol._intern_obj = {}
         for obj in self.variables["objectives"]:
-            sol._intern_obj[obj] = result.solution.get_value(
-                self.variables["objectives"][obj]
-            )
-        self.cur_sol = result.solution
+            sol._intern_obj[obj] = solution.get_value(self.variables["objectives"][obj])
         return sol
 
     def set_warm_start(self, solution: AllocSchedulingSolution) -> None:
@@ -446,7 +442,6 @@ class OptalAllocSchedulingSolver(
                     sol.set_value(self.variables["used"][team], 1)
                 else:
                     sol.set_value(self.variables["used"][team], 0)
-            self.cur_sol = sol
             self.warm_start_solution = sol
             self.use_warm_start = True
 

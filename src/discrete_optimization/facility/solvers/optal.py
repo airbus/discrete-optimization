@@ -191,21 +191,21 @@ class OptalFacilitySolver(
     def get_task_interval(self, task: Task) -> cp.IntervalVar:
         return self.variables["intervals"][task]
 
-    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         if self.modeling == ModelingOptal.SCHEDULING:
             allocation = [
-                int(result.solution.get_start(self.get_task_interval(t)))
+                int(solution.get_start(self.get_task_interval(t)))
                 for t in self.problem.tasks_list
             ]
             return FacilitySolution(
                 problem=self.problem, facility_for_customers=allocation
             )
-        elif self.modeling == ModelingOptal.ALLOCATION:
+        else:  # self.modeling == ModelingOptal.ALLOCATION:
             allocation = []
             for i in range(len(self.problem.tasks_list)):
                 t = self.problem.tasks_list[i]
                 for c in self.problem.unary_resources_list:
-                    if result.solution.get_value(self.variables["allocation"][(t, c)]):
+                    if solution.get_value(self.variables["allocation"][(t, c)]):
                         allocation.append(self.problem.get_index_from_unary_resource(c))
             return FacilitySolution(
                 problem=self.problem, facility_for_customers=allocation

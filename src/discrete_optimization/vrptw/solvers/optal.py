@@ -213,15 +213,13 @@ class OptalVRPTWSolver(SchedulingOptalSolver[Task]):
             + self.variables["total_distance"]
         )
 
-    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+    def retrieve_solution(self, solution: cp.Solution) -> Solution:
         routes = []
         for v in range(self.problem.nb_vehicles):
             all_intervals = []
             for n in self.problem.customers:
-                if result.solution.is_present(
-                    self.variables["intervals_per_vehicle"][v][n]
-                ):
-                    st, end = result.solution.get_value(
+                if solution.is_present(self.variables["intervals_per_vehicle"][v][n]):
+                    st, end = solution.get_value(
                         self.variables["intervals_per_vehicle"][v][n]
                     )
                     all_intervals.append((st, end, n))
