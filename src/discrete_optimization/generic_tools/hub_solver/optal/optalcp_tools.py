@@ -58,6 +58,7 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
     early_stopping_exception: Optional[Exception] = None
     current_bound: int | float | None = None
     current_obj: int | float | None = None
+    current_solution: Optional["cp.Solution"] = None
     status_solver: StatusSolver = None
     use_warm_start: bool = False
     warm_start_solution: Optional["cp.Solution"] = None
@@ -345,6 +346,13 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
     def add_at_least_one(self, exprs: Iterable[Any]) -> list[Any]:
         return super().add_at_least_one(exprs)
 
+    def set_warm_start_from_previous_run(self):
+        """Set warm start from the previous solve run."""
+        if self.current_solution is not None:
+            self.warm_start_solution = self.current_solution
+            self.use_warm_start = True
+            logger.info("Warm start set from previous run")
+
 
 class OptalSolutionCallback:
     def __init__(
@@ -366,6 +374,7 @@ class OptalSolutionCallback:
     def on_solution(self, solution: "cp.SolutionEvent") -> None:
         self.do_solver.current_obj = solution.solution.get_objective()
         if not self.do_not_retrieve_solutions:
+            self.do_solver.current_solution = solution.solution
             sol = self.do_solver.retrieve_solution(solution)
             fit = self.do_solver.aggreg_from_sol(sol)
             self.res.append((sol, fit))
