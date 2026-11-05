@@ -18,11 +18,11 @@ from ortools.sat.python.cp_model import (
     LinearExprT,
 )
 
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationBinaryOrIntegerModellingCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationBinaryOrIntegerModellingCpSolver,
     AllocationModelling,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.base import (
     TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.callbacks.callback import (
@@ -87,7 +87,7 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatTeamAllocationSolver(
-    AllocationBinaryOrIntegerModellingCpBaseSolver[Task, UnaryResource],
+    AllocationBinaryOrIntegerModellingCpSolver[Task, UnaryResource],
     TasksCpSatSolver[Task],
     TeamAllocationSolver,
     WarmstartMixin,

@@ -6,11 +6,10 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optal.base import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.base import (
     TasksOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -38,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 class OptalKnapsackSolver(
-    AllocationCpBaseSolver[Item, Knapsack], TasksOptalSolver[Task], KnapsackSolver
+    AllocationCpSolver[Item, Knapsack], TasksOptalSolver[Item], KnapsackSolver
 ):
     problem: KnapsackProblem
 
@@ -74,7 +73,7 @@ class OptalKnapsackSolver(
         self.variables["intervals"] = intervals
 
     def get_task_unary_resource_is_present_variable(
-        self, task: Task, unary_resource: Knapsack
+        self, task: Item, unary_resource: Knapsack
     ) -> cp.BoolExpr:
         if unary_resource:
             return self.cp_model.presence(self.variables["intervals"][task])

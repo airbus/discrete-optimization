@@ -40,9 +40,7 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
 )
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
 from discrete_optimization.generic_tasks_tools.skill import (
-    NonSkillCumulativeResource,
     NoSkill,
-    Skill,
     WithoutSkillProblem,
     WithoutSkillSolution,
 )
@@ -279,13 +277,11 @@ class ScheduleSolution(
         Task,
         NoUnaryResource,
         NoSkill,
-        NonSkillCumulativeResource,
+        CumulativeResource,
         NonRenewableResource,
         ExclusionResource,
     ],
-    WithoutSkillSolution[
-        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
-    ],
+    WithoutSkillSolution[Task, NoUnaryResource, CumulativeResource, NoUnaryResource],
     WithoutAllocationSolution[Task],
 ):
     problem: "FlexProblem"
@@ -375,13 +371,11 @@ class FlexProblem(
         Task,
         NoUnaryResource,
         NoSkill,
-        NonSkillCumulativeResource,
+        CumulativeResource,
         NonRenewableResource,
         ExclusionResource,
     ],
-    WithoutSkillProblem[
-        Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
-    ],
+    WithoutSkillProblem[Task, NoUnaryResource, CumulativeResource, NoUnaryResource],
     WithoutAllocationProblem[Task],
 ):
     def get_flexible_gap_blocking_constraints(
@@ -537,7 +531,7 @@ class FlexProblem(
         return False
 
     @property
-    def non_skill_cumulative_resources_list(self) -> list[Skill]:
+    def non_skill_cumulative_resources_list(self) -> list[CumulativeResource]:
         return [resource.id for resource in self.resources if resource.renewable]
 
     def get_cumulative_resource_consumption(

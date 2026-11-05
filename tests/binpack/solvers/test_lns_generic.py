@@ -8,7 +8,7 @@ from discrete_optimization.binpack.solvers.cpsat import (
     CpSatBinPackSolver,
     ModelingBinPack,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_extractor import (
     BaseConstraintExtractor,
     ConstraintExtractorList,
     NbChangesAllocationConstraintExtractor,
@@ -17,13 +17,13 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extract
     SubresourcesAllocationConstraintExtractor,
     SubtasksAllocationConstraintExtractor,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler import (
     ALLOCATION_OBJECTIVES,
     SCHEDULING_OBJECTIVES,
     ObjectiveSubproblem,
     TasksConstraintHandler,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.neighbor_tools import (
     NeighborBuilderMix,
     NeighborBuilderSubPart,
     NeighborRandom,

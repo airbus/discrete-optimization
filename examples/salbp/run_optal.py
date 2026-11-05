@@ -7,12 +7,13 @@ from discrete_optimization.alb.salbp.solvers.optal import (
     SalbpProblem_1_2,
 )
 from discrete_optimization.generic_tools.callbacks.loggers import ProblemEvaluateLogger
-from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
     ParamsObjectiveFunction,
 )
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
 
 logging.basicConfig(level=logging.INFO)

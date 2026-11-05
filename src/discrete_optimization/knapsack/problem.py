@@ -15,7 +15,6 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
 )
-from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tools.do_problem import (
     MethodAggregating,
     ModeOptim,
@@ -146,7 +145,7 @@ class KnapsackProblem(AllocationProblem[Item, Knapsack]):
         self.item_to_index_list = {item: i for i, item in enumerate(self.list_items)}
         self.force_recompute_values = force_recompute_values
 
-    def is_optional(self, task: Task) -> bool:
+    def is_optional(self, task: Item) -> bool:
         return True
 
     @property

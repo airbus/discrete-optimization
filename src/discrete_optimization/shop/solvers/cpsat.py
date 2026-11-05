@@ -9,10 +9,10 @@ from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResour
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
 )
-from discrete_optimization.generic_tasks_tools.solvers.base.skill import (
-    WithoutSkillSchedulingCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.skill import (
+    WithoutSkillSchedulingCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -43,7 +43,7 @@ class CommonShopCpSatSolver(
         NoNonRenewableResource,
         ExclusionResource,
     ],
-    WithoutSkillSchedulingCpBaseSolver[
+    WithoutSkillSchedulingCpSolver[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
     ],
 ):

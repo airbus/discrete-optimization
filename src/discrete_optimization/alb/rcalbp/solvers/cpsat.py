@@ -26,10 +26,10 @@ from discrete_optimization.alb.rcalbp.problem import (
     Task,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.base import (
     TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -43,7 +43,7 @@ class ModelingShared(Enum):
 
 
 class CpSatRcAlbpSolver(
-    AllocationCpBaseSolver[Task, Station],
+    AllocationCpSolver[Task, Station],
     TasksCpSatSolver[Task],
 ):
     """

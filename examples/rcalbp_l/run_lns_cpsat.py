@@ -6,15 +6,15 @@ from discrete_optimization.alb.rcalbp_l.solvers import (
     BackwardSequentialRCALBPLSolver,
     CpSatRCALBPLSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_extractor import (
     ConstraintExtractorList,
     NbChangesAllocationConstraintExtractor,
     ParamsConstraintExtractor,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler import (
     TasksConstraintHandler,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.neighbor_tools import (
     NeighborBuilderMix,
     NeighborBuilderTaskThresholdTime,
     NeighborRandom,

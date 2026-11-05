@@ -17,8 +17,9 @@ from discrete_optimization.coloring.solvers.cpsat import (
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_solver import StatusSolver
+from discrete_optimization.generic_tools.enums import SignEnum
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

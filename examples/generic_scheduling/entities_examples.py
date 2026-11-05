@@ -22,7 +22,7 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingMode,
     SpanBlockingConstraint,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto_impl import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_impl import (
     GenericSchedulingAutoCpSatImplSolver,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (

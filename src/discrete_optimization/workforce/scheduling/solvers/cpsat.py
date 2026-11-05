@@ -21,7 +21,7 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NoNonRenewableResource,
 )
 from discrete_optimization.generic_tasks_tools.skill import NoSkill
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto import (
     SinglemodeGenericSchedulingAutoCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution

@@ -6,7 +6,7 @@ from discrete_optimization.alb.rcalbp.problem import RCALBPSolution
 from discrete_optimization.alb.rcalbp.transformations.to_generic import (
     RCALBPToGenericSchedulingTransformation,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto_impl import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_impl import (
     GenericSchedulingAutoCpSatImplSolver,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (

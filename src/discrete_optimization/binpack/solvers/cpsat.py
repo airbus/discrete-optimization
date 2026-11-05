@@ -21,13 +21,13 @@ from discrete_optimization.binpack.problem import (
     Item,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.base.scheduling import (
-    SchedulingCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.scheduling import (
+    SchedulingCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.base import (
     TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -54,8 +54,8 @@ class ModelingError(Exception):
 
 
 class CpSatBinPackBinTypeSolver(
-    AllocationCpBaseSolver[Item, BinPack],
-    SchedulingCpBaseSolver[Item],
+    AllocationCpSolver[Item, BinPack],
+    SchedulingCpSolver[Item],
     TasksCpSatSolver[Item],
     WarmstartMixin,
 ):

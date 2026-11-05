@@ -11,13 +11,11 @@ from discrete_optimization.binpack.problem import (
     BinPackSolution,
     Item,
 )
-from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
-from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -35,7 +33,7 @@ else:
 
 
 class OptalBinPackSolver(
-    AllocationCpBaseSolver[Item, BinPack],
+    AllocationCpSolver[Item, BinPack],
     SchedulingOptalSolver[Item],
 ):
     problem: BinPackProblem
@@ -84,7 +82,7 @@ class OptalBinPackSolver(
         )
 
     def get_task_unary_resource_is_present_variable(
-        self, task: Task, unary_resource: UnaryResource
+        self, task: Item, unary_resource: BinPack
     ) -> "cp.BoolExpr":
         index = self.problem.get_index_from_unary_resource(unary_resource)
         return (
@@ -92,7 +90,7 @@ class OptalBinPackSolver(
             == index
         )
 
-    def get_task_interval(self, task: Task) -> "cp.IntervalVar":
+    def get_task_interval(self, task: Item) -> "cp.IntervalVar":
         return self.variables["intervals"][task]
 
     def retrieve_solution(self, solution: cp.Solution) -> Solution:

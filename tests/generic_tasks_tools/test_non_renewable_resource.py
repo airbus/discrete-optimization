@@ -5,9 +5,6 @@ from __future__ import annotations
 
 import logging
 
-from discrete_optimization.generic_tasks_tools.allocation import (
-    UnaryResource,
-)
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResourceProblem,
     NonRenewableResourceSolution,
@@ -18,6 +15,7 @@ from discrete_optimization.generic_tools.do_problem import ObjectiveRegister, So
 
 NonRenewableResource = str
 Task = str
+UnaryResource = str
 
 
 class MyNonRenewableResourceProblem(

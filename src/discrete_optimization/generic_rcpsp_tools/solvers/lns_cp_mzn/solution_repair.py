@@ -20,7 +20,7 @@ from discrete_optimization.generic_rcpsp_tools.solvers.lns_cp_mzn.neighbor_tools
     constraint_unit_used_subset_employees_preemptive,
     constraint_unit_used_to_tasks_preemptive,
 )
-from discrete_optimization.generic_tools.cp_tools import SignEnum
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )

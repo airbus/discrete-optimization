@@ -7,7 +7,8 @@ import pytest
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
 from discrete_optimization.workforce.allocation.parser import (
     get_data_available,

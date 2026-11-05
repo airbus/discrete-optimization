@@ -9,7 +9,7 @@ from discrete_optimization.facility.solvers.cpsat import CpSatFacilitySolver
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.cp_tools import SignEnum
+from discrete_optimization.generic_tools.enums import SignEnum
 
 
 @fixture

@@ -10,7 +10,8 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
 from discrete_optimization.shop.jsp.problem import JobShopProblem, JobShopSolution
 from discrete_optimization.shop.jsp.solvers.cpsat import CpSatJspSolver

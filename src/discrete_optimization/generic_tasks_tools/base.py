@@ -9,7 +9,6 @@ from collections.abc import Hashable
 from typing import Generic, Optional, TypeVar
 
 from discrete_optimization.generic_tasks_tools.utils import optional_override
-from discrete_optimization.generic_tools.cp_tools import CpSolver
 from discrete_optimization.generic_tools.do_problem import Problem, Solution
 
 logger = logging.getLogger(__name__)
@@ -127,9 +126,3 @@ class TasksSolution(Solution, Generic[Task]):
 
     def get_present_tasks(self):
         return [t for t in self.problem.tasks_list if self.is_present(t)]
-
-
-class TasksCpSolver(CpSolver, Generic[Task]):
-    """Base class for cp solver handling tasks problems."""
-
-    problem: TasksProblem[Task]

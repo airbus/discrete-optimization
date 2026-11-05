@@ -37,7 +37,7 @@ from discrete_optimization.generic_tasks_tools.skill import (
     WithoutSkillProblem,
     WithoutSkillSolution,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (

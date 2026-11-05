@@ -15,13 +15,11 @@ from discrete_optimization.facility.problem import (
 from discrete_optimization.facility.utils import (
     compute_matrix_distance_facility_problem,
 )
-from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
-from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -47,7 +45,7 @@ class ModelingOptal(Enum):
 
 
 class OptalFacilitySolver(
-    AllocationCpBaseSolver[Facility, Customer],
+    AllocationCpSolver[Customer, Facility],
     SchedulingOptalSolver[Customer],
 ):
     hyperparameters = [
@@ -180,7 +178,7 @@ class OptalFacilitySolver(
         self.cp_model.minimize(cost_setup + cost_alloc)
 
     def get_task_unary_resource_is_present_variable(
-        self, task: Task, unary_resource: UnaryResource
+        self, task: Customer, unary_resource: Facility
     ) -> cp.BoolExpr:
         index = self.problem.get_index_from_unary_resource(unary_resource)
         return (
@@ -188,7 +186,7 @@ class OptalFacilitySolver(
             == index
         )
 
-    def get_task_interval(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval(self, task: Customer) -> cp.IntervalVar:
         return self.variables["intervals"][task]
 
     def retrieve_solution(self, solution: cp.Solution) -> Solution:

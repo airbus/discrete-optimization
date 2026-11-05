@@ -59,7 +59,7 @@ def run_cpsat_auto():
 
 
 def run_via_generic():
-    from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto_impl import (
+    from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_impl import (
         GenericSchedulingAutoCpSatImplSolver,
     )
     from discrete_optimization.generic_tools.callbacks.loggers import (

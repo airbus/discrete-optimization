@@ -18,10 +18,6 @@ import numpy as np
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
-    UnaryResource,
-)
-from discrete_optimization.generic_tasks_tools.base import (
-    Task,
 )
 from discrete_optimization.generic_tasks_tools.utils import optional_override_implem
 from discrete_optimization.generic_tools.do_problem import (
@@ -178,7 +174,7 @@ class ColoringSolution(AllocationSolution[Node, Color]):
         i_task = self.problem.index_nodes_name[task]
         return self.colors[i_task] == unary_resource
 
-    def is_present(self, task: Task) -> bool:
+    def is_present(self, task: Node) -> bool:
         i_task = self.problem.index_nodes_name[task]
         return 0 <= self.colors[i_task] < self.problem.number_of_nodes
 
@@ -297,7 +293,7 @@ class ColoringProblem(AllocationProblem[Node, Color]):
 
     @optional_override_implem
     def is_compatible_task_unary_resource(
-        self, task: Task, unary_resource: UnaryResource
+        self, task: Node, unary_resource: Color
     ) -> bool:
         if self.has_constraints_coloring:
             if task in self.constraints_coloring.nodes_fixed():

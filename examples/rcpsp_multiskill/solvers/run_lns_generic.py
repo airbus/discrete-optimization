@@ -5,14 +5,14 @@ import logging
 
 import numpy as np
 
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_extractor import (
     BaseConstraintExtractor,
     ConstraintExtractorList,
     MultimodeConstraintExtractor,
     SchedulingConstraintExtractor,
     SubresourcesAllocationConstraintExtractor,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler import (
     TasksConstraintHandler,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp

@@ -8,10 +8,10 @@ from typing import Any, Optional, Union
 from ortools.sat.python.cp_model import IntVar, LinearExprT
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.base.scheduling import (
-    SchedulingCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.scheduling import (
+    SchedulingCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.base import (
     TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatTspSolver(
-    SchedulingCpBaseSolver[Node], TasksCpSatSolver[Node], TspSolver, WarmstartMixin
+    SchedulingCpSolver[Node], TasksCpSatSolver[Node], TspSolver, WarmstartMixin
 ):
     problem: TspProblem
 

@@ -33,7 +33,7 @@ from discrete_optimization.generic_tasks_tools.skill import (
     WithoutSkillProblem,
     WithoutSkillSolution,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optal.auto import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto import (
     GenericSchedulingAutoOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (

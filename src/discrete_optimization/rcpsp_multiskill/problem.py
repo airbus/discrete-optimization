@@ -2337,7 +2337,7 @@ class MultiskillRcpspProblem(
         return self._skills_list
 
     @property
-    def non_skill_cumulative_resources_list(self) -> list[Skill]:
+    def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:
         """List of cumulative resources that are not skills.
 
         NB: we consider also the lower bound on number of used employees as cumulative resource

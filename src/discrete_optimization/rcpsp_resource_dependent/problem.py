@@ -12,21 +12,13 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     WithoutAllocationProblem,
     WithoutAllocationSolution,
 )
-from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
-    Resource,
     convert_calendar_to_availability_intervals,
-)
-from discrete_optimization.generic_tasks_tools.cumulative_resource import (
-    CumulativeResource,
 )
 from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
-)
-from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
-    NonRenewableResource,
 )
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
@@ -35,15 +27,19 @@ from discrete_optimization.generic_tasks_tools.objectives.objective_computer imp
     ObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.skill import (
-    NonSkillCumulativeResource,
     NoSkill,
-    Skill,
     WithoutSkillProblem,
     WithoutSkillSolution,
 )
 from discrete_optimization.generic_tools.do_problem import (
     Solution,
 )
+
+Resource = str
+NonRenewableResource = str
+CumulativeResource = Resource
+NonSkillCumulativeResource = CumulativeResource
+Task = Hashable
 
 
 class RcpspResourceDependentSolution(
@@ -132,7 +128,7 @@ class RcpspResourceDependentProblem(
     """
 
     @property
-    def non_skill_cumulative_resources_list(self) -> list[Skill]:
+    def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:
         return [r for r in self.resources if r not in self.non_renewable_resources]
 
     def is_non_renewable_resource_task_mode_consumption_dependent(

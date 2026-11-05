@@ -10,7 +10,8 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.generic_tools.callbacks.loggers import ObjectiveLogger
-from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.generic_tools.lns_cp import LnsOrtoolsCpSat
 from discrete_optimization.generic_tools.lns_tools import ConstraintHandlerMix
 from discrete_optimization.tsp.problem import TspSolution

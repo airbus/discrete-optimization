@@ -55,7 +55,7 @@ class SkillProblem(
 
     @property
     @abstractmethod
-    def non_skill_cumulative_resources_list(self) -> list[Skill]:
+    def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:
         """List of cumulative resources that are not skills."""
         ...
 

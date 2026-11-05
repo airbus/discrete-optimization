@@ -11,7 +11,10 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
     WithoutAllocationProblem,
 )
-from discrete_optimization.generic_tasks_tools.calendar_resource import Resource
+from discrete_optimization.generic_tasks_tools.calendar_resource import (
+    NoCalendarResource,
+    WithoutCalendarResourceProblem,
+)
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     WithoutCumulativeResourceProblem,
 )
@@ -132,6 +135,7 @@ class WeightedTardinessProblem(
         ExclusionResource,
     ],
     SinglemodeSchedulingProblem[Task],
+    WithoutCalendarResourceProblem[Task],
     WithoutPrecedenceProblem[Task],
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
@@ -156,14 +160,14 @@ class WeightedTardinessProblem(
         return 0
 
     @property
-    def non_skill_cumulative_resources_list(self) -> list[Resource]:
+    def non_skill_cumulative_resources_list(self) -> list[NoCalendarResource]:
         return []
 
     def get_no_overlap(self) -> set[frozenset[Task]]:
         return {frozenset(set(self.tasks_list))}
 
     def get_resource_availabilities(
-        self, resource: Resource
+        self, resource: NoCalendarResource
     ) -> list[tuple[int, int, int]]:
         return [(0, self.get_makespan_upper_bound(), 1)]
 

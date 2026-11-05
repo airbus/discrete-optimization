@@ -14,7 +14,7 @@ from discrete_optimization.generic_tools.callbacks.callback import Callback
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.cp_tools import SignEnum
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )

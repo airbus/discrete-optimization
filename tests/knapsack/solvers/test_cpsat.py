@@ -7,7 +7,7 @@ from pytest_cases import fixture
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.cp_tools import SignEnum
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.knapsack.problem import KnapsackSolution
 from discrete_optimization.knapsack.solvers.cpsat import CpSatKnapsackSolver
 
