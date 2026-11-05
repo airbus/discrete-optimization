@@ -5,9 +5,9 @@ import logging
 
 import plotly.io as pio
 
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto_impl import (
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_impl import (
     GenericSchedulingAutoCpSatImplSolver,
-    Objective,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     ObjectiveGapStopper,

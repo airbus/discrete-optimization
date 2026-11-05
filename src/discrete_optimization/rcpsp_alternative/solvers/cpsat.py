@@ -3,9 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
-    UnaryResource,
 )
-from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
@@ -19,11 +17,11 @@ from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
 from discrete_optimization.generic_tasks_tools.skill import (
     NonSkillCumulativeResource,
     NoSkill,
-    Skill,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
 )
+from discrete_optimization.rcpsp.problem import Task
 from discrete_optimization.rcpsp.transformations.generic_scheduling_impl import (
     transform_solution_from_raw_generic_to_rcpsp,
 )
@@ -46,11 +44,11 @@ class CpsatRcpspWithAlternativePathSolver(
     additional_variables: dict
 
     def convert_task_variables_to_solution(
-        self, raw_sol: RawSolution[Task, UnaryResource, Skill]
+        self, raw_sol: RawSolution[Task, NoUnaryResource, NoSkill]
     ) -> GenericSchedulingSolution[
         Task,
-        UnaryResource,
-        Skill,
+        NoUnaryResource,
+        NoSkill,
         NonSkillCumulativeResource,
         NonRenewableResource,
         ExclusionResource,

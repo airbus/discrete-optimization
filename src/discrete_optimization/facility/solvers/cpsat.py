@@ -15,10 +15,10 @@ from discrete_optimization.facility.problem import (
     FacilityProblem,
     FacilitySolution,
 )
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.base import (
     TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ModeOptim
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class CpSatFacilitySolver(
-    AllocationCpBaseSolver[Customer, Facility],
+    AllocationCpSolver[Customer, Facility],
     TasksCpSatSolver[Customer],
     WarmstartMixin,
 ):

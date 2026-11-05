@@ -4,8 +4,7 @@
 
 import pytest
 
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
-    BaseConstraintExtractor,
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_extractor import (
     ChainingConstraintExtractor,
     ConstraintExtractorList,
     NbChangesAllocationConstraintExtractor,
@@ -14,7 +13,8 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extract
     SubresourcesAllocationConstraintExtractor,
     SubtasksAllocationConstraintExtractor,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler import (
+    BaseConstraintExtractor,
     ObjectiveSubproblem,
     TasksConstraintHandler,
 )

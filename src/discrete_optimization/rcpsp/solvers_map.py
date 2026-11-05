@@ -16,7 +16,7 @@ from discrete_optimization.generic_rcpsp_tools.solvers.ls import (
     LsSolverType,
 )
 from discrete_optimization.generic_rcpsp_tools.typing import ANY_CLASSICAL_RCPSP
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler import (
     TasksConstraintHandler,
 )
 from discrete_optimization.generic_tools.cp_tools import CpSolverName, ParametersCp

@@ -52,7 +52,7 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     SpanBlockingConstraint,
     StartOrEnd,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optal.auto_impl import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto_impl import (
     GenericSchedulingAutoOptalImplSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (

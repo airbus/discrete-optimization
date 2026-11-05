@@ -25,8 +25,8 @@ from discrete_optimization.generic_rcpsp_tools.typing import (
     ANY_SOLUTION,
     ANY_SOLUTION_PREEMPTIVE,
 )
-from discrete_optimization.generic_tools.cp_tools import SignEnum
 from discrete_optimization.generic_tools.do_problem import Solution
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
     CategoricalHyperparameter,
     FloatHyperparameter,

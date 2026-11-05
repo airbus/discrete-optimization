@@ -7,7 +7,8 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
-from discrete_optimization.generic_tools.cp_tools import ParametersCp, SignEnum
+from discrete_optimization.generic_tools.cp_tools import ParametersCp
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.singlemachine.problem import WTSolution
 from discrete_optimization.singlemachine.solvers.cpsat import CpSatWTSolver
 from discrete_optimization.singlemachine.solvers.cpsat_auto import CpSatAutoWTSolver

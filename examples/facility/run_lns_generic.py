@@ -6,7 +6,7 @@ import logging
 from discrete_optimization.facility.parser import get_data_available, parse_file
 from discrete_optimization.facility.problem import FacilityProblem
 from discrete_optimization.facility.solvers.cpsat import CpSatFacilitySolver
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_extractor import (
     BaseConstraintExtractor,
     ConstraintExtractorPortfolio,
     DummyConstraintExtractor,
@@ -14,7 +14,7 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extract
     SubresourcesAllocationConstraintExtractor,
     SubtasksAllocationConstraintExtractor,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler import (
     TasksConstraintHandler,
 )
 from discrete_optimization.generic_tools.callbacks.warm_start_callback import (

@@ -11,7 +11,6 @@ from ortools.sat.python.cp_model import (
     CpSolverSolutionCallback,
     Domain,
     LinearExpr,
-    LinearExprT,
 )
 
 from discrete_optimization.flex_scheduling.fsp_utils import (
@@ -27,9 +26,6 @@ from discrete_optimization.flex_scheduling.problem import (
     TasksGroups,
 )
 from discrete_optimization.flex_scheduling.solvers.cpsat import CpSatFlexSolver
-from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
-from discrete_optimization.generic_tasks_tools.base import Task
-from discrete_optimization.generic_tasks_tools.skill import Skill
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +45,6 @@ def resource_consumption(flex_problem: FlexProblem, solution: ScheduleSolution):
 
 
 class CPSatFlexSPPreempt(CpSatFlexSolver):
-    def get_skill_variable(
-        self, task: Task, unary_resource: UnaryResource, skill: Skill
-    ) -> LinearExprT:
-        return 0
-
     def retrieve_solution(
         self, cpsolvercb: CpSolverSolutionCallback
     ) -> ScheduleSolution:

@@ -4,7 +4,7 @@
 
 import pytest
 
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler import (
     ALLOCATION_OBJECTIVES,
     SCHEDULING_OBJECTIVES,
     ObjectiveSubproblem,

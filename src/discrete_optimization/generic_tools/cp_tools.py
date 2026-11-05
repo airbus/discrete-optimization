@@ -19,6 +19,7 @@ from discrete_optimization.generic_tools.callbacks.callback import (
     Callback,
 )
 from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -121,14 +122,6 @@ class ParametersCp:
             nb_process=self.nb_process,
             optimisation_level=self.optimisation_level,
         )
-
-
-class SignEnum(Enum):
-    EQUAL = "=="
-    LEQ = "<="
-    UEQ = ">="
-    LESS = "<"
-    UP = ">"
 
 
 class CpSolver(SolverDO):

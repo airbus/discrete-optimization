@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, Optional
 
-from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (

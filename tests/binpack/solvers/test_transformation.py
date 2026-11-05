@@ -13,7 +13,7 @@ from discrete_optimization.binpack.transformations.to_rcpsp import (
 from discrete_optimization.binpack.transformations.to_salbp import (
     BinpackToSalbpTransformation,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto_impl import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_impl import (
     GenericSchedulingAutoCpSatImplSolver,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp

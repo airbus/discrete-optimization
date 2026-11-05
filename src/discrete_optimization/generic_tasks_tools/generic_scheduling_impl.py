@@ -429,7 +429,7 @@ class GenericSchedulingImplProblem(
         return self._skills_list
 
     @property
-    def non_skill_cumulative_resources_list(self) -> list[Skill]:
+    def non_skill_cumulative_resources_list(self) -> list[NonSkillCumulativeResource]:
         return self._non_skill_cumulative_resources_list
 
     def get_unary_resource_skill_value(

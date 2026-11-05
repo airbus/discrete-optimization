@@ -11,10 +11,10 @@ from discrete_optimization.alb.rcalbp_l.problem import (
     Task,
     WorkStation,
 )
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.scheduling import (
     SchedulingOptalSolver,
 )
 
@@ -25,7 +25,7 @@ except ImportError:
 
 
 class OptalRCALBPLSolver(
-    AllocationCpBaseSolver[Task, WorkStation], SchedulingOptalSolver[Task]
+    AllocationCpSolver[Task, WorkStation], SchedulingOptalSolver[Task]
 ):
     problem: RCALBPLProblem
     variables: dict
@@ -425,7 +425,7 @@ class OptalRCALBPLSolver(
 
 
 class OptalRCALBPLSolverV2(
-    AllocationCpBaseSolver[Task, WorkStation], SchedulingOptalSolver[Task]
+    AllocationCpSolver[Task, WorkStation], SchedulingOptalSolver[Task]
 ):
     problem: RCALBPLProblem
     variables: dict

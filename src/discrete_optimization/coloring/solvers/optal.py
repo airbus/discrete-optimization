@@ -14,13 +14,11 @@ from discrete_optimization.coloring.problem import (
     Node,
 )
 from discrete_optimization.coloring.utils import compute_cliques
-from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
-from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -46,9 +44,7 @@ class ModelingCpSat(Enum):
     INTEGER = 1
 
 
-class OptalColoringSolver(
-    AllocationCpBaseSolver[Node, Color], SchedulingOptalSolver[Node]
-):
+class OptalColoringSolver(AllocationCpSolver[Node, Color], SchedulingOptalSolver[Node]):
     hyperparameters = [
         CategoricalHyperparameter("use_clique", choices=[True, False], default=False),
         IntegerHyperparameter(
@@ -61,13 +57,13 @@ class OptalColoringSolver(
     ]
 
     def get_task_unary_resource_is_present_variable(
-        self, task: Task, unary_resource: UnaryResource
+        self, task: Node, unary_resource: Color
     ) -> cp.BoolExpr:
         return self.get_task_start_or_end_variable(
             task, start_or_end=StartOrEnd.START
         ) == self.problem.get_index_from_unary_resource(unary_resource)
 
-    def get_task_interval(self, task: Task) -> cp.IntervalVar:
+    def get_task_interval(self, task: Node) -> cp.IntervalVar:
         return self.variables["intervals"][task]
 
     def retrieve_solution(self, solution: cp.Solution) -> Solution:

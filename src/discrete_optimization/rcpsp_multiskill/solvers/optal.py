@@ -9,10 +9,10 @@ from typing import Any, Hashable, Optional
 
 import numpy as np
 
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optal.multimode_scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.multimode_scheduling import (
     MultimodeSchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 class OptalMSRcpspSolver(
     MultimodeSchedulingOptalSolver[Task],
-    AllocationCpBaseSolver[Task, UnaryResource],
+    AllocationCpSolver[Task, UnaryResource],
 ):
     hyperparameters = [
         CategoricalHyperparameter(

@@ -5,10 +5,10 @@
 import logging
 from typing import Optional
 
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_extractor import (
     ParamsConstraintExtractor,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler import (
     TasksConstraintHandler,
 )
 from discrete_optimization.generic_tools.callbacks.callback import Callback

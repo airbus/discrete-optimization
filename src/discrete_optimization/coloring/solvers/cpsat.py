@@ -16,11 +16,11 @@ from discrete_optimization.coloring.problem import (
 from discrete_optimization.coloring.solvers.starting_solution import (
     WithStartingSolutionColoringSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationBinaryOrIntegerModellingCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationBinaryOrIntegerModellingCpSolver,
     AllocationModelling,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.base import (
     TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import (
@@ -39,7 +39,7 @@ class ModelingCpSat(Enum):
 
 
 class CpSatColoringSolver(
-    AllocationBinaryOrIntegerModellingCpBaseSolver[Node, Color],
+    AllocationBinaryOrIntegerModellingCpSolver[Node, Color],
     TasksCpSatSolver[Node],
     WithStartingSolutionColoringSolver,
     WarmstartMixin,

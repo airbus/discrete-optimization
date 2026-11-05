@@ -9,8 +9,8 @@ from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResour
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
 )
-from discrete_optimization.generic_tasks_tools.solvers.base.typing import CpVar
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.typing import CpVar
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
 )
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (

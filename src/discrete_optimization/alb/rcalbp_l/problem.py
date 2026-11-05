@@ -13,7 +13,6 @@ from matplotlib.widgets import Slider
 from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
-    UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
@@ -156,7 +155,7 @@ class RCALBPLProblem(
         return self.c_max
 
     @property
-    def unary_resources_list(self) -> list[UnaryResource]:
+    def unary_resources_list(self) -> list[WorkStation]:
         return self.stations
 
     @property

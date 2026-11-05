@@ -18,9 +18,9 @@ from discrete_optimization.generic_rcpsp_tools.graph_tools import (
 )
 from discrete_optimization.generic_tools.cp_tools import (
     CpSolverName,
-    SignEnum,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.generic_tools.mzn_tools import (
     MinizincCpSolver,
     find_right_minizinc_solver_name,

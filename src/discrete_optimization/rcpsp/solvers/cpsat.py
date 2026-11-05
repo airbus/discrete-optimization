@@ -28,12 +28,12 @@ from discrete_optimization.generic_tasks_tools.objectives.resource_levels import
     NonRenewableResourceLevelObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.skill import NoSkill
-from discrete_optimization.generic_tasks_tools.solvers.base.objectives.resource_levels import (
-    CalendarRenewableResourceLevelModelerCpBase,
-    NonRenewableResourceLevelModelerCpBase,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.resource_levels import (
+    CalendarRenewableResourceLevelModelerCp,
+    NonRenewableResourceLevelModelerCp,
 )
-from discrete_optimization.generic_tasks_tools.solvers.base.typing import CpVar
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.typing import CpVar
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
 )
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -175,8 +175,8 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
     objective = (
         Objective.CUSTOM
     )  # custom objective (linear combination of makespan and nb_used_resources)
-    renewable_obj_modeler: CalendarRenewableResourceLevelModelerCpBase = None
-    non_renewable_obj_modeler: NonRenewableResourceLevelModelerCpBase = None
+    renewable_obj_modeler: CalendarRenewableResourceLevelModelerCp = None
+    non_renewable_obj_modeler: NonRenewableResourceLevelModelerCp = None
     resources_level_obj_var: LinearExprT = None
 
     def init_model(self, **kwargs):
@@ -203,7 +203,7 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
                     weight_objective=1,
                 )
             )
-            renewable_objective_cpsat = CalendarRenewableResourceLevelModelerCpBase(
+            renewable_objective_cpsat = CalendarRenewableResourceLevelModelerCp(
                 solver=self, objective_computer=renewable_objective_computer
             )
             non_renewable_objective_computer = (
@@ -215,7 +215,7 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
                     weight_objective=1,
                 )
             )
-            non_renewable_objective_cpsat = NonRenewableResourceLevelModelerCpBase(
+            non_renewable_objective_cpsat = NonRenewableResourceLevelModelerCp(
                 solver=self, objective_computer=non_renewable_objective_computer
             )
             resources_level_var = (

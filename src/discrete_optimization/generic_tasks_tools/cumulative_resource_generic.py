@@ -7,11 +7,10 @@ from typing import Generic, Iterable
 
 import numpy as np
 
+from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.calendar_preemptive import (
     CalendarPreemptiveProblem,
     CalendarPreemptiveSolution,
-    CumulativeResource,
-    Task,
 )
 from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     CumulativeResource,

@@ -5,7 +5,7 @@ from discrete_optimization.coloring.solvers.cpsat import (
     CpSatColoringSolver,
     ModelingCpSat,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_extractor import (
     BaseConstraintExtractor,
     ConstraintExtractorList,
     NbChangesAllocationConstraintExtractor,
@@ -13,7 +13,7 @@ from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extract
     SubresourcesAllocationConstraintExtractor,
     SubtasksAllocationConstraintExtractor,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler import (
     ALLOCATION_OBJECTIVES,
     TasksConstraintHandler,
 )

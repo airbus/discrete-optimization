@@ -5,14 +5,18 @@
 #  here https://github.com/erachelson/seq_dec_mak/blob/main/scheduling_newcourse/correction/nb2_jobshopsolver.py
 from __future__ import annotations
 
-from discrete_optimization.generic_tasks_tools.calendar_resource import Resource
 from discrete_optimization.generic_tasks_tools.multimode import (
     SinglemodeSolution,
 )
 from discrete_optimization.generic_tasks_tools.multimode_scheduling import (
     SinglemodeSchedulingProblem,
 )
-from discrete_optimization.shop.base import AnyShopSolution, CommonShopProblem, Task
+from discrete_optimization.shop.base import (
+    AnyShopSolution,
+    CommonShopProblem,
+    Resource,
+    Task,
+)
 
 
 class JobShopSolution(AnyShopSolution, SinglemodeSolution[Task]):

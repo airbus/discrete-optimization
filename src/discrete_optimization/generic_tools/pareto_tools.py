@@ -8,9 +8,9 @@ from typing import Any, Callable, List
 from ortools.sat.python import cp_model
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.cp_tools import SignEnum
 from discrete_optimization.generic_tools.do_problem import Problem, Solution
 from discrete_optimization.generic_tools.do_solver import SolverDO, StatusSolver
+from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.generic_tools.ortools_cpsat_tools import OrtoolsCpSatSolver
 
 logger = logging.getLogger(__name__)

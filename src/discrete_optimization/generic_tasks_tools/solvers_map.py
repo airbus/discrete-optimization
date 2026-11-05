@@ -7,10 +7,10 @@ from typing import Any
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     GenericSchedulingImplProblem,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.auto_impl import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_impl import (
     GenericSchedulingAutoCpSatImplSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler import (
     TasksConstraintHandler,
 )
 from discrete_optimization.generic_tools.do_problem import Problem

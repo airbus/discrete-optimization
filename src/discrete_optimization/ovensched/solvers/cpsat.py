@@ -14,13 +14,13 @@ from ortools.sat.python.cp_model import (
 )
 
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.base.scheduling import (
-    SchedulingCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.scheduling import (
+    SchedulingCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.base import (
     TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import ParamsObjectiveFunction
@@ -39,8 +39,8 @@ logger = logging.getLogger(__name__)
 
 
 class OvenSchedulingCpSatSolver(
-    SchedulingCpBaseSolver[Task],
-    AllocationCpBaseSolver[Task, UnaryResource],
+    SchedulingCpSolver[Task],
+    AllocationCpSolver[Task, UnaryResource],
     TasksCpSatSolver[Task],
     WarmstartMixin,
 ):
@@ -623,7 +623,7 @@ class OvenSchedulingCpSatSolver(
         )
         return solution
 
-    # Implement abstract methods from SchedulingCpBaseSolver
+    # Implement abstract methods from SchedulingCpSolver
     def get_task_start_or_end_variable(
         self, task: Task, start_or_end: StartOrEnd
     ) -> LinearExprT:
@@ -633,7 +633,7 @@ class OvenSchedulingCpSatSolver(
         else:
             return self.variables["task_end"][task]
 
-    # Implement abstract methods from AllocationCpBaseSolver
+    # Implement abstract methods from AllocationCpSolver
     def get_task_unary_resource_is_present_variable(
         self, task: Task, unary_resource: UnaryResource
     ) -> LinearExprT:

@@ -3,17 +3,17 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_extractor import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_extractor import (
     ConstraintExtractorList,
     MultimodeConstraintExtractor,
     ParamsConstraintExtractor,
     SchedulingConstraintExtractor,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.constraint_handler import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler import (
     ObjectiveSubproblem,
     TasksConstraintHandler,
 )
-from discrete_optimization.generic_tasks_tools.solvers.lns_cp.neighbor_tools import (
+from discrete_optimization.generic_tasks_tools.solvers.lns.neighbor_tools import (
     NeighborBuilderMix,
     NeighborBuilderSubPart,
     NeighborBuilderTimeWindow,

@@ -11,10 +11,10 @@ from typing import Any, Optional, Union
 
 import numpy as np
 
-from discrete_optimization.generic_tasks_tools.solvers.base.allocation import (
-    AllocationCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation import (
+    AllocationCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.optal.scheduling import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.scheduling import (
     SchedulingOptalSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
@@ -68,7 +68,7 @@ logger = logging.getLogger(__name__)
 
 class OptalAllocSchedulingSolver(
     SchedulingOptalSolver[Task],
-    AllocationCpBaseSolver[Task, UnaryResource],
+    AllocationCpSolver[Task, UnaryResource],
     SolverAllocScheduling,
     WarmstartMixin,
 ):

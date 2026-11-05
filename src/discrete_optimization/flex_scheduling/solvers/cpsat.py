@@ -38,18 +38,18 @@ from discrete_optimization.flex_scheduling.problem import (
     TaskData,
     TasksGroups,
 )
-from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
+from discrete_optimization.generic_tasks_tools.allocation import NoUnaryResource
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.solvers.base.cumulative_resource import (
-    CumulativeResourceSchedulingCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.cumulative_resource import (
+    CumulativeResourceSchedulingCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.base.non_renewable_resource import (
-    NonRenewableCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.non_renewable_resource import (
+    NonRenewableCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.base.precedence_scheduling import (
-    PrecedenceSchedulingCpBaseSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.precedence_scheduling import (
+    PrecedenceSchedulingCpSolver,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cpsat.base import (
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.base import (
     TasksCpSatSolver,
 )
 from discrete_optimization.generic_tools.do_problem import Solution
@@ -80,9 +80,9 @@ class DurationEncodingEnum(Enum):
 
 
 class CpSatFlexSolver(
-    PrecedenceSchedulingCpBaseSolver[Task],
-    CumulativeResourceSchedulingCpBaseSolver[Task, CumulativeResource, NoUnaryResource],
-    NonRenewableCpBaseSolver[Task, NonRenewableResource, NoUnaryResource],
+    PrecedenceSchedulingCpSolver[Task],
+    CumulativeResourceSchedulingCpSolver[Task, CumulativeResource, NoUnaryResource],
+    NonRenewableCpSolver[Task, NonRenewableResource, NoUnaryResource],
     TasksCpSatSolver[Task],
     WarmstartMixin,
 ):
@@ -1693,14 +1693,8 @@ class CpSatFlexSolver(
             return None
 
     def get_task_unary_resource_is_present_variable(
-        self, task: Task, unary_resource: UnaryResource
+        self, task: Task, unary_resource: NoUnaryResource
     ) -> LinearExprT:
-        # No Unary Resource modeled
-        return None
-
-    def get_task_unary_resource_interval(
-        self, task: Task, unary_resource: UnaryResource
-    ) -> IntervalVar:
         # No Unary Resource modeled
         return None
 
