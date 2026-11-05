@@ -1240,10 +1240,3 @@ class OvenSchedulingOptalSolver(OptalCpSolver, WarmstartMixin):
         self.use_warm_start = True
 
         logger.info(f"Warm start set with objective value: {objective_value}")
-
-    def set_warm_start_from_previous_run(self):
-        """Set warm start from the previous solve run."""
-        if self.current_solution is not None:
-            self.warm_start_solution = self.current_solution
-            self.use_warm_start = True
-            logger.info("Warm start set from previous run")
