@@ -59,6 +59,9 @@ class SoftTimePenaltyComputer(
         penalty = 0
         # time windows
         for task in self.problem.tasks_list:
+            if not solution.is_present(task):
+                # no penalty for absent task
+                continue
             start = solution.get_start_time(task)
             end = solution.get_end_time(task)
             start_lb = self.problem.get_task_start_or_end_lower_bound(
@@ -86,6 +89,11 @@ class SoftTimePenaltyComputer(
                         task2_start_or_end=task2_start_or_end,
                         min_or_max=min_or_max,
                     ):
+                        if not (solution.is_present(task1)) or not (
+                            solution.is_present(task2)
+                        ):
+                            # no penalty for absent tasks
+                            continue
                         t1 = solution.get_start_or_end_time(
                             task=task1, start_or_end=task1_start_or_end
                         )
