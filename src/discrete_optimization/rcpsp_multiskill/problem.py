@@ -26,7 +26,7 @@ from discrete_optimization.generic_tasks_tools.calendar_resource import (
     merge_resources_calendars,
 )
 from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
-from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
+from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -137,7 +137,7 @@ class MultiskillRcpspSolution(
         Skill,
         NonSkillCumulativeResource,
         NonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ],
 ):
     problem: MultiskillRcpspProblem
@@ -2042,7 +2042,7 @@ class MultiskillRcpspProblem(
         Skill,
         NonSkillCumulativeResource,
         NonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ],
 ):
     sgs: ScheduleGenerationScheme

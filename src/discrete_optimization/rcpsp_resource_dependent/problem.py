@@ -15,7 +15,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 from discrete_optimization.generic_tasks_tools.calendar_resource import (
     convert_calendar_to_availability_intervals,
 )
-from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
+from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -49,7 +49,7 @@ class RcpspResourceDependentSolution(
         NoSkill,
         NonSkillCumulativeResource,
         NonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ],
     WithoutSkillSolution[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource
@@ -91,7 +91,7 @@ class RcpspResourceDependentProblem(
         NoSkill,
         NonSkillCumulativeResource,
         NonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ],
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource

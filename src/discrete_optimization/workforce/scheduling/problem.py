@@ -16,7 +16,7 @@ from discrete_optimization.generic_tasks_tools.calendar_resource import (
     convert_calendar_to_availability_intervals,
 )
 from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
-from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
+from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -84,7 +84,7 @@ class AllocSchedulingSolution(
         NoSkill,
         NonSkillCumulativeResource,
         NoNonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ],
     WithoutSkillSolution[
         Task, UnaryResource, NonSkillCumulativeResource, UnaryResource
@@ -161,7 +161,7 @@ class AllocSchedulingProblem(
         NoSkill,
         NonSkillCumulativeResource,
         NoNonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ],
     WithoutSkillProblem[Task, UnaryResource, NonSkillCumulativeResource, UnaryResource],
     WithoutNonRenewableResourceProblem[Task, UnaryResource],

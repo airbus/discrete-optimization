@@ -26,6 +26,7 @@ from discrete_optimization.generic_tasks_tools.calendar_resource import (
     convert_calendar_to_availability_intervals,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     Objective,
@@ -57,7 +58,6 @@ from discrete_optimization.rcpsp.fast_function import (
     sgs_fast_partial_schedule_incomplete_permutation_tasks,
 )
 from discrete_optimization.rcpsp.solution import (
-    ExclusionResource,
     NonRenewableResource,
     NonSkillCumulativeResource,
     RcpspSolution,
@@ -87,7 +87,7 @@ class RcpspProblem(
         NoSkill,
         NonSkillCumulativeResource,
         NonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ],
     WithoutSkillProblem[
         Task, NoUnaryResource, NonSkillCumulativeResource, NoUnaryResource

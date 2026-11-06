@@ -5,7 +5,7 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
-from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
+from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
 )
@@ -41,7 +41,7 @@ class CpSatMultiskillRcpspSolver(
         Skill,
         NonSkillCumulativeResource,
         NonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ],
 ):
     hyperparameters = [

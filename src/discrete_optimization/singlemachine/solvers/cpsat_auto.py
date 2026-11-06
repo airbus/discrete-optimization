@@ -11,7 +11,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto import (
     GenericSchedulingAutoCpSatSolver,
 )
 from discrete_optimization.singlemachine.problem import (
-    ExclusionResource,
+    NoExclusionResource,
     NoNonRenewableResource,
     NonSkillCumulativeResource,
     NoSkill,
@@ -30,7 +30,7 @@ class CpSatAutoWTSolver(
         NoSkill,
         NonSkillCumulativeResource,
         NoNonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ],
 ):
     def convert_task_variables_to_solution(
@@ -41,7 +41,7 @@ class CpSatAutoWTSolver(
         NoSkill,
         NonSkillCumulativeResource,
         NoNonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ]:
         return transform_solution_from_raw_generic_to_wt(
             raw_sol=raw_sol, problem=self.problem

@@ -4,7 +4,7 @@
 from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
 )
-from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
+from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
 )
@@ -37,7 +37,7 @@ class CpsatRcpspWithAlternativePathSolver(
         NoSkill,
         NonSkillCumulativeResource,
         NonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ]
 ):
     problem: RcpspWithAlternativePath
@@ -51,7 +51,7 @@ class CpsatRcpspWithAlternativePathSolver(
         NoSkill,
         NonSkillCumulativeResource,
         NonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ]:
         return transform_solution_from_raw_generic_to_rcpsp(
             raw_sol=raw_sol, problem=self.problem
