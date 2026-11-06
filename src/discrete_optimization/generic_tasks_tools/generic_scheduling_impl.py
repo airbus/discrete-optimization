@@ -248,16 +248,10 @@ class GenericSchedulingImplProblem(
                     None, OBJECTIVE_DEFAULT_WEIGHTS[Objective.MAKESPAN]
                 )
             ]
+        self.update_problem()
+        # some objective computers need everything completely set in problem so we must do that at the end of __init__
         for l in self.list_objective_computer:
             l.set_problem(self)
-        self.update_problem()
-        if len(self.unary_resources_task_mode_compatibility) == 0:
-            for task in self.tasks_list:
-                self.unary_resources_task_mode_compatibility[task] = {}
-                for ur in self.unary_resources_list:
-                    self.unary_resources_task_mode_compatibility[task][ur] = set(
-                        self.get_task_modes(task)
-                    )
 
     def evaluate(self, variable: GenericSchedulingSolution) -> dict[str, float]:
         kpis = super().evaluate(variable)
@@ -282,6 +276,16 @@ class GenericSchedulingImplProblem(
         self.update_time_lags()
         self.update_precedence_constraints()
         self.update_calendar_preemptive_tasks()
+        self.update_allocation_compatibility()
+
+    def update_allocation_compatibility(self):
+        if len(self.unary_resources_task_mode_compatibility) == 0:
+            for task in self.tasks_list:
+                self.unary_resources_task_mode_compatibility[task] = {}
+                for ur in self.unary_resources_list:
+                    self.unary_resources_task_mode_compatibility[task][ur] = set(
+                        self.get_task_modes(task)
+                    )
 
     def update_resource_availabilities(self) -> None:
         self.get_resource_availabilities.cache_clear()

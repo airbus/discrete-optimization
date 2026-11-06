@@ -32,9 +32,9 @@ class CalendarRenewableResourceLevelObjectiveComputer(
 
     def __init__(
         self,
-        problem: CalendarResourceProblem[Task, Resource],
+        problem: CalendarResourceProblem[Task, Resource] | None = None,
         weight_objective: float = 1.0,
-        weight_resource: dict[Resource, float] = None,
+        weight_resource: dict[Resource, float] | None = None,
     ):
         super().__init__(problem, weight_objective)
         if weight_resource is None:
@@ -70,9 +70,10 @@ class NonRenewableResourceLevelObjectiveComputer(
 
     def __init__(
         self,
-        problem: NonRenewableResourceProblem[Task, Resource, UnaryResource],
+        problem: NonRenewableResourceProblem[Task, Resource, UnaryResource]
+        | None = None,
         weight_objective: float = 1.0,
-        weight_resource: dict[Resource, float] = None,
+        weight_resource: dict[Resource, float] | None = None,
     ):
         super().__init__(problem, weight_objective)
         if weight_resource is None:

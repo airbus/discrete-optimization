@@ -29,7 +29,8 @@ class CalendarPreemptedComputer(
         self,
         problem: CalendarPreemptiveProblem[
             Task, CumulativeResource, OtherCalendarResource
-        ],
+        ]
+        | None = None,
         weight_objective: float = 1.0,
     ):
         super().__init__(problem, weight_objective)

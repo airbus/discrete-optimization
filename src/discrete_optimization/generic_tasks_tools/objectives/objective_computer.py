@@ -18,10 +18,11 @@ class ObjectiveComputer(ABC, Generic[Task]):
     problem: TasksProblem[Task]
 
     def __init__(
-        self, problem: TasksProblem[Task] = None, weight_objective: float = 1.0
+        self, problem: TasksProblem[Task] | None = None, weight_objective: float = 1.0
     ):
-        self.problem = problem
         self.weight_objective = weight_objective
+        if problem is not None:
+            self.set_problem(problem)
 
     @staticmethod
     def get_objective_name() -> Objective | str: ...

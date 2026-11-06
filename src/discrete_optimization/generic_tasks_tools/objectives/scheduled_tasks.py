@@ -19,15 +19,17 @@ class ScheduledTasksComputer(ObjectiveComputer[Task], Generic[Task]):
 
     def __init__(
         self,
-        problem: SchedulingProblem[Task] = None,
+        problem: SchedulingProblem[Task] | None = None,
         weight_objective: float = 1.0,
         weight_per_task: dict[Task, int] | None = None,
     ):
+        self.weight_per_task = weight_per_task
         super().__init__(problem=problem, weight_objective=weight_objective)
-        if weight_per_task is None:
+
+    def set_problem(self, problem: SchedulingProblem[Task]):
+        super().set_problem(problem)
+        if self.weight_per_task is None:
             self.weight_per_task = {t: 1 for t in self.problem.tasks_list}
-        else:
-            self.weight_per_task = weight_per_task
 
     @staticmethod
     def get_objective_name() -> Objective | str:

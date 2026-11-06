@@ -21,9 +21,9 @@ class ModeCostComputer(ObjectiveComputer[Task]):
 
     def __init__(
         self,
-        problem: MultimodeProblem[Task] = None,
+        problem: MultimodeProblem[Task] | None = None,
         weight_objective: float = 1.0,
-        mode_cost: dict[Task, dict[int, int]] = None,
+        mode_cost: dict[Task, dict[int, int]] | None = None,
     ):
         super().__init__(problem, weight_objective)
         if mode_cost is None:
