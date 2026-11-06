@@ -340,7 +340,7 @@ class CpSolver(SolverDO):
     def in_intervals(self, expr: Any, intervals: Iterable[tuple[int, int]]) -> Any:
         """Construct boolean expression true iff the given expr to be in given intervals."""
         return self.at_least_one(
-            tuple(self.bool_and(tuple(lb <= expr, expr <= ub)) for lb, ub in intervals)
+            tuple(self.bool_and((lb <= expr, expr <= ub)) for lb, ub in intervals)
         )
 
     @abstractmethod
