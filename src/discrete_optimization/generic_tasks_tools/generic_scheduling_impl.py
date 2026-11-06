@@ -23,7 +23,6 @@ from discrete_optimization.generic_tasks_tools.enums import (
     MinOrMax,
     StartOrEnd,
 )
-from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
     GenericSchedulingSolution,
@@ -58,7 +57,9 @@ UnaryResource = Hashable
 Task = Hashable
 CumulativeResource = NonSkillCumulativeResource | Skill
 Resource = CumulativeResource | UnaryResource  # calendar resources
+ExclusionResource = Hashable
 AnyResource = NonRenewableResource | Resource
+
 UnaryAvailabilityIntervals = list[tuple[int, int]]  # start, end
 AvailabilityIntervals = list[tuple[int, int, int]]  # start, end, value
 

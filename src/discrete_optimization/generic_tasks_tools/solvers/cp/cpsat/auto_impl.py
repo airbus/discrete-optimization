@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import logging
 
-from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
+    ExclusionResource,
     NonRenewableResource,
     NonSkillCumulativeResource,
     Skill,

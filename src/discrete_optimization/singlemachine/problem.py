@@ -19,7 +19,7 @@ from discrete_optimization.generic_tasks_tools.cumulative_resource import (
     WithoutCumulativeResourceProblem,
 )
 from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
-from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
+from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
 )
@@ -132,7 +132,7 @@ class WeightedTardinessProblem(
         NoSkill,
         NonSkillCumulativeResource,
         NoNonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ],
     SinglemodeSchedulingProblem[Task],
     WithoutCalendarResourceProblem[Task],

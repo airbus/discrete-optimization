@@ -18,7 +18,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
-from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
+from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     Objective,
     RawSolution,
@@ -63,7 +63,7 @@ class CpSatRcpspSolver(
         NoSkill,
         NonSkillCumulativeResource,
         NonRenewableResource,
-        ExclusionResource,
+        NoExclusionResource,
     ],
     RcpspSolver,
 ):

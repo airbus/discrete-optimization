@@ -11,7 +11,6 @@ import logging
 from collections.abc import Hashable
 from typing import Any, Optional, Union
 
-from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.utils import optional_override_implem
 from discrete_optimization.rcpsp import RcpspProblem
 from discrete_optimization.rcpsp.solution import (
@@ -22,6 +21,9 @@ from discrete_optimization.rcpsp.special_constraints import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+ExclusionResource = str
 
 
 class RcpspProblemWithExclusion(RcpspProblem):
