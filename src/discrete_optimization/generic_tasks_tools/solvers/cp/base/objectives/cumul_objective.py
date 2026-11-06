@@ -129,7 +129,7 @@ class CumulativeObjective:
                     )
                     for m in modes:
                         self.solver.add_implication(
-                            tuple(
+                            (
                                 self.solver.get_task_unary_resource_is_present_variable(
                                     t, self.problem.unary_resources_list[index_ur]
                                 ),
@@ -137,7 +137,7 @@ class CumulativeObjective:
                             ),
                             contrib_t == val_per_task_per_mode[t][m],
                         )
-                        self.add_implication(
+                        self.solver.add_implication(
                             ~self.solver.get_task_unary_resource_is_present_variable(
                                 t, self.problem.unary_resources_list[index_ur]
                             ),
@@ -193,7 +193,7 @@ class CumulativeObjective:
                     )
                     for m in modes:
                         self.solver.add_implication(
-                            tuple(
+                            (
                                 self.solver.get_task_unary_resource_is_present_variable(
                                     t, self.problem.unary_resources_list[index_ur]
                                 ),

@@ -207,7 +207,7 @@ class CalendarPreemptiveCpSolver(
                         ~is_different_dur[t, mode], actual_dur == original_duration
                     )
                     self.add_implication(
-                        tuple(is_present_mode, is_different_dur[t, mode]),
+                        (is_present_mode, is_different_dur[t, mode]),
                         is_preempted_task_mode[t, mode] == 1,
                     )
                     if isinstance(is_present_mode, int):
@@ -216,15 +216,15 @@ class CalendarPreemptiveCpSolver(
                         )
                     else:
                         self.add_implication(
-                            tuple(~is_present_mode, is_different_dur[t, mode]),
+                            (~is_present_mode, is_different_dur[t, mode]),
                             is_preempted_task_mode[t, mode] == 0,
                         )
                         self.add_implication(
-                            tuple(is_present_mode, ~is_different_dur[t, mode]),
+                            (is_present_mode, ~is_different_dur[t, mode]),
                             is_preempted_task_mode[t, mode] == 0,
                         )
                         self.add_implication(
-                            tuple(~is_present_mode, ~is_different_dur[t, mode]),
+                            (~is_present_mode, ~is_different_dur[t, mode]),
                             is_preempted_task_mode[t, mode] == 0,
                         )
 
