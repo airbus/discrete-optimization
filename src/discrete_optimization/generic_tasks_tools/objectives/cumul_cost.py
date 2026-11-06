@@ -4,6 +4,7 @@
 from typing import Generic, Hashable, TypeVar
 
 from discrete_optimization.generic_tasks_tools.allocation import Task, UnaryResource
+from discrete_optimization.generic_tasks_tools.base import TasksProblem
 from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
@@ -46,27 +47,28 @@ class CumulCostComputer(
 
     def __init__(
         self,
-        problem: GenericSchedulingProblem = None,
+        problem: GenericSchedulingProblem | None = None,
         weight_objective: float = 1.0,
-        cumul_dimensions: list[CUMUL_DIMENSIONS] = None,
-        value_tasks: dict[CUMUL_DIMENSIONS, dict[Task, float]] = None,
-        value_tasks_per_mode: dict[
-            CUMUL_DIMENSIONS, dict[tuple[Task, int], float]
-        ] = None,
+        cumul_dimensions: list[CUMUL_DIMENSIONS] | None = None,
+        value_tasks: dict[CUMUL_DIMENSIONS, dict[Task, float]] | None = None,
+        value_tasks_per_mode: dict[CUMUL_DIMENSIONS, dict[tuple[Task, int], float]]
+        | None = None,
     ):
-        super().__init__(problem, weight_objective)
         if cumul_dimensions is not None:
             self.cumul_dimensions = cumul_dimensions
         else:
             self.cumul_dimensions = ["count"]
-        if value_tasks is not None:
-            self.value_tasks = value_tasks
-        else:
-            self.value_tasks = {"count": {t: 1 for t in self.problem.tasks_list}}
+        self.value_tasks = value_tasks  # default value in `set_problem()`
         if value_tasks_per_mode is not None:
             self.value_tasks_per_mode = value_tasks_per_mode
         else:
             self.value_tasks_per_mode = {}
+        super().__init__(problem, weight_objective)
+
+    def set_problem(self, problem: TasksProblem[Task]):
+        super().set_problem(problem)
+        if self.value_tasks is None:
+            self.value_tasks = {"count": {t: 1 for t in self.problem.tasks_list}}
 
     def depends_on_mode(self, dimension: CUMUL_DIMENSIONS, task: Task):
         if dimension in self.value_tasks:

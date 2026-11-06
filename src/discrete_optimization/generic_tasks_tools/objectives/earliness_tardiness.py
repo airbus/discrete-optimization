@@ -23,20 +23,16 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
 
     def __init__(
         self,
-        problem: SchedulingProblem[Task],
+        problem: SchedulingProblem[Task] | None = None,
         weight_objective: float = 1.0,
-        max_start_and_weight_for_tardiness: dict[
-            Task, tuple[int | None, int | None]
-        ] = None,
-        max_end_and_weight_for_tardiness: dict[
-            Task, tuple[int | None, int | None]
-        ] = None,
-        min_start_and_weight_for_earliness: dict[
-            Task, tuple[int | None, int | None]
-        ] = None,
-        min_end_and_weight_for_earliness: dict[
-            Task, tuple[int | None, int | None]
-        ] = None,
+        max_start_and_weight_for_tardiness: dict[Task, tuple[int | None, int | None]]
+        | None = None,
+        max_end_and_weight_for_tardiness: dict[Task, tuple[int | None, int | None]]
+        | None = None,
+        min_start_and_weight_for_earliness: dict[Task, tuple[int | None, int | None]]
+        | None = None,
+        min_end_and_weight_for_earliness: dict[Task, tuple[int | None, int | None]]
+        | None = None,
     ):
         super().__init__(problem, weight_objective)
         if max_start_and_weight_for_tardiness is None:

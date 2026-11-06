@@ -28,9 +28,10 @@ class AllocationCostComputer(ObjectiveComputer[Task], Generic[Task, UnaryResourc
 
     def __init__(
         self,
-        problem: AllocationProblem[Task, UnaryResource] = None,
+        problem: AllocationProblem[Task, UnaryResource] | None = None,
         weight_objective: float = 1.0,
-        cost_allocation_resource_to_task: dict[Task, dict[UnaryResource, int]] = None,
+        cost_allocation_resource_to_task: dict[Task, dict[UnaryResource, int]]
+        | None = None,
     ):
         super().__init__(problem, weight_objective)
         if cost_allocation_resource_to_task is None:
@@ -81,11 +82,12 @@ class AllocationCostComputerMultimode(
 
     def __init__(
         self,
-        problem: MultimodeAllocationProblem[Task, UnaryResource] = None,
+        problem: MultimodeAllocationProblem[Task, UnaryResource] | None = None,
         weight_objective: float = 1.0,
         cost_allocation_resource_to_task_mode: dict[
             tuple[Task, int], dict[UnaryResource, int]
-        ] = None,
+        ]
+        | None = None,
     ):
         super().__init__(problem, weight_objective)
         if cost_allocation_resource_to_task_mode is None:

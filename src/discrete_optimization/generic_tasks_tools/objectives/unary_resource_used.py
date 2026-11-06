@@ -21,17 +21,19 @@ class UnaryResourcesUsedComputer(ObjectiveComputer[Task], Generic[Task, UnaryRes
 
     def __init__(
         self,
-        problem: AllocationProblem[Task, UnaryResource] = None,
+        problem: AllocationProblem[Task, UnaryResource] | None = None,
         weight_objective: float = 1.0,
-        weight_per_unary_resource: dict[UnaryResource, float] = None,
+        weight_per_unary_resource: dict[UnaryResource, float] | None = None,
     ) -> None:
+        self.weight_per_unary_resource = weight_per_unary_resource
         super().__init__(problem, weight_objective)
-        if weight_per_unary_resource is None:
+
+    def set_problem(self, problem: AllocationProblem[Task, UnaryResource]):
+        super().set_problem(problem)
+        if self.weight_per_unary_resource is None:
             self.weight_per_unary_resource = {
                 ur: 1 for ur in self.problem.unary_resources_list
             }
-        else:
-            self.weight_per_unary_resource = weight_per_unary_resource
 
     def get_weight_per_unary_resource(self, ur: UnaryResource) -> float:
         return self.weight_per_unary_resource.get(ur, 0)

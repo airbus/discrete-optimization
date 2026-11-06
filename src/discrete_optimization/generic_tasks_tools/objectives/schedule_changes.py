@@ -24,13 +24,15 @@ class ScheduleChangesComputer(ObjectiveComputer[Task]):
 
     def __init__(
         self,
-        problem: SchedulingProblem[Task],
-        base_scheduling_solution: SchedulingSolution[Task],
+        problem: SchedulingProblem[Task] | None = None,
+        base_scheduling_solution: SchedulingSolution[Task] | None = None,
         weight_objective: float = 1.0,
-        cost_any_shift: dict[Task, float] = None,
-        cost_unit_deviation: dict[Task, float] = None,
+        cost_any_shift: dict[Task, float] | None = None,
+        cost_unit_deviation: dict[Task, float] | None = None,
     ):
         super().__init__(problem, weight_objective)
+        if base_scheduling_solution is None:
+            raise ValueError("base_scheduling_solution must not be None")
         self.base_scheduling_solution = base_scheduling_solution
         if cost_any_shift is None:
             self._cost_any_shift = {}
