@@ -1,7 +1,6 @@
 #  Copyright (c) 2026 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
-from typing import Type
 
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
@@ -50,7 +49,7 @@ from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used im
 )
 
 
-def get_mapping():
+def get_mapping() -> dict[Objective | str, list[type[ObjectiveComputer]]]:
     list_available = [
         AllocatedTasksObjective,
         AllocationSwitchObjectiveComputer,
@@ -78,9 +77,9 @@ def get_mapping():
     return mapping
 
 
-def get_objective_computer_class(objective: Objective) -> Type[ObjectiveComputer]:
+def get_objective_computer_class(objective: Objective) -> list[type[ObjectiveComputer]]:
     mapping = get_mapping()
-    return mapping.get(objective, None)
+    return mapping.get(objective, [])
 
 
 if __name__ == "__main__":

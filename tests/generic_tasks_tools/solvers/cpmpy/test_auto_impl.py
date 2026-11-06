@@ -34,6 +34,9 @@ from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import
 from discrete_optimization.generic_tasks_tools.objectives.allocation_cost import (
     AllocationCostComputerMultimode,
 )
+from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
+    CumulCostComputer,
+)
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
 )
@@ -44,8 +47,17 @@ from discrete_optimization.generic_tasks_tools.objectives.resource_levels import
     CalendarRenewableResourceLevelObjectiveComputer,
     NonRenewableResourceLevelObjectiveComputer,
 )
+from discrete_optimization.generic_tasks_tools.objectives.scheduled_tasks import (
+    ScheduledTasksComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.soft_time_penalty import (
+    SoftTimePenaltyComputer,
+)
 from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used import (
     UnaryResourcesUsedComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.weighted_sum_start_or_end import (
+    WeightedSumStartEndObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     BlockingConstraintMetadata,
@@ -109,6 +121,16 @@ def test_auto(
     objective,
     caplog,
 ):
+    if objective in [
+        Objective.ALLOCATION_CHANGES,
+        Objective.SCHEDULE_CHANGES,
+        Objective.NB_CAL_PREEMPTED_TASKS,
+        Objective.COST_ON_ALTERNATIVE_SUBPROBLEMS,
+        Objective.WEIGHTED_SUM_START_OR_END,
+        Objective.EARLINESS_TARDINESS,
+    ]:
+        pytest.skip(f"Not testing objective {objective} here.")
+
     def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
         return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
 
@@ -157,22 +179,18 @@ def test_auto(
         list_objective_computer=[
             MakespanObjectiveComputer(),
             CalendarRenewableResourceLevelObjectiveComputer(
-                problem=None,
                 weight_objective=1,
                 weight_resource={"cumulative_resource": 1},
             ),
             NonRenewableResourceLevelObjectiveComputer(
-                problem=None,
                 weight_objective=1,
                 weight_resource={"non_renewable_resource": 1},
             ),
             AllocatedTasksObjective(problem=None, weight_objective=-1),
             UnaryResourcesUsedComputer(
-                problem=None,
                 weight_per_unary_resource={ur: 1 for ur in {"worker1", "worker2"}},
             ),
             ModeCostComputer(
-                problem=None,
                 weight_objective=1,
                 mode_cost={
                     "task-1": {
@@ -185,22 +203,19 @@ def test_auto(
                 },
             ),
             AllocationCostComputerMultimode(
-                problem=None,
                 weight_objective=1,
                 cost_allocation_resource_to_task_mode={
                     ("task-1", 1): {"worker1": 27, "worker2": 10}
                 },
             ),
+            SoftTimePenaltyComputer(),
+            CumulCostComputer(),
+            ScheduledTasksComputer(),
+            WeightedSumStartEndObjectiveComputer(),
         ],
     )
 
     # prepare solver
-    if not isinstance(objective, list):
-        if (
-            problem.get_objective_computer(objective) is None
-            and objective != Objective.CUSTOM
-        ):
-            return
 
     # custom objective: makespan - nb tasks allocated
     def custom_objective_factory(
@@ -442,6 +457,16 @@ def test_auto_optional_tasks(
     objective,
     caplog,
 ):
+    if objective in [
+        Objective.ALLOCATION_CHANGES,
+        Objective.SCHEDULE_CHANGES,
+        Objective.NB_CAL_PREEMPTED_TASKS,
+        Objective.COST_ON_ALTERNATIVE_SUBPROBLEMS,
+        Objective.WEIGHTED_SUM_START_OR_END,
+        Objective.EARLINESS_TARDINESS,
+    ]:
+        pytest.skip(f"Not testing objective {objective} here.")
+
     def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
         return -sum(
             variable.get_start_time(task) for task in variable.get_present_tasks()
@@ -494,22 +519,18 @@ def test_auto_optional_tasks(
         list_objective_computer=[
             MakespanObjectiveComputer(),
             CalendarRenewableResourceLevelObjectiveComputer(
-                problem=None,
                 weight_objective=1,
                 weight_resource={"cumulative_resource": 1},
             ),
             NonRenewableResourceLevelObjectiveComputer(
-                problem=None,
                 weight_objective=1,
                 weight_resource={"non_renewable_resource": 1},
             ),
             AllocatedTasksObjective(problem=None, weight_objective=-1),
             UnaryResourcesUsedComputer(
-                problem=None,
                 weight_per_unary_resource={ur: 1 for ur in {"worker1", "worker2"}},
             ),
             ModeCostComputer(
-                problem=None,
                 weight_objective=1,
                 mode_cost={
                     "task-1": {
@@ -522,18 +543,19 @@ def test_auto_optional_tasks(
                 },
             ),
             AllocationCostComputerMultimode(
-                problem=None,
                 weight_objective=1,
                 cost_allocation_resource_to_task_mode={
                     ("task-1", 1): {"worker1": 27, "worker2": 10}
                 },
             ),
+            SoftTimePenaltyComputer(),
+            CumulCostComputer(),
+            ScheduledTasksComputer(),
+            WeightedSumStartEndObjectiveComputer(),
         ],
     )
+
     # prepare solver
-    if not isinstance(objective, list) and objective != Objective.CUSTOM:
-        if problem.get_objective_computer(objective) is None:
-            return
 
     # custom objective: makespan - nb tasks allocated
     def custom_objective_factory(

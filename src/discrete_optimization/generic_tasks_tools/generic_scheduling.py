@@ -633,15 +633,13 @@ class GenericSchedulingProblem(
     @abstractmethod
     def get_list_objective_computer(self) -> list[ObjectiveComputer]: ...
 
-    def get_objective_computer(
-        self, objective: Objective
-    ) -> list[ObjectiveComputer] | None:
+    def get_objective_computer(self, objective: Objective) -> list[ObjectiveComputer]:
         mapping = {}
         for obj in self.get_list_objective_computer():
             if (obj_name := obj.get_objective_name()) not in mapping:
                 mapping[obj_name] = []
             mapping[obj_name].append(obj)
-        return mapping.get(objective, None)
+        return mapping.get(objective, [])
 
     def evaluate(self, variable: GenericSchedulingSolution) -> dict[str, float]:
         dict_eval = {}

@@ -992,8 +992,6 @@ class GenericSchedulingAutoCpSolver(
             self.params_objective_function.weights,
         ):
             obj_computers = self.problem.get_objective_computer(obj)
-            if obj_computers is None:
-                continue
             for obj_computer in obj_computers:
                 obj_modeler_class: Type["ObjectiveModelerCp"] = (
                     mapping_obj_computer_to_modeler[obj_computer.__class__]

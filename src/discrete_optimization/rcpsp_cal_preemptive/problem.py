@@ -8,8 +8,16 @@ import logging
 from collections.abc import Hashable
 from typing import Any, Optional, Union
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
+from discrete_optimization.generic_tasks_tools.objectives.calendar_preempted import (
+    CalendarPreemptedComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
+    ObjectiveComputer,
+)
 from discrete_optimization.rcpsp import RcpspProblem
 from discrete_optimization.rcpsp.solution import (
+    RcpspSolution,
     Task,
 )
 from discrete_optimization.rcpsp.special_constraints import (
@@ -55,6 +63,19 @@ class CalendarPreemptiveRcpspProblem(RcpspProblem):
             **kwargs,
         )
         self.calendar_preemptive_tasks = calendar_preemptive_tasks
+        self.nb_cal_preempted_tasks_computer = CalendarPreemptedComputer(self)
 
     def is_task_calendar_preempted(self, task: Task) -> bool:
         return task in self.calendar_preemptive_tasks
+
+    def get_list_objective_computer(self) -> list[ObjectiveComputer]:
+        computers = super().get_list_objective_computer()
+        computers.append(self.nb_cal_preempted_tasks_computer)
+        return computers
+
+    def evaluate(self, variable: RcpspSolution) -> dict[str, float]:
+        kpis = super().evaluate(variable)
+        kpis[Objective.NB_CAL_PREEMPTED_TASKS] = (
+            self.nb_cal_preempted_tasks_computer.compute_objective(variable)
+        )
+        return kpis
