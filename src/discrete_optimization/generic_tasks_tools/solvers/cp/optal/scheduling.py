@@ -18,6 +18,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cp.base.typing import (
 from discrete_optimization.generic_tasks_tools.solvers.cp.optal.base import (
     TasksOptalSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.utils import (
+    get_interval_start_or_end_variable,
+)
 
 try:
     import optalcp as cp
@@ -44,10 +47,7 @@ class SchedulingOptalSolver(TasksOptalSolver[Task], SchedulingCpSolver[Task]):
 
         """
         itv = self.get_task_interval(task)
-        if start_or_end == StartOrEnd.START:
-            return itv.start()
-        else:
-            return itv.end()
+        return get_interval_start_or_end_variable(itv=itv, start_or_end=start_or_end)
 
     @abstractmethod
     def get_task_interval(self, task: Task) -> cp.IntervalVar:

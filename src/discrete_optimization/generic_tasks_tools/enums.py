@@ -25,3 +25,7 @@ class MinOrMax(Enum):
 
 class AbsentValue(Enum):
     ABSENT = "absent"
+
+
+class UndefinedData(Enum):
+    UNDEFINED = "undefined"

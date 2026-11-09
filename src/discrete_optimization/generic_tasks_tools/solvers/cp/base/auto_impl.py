@@ -106,11 +106,14 @@ class GenericSchedulingAutoCpImplSolver(
         use_only_skill_to_allocate: Optional[bool] = None,
         use_no_overlap_for_capa_1: Optional[bool] = None,
         use_cumulative_for_capa_1: Optional[bool] = None,
+        logging_objectives: Optional[bool] = None,
         **kwargs: Any,
     ) -> None:
         self.new_horizon = new_horizon
 
         # override default parameters if given, for those not already managed by parent class
+        if logging_objectives is not None:
+            self.logging_objectives = logging_objectives
         if at_most_one_unary_resource_per_task is not None:
             self.at_most_one_unary_resource_per_task = (
                 at_most_one_unary_resource_per_task
