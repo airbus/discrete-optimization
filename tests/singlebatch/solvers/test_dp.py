@@ -5,6 +5,7 @@
 
 import pytest
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -73,4 +74,4 @@ class TestDPSolver:
 
         # Makespan should be <= sum of all processing times
         max_makespan = sum(j.processing_time for j in problem.jobs)
-        assert evaluation["makespan"] <= max_makespan
+        assert evaluation[Objective.MAKESPAN] <= max_makespan

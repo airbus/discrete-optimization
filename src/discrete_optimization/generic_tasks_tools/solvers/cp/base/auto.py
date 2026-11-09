@@ -11,7 +11,11 @@ from typing import Any, Generic, Iterable, Optional, Union
 import networkx as nx
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
-from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import (
+    AbsentValue,
+    MinOrMax,
+    StartOrEnd,
+)
 from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     CumulativeResource,
@@ -184,6 +188,7 @@ class GenericSchedulingAutoCpSolver(
     """
     Either creating present var for all task (not only for optional tasks)
     """
+    logging_objectives: bool = False
 
     # cp variables
     start_or_end_variables: dict[tuple[Task, StartOrEnd], LinearExpr]
@@ -937,6 +942,24 @@ class GenericSchedulingAutoCpSolver(
         # define the constraint on presence of optional task
         # (specified in linear_constraints_presence_tasks())
         self.create_linear_constraint_optional_tasks()
+
+        # Entity constraints (batching + entity precedence/time lags/time windows)
+        # Check if problem has batching or entity constraints
+        if (
+            len(self.problem.get_batch_entities()) > 0
+            or len(self.problem.get_entity_precedence_constraints()) > 0
+            or any(
+                len(self.problem.get_entity_time_lags(se1, se2, mm)) > 0
+                for se1 in [StartOrEnd.START, StartOrEnd.END]
+                for se2 in [StartOrEnd.START, StartOrEnd.END]
+                for mm in [MinOrMax.MIN, MinOrMax.MAX]
+            )
+            or len(self.problem.get_routing_entities()) > 0
+            or len(self.problem.get_ordered_routing_entities()) > 0
+        ):
+            self.init_entity_constraints()
+            self.create_routing_vars_and_constraints()
+
         # Define the entity variables for resource blocking constraint
         self.create_resource_blocking_constraints()
         # Calendar preemptive duration constraint
@@ -1236,6 +1259,11 @@ class GenericSchedulingAutoCpSolver(
             the task variables for the intermediate solution
 
         """
+        if self.logging_objectives:
+            for obj in self.dict_objective_expr:
+                logger.info(
+                    f"Objective {obj}: {solution_value_fn(self.dict_objective_expr[obj])}"
+                )
         task_variables = {}
         for task in self.problem.tasks_list:
             is_present = self.get_task_is_present_variable(task)

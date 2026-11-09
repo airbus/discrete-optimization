@@ -41,7 +41,9 @@ def get_data_available(
     return files
 
 
-def parse_dat_file(file_path: str) -> OvenSchedulingProblem:
+def parse_dat_file(
+    file_path: str, max_nb_batches_per_machine: int = 10
+) -> OvenSchedulingProblem:
     """
     Parses a .dat file and returns an OvenSchedulingProblem instance.
     This version includes robust error handling.
@@ -140,6 +142,7 @@ def parse_dat_file(file_path: str) -> OvenSchedulingProblem:
             machines_data=machines_data,
             setup_costs=setup_costs,
             setup_times=setup_times,
+            max_batches_per_machine=max_nb_batches_per_machine,
         )
 
         additional_data = {

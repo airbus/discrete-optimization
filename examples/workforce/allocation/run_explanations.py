@@ -102,12 +102,12 @@ class InteractSolve:
                 self.dropped_tasks.append(c.metadata["task_index"])
 
         # solver.
-        # solver.model.constraints.extend(h.constraints)
+        # solver.cp_model.constraints.extend(h.constraints)
         # all_names = {str(constraint.name) for constraint in constraints
         #             for c in constraints}
         # self.current_soft = [c for c in self.current_soft
         #                      if str(c) not in all_names]
-        # self.solver.model.constraints = self.current_soft + self.current_hard
+        # self.solver.cp_model.constraints = self.current_soft + self.current_hard
 
     def put_as_hard(self, constraints: list[MetaCpmpyConstraint]):
         self.current_soft = [c for c in self.current_soft if c not in constraints]
@@ -124,7 +124,7 @@ class InteractSolve:
     def solve_current_problem(self, **kwargs) -> tuple[StatusSolver, ResultStorage]:
         # temporary fix
         self.solver.cpm_solver = SolverLookup.get(
-            self.solver.solver_name, self.solver.cp_model
+            self.solver.solver_name, self.solver.model
         )
         res = self.solver.solve(**kwargs)
         status = self.solver.status_solver

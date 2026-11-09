@@ -60,7 +60,7 @@ def test_knapsack_cpmpy_explain(method):
     with pytest.raises(NotImplementedError):
         solver.correct_unsat_meta()
 
-    # NB: solver.model.constraints.remove(cstr) not working as expected
+    # NB: solver.cp_model.constraints.remove(cstr) not working as expected
     constraints_ids = {id(c) for c in constraints}
     solver.cp_model.constraints = [
         c for c in solver.cp_model.constraints if id(c) not in constraints_ids
@@ -108,7 +108,7 @@ def test_knapsack_cpmpy_correct(method):
     with pytest.raises(NotImplementedError):
         solver.correct_unsat_meta()
 
-    # NB: solver.model.constraints.remove(cstr) not working as expected
+    # NB: solver.cp_model.constraints.remove(cstr) not working as expected
     constraints_ids = {id(c) for c in constraints}
     solver.cp_model.constraints = [
         c for c in solver.cp_model.constraints if id(c) not in constraints_ids

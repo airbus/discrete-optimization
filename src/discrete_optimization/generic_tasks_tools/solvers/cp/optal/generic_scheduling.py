@@ -35,6 +35,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cp.optal.no_overlap impor
 from discrete_optimization.generic_tasks_tools.solvers.cp.optal.precedence_scheduling import (
     PrecedenceSchedulingOptalSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.routing import (
+    RoutingOptalSolver,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cp.optal.skill import (
     SkillSchedulingOptalSolver,
 )
@@ -58,6 +61,7 @@ class GenericSchedulingOptalSolver(
         OtherCalendarResource,
         ExclusionResource,
     ],
+    RoutingOptalSolver[Task],
     ExclusionOptalSolver[Task, ExclusionResource],
     AlternativeSubproblemOptalSolver[Task],
     NoOverlapOptalSolver[Task],
@@ -84,6 +88,8 @@ class GenericSchedulingOptalSolver(
     - non-renewable resource capacity
     - skills brought to tasks by allocated unary resources
     - resource blocking (gaps and spans)
+    - entity constraints (precedence, time lags, time windows on any SchedulingEntity)
+    - batching (variable task-to-batch assignment)
 
     For a more all-in-one version actually creating variables, constraints and objectives,
     see `GenericSchedulingAutoOptalSolver`.

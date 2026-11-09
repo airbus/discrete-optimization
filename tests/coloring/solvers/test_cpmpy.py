@@ -67,7 +67,7 @@ def test_cpmpy_solver():
     solver_model_constraints_bak = solver.cp_model.constraints
     solver.cp_model.constraints = [
         c for c in solver_model_constraints_bak if id(c) not in subconstraints_mcs_ids
-    ]  # NB: solver.model.constraints.remove(cstr) not working as expected
+    ]  # NB: solver.cp_model.constraints.remove(cstr) not working as expected
     solver.reset_cpm_solver()
     solver.solve()
     assert solver.status_solver == StatusSolver.OPTIMAL
@@ -84,7 +84,7 @@ def test_cpmpy_solver():
     solver_model_constraints_bak = solver.cp_model.constraints
     solver.cp_model.constraints = [
         c for c in solver_model_constraints_bak if id(c) not in subconstraints_mcs_ids
-    ]  # NB: solver.model.constraints.remove(cstr) not working as expected
+    ]  # NB: solver.cp_model.constraints.remove(cstr) not working as expected
     solver.reset_cpm_solver()
     solver.solve()
     assert solver.status_solver == StatusSolver.OPTIMAL

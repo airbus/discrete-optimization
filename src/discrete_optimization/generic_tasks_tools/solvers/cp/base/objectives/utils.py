@@ -31,6 +31,9 @@ from discrete_optimization.generic_tasks_tools.objectives.resource_levels import
     CalendarRenewableResourceLevelObjectiveComputer,
     NonRenewableResourceLevelObjectiveComputer,
 )
+from discrete_optimization.generic_tasks_tools.objectives.routing_costs import (
+    RoutingCostComputer,
+)
 from discrete_optimization.generic_tasks_tools.objectives.schedule_changes import (
     ScheduleChangesComputer,
 )
@@ -42,6 +45,13 @@ from discrete_optimization.generic_tasks_tools.objectives.soft_time_penalty impo
 )
 from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used import (
     UnaryResourcesUsedComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.weighted_number_late_tasks import (
+    WeightedNumberLateComputer,
+    WeightedNumberLateTasksInBatchComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.weighted_sum_start_or_end import (
+    WeightedSumStartEndObjectiveComputer,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.allocated_tasks import (
     AllocatedTasksModelerCp,
@@ -75,6 +85,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.resour
     CalendarRenewableResourceLevelModelerCp,
     NonRenewableResourceLevelModelerCp,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.routing_costs import (
+    RoutingCostsModelerCp,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.schedule_changes import (
     ScheduleChangesModelerCp,
 )
@@ -86,6 +99,13 @@ from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.soft_t
 )
 from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.unary_resource_used import (
     UnaryResourcesUsedModelerCp,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.weighted_number_late_tasks import (
+    WeightedNumberLateInBatchModelerCp,
+    WeightedNumberLateModelerCp,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.weighted_sum_start_or_end import (
+    WeightedSumStartEndModelerCp,
 )
 
 mapping_computer_to_modeler = {
@@ -105,4 +125,8 @@ mapping_computer_to_modeler = {
     ScheduledTasksComputer: ScheduledTasksModelerCp,
     CalendarPreemptedComputer: CalendarPreemptedModelerCp,
     CustomComputer: CustomModelerCp,
+    WeightedSumStartEndObjectiveComputer: WeightedSumStartEndModelerCp,
+    WeightedNumberLateComputer: WeightedNumberLateModelerCp,
+    WeightedNumberLateTasksInBatchComputer: WeightedNumberLateInBatchModelerCp,
+    RoutingCostComputer: RoutingCostsModelerCp,
 }
