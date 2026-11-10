@@ -7,8 +7,12 @@ import logging
 from typing import Generic, Optional
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
+from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
 from discrete_optimization.generic_tasks_tools.exclusions import ExclusionResource
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
+    RawSolution,
+    TaskVariable,
+)
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
     NonRenewableResource,
 )
@@ -226,14 +230,123 @@ class GenericSchedulingAutoOptalSolver(
     def get_task_mode_interval(self, task: Task, mode: int) -> cp.IntervalVar:
         return self.modes_intervals[task][mode]
 
-    def retrieve_solution(self, result: cp.SolveResult) -> Solution:
+    def retrieve_solution(self, result: "cp.Solution") -> Solution:
         # construct generic tasks variables
-        def solution_value_fn(var):
-            return result.solution.get_value(var)
-
-        raw_sol = self.retrieve_tasks_variables(solution_value_fn=solution_value_fn)
+        raw_sol = self.retrieve_tasks_variables_optal(solution=result)
         # convert to specific solution type
         return self.convert_task_variables_to_solution(raw_sol=raw_sol)
+
+    def retrieve_tasks_variables_optal(
+        self, solution: "cp.Solution"
+    ) -> RawSolution[Task, UnaryResource, Skill]:
+        """Construct each task variable from the optal internal solution.
+
+        We cannot use the generic `retrieve_tasks_variables()` as the way to retrieve the value of a given expression
+        or variable may vary. Often we need to go back to the interval variable it is derived from.
+
+        This method will be called in `self.retrieve_solution()` before `self.convert_task_variables_to_solution()`.
+
+        Args:
+            solution:
+
+        Returns:
+            the task variables for the intermediate solution
+
+        """
+        task_variables = {}
+        for task in self.problem.tasks_list:
+            itv = self.get_task_interval(task)
+            is_present = solution.is_present(itv)
+            if not is_present:
+                task_variables[task] = TaskVariable(
+                    start=AbsentValue.ABSENT,
+                    end=AbsentValue.ABSENT,
+                    mode=AbsentValue.ABSENT,
+                    allocated={},
+                    is_present=False,
+                )
+            else:
+                start, end = solution.get_value(itv)
+                modes = self.problem.get_task_modes(task)
+                mode = AbsentValue.ABSENT
+                if len(modes) == 1:
+                    mode = next(iter(modes))
+                else:
+                    for mode in modes:
+                        if solution.is_present(
+                            self.get_task_mode_interval(task=task, mode=mode)
+                        ):
+                            break
+
+                def get_skill_used(
+                    task: Task, unary_resource: UnaryResource
+                ) -> set[Skill]:
+                    """Get set of skills used by unary resource for the task
+
+                    Hypothesis: the unary resource is allocated to the task. No need to check it again.
+
+                    Args:
+                        task:
+                        unary_resource:
+
+                    Returns:
+
+                    """
+                    try:
+                        skill_variables = self.skill_variables[task][unary_resource]
+                    except KeyError:
+                        return set()
+                    else:
+                        skills = set()
+                        for skill, skill_var in skill_variables.items():
+                            if isinstance(skill_var, cp.BoolExpr):
+                                # When skill_var is not a variable but an expression,
+                                # we cannot use `solution.get_value()` on it (with optal 2026.11.0)
+                                # It is the case where the use of the skill is directly
+                                # defined by the fact that the unary resource is allocated to the task.
+                                # As `get_skill_used()` is called only when `unary_resource` is allocated,
+                                # we add the skill.
+                                skills.add(skill)
+                            else:  # bool variable
+                                skill_used = solution.get_value(skill_variables[skill])
+                                if skill_used > 0:
+                                    skills.add(skill)
+                        return skills
+
+                allocated = {
+                    unary_resource: get_skill_used(
+                        task=task, unary_resource=unary_resource
+                    )
+                    for unary_resource, allocation_interval in self.allocation_intervals[
+                        task
+                    ].items()
+                    if (solution.is_present(allocation_interval))
+                }
+                task_variables[task] = TaskVariable(
+                    start=start,
+                    end=end,
+                    mode=mode,
+                    allocated=allocated,
+                    is_present=True,
+                )
+        metadata = {}
+        # Stores other decision
+        for c in (
+            self.problem.get_flexible_gap_blocking_constraints()
+            + self.problem.get_span_blocking_constraints()
+        ):
+            if c.has_a_choice():
+                tag = c.metadata.name_choice
+                choice = None
+                for val in self._choices_blocking_constraint_vars[tag]:
+                    if solution.get_value(
+                        self._choices_blocking_constraint_vars[tag][val]
+                    ):
+                        choice = val
+                        break
+                metadata[tag] = choice
+
+        return RawSolution(task_variables=task_variables, metadata=metadata)
 
 
 class SinglemodeGenericSchedulingAutoOptalSolver(
