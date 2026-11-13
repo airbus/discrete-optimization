@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import inspect
 from abc import abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Sequence
 from enum import Enum
-from typing import Any, Iterable, Optional, Sequence
+from typing import Any, Optional
 
 import cpmpy
 import numpy as np
@@ -176,6 +176,7 @@ class CpmpySolver(CpSolver):
         callbacks: Optional[list[Callback]] = None,
         parameters_cp: Optional[ParametersCp] = None,
         time_limit: Optional[float] = 100.0,
+        kwargs_keys_for_init_model_only: Optional[Iterable[str]] = None,
         **kwargs: Any,
     ) -> ResultStorage:
         if parameters_cp is None:
@@ -190,6 +191,10 @@ class CpmpySolver(CpSolver):
         callbacks_list.on_solve_start(solver=self)
 
         solver_kwargs = dict(kwargs)
+        if kwargs_keys_for_init_model_only:
+            # remove keys not meant for solver but only for init_model
+            for key in kwargs_keys_for_init_model_only:
+                solver_kwargs.pop(key, None)
         if self.cpm_solver is None:  # this is the first solve call
             self.cpm_solver = SolverLookup.get(self.solver_name, self.cp_model)
         solver_allowed_params = inspect.signature(self.cpm_solver.solve).parameters
