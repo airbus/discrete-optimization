@@ -272,21 +272,26 @@ def test_osp_via_rcpsp_cpsat(simple_osp_problem):
     print(f"OSP via RCPSP CP-SAT: {simple_osp_problem.evaluate(sol)}")
 
 
-def test_osp_via_generic_scheduling(simple_osp_problem):
+def test_osp_via_generic_scheduling(
+    simple_osp_problem,
+    generic_solver_cls,
+    generic_solver_kwargs,
+    generic_solver_check_solution,
+):
     """Solve OSP via GenericScheduling transformation using CP-SAT solver."""
     solver = TransformationSolver(
         transformation=ShopToGenericSchedulingTransformation(),
         source_problem=simple_osp_problem,
-        solver_brick=SubBrick(cls=GenericSchedulingAutoCpSatImplSolver, kwargs={}),
+        solver_brick=SubBrick(cls=generic_solver_cls, kwargs=generic_solver_kwargs),
     )
     solver.init_model()
     res = solver.solve(
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
         parameters_cp=ParametersCp.default(),
     )
-    sol = res[-1][0]
-    assert simple_osp_problem.satisfy(sol)
-    print(f"OSP via GenericScheduling: {simple_osp_problem.evaluate(sol)}")
+    if generic_solver_check_solution:
+        sol = res[-1][0]
+        assert simple_osp_problem.satisfy(sol)
 
 
 def test_osp_from_jsp_file_via_rcpsp():

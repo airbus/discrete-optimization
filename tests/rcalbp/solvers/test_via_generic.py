@@ -6,9 +6,6 @@ from discrete_optimization.alb.rcalbp.problem import RCALBPSolution
 from discrete_optimization.alb.rcalbp.transformations.to_generic import (
     RCALBPToGenericSchedulingTransformation,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_impl import (
-    GenericSchedulingAutoCpSatImplSolver,
-)
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     ObjectiveGapStopper,
 )
@@ -20,18 +17,23 @@ from discrete_optimization.generic_tools.hyperparameters.hyperparameter import S
 from discrete_optimization.generic_tools.transformation import TransformationSolver
 
 
-def test_via_generic(simple_problem):
+def test_via_generic(
+    simple_problem,
+    generic_solver_cls,
+    generic_solver_kwargs,
+    generic_solver_check_solution,
+):
     # Load problem from RCPSP instance
     p = ParametersCp.default_cpsat()
     p.nb_process = 16
     solver = TransformationSolver(
         transformation=RCALBPToGenericSchedulingTransformation(),
         solver_brick=SubBrick(
-            GenericSchedulingAutoCpSatImplSolver,
+            generic_solver_cls,
             {
                 "time_limit": 100,
                 "parameters_cp": p,
-                "ortools_cpsat_solver_kwargs": {"log_search_progress": True},
+                **generic_solver_kwargs,
             },
         ),
         source_problem=simple_problem,
@@ -40,6 +42,7 @@ def test_via_generic(simple_problem):
     res = solver.solve(
         callbacks=[ObjectiveGapStopper(0, 0), BasicStatsCallback()],
     )
-    assert len(res) > 0
-    solution: RCALBPSolution = res.get_best_solution()
-    assert simple_problem.satisfy(solution)
+    if generic_solver_check_solution:
+        assert len(res) > 0
+        solution: RCALBPSolution = res.get_best_solution()
+        assert simple_problem.satisfy(solution)

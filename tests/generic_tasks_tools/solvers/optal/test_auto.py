@@ -290,9 +290,6 @@ class MyAutoOptalSolver(
             return self.new_horizon
 
 
-OPTAL_PREVIEW_ONLY = True
-
-
 @pytest.mark.skipif(
     not optalcp_available, reason="You need optalcp to test this solver."
 )
@@ -312,6 +309,7 @@ def test_auto(
     use_energy_constraints,
     keep_only_most_nested_energy_constraints,
     caplog,
+    optal_preview_only,
 ):
     problem = MyProblem()
 
@@ -351,7 +349,7 @@ def test_auto(
 
     # solve
     res = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
@@ -367,7 +365,7 @@ def test_auto(
         assert solver.current_obj == 9
         assert solver.current_obj == 2
 
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         # check sol and kpis
         sol: MySolution
         sol, fit = res[-1]

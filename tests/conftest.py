@@ -5,11 +5,24 @@ import os
 import warnings
 
 import pandas as pd
-from pytest import fixture
+import pytest
+from pytest_cases import fixture, param_fixture, unpack_fixture
 
 from discrete_optimization.datasets import DO_DEFAULT_DATAHOME_ENVVARNAME
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpmpy.auto_impl import (
+    GenericSchedulingAutoCpmpyImplSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_impl import (
+    GenericSchedulingAutoCpSatImplSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto_impl import (
+    GenericSchedulingAutoOptalImplSolver,
+)
 from discrete_optimization.generic_tools.do_problem import ModeOptim
 from discrete_optimization.generic_tools.do_solver import StatusSolver
+from discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools import (
+    optalcp_available,
+)
 
 
 @fixture
@@ -17,6 +30,46 @@ def fake_data_home(monkeypatch):
     data_home = "~/discrete_optimization_data_not_existing"
     monkeypatch.setenv(DO_DEFAULT_DATAHOME_ENVVARNAME, data_home)
 
+
+# optal settings
+@fixture
+def optal_preview_only():
+    # only preview version available => do not retrieve solutions
+    return True
+
+
+# generic scheduling cp solver
+cp_framework = param_fixture("cp_framework", ["cpsat", "cpmpy", "optal"])
+
+
+@fixture
+def generic_scheduling_solver_cls_kwargs_check(cp_framework, optal_preview_only):
+    kwargs = {}
+    check_solution = True
+    match cp_framework:
+        case "cpsat":
+            cls = GenericSchedulingAutoCpSatImplSolver
+        case "cpmpy":
+            cls = GenericSchedulingAutoCpmpyImplSolver
+        case "optal":
+            if not optalcp_available:
+                pytest.skip("You need optalcp to test this solver.")
+            cls = GenericSchedulingAutoOptalImplSolver
+            if optal_preview_only:
+                kwargs["do_not_retrieve_solutions"] = True
+                check_solution = False
+        case _:
+            raise NotImplementedError()
+
+    return cls, kwargs, check_solution
+
+
+generic_solver_cls, generic_solver_kwargs, generic_solver_check_solution = (
+    unpack_fixture(
+        "generic_solver_cls, generic_solver_kwargs, generic_solver_check_solution",
+        generic_scheduling_solver_cls_kwargs_check,
+    )
+)
 
 # common fixtures for non-regression tests
 NONREGRESSION_DB_SUFFIX = "_db.csv"

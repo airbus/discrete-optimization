@@ -66,7 +66,6 @@ class WorkforceAllocationToGenericSchedulingTransformation(
         time_window = {}
         for t in source_problem.schedule:
             st, end = source_problem.schedule[t]
-            print(st, end)
             time_window[t] = (st, end, st, end)
         compatible_teams = source_problem.compute_compatibility_for_all_tasks()
         return GenericSchedulingImplProblem(
