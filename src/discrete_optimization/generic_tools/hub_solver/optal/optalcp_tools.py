@@ -374,6 +374,7 @@ class OptalSolutionCallback:
         self.nb_solutions = 0
         self.current_solve_result: Optional[cp.SolveResult] = None
         self.do_not_retrieve_solutions = do_not_retrieve_solutions
+        self.stopping = False
 
     def on_solution(self, event: "cp.SolutionEvent") -> None:
         self.do_solver.current_obj = event.solution.get_objective()
@@ -396,9 +397,12 @@ class OptalSolutionCallback:
                 self.do_solver.early_stopping_exception = SolveEarlyStop(
                     f"{self.do_solver.__class__.__name__}.solve() stopped by user callback."
                 )
-        if stopping:
+        if stopping and not self.stopping:
             logger.debug("stopping")
             self.optal_solver.stop("stopped by usr callback")
+            self.stopping = (
+                True  # avoid retrying to stop afterwards (would result in a kill -9)
+            )
 
     def on_bound(self, event: "cp.ObjectiveBoundEntry") -> None:
         self.do_solver.current_bound = event.value

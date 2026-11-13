@@ -25,10 +25,7 @@ def test_several_solvers(solver_class):
     problem = parse_file(file)
     solver = solver_class(problem)
     solver.init_model(scaling=100)
-    kwargs = dict(time_limit=10)
-    if not isinstance(solver, OptalTopSolver):
-        kwargs["callbacks"] = [NbIterationStopper(nb_iteration_max=1)]
-
+    kwargs = dict(callbacks=[NbIterationStopper(nb_iteration_max=1)], time_limit=10)
     res = solver.solve(**kwargs)
     sol = res[-1][0]
     if not isinstance(solver, OptalTopSolver):

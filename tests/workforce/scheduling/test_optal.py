@@ -4,6 +4,9 @@
 
 import pytest
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.workforce.scheduling.parser import (
@@ -27,6 +30,7 @@ def test_optal():
     res = solver.solve(
         parameters_cp=ParametersCp.default_cpsat(),
         time_limit=10,
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
         do_not_retrieve_solutions=True,  # optalcp-preview mode
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL, StatusSolver.SATISFIED)
