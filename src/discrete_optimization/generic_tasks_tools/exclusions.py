@@ -137,7 +137,7 @@ class ExclusionSolution(
         max_time = self.get_max_end_time()
         for r in self.problem.exclusion_resources_list:
             capacity = self.problem.get_capacity_exclusion_resource(r)
-            blocked = np.zeros(max_time, dtype=np.bool)
+            blocked = np.zeros(max_time, dtype=bool)
             # Check the cumulative constraint too.
             consumption = np.zeros(max_time, dtype=int)
             task_mode_excluding = self.problem.get_tasks_modes_exclude_others(r)
