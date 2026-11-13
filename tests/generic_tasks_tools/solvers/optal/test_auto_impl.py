@@ -67,6 +67,9 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
 from discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto_impl import (
     GenericSchedulingAutoOptalImplSolver,
 )
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
     ObjectiveHandling,
@@ -1470,7 +1473,9 @@ def test_rcpsp_mm():
     )
     generic_solver.init_model()
     res = generic_solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY, time_limit=2
+        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        time_limit=2,
+        callbacks=[NbIterationStopper(1)],
     )
     assert generic_solver.status_solver in (
         StatusSolver.OPTIMAL,
@@ -1540,7 +1545,9 @@ def test_rcpsp_multiskill(
         add_redundant_skill_cumulative_constraints=redundant_skill_cumulative,
     )
     res = generic_solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY, time_limit=2
+        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        time_limit=2,
+        callbacks=[NbIterationStopper(1)],
     )
     assert generic_solver.status_solver in (
         StatusSolver.OPTIMAL,

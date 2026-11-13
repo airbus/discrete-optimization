@@ -3,6 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import pytest
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.rcpsp_multiskill.parser_mslib import (
     get_data_available,
@@ -40,6 +43,7 @@ def test_optal(
     res = solver.solve(
         time_limit=time_limit,
         do_not_retrieve_solutions=True,  # optalcp-preview mode
+        callbacks=[NbIterationStopper(1)],
     )
     if feasible:
         if no_solution:

@@ -84,7 +84,7 @@ def test_solve_via_generic(solver_name):
                 check_solution = False
 
     generic_solution: GenericSchedulingImplSolution = solver.solve(
-        **kwargs
+        callbacks=[NbIterationStopper(1)], **kwargs
     ).get_best_solution()
     if check_solution:
         solution = transfo.back_transform_solution(

@@ -7,6 +7,9 @@ from discrete_optimization.alb.salbp.solvers.optal import (
     SalbpProblem_1_2,
     optalcp_available,
 )
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -61,4 +64,5 @@ def test_optal_on_salbp2():
         parameters_cp=p,
         do_not_retrieve_solutions=True,
         time_limit=100,
+        callbacks=[NbIterationStopper(1)],
     )
