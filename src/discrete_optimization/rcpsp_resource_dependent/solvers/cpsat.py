@@ -4,7 +4,6 @@
 from discrete_optimization.generic_tasks_tools.allocation import (
     NoUnaryResource,
 )
-from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
@@ -22,8 +21,10 @@ from discrete_optimization.rcpsp_resource_dependent.problem import (
     NonRenewableResource,
     NonSkillCumulativeResource,
     RcpspResourceDependentProblem,
-    RcpspResourceDependentSolution,
     Task,
+)
+from discrete_optimization.rcpsp_resource_dependent.transformations.generic_scheduling_impl import (
+    transform_solution_from_raw_generic_to_rcpsp_resource_dependent,
 )
 
 
@@ -49,18 +50,7 @@ class CpSatRcpspResourceDependentSolver(
         NonRenewableResource,
         NoExclusionResource,
     ]:
-        return RcpspResourceDependentSolution(
+        return transform_solution_from_raw_generic_to_rcpsp_resource_dependent(
+            raw_sol=raw_sol,
             problem=self.problem,
-            schedule={
-                t: (
-                    raw_sol.task_variables[t].get_start_or_end(
-                        start_or_end=StartOrEnd.START
-                    ),
-                    raw_sol.task_variables[t].get_start_or_end(
-                        start_or_end=StartOrEnd.END
-                    ),
-                )
-                for t in self.problem.tasks_list
-            },
-            modes={t: raw_sol.task_variables[t].mode for t in self.problem.tasks_list},
         )
