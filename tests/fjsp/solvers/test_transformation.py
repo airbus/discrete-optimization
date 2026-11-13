@@ -14,6 +14,9 @@ from discrete_optimization.shop.fjsp.transformations.to_rcpsp import (
 from discrete_optimization.shop.fjsp.transformations.to_workforce import (
     FjspToWorkforceSchedulingTransformation,
 )
+from discrete_optimization.shop.transformations.to_generic_scheduling import (
+    ShopToGenericSchedulingTransformation,
+)
 from discrete_optimization.workforce.scheduling.solvers.cpsat import (
     CPSatAllocSchedulingSolver,
 )
@@ -52,3 +55,21 @@ def test_via_workforce():
     # Duration are unchanged
     # per workers in the workforce version..
     # assert problem.satisfy(sol)
+
+
+def test_via_generic(
+    generic_solver_cls, generic_solver_kwargs, generic_solver_check_solution
+):
+    files = fjsp_parser.get_data_available()
+    print(files)
+    file = [f for f in files if "Behnke1.fjs" in f][0]
+    problem = fjsp_parser.parse_file(file)
+    solver = TransformationSolver(
+        transformation=ShopToGenericSchedulingTransformation(),
+        source_problem=problem,
+        solver_brick=SubBrick(cls=generic_solver_cls, kwargs=generic_solver_kwargs),
+    )
+    res = solver.solve(callbacks=[NbIterationStopper(1)])
+    if generic_solver_check_solution:
+        sol = res[-1][0]
+        print(problem.evaluate(sol), problem.satisfy(sol))

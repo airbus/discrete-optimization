@@ -2,27 +2,17 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import numpy as np
-import pytest
 
 from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     GenericSchedulingImplSolution,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cp.cpmpy.auto_impl import (
-    GenericSchedulingAutoCpmpyImplSolver,
-)
 from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_impl import (
     GenericSchedulingAutoCpSatImplSolver,
-)
-from discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto_impl import (
-    GenericSchedulingAutoOptalImplSolver,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
-from discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools import (
-    optalcp_available,
-)
 from discrete_optimization.rcpsp_multiskill.parser_imopse import (
     get_data_available,
     parse_file,
@@ -31,8 +21,6 @@ from discrete_optimization.rcpsp_multiskill.transformations.generic_scheduling_i
     GenericSchedulingToMultiskillRcpspTransformation,
     MultiskillRcpspToGenericSchedulingTransformation,
 )
-
-OPTAL_PREVIEW_ONLY = True
 
 
 def test_transfo_to_from_generic_scheduling():
@@ -68,36 +56,22 @@ def test_transfo_to_from_generic_scheduling():
     assert generic_solution_2.raw_sol == generic_solution.raw_sol
 
 
-@pytest.mark.parametrize(
-    "solver_name",
-    ["cpsat", "cpmpy", "optal"],
-)
-def test_solve_via_generic(solver_name):
+def test_solve_via_generic(
+    generic_solver_cls, generic_solver_kwargs, generic_solver_check_solution
+):
     file = [f for f in get_data_available() if "100_5_64_9.def" in f][0]
     problem, _ = parse_file(file, max_horizon=1000)
     transfo = MultiskillRcpspToGenericSchedulingTransformation()
     generic_problem = transfo.transform_problem(source_problem=problem)
     parameters_cp = ParametersCp.default()
-    kwargs = dict(parameters_cp=parameters_cp, time_limit=2)
-    solver = None
-    check_solution = True
-    match solver_name:
-        case "cpsat":
-            solver = GenericSchedulingAutoCpSatImplSolver(generic_problem)
-        case "cpmpy":
-            solver = GenericSchedulingAutoCpmpyImplSolver(generic_problem)
-        case "optal":
-            if not optalcp_available:
-                pytest.skip("You need optalcp to test this solver.")
-            solver = GenericSchedulingAutoOptalImplSolver(generic_problem)
-            if OPTAL_PREVIEW_ONLY:
-                kwargs["do_not_retrieve_solutions"] = True
-                check_solution = False
-
+    solver = generic_solver_cls(generic_problem)
     generic_solution: GenericSchedulingImplSolution = solver.solve(
-        callbacks=[NbIterationStopper(1)], **kwargs
+        parameters_cp=parameters_cp,
+        time_limit=2,
+        callbacks=[NbIterationStopper(1)],
+        **generic_solver_kwargs,
     ).get_best_solution()
-    if check_solution:
+    if generic_solver_check_solution:
         solution = transfo.back_transform_solution(
             generic_solution, source_problem=problem
         )

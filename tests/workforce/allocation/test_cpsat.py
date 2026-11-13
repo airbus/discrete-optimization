@@ -10,10 +10,6 @@ from discrete_optimization.generic_tools.callbacks.early_stoppers import (
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.enums import SignEnum
 from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
-from discrete_optimization.workforce.allocation.parser import (
-    get_data_available,
-    parse_to_allocation_problem,
-)
 from discrete_optimization.workforce.allocation.problem import TeamAllocationSolution
 from discrete_optimization.workforce.allocation.solvers.cpsat import (
     CpSatTeamAllocationSolver,
@@ -25,12 +21,6 @@ from discrete_optimization.workforce.generators.resource_scenario import (
     ParamsRandomness,
     generate_allocation_disruption,
 )
-
-
-@pytest.fixture()
-def problem():
-    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
-    return parse_to_allocation_problem(instance, multiobjective=True)
 
 
 def test_cpsat_multiobj(problem):
@@ -394,7 +384,8 @@ def prepare_solver_for_binary_optional(solver):
     ):
         # init with dummy empty solution
         dummy_sol = TeamAllocationSolution(
-            allocation=[None] * len(solver.problem.tasks_list), problem=solver.problem
+            allocation=[None] * len(conftest.problem.tasks_list),
+            problem=conftest.problem,
         )
         solver.set_warm_start(dummy_sol)
 

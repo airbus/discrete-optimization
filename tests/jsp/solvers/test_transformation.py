@@ -22,6 +22,9 @@ from discrete_optimization.shop.jsp.problem import JobShopProblem
 from discrete_optimization.shop.jsp.transformations.to_fjsp import (
     JspToFjspTransformation,
 )
+from discrete_optimization.shop.transformations.to_generic_scheduling import (
+    ShopToGenericSchedulingTransformation,
+)
 
 
 @pytest.fixture()
@@ -57,3 +60,17 @@ def test_via_rcpsp(problem):
     res = solver.solve(callbacks=[NbIterationStopper(1)])
     sol = res[-1][0]
     assert problem.satisfy(sol)
+
+
+def test_via_generic(
+    problem, generic_solver_cls, generic_solver_kwargs, generic_solver_check_solution
+):
+    solver = TransformationSolver(
+        transformation=ShopToGenericSchedulingTransformation(),
+        source_problem=problem,
+        solver_brick=SubBrick(generic_solver_cls, generic_solver_kwargs),
+    )
+    res = solver.solve(callbacks=[NbIterationStopper(1)])
+    if generic_solver_check_solution:
+        sol = res[-1][0]
+        assert problem.satisfy(sol)

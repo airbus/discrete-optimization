@@ -95,10 +95,6 @@ from discrete_optimization.shop.transformations.to_generic_scheduling import (
     ShopToGenericSchedulingTransformation,
 )
 
-OPTAL_PREVIEW_ONLY = (
-    True  # Only optalcp-preview available? => cannot retrieve solutions
-)
-
 if not optalcp_available:
     pytest.skip(
         reason="You need optalcp to test this solver.",
@@ -120,10 +116,7 @@ if not optalcp_available:
         ],
     ],
 )
-def test_auto(
-    objective,
-    caplog,
-):
+def test_auto(objective, caplog, optal_preview_only):
     if objective in [
         Objective.ALLOCATION_CHANGES,
         Objective.SCHEDULE_CHANGES,
@@ -262,11 +255,11 @@ def test_auto(
     )
 
     # solve
-    res = solver.solve(do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY)
+    res = solver.solve(do_not_retrieve_solutions=optal_preview_only)
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
 
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         # check sol and kpis
         sol: GenericSchedulingImplSolution
         sol, fit = res[-1]
@@ -296,10 +289,7 @@ def test_auto(
 
 
 @pytest.mark.parametrize("mode_optim", list(ModeOptim))
-def test_auto_custom(
-    mode_optim,
-    caplog,
-):
+def test_auto_custom(mode_optim, caplog, optal_preview_only):
     def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
         return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
 
@@ -411,12 +401,12 @@ def test_auto_custom(
 
     # solve
     res = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
 
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         # check sol and kpis
         sol: GenericSchedulingImplSolution
         sol, fit = res[-1]
@@ -436,10 +426,7 @@ def test_auto_custom(
         [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)],
     ],
 )
-def test_auto_optional_tasks(
-    objective,
-    caplog,
-):
+def test_auto_optional_tasks(objective, caplog, optal_preview_only):
     if objective in [
         Objective.ALLOCATION_CHANGES,
         Objective.SCHEDULE_CHANGES,
@@ -583,12 +570,12 @@ def test_auto_optional_tasks(
 
     # solve
     res = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
 
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         # check sol and kpis
         sol: GenericSchedulingImplSolution
         sol, fit = res[-1]
@@ -612,7 +599,7 @@ def test_auto_optional_tasks(
             assert kpi[Objective.MAKESPAN] == 9
 
 
-def test_auto_optional_tasks_with_resource_blocking():
+def test_auto_optional_tasks_with_resource_blocking(optal_preview_only):
     """Test optional tasks with resource blocking constraints.
 
     This test verifies that resource blocking constraints work correctly
@@ -709,12 +696,12 @@ def test_auto_optional_tasks_with_resource_blocking():
     solver = GenericSchedulingAutoOptalImplSolver(problem=problem)
     solver.init_model()
     result = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
 
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         # Get solution
         solution: GenericSchedulingImplSolution
         solution, fit = result[-1]
@@ -779,7 +766,7 @@ def test_auto_optional_tasks_with_resource_blocking():
         print("\n✓ Test passed: Optional tasks with resource blocking work correctly!")
 
 
-def test_auto_with_resource_blocking():
+def test_auto_with_resource_blocking(optal_preview_only):
     """Test optional tasks with resource blocking constraints.
     This test verifies that resource blocking constraints work correctly
     Blocking constraints:
@@ -863,12 +850,12 @@ def test_auto_with_resource_blocking():
     solver = GenericSchedulingAutoOptalImplSolver(problem=problem)
     solver.init_model()
     result = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
 
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         # Get solution
         solution: GenericSchedulingImplSolution
         solution, fit = result[-1]
@@ -932,7 +919,7 @@ def test_auto_with_resource_blocking():
         assert solution is not None
 
 
-def test_auto_with_resource_blocking_and_choices():
+def test_auto_with_resource_blocking_and_choices(optal_preview_only):
     """Test optional tasks with resource blocking constraints.
     This test verifies that resource blocking constraints work correctly
     Blocking constraints:
@@ -1018,12 +1005,12 @@ def test_auto_with_resource_blocking_and_choices():
     solver = GenericSchedulingAutoOptalImplSolver(problem=problem)
     solver.init_model()
     result = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
 
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         # Get solution
         solution: GenericSchedulingImplSolution
         solution, fit = result[-1]
@@ -1088,7 +1075,7 @@ def test_auto_with_resource_blocking_and_choices():
         assert solution is not None
 
 
-def test_start_to_end_time_lag():
+def test_start_to_end_time_lag(optal_preview_only):
     problem = GenericSchedulingImplProblem(
         horizon=10,
         durations_per_mode={
@@ -1103,16 +1090,16 @@ def test_start_to_end_time_lag():
     )
     solver = GenericSchedulingAutoOptalImplSolver(problem=problem)
     result = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         solution: GenericSchedulingImplSolution = result.get_best_solution()
         assert problem.satisfy(solution)
 
 
-def test_start_to_end_time_lag_optional_tasks():
+def test_start_to_end_time_lag_optional_tasks(optal_preview_only):
     problem = GenericSchedulingImplProblem(
         horizon=10,
         durations_per_mode={
@@ -1129,17 +1116,17 @@ def test_start_to_end_time_lag_optional_tasks():
     solver = GenericSchedulingAutoOptalImplSolver(problem=problem)
     solver.init_model()
     result = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         solution: GenericSchedulingImplSolution = result.get_best_solution()
         assert problem.satisfy(solution)
         assert not solution.is_present("task-1")
 
 
-def test_no_overlap():
+def test_no_overlap(optal_preview_only):
     problem = GenericSchedulingImplProblem(
         horizon=10,
         durations_per_mode={
@@ -1163,11 +1150,11 @@ def test_no_overlap():
         ),
     )
     res = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         sol: GenericSchedulingImplSolution = res.get_best_solution()
         assert problem.satisfy(sol)
         kpi = problem.evaluate(sol)
@@ -1175,7 +1162,7 @@ def test_no_overlap():
 
 
 @fixture
-def problem_with_unary_dependent_resource_consumption():
+def problem_with_unary_dependent_resource_consumption(optal_preview_only):
     return GenericSchedulingImplProblem(
         horizon=10,
         durations_per_mode={
@@ -1228,7 +1215,7 @@ def problem_with_unary_dependent_resource_consumption():
 
 
 @fixture
-def problem_with_unary_dependent_nr_resource_consumption():
+def problem_with_unary_dependent_nr_resource_consumption(optal_preview_only):
     return GenericSchedulingImplProblem(
         horizon=10,
         durations_per_mode={
@@ -1283,7 +1270,7 @@ def problem_with_unary_dependent_nr_resource_consumption():
 
 
 @fixture
-def problem_with_forbidden_task_mode_unary_resource():
+def problem_with_forbidden_task_mode_unary_resource(optal_preview_only):
     return GenericSchedulingImplProblem(
         horizon=10,
         durations_per_mode={
@@ -1346,7 +1333,7 @@ def problem_with_forbidden_task_mode_unary_resource():
 
 
 def test_solving_unary_resource_consumption_dependent(
-    problem_with_unary_dependent_resource_consumption,
+    problem_with_unary_dependent_resource_consumption, optal_preview_only
 ):
     problem: GenericSchedulingImplProblem = (
         problem_with_unary_dependent_resource_consumption
@@ -1354,17 +1341,17 @@ def test_solving_unary_resource_consumption_dependent(
     solver = GenericSchedulingAutoOptalImplSolver(problem)
     solver.init_model()
     res = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         sol = res[-1][0]
         assert problem.satisfy(sol)
 
 
 def test_solving_unary_nr_resource_consumption_dependent(
-    problem_with_unary_dependent_nr_resource_consumption,
+    problem_with_unary_dependent_nr_resource_consumption, optal_preview_only
 ):
     problem: GenericSchedulingImplProblem = (
         problem_with_unary_dependent_nr_resource_consumption
@@ -1372,17 +1359,17 @@ def test_solving_unary_nr_resource_consumption_dependent(
     solver = GenericSchedulingAutoOptalImplSolver(problem)
     solver.init_model()
     res = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         sol = res[-1][0]
         assert problem.satisfy(sol)
 
 
 def test_solving_forbidden_unary_resource_task_mode(
-    problem_with_forbidden_task_mode_unary_resource,
+    problem_with_forbidden_task_mode_unary_resource, optal_preview_only
 ):
     problem: GenericSchedulingImplProblem = (
         problem_with_forbidden_task_mode_unary_resource
@@ -1390,16 +1377,16 @@ def test_solving_forbidden_unary_resource_task_mode(
     solver = GenericSchedulingAutoOptalImplSolver(problem)
     solver.init_model()
     res = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         sol = res[-1][0]
         assert problem.satisfy(sol)
 
 
-def test_rcpsp_simple():
+def test_rcpsp_simple(optal_preview_only):
     mode_details = {
         1: {1: {"duration": 0}},  # dummy start
         2: {1: {"duration": 3, "R1": 1}},
@@ -1443,16 +1430,16 @@ def test_rcpsp_simple():
     )
     generic_solver.init_model()
     res = generic_solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert generic_solver.status_solver in (StatusSolver.OPTIMAL,)
     assert generic_solver.current_obj >= generic_solver.current_bound
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         generic_solution = res.get_best_solution()
         assert generic_problem.satisfy(generic_solution)
 
 
-def test_rcpsp_mm():
+def test_rcpsp_mm(optal_preview_only):
     filename = "j1010_1.mm"
     files_available = rcpsp_parser.get_data_available()
     file = [f for f in files_available if filename in f][0]
@@ -1473,7 +1460,7 @@ def test_rcpsp_mm():
     )
     generic_solver.init_model()
     res = generic_solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
         time_limit=2,
         callbacks=[NbIterationStopper(1)],
     )
@@ -1482,7 +1469,7 @@ def test_rcpsp_mm():
         StatusSolver.SATISFIED,
     )
     assert generic_solver.current_obj >= generic_solver.current_bound
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         generic_solution = res.get_best_solution()
         assert generic_problem.satisfy(generic_solution)
 
@@ -1508,6 +1495,7 @@ def test_rcpsp_multiskill(
     slack_skill,
     use_energy_constraints,
     redundant_skill_cumulative,
+    optal_preview_only,
 ):
     file = [f for f in parser_imopse.get_data_available() if "100_5_64_9.def" in f][0]
     problem, _ = parser_imopse.parse_file(file, max_horizon=1000)
@@ -1545,7 +1533,7 @@ def test_rcpsp_multiskill(
         add_redundant_skill_cumulative_constraints=redundant_skill_cumulative,
     )
     res = generic_solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
         time_limit=2,
         callbacks=[NbIterationStopper(1)],
     )
@@ -1554,7 +1542,7 @@ def test_rcpsp_multiskill(
         StatusSolver.SATISFIED,
     )
     assert generic_solver.current_obj >= generic_solver.current_bound
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         generic_solution = res.get_best_solution()
         assert generic_problem.satisfy(generic_solution)
         if one_skill_per_task:
@@ -1584,7 +1572,7 @@ def test_rcpsp_multiskill(
             )
 
 
-def test_jsp():
+def test_jsp(optal_preview_only):
     filename = "la02"
     filepath = [f for f in jsp_parser.get_data_available() if f.endswith(filename)][0]
     problem = jsp_parser.parse_file(filepath)
@@ -1598,19 +1586,19 @@ def test_jsp():
     generic_solver.init_model()
     generic_solution: GenericSchedulingImplSolution
     res = generic_solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY, time_limit=2
+        do_not_retrieve_solutions=optal_preview_only, time_limit=2
     )
     assert generic_solver.status_solver in (
         StatusSolver.OPTIMAL,
         StatusSolver.SATISFIED,
     )
     assert generic_solver.current_obj >= generic_solver.current_bound
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         generic_solution = res.get_best_solution()
         assert generic_problem.satisfy(generic_solution)
 
 
-def test_fjsp():
+def test_fjsp(optal_preview_only):
     files = fjsp_parser.get_data_available()
     file = [f for f in files if "Behnke1.fjs" in f][0]
     problem = fjsp_parser.parse_file(file)
@@ -1625,19 +1613,21 @@ def test_fjsp():
     generic_solver.init_model()
     generic_solution: GenericSchedulingImplSolution
     res = generic_solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY, time_limit=2
+        do_not_retrieve_solutions=optal_preview_only,
+        time_limit=2,
+        callbacks=[NbIterationStopper(1)],
     )
     assert generic_solver.status_solver in (
         StatusSolver.OPTIMAL,
         StatusSolver.SATISFIED,
     )
     assert generic_solver.current_obj >= generic_solver.current_bound
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         generic_solution = res.get_best_solution()
         assert generic_problem.satisfy(generic_solution)
 
 
-def test_solving_with_entities():
+def test_solving_with_entities(optal_preview_only):
     entities: list[ConstantDurationEntity] = []
     duration_per_mode = {}
     for product in range(5):
@@ -1680,12 +1670,12 @@ def test_solving_with_entities():
     )
     # solve
     res = solver.solve(
-        do_not_retrieve_solutions=OPTAL_PREVIEW_ONLY,
+        do_not_retrieve_solutions=optal_preview_only,
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
 
-    if not OPTAL_PREVIEW_ONLY:
+    if not optal_preview_only:
         sol = res[-1][0]
         assert problem.satisfy(sol)
         start_entities = sorted(

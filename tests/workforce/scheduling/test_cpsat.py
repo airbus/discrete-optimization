@@ -20,10 +20,6 @@ from discrete_optimization.workforce.generators.resource_scenario import (
     ParamsRandomness,
     generate_scheduling_disruption,
 )
-from discrete_optimization.workforce.scheduling.parser import (
-    get_data_available,
-    parse_json_to_problem,
-)
 from discrete_optimization.workforce.scheduling.problem import AllocSchedulingSolution
 from discrete_optimization.workforce.scheduling.solvers.alloc_scheduling_lb import (
     ApproximateBoundAllocScheduling,
@@ -38,12 +34,6 @@ from discrete_optimization.workforce.scheduling.utils import (
     compute_changes_between_solution,
     plotly_schedule_comparison,
 )
-
-
-@pytest.fixture()
-def problem():
-    instance = [p for p in get_data_available() if "instance_64.json" in p][0]
-    return parse_json_to_problem(instance)
 
 
 def test_cpsat(problem):
