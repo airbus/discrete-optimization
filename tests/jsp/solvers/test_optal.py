@@ -4,6 +4,9 @@
 
 import pytest
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.shop.jsp.parser import get_data_available, parse_file
 from discrete_optimization.shop.jsp.solvers.optal import (
@@ -24,6 +27,7 @@ def test_optal():
     res = solver.solve(
         time_limit=5,
         do_not_retrieve_solutions=True,  # optalcp-preview mode
+        callbacks=[NbIterationStopper(1)],
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL, StatusSolver.SATISFIED)
     assert solver.current_obj >= solver.current_bound
