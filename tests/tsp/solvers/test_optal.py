@@ -3,6 +3,9 @@
 #  LICENSE file in the root directory of this source tree.
 import pytest
 
+from discrete_optimization.generic_tools.callbacks.early_stoppers import (
+    NbIterationStopper,
+)
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.tsp.parser import get_data_available, parse_file
@@ -27,6 +30,7 @@ def test_optal(modeling):
         parameters_cp=ParametersCp.default_cpsat(),
         time_limit=1,
         do_not_retrieve_solutions=True,  # optalcp-preview mode
+        callbacks=[NbIterationStopper(nb_iteration_max=1)],
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL, StatusSolver.SATISFIED)
     assert solver.current_obj >= solver.current_bound
