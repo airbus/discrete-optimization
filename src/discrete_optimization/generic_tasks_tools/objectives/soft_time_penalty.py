@@ -55,7 +55,7 @@ class SoftTimePenaltyComputer(
             NonRenewableResource,
             ExclusionResource,
         ],
-    ) -> float:
+    ) -> float | int:
         penalty = 0
         # time windows
         for task in self.problem.tasks_list:

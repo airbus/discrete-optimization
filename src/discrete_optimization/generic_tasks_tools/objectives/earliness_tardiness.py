@@ -24,7 +24,7 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
     def __init__(
         self,
         problem: SchedulingProblem[Task] | None = None,
-        weight_objective: float = 1.0,
+        weight_objective: float | int = 1,
         max_start_and_weight_for_tardiness: dict[Task, tuple[int | None, int | None]]
         | None = None,
         max_end_and_weight_for_tardiness: dict[Task, tuple[int | None, int | None]]
@@ -64,16 +64,16 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
     def get_min_end_for_earliness(self, task: Task) -> int:
         return self.min_end_and_weight_for_earliness.get(task, (None, 0))[0]
 
-    def get_weight_start_for_tardiness(self, task: Task) -> float:
+    def get_weight_start_for_tardiness(self, task: Task) -> float | int:
         return self.max_start_and_weight_for_tardiness.get(task, (0, None))[1]
 
-    def get_weight_end_for_tardiness(self, task: Task) -> float:
+    def get_weight_end_for_tardiness(self, task: Task) -> float | int:
         return self.max_end_and_weight_for_tardiness.get(task, (0, None))[1]
 
-    def get_weight_start_for_earliness(self, task: Task) -> float:
+    def get_weight_start_for_earliness(self, task: Task) -> float | int:
         return self.min_start_and_weight_for_earliness.get(task, (0, None))[1]
 
-    def get_weight_end_for_earliness(self, task: Task) -> float:
+    def get_weight_end_for_earliness(self, task: Task) -> float | int:
         return self.min_end_and_weight_for_earliness.get(task, (0, None))[1]
 
     def get_tasks_having_max_start_for_tardiness(self) -> list[Task]:
@@ -108,12 +108,12 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
             and self.get_weight_end_for_earliness(t) > 0
         ]
 
-    def compute_objective(self, solution: TasksSolution) -> float:
+    def compute_objective(self, solution: TasksSolution) -> float | int:
         return self.compute_aggregated_cost(solution)
 
     def compute_earliness_end(
         self, solution: SchedulingSolution[Task], task: Task
-    ) -> float:
+    ) -> float | int:
         if not solution.is_present(task):
             return 0
         return max(
@@ -122,7 +122,7 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
 
     def compute_earliness_start(
         self, solution: SchedulingSolution[Task], task: Task
-    ) -> float:
+    ) -> float | int:
         if not solution.is_present(task):
             return 0
         return max(
@@ -131,7 +131,7 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
 
     def compute_tardiness_end(
         self, solution: SchedulingSolution[Task], task: Task
-    ) -> float:
+    ) -> float | int:
         if not solution.is_present(task):
             return 0
         return max(
@@ -140,7 +140,7 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
 
     def compute_tardiness_start(
         self, solution: SchedulingSolution[Task], task: Task
-    ) -> float:
+    ) -> float | int:
         if not solution.is_present(task):
             return 0
         return max(
@@ -169,7 +169,7 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
             },
         }
 
-    def compute_earliness_cost(self, solution: SchedulingSolution[Task]) -> float:
+    def compute_earliness_cost(self, solution: SchedulingSolution[Task]) -> float | int:
         earliness_start = sum(
             self.compute_earliness_start(solution, t)
             * self.get_weight_start_for_earliness(t)
@@ -182,7 +182,7 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
         )
         return earliness_start + earliness_end
 
-    def compute_tardiness_cost(self, solution: SchedulingSolution[Task]) -> float:
+    def compute_tardiness_cost(self, solution: SchedulingSolution[Task]) -> float | int:
         tardiness_start = sum(
             self.compute_tardiness_start(solution, t)
             * self.get_weight_start_for_tardiness(t)
@@ -195,7 +195,9 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
         )
         return tardiness_start + tardiness_end
 
-    def compute_aggregated_cost(self, solution: SchedulingSolution[Task]) -> float:
+    def compute_aggregated_cost(
+        self, solution: SchedulingSolution[Task]
+    ) -> float | int:
         return self.compute_earliness_cost(solution) + self.compute_tardiness_cost(
             solution
         )

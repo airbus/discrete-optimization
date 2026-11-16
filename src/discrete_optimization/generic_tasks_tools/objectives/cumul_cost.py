@@ -48,10 +48,12 @@ class CumulCostComputer(
     def __init__(
         self,
         problem: GenericSchedulingProblem | None = None,
-        weight_objective: float = 1.0,
+        weight_objective: float | int = 1,
         cumul_dimensions: list[CUMUL_DIMENSIONS] | None = None,
-        value_tasks: dict[CUMUL_DIMENSIONS, dict[Task, float]] | None = None,
-        value_tasks_per_mode: dict[CUMUL_DIMENSIONS, dict[tuple[Task, int], float]]
+        value_tasks: dict[CUMUL_DIMENSIONS, dict[Task, float | int]] | None = None,
+        value_tasks_per_mode: dict[
+            CUMUL_DIMENSIONS, dict[tuple[Task, int], float | int]
+        ]
         | None = None,
     ):
         if cumul_dimensions is not None:
@@ -107,7 +109,7 @@ class CumulCostComputer(
             NonRenewableResource,
             ExclusionResource,
         ],
-    ) -> float:
+    ) -> float | int:
         cumul_per_unary_resource = {
             ur: {dim: 0 for dim in self.cumul_dimensions}
             for ur in self.problem.unary_resources_list

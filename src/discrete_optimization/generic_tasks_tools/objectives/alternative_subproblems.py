@@ -29,7 +29,7 @@
 #         problem: AlternativeSchedulingProblem[
 #             Task
 #         ],
-#         weight_objective: float = 1.0,
+#         weight_objective: float | int = 1,
 #     ):
 #         super().__init__(problem, weight_objective)
 #
@@ -38,7 +38,7 @@
 #         solution: CalendarPreemptiveSolution[
 #             Task, CumulativeResource, OtherCalendarResource
 #         ],
-#     ) -> float:
+#     ) -> float | int:
 #         nb_cal_preemptive = 0
 #         for task in self.problem.tasks_list:
 #             if not solution.is_present(task):

@@ -22,8 +22,8 @@ class UnaryResourcesUsedComputer(ObjectiveComputer[Task], Generic[Task, UnaryRes
     def __init__(
         self,
         problem: AllocationProblem[Task, UnaryResource] | None = None,
-        weight_objective: float = 1.0,
-        weight_per_unary_resource: dict[UnaryResource, float] | None = None,
+        weight_objective: float | int = 1,
+        weight_per_unary_resource: dict[UnaryResource, float | int] | None = None,
     ) -> None:
         self.weight_per_unary_resource = weight_per_unary_resource
         super().__init__(problem, weight_objective)
@@ -35,7 +35,7 @@ class UnaryResourcesUsedComputer(ObjectiveComputer[Task], Generic[Task, UnaryRes
                 ur: 1 for ur in self.problem.unary_resources_list
             }
 
-    def get_weight_per_unary_resource(self, ur: UnaryResource) -> float:
+    def get_weight_per_unary_resource(self, ur: UnaryResource) -> float | int:
         return self.weight_per_unary_resource.get(ur, 0)
 
     def has_cost_on_unary_resource(self) -> bool:
