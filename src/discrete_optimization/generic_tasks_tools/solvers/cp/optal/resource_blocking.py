@@ -121,13 +121,13 @@ class ResourceBlockingOptalSolver(
             name=f"interval_{entity.entity_id}",
             optional=base_itv.optional,
         )
+        self._intervals_entity[entity] = itv
         if entity.start_or_end == StartOrEnd.START:
             self.cp_model.enforce(
                 itv.start() == base_itv.start() * entity.multiply_factor
             )
         else:
             self.cp_model.enforce(itv.end() == base_itv.end() * entity.multiply_factor)
-        super().create_multiply_entity_interval(entity)
 
     def _create_flexible_gap_blocking_interval(
         self, constraint, i_constraint
