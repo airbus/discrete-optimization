@@ -42,7 +42,7 @@ def create_exclusion_rcpsp_problem(
                     m: {} for m in problem.get_task_modes(t)
                 }
             for m in exclusion_resource_boolean[t]:
-                exclusion_resource_boolean[t][m][z] = True
+                exclusion_resource_boolean[t][m][z] = 1
         for t in blocked_tasks:
             if t not in exclusion_resource_consumptions:
                 exclusion_resource_consumptions[t] = {
