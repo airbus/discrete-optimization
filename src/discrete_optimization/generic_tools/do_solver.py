@@ -241,6 +241,30 @@ class WarmstartMixin(ABC):
         ...
 
 
+class WarmstartFromPreviousRunMixin(ABC):
+    """Mixin class for solvers that can restart from the last found solution."""
+
+    @abstractmethod
+    def set_warm_start_from_previous_run(self) -> None:
+        """Set warm start from the previous solve run.
+
+        Will use the last or best found solution according to implementation.
+
+        Raises:
+            RuntimeError: if `solve()` was not called formerly.
+
+        """
+        if not self.was_previously_run():
+            raise RuntimeError(
+                "You cannot call `set_warm_start_from_previous_run()` before a first call to `solve()`."
+            )
+
+    @abstractmethod
+    def was_previously_run(self) -> bool:
+        """Check whether the solver was already run or not."""
+        ...
+
+
 class BoundsProviderMixin(ABC):
     """Mixin class for solvers providing bounds on objective.
 

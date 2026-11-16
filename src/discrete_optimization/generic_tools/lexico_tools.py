@@ -17,7 +17,11 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     get_default_objective_setup,
 )
-from discrete_optimization.generic_tools.do_solver import SolverDO
+from discrete_optimization.generic_tools.do_solver import (
+    BoundsProviderMixin,
+    SolverDO,
+    WarmstartFromPreviousRunMixin,
+)
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -114,10 +118,25 @@ class LexicoSolver(SolverDO):
             if stopping:
                 break
 
-            # add constraint on current objective for next one
-            fit = self.subsolver.get_lexico_objective_value(obj, res)
-            logger.debug(f"Found {fit} when optimizing {obj}")
-            self.subsolver.add_lexico_constraint(obj, fit)
+            if i_obj < len(objectives) - 1:  # not the last subobjective
+                # add constraint on current objective for next one
+                if isinstance(self.subsolver, BoundsProviderMixin) and kwargs.get(
+                    "do_not_retrieve_solutions", False
+                ):
+                    # special case for testing with optal preview
+                    fit = int(
+                        self.subsolver.get_current_best_internal_objective_value()
+                    )
+                else:
+                    fit = self.subsolver.get_lexico_objective_value(obj, res)
+                logger.debug(f"Found {fit} when optimizing {obj}")
+                self.subsolver.add_lexico_constraint(obj, fit)
+                # set warmstart from last solution (if method existing)
+                if (
+                    isinstance(self.subsolver, WarmstartFromPreviousRunMixin)
+                    and self.subsolver.was_previously_run()  # will be False with optalcp-preview since no solution stored
+                ):
+                    self.subsolver.set_warm_start_from_previous_run()
 
         # end of solve callback
         callbacks_list.on_solve_end(res=res, solver=self)

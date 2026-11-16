@@ -50,7 +50,10 @@ from discrete_optimization.generic_tools.do_problem import (
     Problem,
     Solution,
 )
-from discrete_optimization.generic_tools.do_solver import StatusSolver
+from discrete_optimization.generic_tools.do_solver import (
+    StatusSolver,
+    WarmstartFromPreviousRunMixin,
+)
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -130,7 +133,7 @@ class _CpmpyCbClass:
         )
 
 
-class CpmpySolver(CpSolver):
+class CpmpySolver(CpSolver, WarmstartFromPreviousRunMixin):
     """Generic cpmpy solver."""
 
     cp_model: Optional[Model] = None
@@ -250,6 +253,18 @@ class CpmpySolver(CpSolver):
         callbacks_list.on_solve_end(res=res, solver=self)
 
         return res
+
+    def was_previously_run(self) -> bool:
+        return self.cpm_solver is not None
+
+    def set_warm_start_from_previous_run(self) -> None:
+        if not self.was_previously_run():
+            raise RuntimeError(
+                "You cannot call `set_warm_start_from_previous_run()` before a first call to `solve()`."
+            )
+        self.hint_solution(
+            hints={var: var.value() for var in self.cpm_solver.user_vars}
+        )
 
     def explain_unsat_meta(
         self,

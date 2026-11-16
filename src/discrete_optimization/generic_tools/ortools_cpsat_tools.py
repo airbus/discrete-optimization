@@ -32,6 +32,7 @@ from discrete_optimization.generic_tools.do_problem import Solution
 from discrete_optimization.generic_tools.do_solver import (
     BoundsProviderMixin,
     StatusSolver,
+    WarmstartFromPreviousRunMixin,
 )
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -41,7 +42,7 @@ from discrete_optimization.generic_tools.result_storage.result_storage import (
 logger = logging.getLogger(__name__)
 
 
-class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
+class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin, WarmstartFromPreviousRunMixin):
     """Generic ortools cp-sat solver."""
 
     cp_model: Optional[CpModel] = None
@@ -169,7 +170,7 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
 
     def set_warm_start_from_previous_run(self):
         """Set warm start from previous run of the solver."""
-        if self.solver is None:
+        if not self.was_previously_run():
             raise RuntimeError(
                 "You cannot call `set_warm_start_from_previous_run()` before a first call to `solve()`"
             )
@@ -178,6 +179,9 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin):
         for i in range(len(response.solution)):
             var = self.cp_model.GetIntVarFromProtoIndex(i)
             self.cp_model.AddHint(var, response.solution[i])
+
+    def was_previously_run(self) -> bool:
+        return self.solver is not None
 
     def init_model(self, **kwargs: Any) -> None:
         """Init cp model and reset stored variables if any."""
