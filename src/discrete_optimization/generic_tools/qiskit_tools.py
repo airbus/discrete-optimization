@@ -436,7 +436,11 @@ class QiskitVqeSolver(QiskitSolver):
                     "your personnalized ansatz must be a QuantumCircuit Object"
                 )
         else:
-            self.ansatz = EfficientSU2(hamiltonian.num_qubits, reps=kwargs["reps"])
+            self.ansatz = EfficientSU2(
+                hamiltonian.num_qubits,
+                reps=kwargs["reps"],
+                su2_gates=["rx", "rz"],
+            )
 
         result = execute_ansatz_with_Hamiltonian(
             self, self.backend, self.ansatz, hamiltonian, use_session, **kwargs
