@@ -5,7 +5,11 @@ import logging
 from typing import Optional
 
 from discrete_optimization.generic_tools.callbacks.callback import Callback
-from discrete_optimization.generic_tools.do_solver import SolverDO, WarmstartMixin
+from discrete_optimization.generic_tools.do_solver import (
+    SolverDO,
+    WarmstartFromPreviousRunMixin,
+    WarmstartMixin,
+)
 from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
 from discrete_optimization.generic_tools.lns_cp import BaseLnsCp
 from discrete_optimization.generic_tools.result_storage.result_storage import (
@@ -27,22 +31,21 @@ class WarmStartCallback(Callback):
     def on_step_end(
         self, step: int, res: ResultStorage, solver: SolverDO
     ) -> Optional[bool]:
-        solver_ = None
-        if isinstance(solver, LexicoSolver):
+        solver_: Optional[WarmstartMixin] = None
+        if isinstance(solver, LexicoSolver) or isinstance(solver, BaseLnsCp):
             if isinstance(solver.subsolver, WarmstartMixin):
                 solver_ = solver.subsolver
-        if isinstance(solver, WarmstartMixin):
+        elif isinstance(solver, WarmstartMixin):
             solver_ = solver
-        if isinstance(solver, BaseLnsCp):
-            solver_ = solver.subsolver
         if solver_ is not None:
             sol = None
             if self.warm_start_best_solution:
                 sol, _ = res.get_best_solution_fit()
-            if self.warm_start_last_solution:
+            if self.warm_start_last_solution and len(res) > 0:
                 sol, _ = res[-1]
-            solver_.set_warm_start(sol)
-            logger.info(f"Warm-start done")
+            if sol is not None:
+                solver_.set_warm_start(sol)
+                logger.info(f"Warm-start done")
 
 
 class WarmStartCallbackLastRun(WarmStartCallback):
@@ -51,20 +54,14 @@ class WarmStartCallbackLastRun(WarmStartCallback):
     def on_step_end(
         self, step: int, res: ResultStorage, solver: SolverDO
     ) -> Optional[bool]:
-        from discrete_optimization.generic_tools.ortools_cpsat_tools import (
-            OrtoolsCpSatSolver,
-        )
-
         solver_ = None
-        if isinstance(solver, LexicoSolver):
-            if isinstance(solver.subsolver, WarmstartMixin):
+        if isinstance(solver, LexicoSolver) or isinstance(solver, BaseLnsCp):
+            if isinstance(solver.subsolver, WarmstartFromPreviousRunMixin):
                 solver_ = solver.subsolver
-        if isinstance(solver, WarmstartMixin):
+        elif isinstance(solver, WarmstartFromPreviousRunMixin):
             solver_ = solver
-        if isinstance(solver, BaseLnsCp):
-            solver_ = solver.subsolver
-        solver_: OrtoolsCpSatSolver
-        if solver_.solver is not None:
-            solver_.set_warm_start_from_previous_run()
+        if solver_ is not None:
+            if solver_.was_previously_run():
+                solver_.set_warm_start_from_previous_run()
         else:
-            super().on_step_end(step, res, solver)
+            return super().on_step_end(step, res, solver)

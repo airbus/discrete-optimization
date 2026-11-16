@@ -26,6 +26,7 @@ from discrete_optimization.generic_tools.do_problem import (
 from discrete_optimization.generic_tools.do_solver import (
     BoundsProviderMixin,
     StatusSolver,
+    WarmstartFromPreviousRunMixin,
 )
 from discrete_optimization.generic_tools.exceptions import SolveEarlyStop
 from discrete_optimization.generic_tools.hyperparameters.hyperparameter import (
@@ -46,7 +47,7 @@ else:
 logger = logging.getLogger(__name__)
 
 
-class OptalCpSolver(CpSolver, BoundsProviderMixin):
+class OptalCpSolver(CpSolver, BoundsProviderMixin, WarmstartFromPreviousRunMixin):
     hyperparameters = [
         CategoricalHyperparameter(
             name="searchType",
@@ -352,10 +353,16 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin):
 
     def set_warm_start_from_previous_run(self):
         """Set warm start from the previous solve run."""
-        if self.current_solution is not None:
-            self.warm_start_solution = self.current_solution
-            self.use_warm_start = True
-            logger.info("Warm start set from previous run")
+        if not self.was_previously_run():
+            raise RuntimeError(
+                "You cannot call `set_warm_start_from_previous_run()` before a first call to `solve()`."
+            )
+        self.warm_start_solution = self.current_solution
+        self.use_warm_start = True
+        logger.info("Warm start set from previous run")
+
+    def was_previously_run(self) -> bool:
+        return self.current_solution is not None
 
 
 class OptalSolutionCallback:

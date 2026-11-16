@@ -7,6 +7,7 @@ import pytest
 
 from discrete_optimization.generic_tools.callbacks.warm_start_callback import (
     WarmStartCallback,
+    WarmStartCallbackLastRun,
 )
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.generic_tools.lexico_tools import LexicoSolver
@@ -19,7 +20,23 @@ from discrete_optimization.knapsack.solvers.cpsat import CpSatKnapsackSolver
     "objectives",
     [("value", "weight", "heaviest_item")],
 )
-def test_knapsack_ortools_lexico_ws(objectives):
+@pytest.mark.parametrize(
+    "warm_start_callback_cls, warm_start_callback_kwargs",
+    [
+        (
+            WarmStartCallback,
+            dict(warm_start_last_solution=True, warm_start_best_solution=False),
+        ),
+        (
+            WarmStartCallback,
+            dict(warm_start_last_solution=False, warm_start_best_solution=True),
+        ),
+        (WarmStartCallbackLastRun, {}),
+    ],
+)
+def test_knapsack_ortools_lexico_ws(
+    objectives, warm_start_callback_cls, warm_start_callback_kwargs
+):
     model_file = [f for f in get_data_available() if "ks_60_0" in f][0]
     model: KnapsackProblem = parse_file(model_file, force_recompute_values=True)
     model: MobjKnapsackModel = MobjKnapsackModel.from_knapsack(model)
@@ -29,9 +46,7 @@ def test_knapsack_ortools_lexico_ws(objectives):
         subsolver=subsolver,
     )
     solver.init_model()
-    mycb = WarmStartCallback(
-        warm_start_last_solution=True, warm_start_best_solution=False
-    )
+    mycb = warm_start_callback_cls(**warm_start_callback_kwargs)
     parameters_cp = ParametersCp.default()
     result_storage = solver.solve(
         time_limit=10,
