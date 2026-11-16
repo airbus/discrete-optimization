@@ -20,7 +20,7 @@ class ScheduledTasksComputer(ObjectiveComputer[Task], Generic[Task]):
     def __init__(
         self,
         problem: SchedulingProblem[Task] | None = None,
-        weight_objective: float = 1.0,
+        weight_objective: float | int = 1,
         weight_per_task: dict[Task, int] | None = None,
     ):
         self.weight_per_task = weight_per_task
@@ -35,7 +35,7 @@ class ScheduledTasksComputer(ObjectiveComputer[Task], Generic[Task]):
     def get_objective_name() -> Objective | str:
         return Objective.NB_TASKS_SCHEDULED
 
-    def compute_objective(self, solution: SchedulingSolution[Task]) -> float:
+    def compute_objective(self, solution: SchedulingSolution[Task]) -> float | int:
         return sum(
             self.weight_per_task[t] * solution.is_present(t)
             for t in self.weight_per_task

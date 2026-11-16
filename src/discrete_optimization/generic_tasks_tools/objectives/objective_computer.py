@@ -18,7 +18,9 @@ class ObjectiveComputer(ABC, Generic[Task]):
     problem: TasksProblem[Task]
 
     def __init__(
-        self, problem: TasksProblem[Task] | None = None, weight_objective: float = 1.0
+        self,
+        problem: TasksProblem[Task] | None = None,
+        weight_objective: float | int = 1,
     ):
         self.weight_objective = weight_objective
         if problem is not None:
@@ -31,7 +33,7 @@ class ObjectiveComputer(ABC, Generic[Task]):
         self.problem = problem
 
     @abstractmethod
-    def compute_objective(self, solution: TasksSolution) -> float: ...
+    def compute_objective(self, solution: TasksSolution) -> float | int: ...
     @property
-    def weight_cost(self) -> float:
+    def weight_cost(self) -> float | int:
         return self.weight_objective

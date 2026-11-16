@@ -23,7 +23,7 @@ class WeightedSumStartEndObjectiveComputer(ObjectiveComputer[Task]):
         problem: SchedulingProblem[Task] | None = None,
         dict_weight: dict[Task | SchedulingEntity[Task], dict[StartOrEnd, int]]
         | None = None,
-        weight_objective: float = 1.0,
+        weight_objective: float | int = 1,
     ):
         self.dict_weight = dict_weight
         super().__init__(problem, weight_objective=weight_objective)

@@ -29,7 +29,7 @@ class AllocationCostComputer(ObjectiveComputer[Task], Generic[Task, UnaryResourc
     def __init__(
         self,
         problem: AllocationProblem[Task, UnaryResource] | None = None,
-        weight_objective: float = 1.0,
+        weight_objective: float | int = 1,
         cost_allocation_resource_to_task: dict[Task, dict[UnaryResource, int]]
         | None = None,
     ):
@@ -41,7 +41,7 @@ class AllocationCostComputer(ObjectiveComputer[Task], Generic[Task, UnaryResourc
 
     def cost_allocation_resource_to_task(
         self, task: Task, unary_resource: UnaryResource
-    ) -> float:
+    ) -> float | int:
         if task in self._cost_allocation_resource_to_task:
             return self._cost_allocation_resource_to_task[task].get(unary_resource, 0)
         return 0
@@ -55,7 +55,7 @@ class AllocationCostComputer(ObjectiveComputer[Task], Generic[Task, UnaryResourc
 
     def compute_objective(
         self, solution: AllocationSolution[Task, UnaryResource]
-    ) -> float:
+    ) -> float | int:
         return sum(
             self.cost_allocation_resource_to_task(
                 task=task, unary_resource=unary_resource
@@ -83,7 +83,7 @@ class AllocationCostComputerMultimode(
     def __init__(
         self,
         problem: MultimodeAllocationProblem[Task, UnaryResource] | None = None,
-        weight_objective: float = 1.0,
+        weight_objective: float | int = 1,
         cost_allocation_resource_to_task_mode: dict[
             tuple[Task, int], dict[UnaryResource, int]
         ]
@@ -99,7 +99,7 @@ class AllocationCostComputerMultimode(
 
     def cost_allocation_resource_to_task_mode(
         self, task: Task, mode: int, unary_resource: UnaryResource
-    ) -> float:
+    ) -> float | int:
         if (task, mode) in self._cost_allocation_resource_to_task_mode:
             return self._cost_allocation_resource_to_task_mode[task, mode].get(
                 unary_resource, 0
@@ -122,7 +122,7 @@ class AllocationCostComputerMultimode(
 
     def compute_objective(
         self, solution: MultiModeAllocationSolution[Task, UnaryResource]
-    ) -> float:
+    ) -> float | int:
         return sum(
             self.cost_allocation_resource_to_task_mode(
                 task=task, mode=solution.get_mode(task), unary_resource=unary_resource

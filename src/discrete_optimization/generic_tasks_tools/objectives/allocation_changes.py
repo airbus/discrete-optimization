@@ -31,7 +31,7 @@ class AllocationSwitchObjectiveComputer(
         self,
         problem: AllocationProblem[Task, UnaryResource],
         base_allocation_solution: AllocationSolution[Task, UnaryResource] | None = None,
-        weight_objective: float = 1.0,
+        weight_objective: float | int = 1,
         switch_on_cost: dict[Task, dict[UnaryResource, int]] | None = None,
         switch_off_cost: dict[Task, dict[UnaryResource, int]] | None = None,
     ):
@@ -82,7 +82,7 @@ class AllocationSwitchObjectiveComputer(
 
     def compute_objective(
         self, solution: AllocationSolution[Task, UnaryResource]
-    ) -> float:
+    ) -> float | int:
         cost = 0
         for task in self.problem.tasks_list:
             alloc_original = self.base_allocation_solution.get_task_allocation(task)

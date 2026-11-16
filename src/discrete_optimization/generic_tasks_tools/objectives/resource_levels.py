@@ -33,8 +33,8 @@ class CalendarRenewableResourceLevelObjectiveComputer(
     def __init__(
         self,
         problem: CalendarResourceProblem[Task, Resource] | None = None,
-        weight_objective: float = 1.0,
-        weight_resource: dict[Resource, float] | None = None,
+        weight_objective: float | int = 1,
+        weight_resource: dict[Resource, float | int] | None = None,
     ):
         super().__init__(problem, weight_objective)
         if weight_resource is None:
@@ -42,7 +42,7 @@ class CalendarRenewableResourceLevelObjectiveComputer(
         else:
             self.weight_resource = weight_resource
 
-    def get_weight_resource(self, resource: Resource) -> float:
+    def get_weight_resource(self, resource: Resource) -> float | int:
         return self.weight_resource.get(resource, 0)
 
     def has_any_weight(self):
@@ -50,7 +50,7 @@ class CalendarRenewableResourceLevelObjectiveComputer(
 
     def compute_objective(
         self, solution: CalendarResourceSolution[Task, Resource]
-    ) -> float:
+    ) -> float | int:
         return solution.compute_aggregated_calendar_resources_levels(
             weights={
                 r: self.get_weight_resource(r)
@@ -72,8 +72,8 @@ class NonRenewableResourceLevelObjectiveComputer(
         self,
         problem: NonRenewableResourceProblem[Task, Resource, UnaryResource]
         | None = None,
-        weight_objective: float = 1.0,
-        weight_resource: dict[Resource, float] | None = None,
+        weight_objective: float | int = 1,
+        weight_resource: dict[Resource, float | int] | None = None,
     ):
         super().__init__(problem, weight_objective)
         if weight_resource is None:
@@ -81,7 +81,7 @@ class NonRenewableResourceLevelObjectiveComputer(
         else:
             self.weight_resource = weight_resource
 
-    def get_weight_resource(self, resource: Resource) -> float:
+    def get_weight_resource(self, resource: Resource) -> float | int:
         return self.weight_resource.get(resource, 0)
 
     def has_any_weight(self):
@@ -92,7 +92,7 @@ class NonRenewableResourceLevelObjectiveComputer(
         solution: NonRenewableResourceSolution[
             Task, NonRenewableResource, UnaryResource
         ],
-    ) -> float:
+    ) -> float | int:
         return solution.compute_nb_non_renewable_resources_used(
             weights={
                 r: self.get_weight_resource(r)
