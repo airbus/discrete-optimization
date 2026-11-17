@@ -1,7 +1,9 @@
 #  Copyright (c) 2025 AIRBUS and its affiliates.
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
+import asyncio
 import os
+import sys
 import warnings
 
 import pandas as pd
@@ -23,6 +25,12 @@ from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.generic_tools.hub_solver.optal.optalcp_tools import (
     optalcp_available,
 )
+
+
+def pytest_configure(config):
+    """Force ProactorEventLoop policy on Windows before any tests run."""
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 
 @fixture
