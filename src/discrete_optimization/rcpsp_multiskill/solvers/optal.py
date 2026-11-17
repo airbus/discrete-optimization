@@ -205,8 +205,10 @@ class OptalMSRcpspSolver(
                         opt_interval_var[task][worker],
                         self.variables["interval_var"][task],
                     )
-                    # self.cp_model.end_at_end(opt_interval_var[task][worker],
-                    #                         self.variables["interval_var"][task])
+                    self.cp_model.end_at_end(
+                        opt_interval_var[task][worker],
+                        self.variables["interval_var"][task],
+                    )
                     skills_of_worker = self.problem.employees[
                         worker
                     ].get_non_zero_skills()
