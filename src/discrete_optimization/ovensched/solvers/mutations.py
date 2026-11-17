@@ -145,7 +145,10 @@ class OvenPermutationPartialShuffle(Mutation):
         """
         super().__init__(problem=problem, **kwargs)
         self.min_length = min_length
-        self.max_length = max_length if max_length is not None else problem.n_jobs // 4
+        self.max_length = max(
+            max_length if max_length is not None else problem.n_jobs // 4,
+            self.min_length,
+        )
 
     def mutate(self, solution: Solution) -> tuple[Solution, LocalMove]:
         """
@@ -165,8 +168,9 @@ class OvenPermutationPartialShuffle(Mutation):
         n = len(solution.permutation)
 
         # Choose subsequence length
+        min_len = min(self.min_length, n)
         max_len = min(self.max_length, n)
-        subseq_length = random.randint(self.min_length, max_len)
+        subseq_length = random.randint(min_len, max_len)
 
         # Choose starting position
         start = random.randint(0, n - subseq_length)
