@@ -110,14 +110,16 @@ class GenericSchedulingAutoCpImplSolver(
         self.new_horizon = new_horizon
 
         # override default parameters if given, for those not already managed by parent class
-        if exactly_one_unary_resource_per_task is not None:
-            self.exactly_one_unary_resource_per_task = (
-                exactly_one_unary_resource_per_task
-            )
         if at_most_one_unary_resource_per_task is not None:
             self.at_most_one_unary_resource_per_task = (
                 at_most_one_unary_resource_per_task
             )
+        if exactly_one_unary_resource_per_task is not None:
+            self.exactly_one_unary_resource_per_task = (
+                exactly_one_unary_resource_per_task
+            )
+            if exactly_one_unary_resource_per_task:
+                self.at_most_one_unary_resource_per_task = True
         if use_exact_skill is not None:
             self.use_exact_skill = use_exact_skill
         if use_slack_for_skill is not None:
