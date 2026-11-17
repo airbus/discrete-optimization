@@ -3,6 +3,7 @@
 #  LICENSE file in the root directory of this source tree.
 """DIDPpy-based solver for the Oven Scheduling Problem."""
 
+import logging
 import re
 from typing import Any
 
@@ -15,6 +16,8 @@ from discrete_optimization.ovensched.problem import (
     OvenSchedulingSolution,
     ScheduleInfo,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class DpOvenSchedulingSolver(DpSolver):
@@ -643,7 +646,7 @@ class DpOvenSchedulingSolver(DpSolver):
                             for j_id in jobs_in_batch
                         )
                         if duration > max_duration_limit:
-                            print(
+                            logger.info(
                                 f"Warning: batch duration {duration} exceeds max limit {max_duration_limit}"
                             )
                             duration = max_duration_limit
@@ -710,7 +713,7 @@ class DpOvenSchedulingSolver(DpSolver):
                         for j_id in jobs_in_batch
                     )
                     if duration > max_duration_limit:
-                        print(
+                        logger.info(
                             f"Warning: final batch duration {duration} exceeds max limit {max_duration_limit}"
                         )
                         duration = max_duration_limit
@@ -746,9 +749,6 @@ class DpOvenSchedulingSolver(DpSolver):
             schedule_per_machine[m] = batches
         sol = OvenSchedulingSolution(
             problem=self.problem, schedule_per_machine=schedule_per_machine
-        )
-        print(
-            f"\nRelative performance: {self.aggreg_from_sol(sol) / self.problem.additional_data['ub']:.4f}"
         )
         return sol
 
@@ -823,9 +823,11 @@ class DpOvenSchedulingSolver(DpSolver):
         # Set the initial solution in DIDPpy
         if transitions:
             self.initial_solution = transitions
-            print(f"Warm start: converted solution to {len(transitions)} transitions")
+            logger.info(
+                f"Warm start: converted solution to {len(transitions)} transitions"
+            )
         else:
-            print(
+            logger.info(
                 "Warning: could not generate any transitions from warm start solution"
             )
 
