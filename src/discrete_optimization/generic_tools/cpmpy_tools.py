@@ -234,11 +234,11 @@ class CpmpySolver(CpSolver):
             cpm_vars, values = tuple(zip(*self.hints.items()))
             self.cpm_solver.solution_hint(cpm_vars=list(cpm_vars), vals=list(values))
         # solve
-        self.cpm_solver.solve(time_limit=time_limit, **solver_kwargs)
+        has_sol = self.cpm_solver.solve(time_limit=time_limit, **solver_kwargs)
         self.cpm_status = self.cpm_solver.status()
         self.status_solver = map_exitstatus2statussolver[self.cpm_status.exitstatus]
 
-        if self.cpm_status.exitstatus in [ExitStatus.UNSATISFIABLE, ExitStatus.ERROR]:
+        if not has_sol:
             res = self.create_result_storage([])
         else:
             sol = self.retrieve_current_solution()
