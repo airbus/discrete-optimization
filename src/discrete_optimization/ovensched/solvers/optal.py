@@ -155,7 +155,7 @@ class OvenSchedulingOptalSolver(OptalCpSolver, WarmstartMixin):
         by over-restricting the search space and removing useful stepping stones for
         the LNS search. Use use_incompatibility_constraints=True to enable.
         """
-        print("Adding job incompatibility constraints...")
+        logger.debug("Adding job incompatibility constraints...")
 
         # Precompute incompatible pairs
         incompatible_pairs = []
@@ -178,7 +178,7 @@ class OvenSchedulingOptalSolver(OptalCpSolver, WarmstartMixin):
                     # No valid duration satisfies both jobs
                     incompatible_pairs.append((i, j))
 
-        print(f"Found {len(incompatible_pairs)} incompatible job pairs")
+        logger.info(f"Found {len(incompatible_pairs)} incompatible job pairs")
 
         # Add constraints for incompatible pairs
         # If job i and job j are incompatible, they cannot be in the same batch on any machine

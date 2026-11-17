@@ -403,9 +403,11 @@ class OvenSchedulingProblem(
                     for avail_start, avail_end in self.machines_data[m].availability
                 )
                 if not is_in_valid_window:
-                    print(start_time, end_time, self.machines_data[m].availability)
                     logger.info(
                         f"Batch {m, i_batch} is not in valid window for machine {m}"
+                    )
+                    logger.debug(
+                        start_time, end_time, self.machines_data[m].availability
                     )
                     return False
                 if any(
