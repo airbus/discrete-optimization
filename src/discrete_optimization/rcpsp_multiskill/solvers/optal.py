@@ -621,7 +621,22 @@ class OptalMSRcpspSolver(
                             for s in self.variables["worker_variable"]["skills_used"][
                                 task
                             ][worker]:
-                                if solution.get_value(
+                                if isinstance(
+                                    self.variables["worker_variable"]["skills_used"][
+                                        task
+                                    ][worker][s],
+                                    cp.BoolExpr,
+                                ):
+                                    # Workaround.
+                                    present = solution.is_present(
+                                        self.variables["worker_variable"][
+                                            "opt_intervals"
+                                        ][task][worker]
+                                    )
+                                    if present:
+                                        contrib.add(s)
+
+                                elif solution.get_value(
                                     self.variables["worker_variable"]["skills_used"][
                                         task
                                     ][worker][s]
