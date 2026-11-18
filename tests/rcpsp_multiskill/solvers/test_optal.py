@@ -79,5 +79,5 @@ def test_optal(
     else:
         assert solver.status_solver == StatusSolver.UNSATISFIABLE
 
-    if not optal_preview_only:
+    if not optal_preview_only and feasible:
         assert problem.satisfy(res.get_best_solution())
