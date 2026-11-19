@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from collections.abc import Container
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any, Generic
 
 from discrete_optimization.generic_tasks_tools.allocation import UnaryResource
@@ -88,8 +87,15 @@ class RawSolution(Generic[Task, UnaryResource, Skill]):
         )
 
 
-class Objective(Enum):
-    """Objective for a generic scheduling problem."""
+class Objective:
+    """Names of possible objective for a generic scheduling problem.
+
+    Will be used by the objective computers and thus be found in
+    - ObjectiveRegister
+    - ParamsObjectiveFunction
+    - problem.evaluate() output keys
+
+    """
 
     MAKESPAN = "makespan"
     """Global makespan of the schedule, to minimize."""
@@ -121,23 +127,11 @@ class Objective(Enum):
 
     CUSTOM = "custom_objective"
 
-
-OBJECTIVE_DEFAULT_WEIGHTS: dict[Objective, int] = {
-    Objective.MAKESPAN: 1,
-    Objective.NB_TASKS_ALLOCATED: -1,
-    Objective.NB_UNARY_RESOURCES_USED: 1,
-    Objective.CUSTOM: 1,
-}
-"""Default weight applied to a given objective so that it will be *maximized*."""
-
-
-class Penalty(Enum):
-    "Penalties for a generic scheduling problem."
-
-    TIME = "time_penalty"
-
-
-PENALTY_DEFAULT_WEIGHTS: dict[Penalty, int] = {
-    Penalty.TIME: -100,
-}
-"""Default weight applied to a given penalty to be added to the objective so that it will be *maximized*."""
+    @classmethod
+    def get_list_objectives(cls) -> list[str]:
+        """Get list of available objectives for a scheduling problem."""
+        return [
+            obj
+            for k, obj in vars(cls).items()
+            if not k.startswith("_") and k[0].isupper()
+        ]

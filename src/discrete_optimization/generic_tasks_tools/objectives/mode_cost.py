@@ -16,7 +16,7 @@ class ModeCostComputer(ObjectiveComputer[Task]):
     problem: MultimodeProblem[Task]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.MODE_COST
 
     def __init__(

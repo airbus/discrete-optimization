@@ -21,7 +21,7 @@
 #     problem: AlternativeSchedulingProblem[Task]
 #
 #     @staticmethod
-#     def get_objective_name() -> Objective | str:
+#     def get_objective_name() -> str:
 #         return Objective.COST_ON_ALTERNATIVE_SUBPROBLEMS
 #
 #     def __init__(

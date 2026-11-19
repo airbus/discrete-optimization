@@ -2,7 +2,6 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 
-from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
     AllocatedTasksObjective,
 )
@@ -49,7 +48,7 @@ from discrete_optimization.generic_tasks_tools.objectives.unary_resource_used im
 )
 
 
-def get_mapping() -> dict[Objective | str, list[type[ObjectiveComputer]]]:
+def get_mapping() -> dict[str, list[type[ObjectiveComputer]]]:
     list_available = [
         AllocatedTasksObjective,
         AllocationSwitchObjectiveComputer,
@@ -77,7 +76,7 @@ def get_mapping() -> dict[Objective | str, list[type[ObjectiveComputer]]]:
     return mapping
 
 
-def get_objective_computer_class(objective: Objective) -> list[type[ObjectiveComputer]]:
+def get_objective_computer_class(objective: str) -> list[type[ObjectiveComputer]]:
     mapping = get_mapping()
     return mapping.get(objective, [])
 

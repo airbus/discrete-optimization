@@ -42,7 +42,7 @@ class SoftTimePenaltyComputer(
     penalty = 0
 
     @staticmethod
-    def get_objective_name() -> Objective:
+    def get_objective_name() -> str:
         return Objective.TIME_PENALTY
 
     def compute_objective(

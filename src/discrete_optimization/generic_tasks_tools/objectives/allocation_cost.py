@@ -23,7 +23,7 @@ class AllocationCostComputer(ObjectiveComputer[Task], Generic[Task, UnaryResourc
     problem: AllocationProblem[Task, UnaryResource]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.ALLOCATION_COST
 
     def __init__(
@@ -77,7 +77,7 @@ class AllocationCostComputerMultimode(
     problem: MultimodeAllocationProblem[Task, UnaryResource]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.ALLOCATION_COST
 
     def __init__(

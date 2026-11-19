@@ -37,6 +37,7 @@ from discrete_optimization.generic_tasks_tools.objectives.allocation_cost import
 from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
     CumulCostComputer,
 )
+from discrete_optimization.generic_tasks_tools.objectives.custom import CustomComputer
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
 )
@@ -105,7 +106,7 @@ from discrete_optimization.shop.transformations.to_generic_scheduling import (
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective)
+    Objective.get_list_objectives()
     + [
         [
             (Objective.MAKESPAN, 2),
@@ -131,7 +132,7 @@ def test_auto(
     ]:
         pytest.skip(f"Not testing objective {objective} here.")
 
-    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
+    def custom_fn(problem, variable: GenericSchedulingImplSolution):
         return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
 
     problem = GenericSchedulingImplProblem(
@@ -172,7 +173,6 @@ def test_auto(
                 (5, 10, 2),
             ],
         },
-        custom_evaluate_fn=custom_evaluate_fn,
         non_renewable_resources={
             "non_renewable_resource": 1,
         },
@@ -212,6 +212,7 @@ def test_auto(
             CumulCostComputer(),
             ScheduledTasksComputer(),
             WeightedSumStartEndObjectiveComputer(),
+            CustomComputer(custom_fn=custom_fn),
         ],
     )
 
@@ -233,7 +234,7 @@ def test_auto(
     ]
     if objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
         exactly_one_unary_resource_per_task = True
-    if isinstance(objective, Objective):
+    if isinstance(objective, str):
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.SINGLE,
             objectives=[objective],
@@ -249,7 +250,6 @@ def test_auto(
         )
     solver = GenericSchedulingAutoCpSatImplSolver(
         problem=problem,
-        objective=objective,
         params_objective_function=params_objective_function,
         custom_objective_factory=custom_objective_factory,
     )
@@ -322,7 +322,7 @@ def test_auto_custom(
     mode_optim,
     caplog,
 ):
-    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
+    def custom_fn(problem, variable: GenericSchedulingImplSolution):
         return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
 
     problem = GenericSchedulingImplProblem(
@@ -363,7 +363,6 @@ def test_auto_custom(
                 (5, 10, 2),
             ],
         },
-        custom_evaluate_fn=custom_evaluate_fn,
         non_renewable_resources={
             "non_renewable_resource": 1,
         },
@@ -404,6 +403,7 @@ def test_auto_custom(
                     ("task-1", 1): {"worker1": 27, "worker2": 10}
                 },
             ),
+            CustomComputer(custom_fn=custom_fn),
         ],
     )
 
@@ -424,7 +424,6 @@ def test_auto_custom(
     )
     solver = GenericSchedulingAutoCpSatImplSolver(
         problem=problem,
-        objective=Objective.CUSTOM,
         params_objective_function=params_objective_function,
         custom_objective_factory=custom_objective_factory,
     )
@@ -447,7 +446,7 @@ def test_auto_custom(
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective)
+    Objective.get_list_objectives()
     + [
         [(Objective.MAKESPAN, 2), (Objective.NB_TASKS_ALLOCATED, -2)],
         [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)],
@@ -467,7 +466,7 @@ def test_auto_optional_tasks(
     ]:
         pytest.skip(f"Not testing objective {objective} here.")
 
-    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
+    def custom_fn(problem, variable: GenericSchedulingImplSolution):
         return -sum(
             variable.get_start_time(task) for task in variable.get_present_tasks()
         )
@@ -514,8 +513,6 @@ def test_auto_optional_tasks(
             "non_renewable_resource": 1,
         },
         optional_tasks={"task-1"},
-        objective=objective,
-        custom_evaluate_fn=custom_evaluate_fn,
         list_objective_computer=[
             MakespanObjectiveComputer(),
             CalendarRenewableResourceLevelObjectiveComputer(
@@ -552,6 +549,7 @@ def test_auto_optional_tasks(
             CumulCostComputer(),
             ScheduledTasksComputer(),
             WeightedSumStartEndObjectiveComputer(),
+            CustomComputer(custom_fn=custom_fn),
         ],
     )
     # prepare solver
@@ -571,7 +569,7 @@ def test_auto_optional_tasks(
     if objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
         exactly_one_unary_resource_per_task = True
 
-    if isinstance(objective, Objective):
+    if isinstance(objective, str):
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.SINGLE,
             objectives=[objective],
@@ -588,7 +586,6 @@ def test_auto_optional_tasks(
     solver = GenericSchedulingAutoCpSatImplSolver(
         problem=problem,
         params_objective_function=params_objective_function,
-        objective=objective,
         custom_objective_factory=custom_objective_factory,
     )
 
@@ -744,7 +741,6 @@ def test_auto_optional_tasks_with_resource_blocking():
         optional_tasks=optional_tasks,
         flexible_gap_blocking_constraints=[flexible_gap_blocking],
         span_blocking_constraints=[span_blocking],
-        objective=Objective.MAKESPAN,
     )
 
     # Solve the problem
@@ -895,7 +891,6 @@ def test_auto_with_resource_blocking():
         non_skill_cumulative_resources=non_skill_cumulative_resources,
         flexible_gap_blocking_constraints=[flexible_gap_blocking],
         span_blocking_constraints=[span_blocking],
-        objective=Objective.MAKESPAN,
     )
 
     # Solve the problem
@@ -1047,7 +1042,6 @@ def test_auto_with_resource_blocking_and_choices():
         non_skill_cumulative_resources=non_skill_cumulative_resources,
         flexible_gap_blocking_constraints=[flexible_gap_blocking],
         span_blocking_constraints=[span_blocking],
-        objective=Objective.MAKESPAN,
     )
 
     # Solve the problem

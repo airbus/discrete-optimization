@@ -45,7 +45,7 @@ class UnaryResourcesUsedComputer(ObjectiveComputer[Task], Generic[Task, UnaryRes
         )
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.NB_UNARY_RESOURCES_USED
 
     def compute_objective(self, solution: AllocationSolution[Task, UnaryResource]):

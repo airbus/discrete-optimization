@@ -42,7 +42,7 @@ class CumulCostComputer(
     ]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.CUMUL_COST
 
     def __init__(

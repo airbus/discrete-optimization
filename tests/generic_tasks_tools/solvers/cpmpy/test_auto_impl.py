@@ -7,7 +7,6 @@ import random
 
 import numpy as np
 import pytest
-from ortools.sat.python.cp_model import LinearExprT
 from pytest import fixture
 
 import discrete_optimization.rcpsp.parser as rcpsp_parser
@@ -37,6 +36,7 @@ from discrete_optimization.generic_tasks_tools.objectives.allocation_cost import
 from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
     CumulCostComputer,
 )
+from discrete_optimization.generic_tasks_tools.objectives.custom import CustomComputer
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
 )
@@ -66,8 +66,9 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     SpanBlockingConstraint,
     StartOrEnd,
 )
-from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_impl import (
-    GenericSchedulingAutoCpSatImplSolver,
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.typing import LinearExpr
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpmpy.auto_impl import (
+    GenericSchedulingAutoCpmpyImplSolver,
 )
 from discrete_optimization.generic_tools.callbacks.early_stoppers import (
     NbIterationStopper,
@@ -105,7 +106,7 @@ from discrete_optimization.shop.transformations.to_generic_scheduling import (
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective)
+    Objective.get_list_objectives()
     + [
         [
             (Objective.MAKESPAN, 2),
@@ -128,10 +129,11 @@ def test_auto(
         Objective.COST_ON_ALTERNATIVE_SUBPROBLEMS,
         Objective.WEIGHTED_SUM_START_OR_END,
         Objective.EARLINESS_TARDINESS,
+        Objective.NB_TASKS_SCHEDULED,
     ]:
         pytest.skip(f"Not testing objective {objective} here.")
 
-    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
+    def custom_fn(problem, variable: GenericSchedulingImplSolution):
         return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
 
     problem = GenericSchedulingImplProblem(
@@ -172,7 +174,6 @@ def test_auto(
                 (5, 10, 2),
             ],
         },
-        custom_evaluate_fn=custom_evaluate_fn,
         non_renewable_resources={
             "non_renewable_resource": 1,
         },
@@ -212,6 +213,7 @@ def test_auto(
             CumulCostComputer(),
             ScheduledTasksComputer(),
             WeightedSumStartEndObjectiveComputer(),
+            CustomComputer(custom_fn=custom_fn),
         ],
     )
 
@@ -219,8 +221,8 @@ def test_auto(
 
     # custom objective: makespan - nb tasks allocated
     def custom_objective_factory(
-        solver: GenericSchedulingAutoCpSatImplSolver,
-    ) -> LinearExprT:
+        solver: GenericSchedulingAutoCpmpyImplSolver,
+    ) -> LinearExpr:
         return (
             solver.get_nb_tasks_allocated_variable()
             - solver.get_global_makespan_variable()
@@ -233,7 +235,7 @@ def test_auto(
     ]
     if objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
         exactly_one_unary_resource_per_task = True
-    if isinstance(objective, Objective):
+    if isinstance(objective, str):
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.SINGLE,
             objectives=[objective],
@@ -247,9 +249,8 @@ def test_auto(
             weights=[obj[1] for obj in objective],
             sense_function=ModeOptim.MINIMIZATION,
         )
-    solver = GenericSchedulingAutoCpSatImplSolver(
+    solver = GenericSchedulingAutoCpmpyImplSolver(
         problem=problem,
-        objective=objective,
         params_objective_function=params_objective_function,
         custom_objective_factory=custom_objective_factory,
     )
@@ -261,7 +262,6 @@ def test_auto(
     # solve
     res = solver.solve(
         parameters_cp=ParametersCp.default(),
-        ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
 
     # check sol and kpis
@@ -309,7 +309,7 @@ def test_auto(
     # warm start + 1 sol only => should find the "bad" solution
     solver.set_warm_start(solution=bad_sol)
     res = solver.solve(
-        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
+        fix_variables_to_their_hinted_value=True,
         parameters_cp=ParametersCp.default(),
         callbacks=[NbIterationStopper(1)],
     )
@@ -322,7 +322,7 @@ def test_auto_custom(
     mode_optim,
     caplog,
 ):
-    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
+    def custom_fn(problem, variable: GenericSchedulingImplSolution):
         return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
 
     problem = GenericSchedulingImplProblem(
@@ -363,7 +363,6 @@ def test_auto_custom(
                 (5, 10, 2),
             ],
         },
-        custom_evaluate_fn=custom_evaluate_fn,
         non_renewable_resources={
             "non_renewable_resource": 1,
         },
@@ -404,13 +403,14 @@ def test_auto_custom(
                     ("task-1", 1): {"worker1": 27, "worker2": 10}
                 },
             ),
+            CustomComputer(custom_fn=custom_fn),
         ],
     )
 
     # custom objective: makespan - nb tasks allocated
     def custom_objective_factory(
-        solver: GenericSchedulingAutoCpSatImplSolver,
-    ) -> LinearExprT:
+        solver: GenericSchedulingAutoCpmpyImplSolver,
+    ) -> LinearExpr:
         return (
             solver.get_nb_tasks_allocated_variable()
             - solver.get_global_makespan_variable()
@@ -422,9 +422,8 @@ def test_auto_custom(
         weights=[1],
         sense_function=mode_optim,
     )
-    solver = GenericSchedulingAutoCpSatImplSolver(
+    solver = GenericSchedulingAutoCpmpyImplSolver(
         problem=problem,
-        objective=Objective.CUSTOM,
         params_objective_function=params_objective_function,
         custom_objective_factory=custom_objective_factory,
     )
@@ -447,7 +446,7 @@ def test_auto_custom(
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective)
+    Objective.get_list_objectives()
     + [
         [(Objective.MAKESPAN, 2), (Objective.NB_TASKS_ALLOCATED, -2)],
         [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)],
@@ -467,7 +466,7 @@ def test_auto_optional_tasks(
     ]:
         pytest.skip(f"Not testing objective {objective} here.")
 
-    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
+    def custom_fn(problem, variable: GenericSchedulingImplSolution):
         return -sum(
             variable.get_start_time(task) for task in variable.get_present_tasks()
         )
@@ -514,8 +513,6 @@ def test_auto_optional_tasks(
             "non_renewable_resource": 1,
         },
         optional_tasks={"task-1"},
-        objective=objective,
-        custom_evaluate_fn=custom_evaluate_fn,
         list_objective_computer=[
             MakespanObjectiveComputer(),
             CalendarRenewableResourceLevelObjectiveComputer(
@@ -552,6 +549,7 @@ def test_auto_optional_tasks(
             CumulCostComputer(),
             ScheduledTasksComputer(),
             WeightedSumStartEndObjectiveComputer(),
+            CustomComputer(custom_fn=custom_fn),
         ],
     )
 
@@ -559,8 +557,8 @@ def test_auto_optional_tasks(
 
     # custom objective: makespan - nb tasks allocated
     def custom_objective_factory(
-        solver: GenericSchedulingAutoCpSatImplSolver,
-    ) -> LinearExprT:
+        solver: GenericSchedulingAutoCpmpyImplSolver,
+    ) -> LinearExpr:
         return -solver.get_subtasks_sum_start_time_variable(problem.tasks_list)
 
     exactly_one_unary_resource_per_task = objective in [
@@ -572,11 +570,16 @@ def test_auto_optional_tasks(
     if objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
         exactly_one_unary_resource_per_task = True
 
-    if isinstance(objective, Objective):
+    if isinstance(objective, str):
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.SINGLE,
             objectives=[objective],
-            weights=[1 if objective != Objective.NB_TASKS_ALLOCATED else -1],
+            weights=[
+                -1
+                if objective
+                in [Objective.NB_TASKS_ALLOCATED, Objective.NB_TASKS_SCHEDULED]
+                else 1
+            ],
             sense_function=ModeOptim.MINIMIZATION,
         )
     else:
@@ -586,22 +589,19 @@ def test_auto_optional_tasks(
             weights=[obj[1] for obj in objective],
             sense_function=ModeOptim.MINIMIZATION,
         )
-    solver = GenericSchedulingAutoCpSatImplSolver(
+    solver = GenericSchedulingAutoCpmpyImplSolver(
         problem=problem,
         params_objective_function=params_objective_function,
-        objective=objective,
         custom_objective_factory=custom_objective_factory,
     )
 
     solver.init_model(
         exactly_one_unary_resource_per_task=exactly_one_unary_resource_per_task
     )
-    # solver.set_warm_start(sol)
 
     # solve
     res = solver.solve(
         parameters_cp=ParametersCp.default(),
-        ortools_cpsat_solver_kwargs={"log_search_progress": True},
     )
 
     # check sol and kpis
@@ -647,7 +647,7 @@ def test_auto_optional_tasks(
     # warm start + 1 sol only => should find the "bad" solution
     solver.set_warm_start(solution=bad_sol)
     res = solver.solve(
-        ortools_cpsat_solver_kwargs=dict(fix_variables_to_their_hinted_value=True),
+        fix_variables_to_their_hinted_value=True,
         parameters_cp=ParametersCp.default(),
         callbacks=[NbIterationStopper(1)],
     )
@@ -745,16 +745,15 @@ def test_auto_optional_tasks_with_resource_blocking():
         optional_tasks=optional_tasks,
         flexible_gap_blocking_constraints=[flexible_gap_blocking],
         span_blocking_constraints=[span_blocking],
-        objective=Objective.MAKESPAN,
     )
 
     # Solve the problem
-    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver = GenericSchedulingAutoCpmpyImplSolver(problem=problem)
     solver.init_model()
     result = solver.solve(
         time_limit=30,
         parameters_cp=ParametersCp.default(),
-        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+        log_search_progress=True,
     )
 
     # Get solution
@@ -896,16 +895,15 @@ def test_auto_with_resource_blocking():
         non_skill_cumulative_resources=non_skill_cumulative_resources,
         flexible_gap_blocking_constraints=[flexible_gap_blocking],
         span_blocking_constraints=[span_blocking],
-        objective=Objective.MAKESPAN,
     )
 
     # Solve the problem
-    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver = GenericSchedulingAutoCpmpyImplSolver(problem=problem)
     solver.init_model()
     result = solver.solve(
         time_limit=30,
         parameters_cp=ParametersCp.default(),
-        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+        log_search_progress=True,
     )
 
     # Get solution
@@ -1048,16 +1046,15 @@ def test_auto_with_resource_blocking_and_choices():
         non_skill_cumulative_resources=non_skill_cumulative_resources,
         flexible_gap_blocking_constraints=[flexible_gap_blocking],
         span_blocking_constraints=[span_blocking],
-        objective=Objective.MAKESPAN,
     )
 
     # Solve the problem
-    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver = GenericSchedulingAutoCpmpyImplSolver(problem=problem)
     solver.init_model()
     result = solver.solve(
         time_limit=30,
         parameters_cp=ParametersCp.default(),
-        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+        log_search_progress=True,
     )
 
     # Get solution
@@ -1135,7 +1132,7 @@ def test_start_to_end_time_lag():
         },
         start_to_end_min_time_lags=[("task-1", "task-2", 8)],
     )
-    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver = GenericSchedulingAutoCpmpyImplSolver(problem=problem)
     result = solver.solve(time_limit=10, parameters_cp=ParametersCp.default())
     solution: GenericSchedulingImplSolution = result.get_best_solution()
     assert problem.satisfy(solution)
@@ -1155,7 +1152,7 @@ def test_start_to_end_time_lag_optional_tasks():
         optional_tasks={"task-1"},
         start_to_end_min_time_lags=[("task-1", "task-2", 8)],
     )
-    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver = GenericSchedulingAutoCpmpyImplSolver(problem=problem)
     solver.init_model()
     result = solver.solve(time_limit=10, parameters_cp=ParametersCp.default())
     solution: GenericSchedulingImplSolution = result.get_best_solution()
@@ -1177,7 +1174,7 @@ def test_no_overlap():
         no_overlap_sets={frozenset({"task-1", "task-2"})},
         forbidden_intervals={"task-1": [(1, 3)]},
     )
-    solver = GenericSchedulingAutoCpSatImplSolver(
+    solver = GenericSchedulingAutoCpmpyImplSolver(
         problem=problem,
         params_objective_function=ParamsObjectiveFunction(
             ObjectiveHandling.SINGLE,
@@ -1369,7 +1366,7 @@ def test_solving_unary_resource_consumption_dependent(
     problem: GenericSchedulingImplProblem = (
         problem_with_unary_dependent_resource_consumption
     )
-    solver = GenericSchedulingAutoCpSatImplSolver(problem)
+    solver = GenericSchedulingAutoCpmpyImplSolver(problem)
     solver.init_model()
     res = solver.solve(time_limit=10)
     sol = res[-1][0]
@@ -1382,7 +1379,7 @@ def test_solving_unary_nr_resource_consumption_dependent(
     problem: GenericSchedulingImplProblem = (
         problem_with_unary_dependent_nr_resource_consumption
     )
-    solver = GenericSchedulingAutoCpSatImplSolver(problem)
+    solver = GenericSchedulingAutoCpmpyImplSolver(problem)
     solver.init_model()
     res = solver.solve(time_limit=10)
     sol = res[-1][0]
@@ -1395,7 +1392,7 @@ def test_solving_forbidden_unary_resource_task_mode(
     problem: GenericSchedulingImplProblem = (
         problem_with_forbidden_task_mode_unary_resource
     )
-    solver = GenericSchedulingAutoCpSatImplSolver(problem)
+    solver = GenericSchedulingAutoCpmpyImplSolver(problem)
     solver.init_model()
     res = solver.solve(time_limit=10)
     sol = res[-1][0]
@@ -1451,7 +1448,7 @@ def test_rcpsp_simple():
     # transform to generic problem
     transfo = RcpspToGenericSchedulingTransformation()
     generic_problem = transfo.transform_problem(problem)
-    generic_solver = GenericSchedulingAutoCpSatImplSolver(
+    generic_solver = GenericSchedulingAutoCpmpyImplSolver(
         problem=generic_problem,
     )
     generic_solver.init_model()
@@ -1490,7 +1487,7 @@ def test_rcpsp_mm():
     transfo = RcpspToGenericSchedulingTransformation()
     generic_problem = transfo.transform_problem(problem)
 
-    generic_solver = GenericSchedulingAutoCpSatImplSolver(
+    generic_solver = GenericSchedulingAutoCpmpyImplSolver(
         problem=generic_problem,
     )
     generic_solver.init_model()
@@ -1508,11 +1505,6 @@ def test_rcpsp_mm():
     assert problem.satisfy(from_generic_solution)
     print("specific", problem.evaluate(solution))
     print("generic", problem.evaluate(from_generic_solution))
-
-    # generic solution same as or better than specific one
-    assert solver.aggreg_from_sol(from_generic_solution) >= solver.aggreg_from_sol(
-        solution
-    )
 
 
 @pytest.mark.parametrize(
@@ -1585,7 +1577,7 @@ def test_rcpsp_multiskill(
     transfo = MultiskillRcpspToGenericSchedulingTransformation()
     generic_problem = transfo.transform_problem(problem)
 
-    generic_solver = GenericSchedulingAutoCpSatImplSolver(
+    generic_solver = GenericSchedulingAutoCpmpyImplSolver(
         problem=generic_problem,
     )
     generic_solver.init_model(
@@ -1632,11 +1624,6 @@ def test_rcpsp_multiskill(
     print("specific", problem.evaluate(solution))
     print("generic", problem.evaluate(from_generic_solution))
 
-    # generic solution same as or better than specific one
-    assert solver.aggreg_from_sol(from_generic_solution) >= solver.aggreg_from_sol(
-        solution
-    )
-
 
 def test_jsp():
     filename = "la02"
@@ -1653,7 +1640,7 @@ def test_jsp():
     # transform to generic problem
     transfo = ShopToGenericSchedulingTransformation()
     generic_problem = transfo.transform_problem(problem)
-    generic_solver = GenericSchedulingAutoCpSatImplSolver(
+    generic_solver = GenericSchedulingAutoCpmpyImplSolver(
         problem=generic_problem,
     )
     generic_solver.init_model()
@@ -1673,11 +1660,6 @@ def test_jsp():
     print("specific", problem.evaluate(solution))
     print("generic", problem.evaluate(from_generic_solution))
 
-    # generic solution same as or better than specific one
-    assert solver.aggreg_from_sol(from_generic_solution) >= solver.aggreg_from_sol(
-        solution
-    )
-
 
 def test_fjsp():
     files = fjsp_parser.get_data_available()
@@ -1695,7 +1677,7 @@ def test_fjsp():
     transfo = ShopToGenericSchedulingTransformation()
     generic_problem = transfo.transform_problem(problem)
 
-    generic_solver = GenericSchedulingAutoCpSatImplSolver(
+    generic_solver = GenericSchedulingAutoCpmpyImplSolver(
         problem=generic_problem,
     )
     generic_solver.init_model()
@@ -1714,11 +1696,6 @@ def test_fjsp():
     assert problem.satisfy(from_generic_solution)
     print("specific", problem.evaluate(solution))
     print("generic", problem.evaluate(from_generic_solution))
-
-    # generic solution same as or better than specific one
-    assert solver.aggreg_from_sol(from_generic_solution) >= solver.aggreg_from_sol(
-        solution
-    )
 
 
 def test_solving_with_entities():
@@ -1753,7 +1730,7 @@ def test_solving_with_entities():
         non_skill_cumulative_resources={"r1": 1},
         span_blocking_constraints=span_blocking_constraints,
     )
-    solver = GenericSchedulingAutoCpSatImplSolver(
+    solver = GenericSchedulingAutoCpmpyImplSolver(
         problem=problem,
         params_objective_function=ParamsObjectiveFunction(
             ObjectiveHandling.SINGLE,

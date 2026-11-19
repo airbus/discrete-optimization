@@ -6,7 +6,7 @@ from __future__ import annotations
 import logging
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import Any, Generic, Iterable, Optional, Type, Union
+from typing import Any, Generic, Iterable, Optional, Union
 
 import networkx as nx
 
@@ -19,7 +19,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     Resource,
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
-    Objective,
     RawSolution,
     TaskVariable,
 )
@@ -217,7 +216,7 @@ class GenericSchedulingAutoCpSolver(
     )
 
     list_obj_modeler_weight: list[tuple[ObjectiveModelerCp, float]]
-    dict_objective_expr: dict[Objective | str, LinearExpr]
+    dict_objective_expr: dict[str, LinearExpr]
 
     @property
     def needs_duration_variables(self) -> bool:
@@ -993,7 +992,7 @@ class GenericSchedulingAutoCpSolver(
         ):
             obj_computers = self.problem.get_objective_computer(obj)
             for obj_computer in obj_computers:
-                obj_modeler_class: Type["ObjectiveModelerCp"] = (
+                obj_modeler_class: type["ObjectiveModelerCp"] = (
                     mapping_obj_computer_to_modeler[obj_computer.__class__]
                 )
                 obj_modeler = obj_modeler_class(
@@ -1017,8 +1016,9 @@ class GenericSchedulingAutoCpSolver(
             if (
                 key := obj_modeler.objective_computer.get_objective_name()
             ) not in self.dict_objective_expr:
-                self.dict_objective_expr[key] = 0
-            self.dict_objective_expr[key] += obj_modeler.get_objective_expr()
+                self.dict_objective_expr[key] = obj_modeler.get_objective_expr()
+            else:
+                self.dict_objective_expr[key] += obj_modeler.get_objective_expr()
         obj = self.sum(
             [
                 weight * self.dict_objective_expr[obj]
@@ -1035,7 +1035,18 @@ class GenericSchedulingAutoCpSolver(
             case ModeOptim.MAXIMIZATION:
                 self.maximize_variable(obj)
             case _:
-                raise NotImplementedError
+                raise NotImplementedError()
+
+    @optional_override
+    def get_custom_objective_expr(self) -> LinearExpr:
+        """Create the linear expression corresponding to a custom objective.
+
+        To be overriden in child classes to be able to manage custom objectives.
+        Will be used by `CustomModelerCp` to translate a custom objective defined
+        by a `CustomObjectiveComputer` in the problem.
+
+        """
+        raise NotImplementedError()
 
     def _create_duration_variable_on_the_fly(
         self, task: Task, task_interval_will_exist: Optional[bool] = None
@@ -1497,9 +1508,7 @@ class GenericSchedulingAutoCpSolver(
     def implements_lexico_api(self) -> bool:
         return True
 
-    def get_objective_expr(
-        self, obj: Union[str | Objective, list[tuple[Union[str | Objective], float]]]
-    ):
+    def get_objective_expr(self, obj: Union[str, list[tuple[Union[str], float]]]):
         if isinstance(obj, list):
             obj_expr = self.sum(
                 [weight * self.dict_objective_expr[obj] for obj, weight in obj]
@@ -1509,13 +1518,13 @@ class GenericSchedulingAutoCpSolver(
         return obj_expr
 
     def set_lexico_objective(
-        self, obj: Union[str | Objective, list[tuple[Union[str | Objective], float]]]
+        self, obj: Union[str, list[tuple[Union[str], float]]]
     ) -> None:
         self.minimize_variable(self.get_objective_expr(obj))
 
     def add_lexico_constraint(
         self,
-        obj: Union[str | Objective, list[tuple[Union[str | Objective], float]]],
+        obj: Union[str, list[tuple[Union[str], float]]],
         value: float,
     ) -> Iterable[Any]:
         self.add_bool_constraint(self.get_objective_expr(obj) <= value)
@@ -1523,7 +1532,7 @@ class GenericSchedulingAutoCpSolver(
     @optional_override
     def get_lexico_objective_value(
         self,
-        obj: Union[str | Objective, list[tuple[Union[str | Objective], float]]],
+        obj: Union[str, list[tuple[Union[str], float]]],
         res: ResultStorage,
     ) -> float:
         # TODO, decide if better use the res.get_best_solution()

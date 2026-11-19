@@ -55,7 +55,7 @@ def problem_wo_skills():
             return solution.compute_nb_tasks_allocated() - solution.get_max_end_time()
 
         @staticmethod
-        def get_objective_name() -> Objective | str:
+        def get_objective_name() -> str:
             return Objective.CUSTOM
 
     return GenericSchedulingImplProblem(

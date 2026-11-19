@@ -14,7 +14,6 @@ from ortools.sat.python.cp_model import (
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
-    Objective,
     RawSolution,
 )
 from discrete_optimization.generic_tasks_tools.non_renewable_resource import (
@@ -154,7 +153,6 @@ class CPSatAllocSchedulingSolver(
     avoid_interval_optional_for_nooverlap_with_margin_constraint = False
     """Whether using optional interval or task interval + demand variable"""
     at_most_one_unary_resource_per_task = True
-    objective = Objective.NB_UNARY_RESOURCES_USED
 
     @staticmethod
     def implements_lexico_api() -> bool:

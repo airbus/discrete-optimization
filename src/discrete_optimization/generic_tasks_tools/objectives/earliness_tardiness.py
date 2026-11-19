@@ -18,7 +18,7 @@ class EarlinessTardinessComputer(ObjectiveComputer[Task]):
     problem: SchedulingProblem[Task]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.EARLINESS_TARDINESS
 
     def __init__(

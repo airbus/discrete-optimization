@@ -7,7 +7,6 @@ import random
 
 import numpy as np
 import pytest
-from ortools.sat.python.cp_model import LinearExprT
 from pytest import fixture
 
 import discrete_optimization.rcpsp.parser as rcpsp_parser
@@ -35,6 +34,7 @@ from discrete_optimization.generic_tasks_tools.objectives.allocation_cost import
 from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
     CumulCostComputer,
 )
+from discrete_optimization.generic_tasks_tools.objectives.custom import CustomComputer
 from discrete_optimization.generic_tasks_tools.objectives.makespan import (
     MakespanObjectiveComputer,
 )
@@ -64,6 +64,7 @@ from discrete_optimization.generic_tasks_tools.resource_blocking import (
     SpanBlockingConstraint,
     StartOrEnd,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.typing import LinearExpr
 from discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto_impl import (
     GenericSchedulingAutoOptalImplSolver,
 )
@@ -104,7 +105,7 @@ if not optalcp_available:
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective)
+    Objective.get_list_objectives()
     + [
         [
             (Objective.MAKESPAN, 2),
@@ -127,7 +128,7 @@ def test_auto(objective, caplog, optal_preview_only):
     ]:
         pytest.skip(f"Not testing objective {objective} here.")
 
-    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
+    def custom_fn(problem, variable: GenericSchedulingImplSolution):
         return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
 
     problem = GenericSchedulingImplProblem(
@@ -168,7 +169,6 @@ def test_auto(objective, caplog, optal_preview_only):
                 (5, 10, 2),
             ],
         },
-        custom_evaluate_fn=custom_evaluate_fn,
         non_renewable_resources={
             "non_renewable_resource": 1,
         },
@@ -208,6 +208,7 @@ def test_auto(objective, caplog, optal_preview_only):
             CumulCostComputer(),
             ScheduledTasksComputer(),
             WeightedSumStartEndObjectiveComputer(),
+            CustomComputer(custom_fn=custom_fn),
         ],
     )
 
@@ -216,7 +217,7 @@ def test_auto(objective, caplog, optal_preview_only):
     # custom objective: makespan - nb tasks allocated
     def custom_objective_factory(
         solver: GenericSchedulingAutoOptalImplSolver,
-    ) -> LinearExprT:
+    ) -> LinearExpr:
         return (
             solver.get_nb_tasks_allocated_variable()
             - solver.get_global_makespan_variable()
@@ -229,7 +230,7 @@ def test_auto(objective, caplog, optal_preview_only):
     ]
     if objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
         exactly_one_unary_resource_per_task = True
-    if isinstance(objective, Objective):
+    if isinstance(objective, str):
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.SINGLE,
             objectives=[objective],
@@ -245,7 +246,6 @@ def test_auto(objective, caplog, optal_preview_only):
         )
     solver = GenericSchedulingAutoOptalImplSolver(
         problem=problem,
-        objective=objective,
         params_objective_function=params_objective_function,
         custom_objective_factory=custom_objective_factory,
     )
@@ -258,6 +258,15 @@ def test_auto(objective, caplog, optal_preview_only):
     res = solver.solve(do_not_retrieve_solutions=optal_preview_only)
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
+
+    if objective == Objective.NB_UNARY_RESOURCES_USED:
+        assert solver.current_obj == 1
+    elif objective == Objective.MAKESPAN:
+        assert solver.current_obj == 9
+    elif objective == Objective.NB_TASKS_ALLOCATED:
+        assert solver.current_obj == -2
+    elif objective == Objective.CUSTOM:
+        assert solver.current_obj == 2 - 10
 
     if not optal_preview_only:
         # check sol and kpis
@@ -290,7 +299,7 @@ def test_auto(objective, caplog, optal_preview_only):
 
 @pytest.mark.parametrize("mode_optim", list(ModeOptim))
 def test_auto_custom(mode_optim, caplog, optal_preview_only):
-    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
+    def custom_fn(problem, variable: GenericSchedulingImplSolution):
         return variable.compute_nb_tasks_allocated() - variable.get_max_end_time()
 
     problem = GenericSchedulingImplProblem(
@@ -331,7 +340,6 @@ def test_auto_custom(mode_optim, caplog, optal_preview_only):
                 (5, 10, 2),
             ],
         },
-        custom_evaluate_fn=custom_evaluate_fn,
         non_renewable_resources={
             "non_renewable_resource": 1,
         },
@@ -372,13 +380,14 @@ def test_auto_custom(mode_optim, caplog, optal_preview_only):
                     ("task-1", 1): {"worker1": 27, "worker2": 10}
                 },
             ),
+            CustomComputer(custom_fn=custom_fn),
         ],
     )
 
     # custom objective: makespan - nb tasks allocated
     def custom_objective_factory(
         solver: GenericSchedulingAutoOptalImplSolver,
-    ) -> LinearExprT:
+    ) -> LinearExpr:
         return (
             solver.get_nb_tasks_allocated_variable()
             - solver.get_global_makespan_variable()
@@ -392,7 +401,6 @@ def test_auto_custom(mode_optim, caplog, optal_preview_only):
     )
     solver = GenericSchedulingAutoOptalImplSolver(
         problem=problem,
-        objective=Objective.CUSTOM,
         params_objective_function=params_objective_function,
         custom_objective_factory=custom_objective_factory,
     )
@@ -405,6 +413,11 @@ def test_auto_custom(mode_optim, caplog, optal_preview_only):
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
+
+    if mode_optim == ModeOptim.MINIMIZATION:
+        assert solver.current_obj == 2 - 10
+    if mode_optim == ModeOptim.MAXIMIZATION:
+        assert solver.current_obj == 2 - 9
 
     if not optal_preview_only:
         # check sol and kpis
@@ -420,7 +433,7 @@ def test_auto_custom(mode_optim, caplog, optal_preview_only):
 
 @pytest.mark.parametrize(
     "objective",
-    list(Objective)
+    Objective.get_list_objectives()
     + [
         [(Objective.MAKESPAN, 2), (Objective.NB_TASKS_ALLOCATED, -2)],
         [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)],
@@ -437,7 +450,7 @@ def test_auto_optional_tasks(objective, caplog, optal_preview_only):
     ]:
         pytest.skip(f"Not testing objective {objective} here.")
 
-    def custom_evaluate_fn(variable: GenericSchedulingImplSolution):
+    def custom_fn(problem, variable: GenericSchedulingImplSolution):
         return -sum(
             variable.get_start_time(task) for task in variable.get_present_tasks()
         )
@@ -484,8 +497,6 @@ def test_auto_optional_tasks(objective, caplog, optal_preview_only):
             "non_renewable_resource": 1,
         },
         optional_tasks={"task-1"},
-        objective=objective,
-        custom_evaluate_fn=custom_evaluate_fn,
         list_objective_computer=[
             MakespanObjectiveComputer(),
             CalendarRenewableResourceLevelObjectiveComputer(
@@ -522,6 +533,7 @@ def test_auto_optional_tasks(objective, caplog, optal_preview_only):
             CumulCostComputer(),
             ScheduledTasksComputer(),
             WeightedSumStartEndObjectiveComputer(),
+            CustomComputer(custom_fn=custom_fn),
         ],
     )
 
@@ -530,7 +542,7 @@ def test_auto_optional_tasks(objective, caplog, optal_preview_only):
     # custom objective: makespan - nb tasks allocated
     def custom_objective_factory(
         solver: GenericSchedulingAutoOptalImplSolver,
-    ) -> LinearExprT:
+    ) -> LinearExpr:
         return -solver.get_subtasks_sum_start_time_variable(problem.tasks_list)
 
     exactly_one_unary_resource_per_task = objective in [
@@ -542,7 +554,7 @@ def test_auto_optional_tasks(objective, caplog, optal_preview_only):
     if objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
         exactly_one_unary_resource_per_task = True
 
-    if isinstance(objective, Objective):
+    if isinstance(objective, str):
         params_objective_function = ParamsObjectiveFunction(
             objective_handling=ObjectiveHandling.SINGLE,
             objectives=[objective],
@@ -559,7 +571,6 @@ def test_auto_optional_tasks(objective, caplog, optal_preview_only):
     solver = GenericSchedulingAutoOptalImplSolver(
         problem=problem,
         params_objective_function=params_objective_function,
-        objective=objective,
         custom_objective_factory=custom_objective_factory,
     )
 
@@ -574,6 +585,20 @@ def test_auto_optional_tasks(objective, caplog, optal_preview_only):
     )
     assert solver.status_solver in (StatusSolver.OPTIMAL,)
     assert solver.current_obj >= solver.current_bound
+
+    if objective == Objective.NB_UNARY_RESOURCES_USED:
+        assert solver.current_obj == 1
+    elif objective == Objective.MAKESPAN:
+        assert solver.current_obj == 9
+    elif objective == Objective.NB_TASKS_ALLOCATED:
+        assert solver.current_obj == -2
+    elif objective == [(Objective.MODE_COST, 1), (Objective.ALLOCATION_COST, 1)]:
+        assert solver.current_obj == 0
+    elif objective == Objective.CUSTOM:
+        # task 1 (mode1): 3->6, task 2 : 6->10
+        assert solver.current_obj == -9
+    elif isinstance(objective, list):
+        assert solver.current_obj == 2 * 9 - 2 * 2
 
     if not optal_preview_only:
         # check sol and kpis
@@ -689,7 +714,6 @@ def test_auto_optional_tasks_with_resource_blocking(optal_preview_only):
         optional_tasks=optional_tasks,
         flexible_gap_blocking_constraints=[flexible_gap_blocking],
         span_blocking_constraints=[span_blocking],
-        objective=Objective.MAKESPAN,
     )
 
     # Solve the problem
@@ -843,7 +867,6 @@ def test_auto_with_resource_blocking(optal_preview_only):
         non_skill_cumulative_resources=non_skill_cumulative_resources,
         flexible_gap_blocking_constraints=[flexible_gap_blocking],
         span_blocking_constraints=[span_blocking],
-        objective=Objective.MAKESPAN,
     )
 
     # Solve the problem
@@ -998,7 +1021,6 @@ def test_auto_with_resource_blocking_and_choices(optal_preview_only):
         non_skill_cumulative_resources=non_skill_cumulative_resources,
         flexible_gap_blocking_constraints=[flexible_gap_blocking],
         span_blocking_constraints=[span_blocking],
-        objective=Objective.MAKESPAN,
     )
 
     # Solve the problem

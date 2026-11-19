@@ -27,7 +27,7 @@ class CalendarRenewableResourceLevelObjectiveComputer(
     problem: CalendarResourceProblem[Task, Resource]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.CALENDAR_RESOURCES_LEVELS
 
     def __init__(
@@ -65,7 +65,7 @@ class NonRenewableResourceLevelObjectiveComputer(
     problem: NonRenewableResourceProblem[Task, NonRenewableResource, UnaryResource]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.NON_RENEWABLE_RESOURCES_LEVELS
 
     def __init__(
