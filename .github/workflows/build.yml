@@ -220,6 +220,7 @@ jobs:
           if [ "${{ startsWith(matrix.os, 'windows') }}" == false ]; then
             echo "install toulbar2"
             extras="${extras}, toulbar"
+            additional_specs="${additional_specs} pytoulbar2!=1.4.0.2"  # this version not compatible with some github runners
           fi
 
           pip install "${wheelfile}[${extras}]" "pytest<9.1.0" --group test ${additional_specs}
