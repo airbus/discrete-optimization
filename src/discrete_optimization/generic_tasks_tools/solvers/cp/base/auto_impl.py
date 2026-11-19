@@ -19,7 +19,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_impl import (
     UnaryResource,
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
-    Objective,
     RawSolution,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cp.base.auto import (
@@ -29,7 +28,6 @@ from discrete_optimization.generic_tasks_tools.solvers.cp.base.typing import (
     LinearExpr,
 )
 from discrete_optimization.generic_tools.do_problem import (
-    ModeOptim,
     ParamsObjectiveFunction,
 )
 
@@ -49,13 +47,11 @@ class GenericSchedulingAutoCpImplSolver(
     """Generic cp solver for scheduling problems (with or without allocation) applied to `GenericSchedulingImplProblem`."""
 
     problem: GenericSchedulingImplProblem
-    objective = Objective.CUSTOM  # do not set the objective during super().init_model()
 
     def __init__(
         self,
         problem: GenericSchedulingImplProblem,
         params_objective_function: Optional[ParamsObjectiveFunction] = None,
-        objective: Optional[Objective] = None,
         custom_objective_factory: Optional[
             Callable[[GenericSchedulingAutoCpImplSolver], LinearExpr]
         ] = None,
@@ -66,10 +62,9 @@ class GenericSchedulingAutoCpImplSolver(
         Args:
             problem: GenericSchedulingProblem to optimize
             params_objective_function: Objective function settings to optimize
-            objective: Objective param, only used when it is CUSTOM, otherwise the params_objective_function is considered.
-            custom_objective_factory: callable constructing the custom objective variable using this solver variables.
-                It should correspond to `problem.custom_evaluate_fn`. It will be used as a way to compute
-                the subobjective "custom" if appearing in `params_objective_function.objectives`.
+            custom_objective_factory: callable constructing the custom objective expression using this solver variables,
+                corresponding to the custom objective computed by any `CustomComputer`
+                in `problem.get_list_objective_computer()`.
             **kwargs:
         """
         super().__init__(
@@ -77,7 +72,6 @@ class GenericSchedulingAutoCpImplSolver(
             params_objective_function=params_objective_function,
             **kwargs,
         )
-        self.objective = objective
         self.custom_objective_factory = custom_objective_factory
 
     def get_makespan_upper_bound(self) -> int:
@@ -85,6 +79,13 @@ class GenericSchedulingAutoCpImplSolver(
             return super().get_makespan_upper_bound()
         else:
             return min(self.new_horizon, super().get_makespan_upper_bound())
+
+    def get_custom_objective_expr(self) -> LinearExpr:
+        if self.custom_objective_factory is None:
+            raise RuntimeError(
+                "Not custom_objective_factory specified to translate the problem custom objective."
+            )
+        return self.custom_objective_factory(self)
 
     def init_model(
         self,
@@ -144,15 +145,6 @@ class GenericSchedulingAutoCpImplSolver(
             add_redundant_skill_cumulative_constraints=add_redundant_skill_cumulative_constraints,
             **kwargs,
         )
-        if self.objective == Objective.CUSTOM:
-            if self.custom_objective_factory is not None:
-                match self.params_objective_function.sense_function:
-                    case ModeOptim.MINIMIZATION:
-                        self.minimize_variable(self.custom_objective_factory(self))
-                    case ModeOptim.MAXIMIZATION:
-                        self.maximize_variable(self.custom_objective_factory(self))
-                    case _:
-                        raise NotImplementedError()
 
     def convert_task_variables_to_solution(
         self, raw_sol: RawSolution[Task, UnaryResource, Skill]

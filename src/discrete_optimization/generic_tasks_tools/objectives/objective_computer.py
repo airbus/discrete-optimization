@@ -9,9 +9,6 @@ from discrete_optimization.generic_tasks_tools.base import (
     TasksProblem,
     TasksSolution,
 )
-from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
-    Objective,
-)
 
 
 class ObjectiveComputer(ABC, Generic[Task]):
@@ -27,7 +24,7 @@ class ObjectiveComputer(ABC, Generic[Task]):
             self.set_problem(problem)
 
     @staticmethod
-    def get_objective_name() -> Objective | str: ...
+    def get_objective_name() -> str: ...
 
     def set_problem(self, problem: TasksProblem[Task]):
         self.problem = problem

@@ -16,7 +16,7 @@ class MakespanObjectiveComputer(ObjectiveComputer[Task]):
     problem: SchedulingProblem[Task]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.MAKESPAN
 
     def compute_objective(self, solution: SchedulingSolution[Task]) -> int:

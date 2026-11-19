@@ -17,6 +17,7 @@ from discrete_optimization.generic_tasks_tools.objectives.calendar_preempted imp
 from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
     CumulCostComputer,
 )
+from discrete_optimization.generic_tasks_tools.objectives.custom import CustomComputer
 from discrete_optimization.generic_tasks_tools.objectives.earliness_tardiness import (
     EarlinessTardinessComputer,
 )
@@ -57,6 +58,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.calend
 )
 from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.cumul_objective import (
     CumulCostModelerCp,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.custom import (
+    CustomModelerCp,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives.earliness_tardiness import (
     EarlinessTardinessModelerCp,
@@ -100,4 +104,5 @@ mapping_computer_to_modeler = {
     CumulCostComputer: CumulCostModelerCp,
     ScheduledTasksComputer: ScheduledTasksModelerCp,
     CalendarPreemptedComputer: CalendarPreemptedModelerCp,
+    CustomComputer: CustomModelerCp,
 }

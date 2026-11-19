@@ -24,7 +24,7 @@ class AllocationSwitchObjectiveComputer(
     base_allocation_solution: AllocationSolution[Task, UnaryResource]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.ALLOCATION_CHANGES
 
     def __init__(

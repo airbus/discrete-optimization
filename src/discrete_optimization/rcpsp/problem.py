@@ -29,11 +29,16 @@ from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingProblem,
+)
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     Objective,
 )
 from discrete_optimization.generic_tasks_tools.multimode import ModeConstraintType
 from discrete_optimization.generic_tasks_tools.objectives.objective_computer import (
     ObjectiveComputer,
+)
+from discrete_optimization.generic_tasks_tools.objectives.utils import (
+    get_objective_computer_class,
 )
 from discrete_optimization.generic_tasks_tools.resource_blocking import (
     FlexibleGapBlockingConstraint,
@@ -289,11 +294,6 @@ class RcpspProblem(
         self.update_problem()
 
     def get_list_objective_computer(self) -> list[ObjectiveComputer]:
-        from discrete_optimization.generic_tasks_tools.objectives.utils import (
-            Objective,
-            get_objective_computer_class,
-        )
-
         return [
             class_objective_computer_class(problem=self, weight_objective=1)
             for class_objective_computer_class in get_objective_computer_class(

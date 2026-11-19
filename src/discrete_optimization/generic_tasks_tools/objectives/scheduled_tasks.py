@@ -32,7 +32,7 @@ class ScheduledTasksComputer(ObjectiveComputer[Task], Generic[Task]):
             self.weight_per_task = {t: 1 for t in self.problem.tasks_list}
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.NB_TASKS_SCHEDULED
 
     def compute_objective(self, solution: SchedulingSolution[Task]) -> float | int:

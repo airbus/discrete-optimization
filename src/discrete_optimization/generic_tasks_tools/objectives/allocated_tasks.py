@@ -19,7 +19,7 @@ class AllocatedTasksObjective(ObjectiveComputer[Task], Generic[Task, UnaryResour
     problem: AllocationProblem[Task, UnaryResource]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.NB_TASKS_ALLOCATED
 
     def compute_objective(self, solution: AllocationSolution[Task, UnaryResource]):

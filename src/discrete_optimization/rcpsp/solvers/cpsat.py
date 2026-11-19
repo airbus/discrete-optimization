@@ -20,7 +20,6 @@ from discrete_optimization.generic_tasks_tools.allocation import (
 from discrete_optimization.generic_tasks_tools.enums import StartOrEnd
 from discrete_optimization.generic_tasks_tools.exclusions import NoExclusionResource
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
-    Objective,
     RawSolution,
 )
 from discrete_optimization.generic_tasks_tools.objectives.resource_levels import (
@@ -172,9 +171,6 @@ class CpSatCumulativeResourceRcpspSolver(CpSatRcpspSolver):
     In this version we sum up the resource for each given time to do the resource optimisation.
     """
 
-    objective = (
-        Objective.CUSTOM
-    )  # custom objective (linear combination of makespan and nb_used_resources)
     renewable_obj_modeler: CalendarRenewableResourceLevelModelerCp = None
     non_renewable_obj_modeler: NonRenewableResourceLevelModelerCp = None
     resources_level_obj_var: LinearExprT = None

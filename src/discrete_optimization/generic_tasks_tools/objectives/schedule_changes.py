@@ -19,7 +19,7 @@ class ScheduleChangesComputer(ObjectiveComputer[Task]):
     problem: SchedulingProblem[Task]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.SCHEDULE_CHANGES
 
     def __init__(

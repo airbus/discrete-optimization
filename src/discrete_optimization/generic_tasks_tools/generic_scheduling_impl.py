@@ -5,8 +5,7 @@ from __future__ import annotations
 
 from collections.abc import Container, Hashable, Iterable
 from copy import deepcopy
-from dataclasses import InitVar, dataclass, field
-from typing import Callable, Optional
+from dataclasses import dataclass, field
 
 import numpy as np
 import wrapt
@@ -28,8 +27,6 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling import (
     GenericSchedulingSolution,
 )
 from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
-    OBJECTIVE_DEFAULT_WEIGHTS,
-    Objective,
     RawSolution,
 )
 from discrete_optimization.generic_tasks_tools.multimode import ModeConstraintType
@@ -123,20 +120,6 @@ class GenericSchedulingImplProblem(
         span_blocking_constraints: list of span blocking constraints.
             Each constraint is (tasks, resources, metadata) where tasks is a frozenset.
             Default to no blocking constraints.
-        objective: objective for the problem. Default to minimization of makespan.
-            Either an iterable of (objective, weight) so that the problem should *maximize* the aggregated objective
-            resulting from weighted sum of objectives, or a single objective in which case we use the corresponding
-            default weight from
-            `discrete_optimization.generic_tasks_tools.generic_scheduling_utils.OBJECTIVE_DEFAULT_WEIGHTS`
-            and maximize it. For instance the default weight for makespan is -1 so that it will
-            actually minimize the makespan.
-        custom_evaluate_fn: function used to evaluate the "custom" objective (to be maximized).
-        objective_resource_weights: Weights to be used by the objective when summing used resources
-            (`Objective.NB_RESOURCES_USED`) or resources levels (`Objective.RESOURCES_LEVELS`).
-            Default to 1 for resources not mentioned.
-        mode_costs: cost of choosing each mode. Missing key => cost = 0.
-        unary_resource_costs: cost of allocating each unary resource. Missing key => cost = 0.
-        compute_time_penalty: whether to include time penalties in evaluation
 
     """
 
@@ -211,14 +194,6 @@ class GenericSchedulingImplProblem(
         tuple[ModeConstraintType, list[tuple[Task, set[int]]]]
     ] = field(default_factory=list)
     same_unary_allocation: list[set[Task]] = field(default_factory=list)
-    objective: InitVar[Objective | Iterable[tuple[Objective, int]]] = Objective.MAKESPAN
-    custom_evaluate_fn: Optional[Callable[[GenericSchedulingImplSolution], int]] = None
-    objective_resource_weights: Optional[dict[AnyResource, int]] = None
-    mode_costs: dict[Task, dict[int, int]] = field(default_factory=dict)
-    unary_resource_costs: dict[Task, dict[int, dict[UnaryResource, int]]] = field(
-        default_factory=dict
-    )
-    compute_time_penalty: bool = True
     optional_tasks: set[Task] = field(default_factory=set)
     list_objective_computer: list[ObjectiveComputer] = field(
         compare=False, default=None
@@ -241,23 +216,13 @@ class GenericSchedulingImplProblem(
         tuple[list[tuple[Task, int]], int | None, int | None]
     ] = field(default_factory=list)
 
-    def __post_init__(self, objective: Objective | Iterable[tuple[Objective, int]]):
+    def __post_init__(self):
         if self.list_objective_computer is None:
-            self.list_objective_computer = [
-                MakespanObjectiveComputer(
-                    None, OBJECTIVE_DEFAULT_WEIGHTS[Objective.MAKESPAN]
-                )
-            ]
+            self.list_objective_computer = [MakespanObjectiveComputer()]
         self.update_problem()
         # some objective computers need everything completely set in problem so we must do that at the end of __init__
         for l in self.list_objective_computer:
             l.set_problem(self)
-
-    def evaluate(self, variable: GenericSchedulingSolution) -> dict[str, float]:
-        kpis = super().evaluate(variable)
-        if self.custom_evaluate_fn is not None:
-            kpis[Objective.CUSTOM] = self.custom_evaluate_fn(variable)
-        return kpis
 
     def update_problem(self):
         """Method to call when some attributes of the problem are modified."""

@@ -26,7 +26,6 @@ from discrete_optimization.generic_tasks_tools.exclusions import (
     ExclusionResource,
     ExclusionSolution,
 )
-from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tasks_tools.no_overlap import (
     NoOverlapProblem,
     NoOverlapSolution,
@@ -633,7 +632,7 @@ class GenericSchedulingProblem(
     @abstractmethod
     def get_list_objective_computer(self) -> list[ObjectiveComputer]: ...
 
-    def get_objective_computer(self, objective: Objective) -> list[ObjectiveComputer]:
+    def get_objective_computer(self, objective: str) -> list[ObjectiveComputer]:
         mapping = {}
         for obj in self.get_list_objective_computer():
             if (obj_name := obj.get_objective_name()) not in mapping:

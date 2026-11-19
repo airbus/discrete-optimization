@@ -22,7 +22,7 @@ class CalendarPreemptedComputer(
     problem: CalendarPreemptiveProblem[Task, CumulativeResource, OtherCalendarResource]
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.NB_CAL_PREEMPTED_TASKS
 
     def __init__(

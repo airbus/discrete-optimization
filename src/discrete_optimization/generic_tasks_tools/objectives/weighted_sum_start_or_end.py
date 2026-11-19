@@ -35,7 +35,7 @@ class WeightedSumStartEndObjectiveComputer(ObjectiveComputer[Task]):
             self.dict_weight = {t: {StartOrEnd.END: 1} for t in self.problem.tasks_list}
 
     @staticmethod
-    def get_objective_name() -> Objective | str:
+    def get_objective_name() -> str:
         return Objective.WEIGHTED_SUM_START_OR_END
 
     def compute_objective(self, solution: SchedulingSolution[Task]) -> int:
