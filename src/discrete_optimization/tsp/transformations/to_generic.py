@@ -115,16 +115,6 @@ class TspToGenericSchedulingTransformation(
         ] + real_node_entities
         for t in real_node_entities:
             entity_precedence_constraints[t] = [sink_entity]
-        # real_source_entity = entity_map[source_problem.start_index]
-        # real_sink_entity = entity_map[source_problem.end_index]
-        # entity_precedence_constraints[real_source_entity] = [sink_entity]+[rn for rn in real_node_entities
-        #                                                                    if rn != real_source_entity]
-        # if real_sink_entity != real_source_entity:
-        #     for t in real_node_entities:
-        #         if t == real_sink_entity:
-        #             continue
-        #         entity_precedence_constraints[t].append(real_sink_entity)
-
         return GenericSchedulingImplProblem(
             horizon=source_problem.node_count + 2,
             durations_per_mode={t: {0: 0} for t in new_tasks_list},
