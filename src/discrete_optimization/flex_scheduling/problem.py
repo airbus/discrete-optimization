@@ -894,7 +894,6 @@ class FlexProblem(
         - resource_cost (if applicable)
         - wip_cost (if applicable)
         """
-        print("Calling evaluate")
         from .fsp_utils import SolutionDetails
 
         if isinstance(variable, ScheduleSolutionPreemptive):
@@ -1166,9 +1165,6 @@ class FlexProblem(
                     type=TypeObjective.OBJECTIVE, default_weight=1
                 ),
                 Objective.CALENDAR_RESOURCES_LEVELS: ObjectiveDoc(
-                    type=TypeObjective.OBJECTIVE, default_weight=1
-                ),
-                "wip_cost": ObjectiveDoc(
                     type=TypeObjective.OBJECTIVE, default_weight=1
                 ),
             },
