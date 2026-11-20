@@ -130,6 +130,12 @@ def test_auto(
         Objective.WEIGHTED_SUM_START_OR_END,
         Objective.EARLINESS_TARDINESS,
         Objective.NB_TASKS_SCHEDULED,
+        Objective.EARLINESS_ONLY,
+        Objective.TARDINESS_ONLY,
+        Objective.WEIGHTED_NB_LATE_TASKS,
+        Objective.WEIGHTED_NB_LATE_TASKS_BATCH,
+        Objective.WEIGHTED_SUM_START_OR_END_ENTITIES,
+        Objective.ROUTING_COSTS,
     ]:
         pytest.skip(f"Not testing objective {objective} here.")
 
@@ -463,6 +469,12 @@ def test_auto_optional_tasks(
         Objective.COST_ON_ALTERNATIVE_SUBPROBLEMS,
         Objective.WEIGHTED_SUM_START_OR_END,
         Objective.EARLINESS_TARDINESS,
+        Objective.EARLINESS_ONLY,
+        Objective.TARDINESS_ONLY,
+        Objective.WEIGHTED_NB_LATE_TASKS,
+        Objective.WEIGHTED_NB_LATE_TASKS_BATCH,
+        Objective.WEIGHTED_SUM_START_OR_END_ENTITIES,
+        Objective.ROUTING_COSTS,
     ]:
         pytest.skip(f"Not testing objective {objective} here.")
 

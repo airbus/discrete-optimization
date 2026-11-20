@@ -311,6 +311,12 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin, WarmstartFromPreviousRun
     def add_at_least_one(self, exprs: Iterable[Any]) -> list[Any]:
         return [self.cp_model.add_at_least_one(exprs)]
 
+    def add_multiple_circuit(self, arcs: Sequence[tuple[int, int, Any]]) -> list[Any]:
+        return [self.cp_model.add_multiple_circuit(arcs)]
+
+    def add_circuit(self, arcs: Sequence[tuple[int, int, Any]]) -> list[Any]:
+        return [self.cp_model.add_circuit(arcs)]
+
     def hint_solution(self, hints: dict[Any, int | bool]) -> None:
         self.cp_model.clear_hints()
         for var, value in hints.items():

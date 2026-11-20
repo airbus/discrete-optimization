@@ -44,6 +44,7 @@ def test_cpsat_small_problem(random_seed):
 
     # Solve with CP-SAT
     solver = CpSatFlexSolver(problem=problem)
+    print(solver.params_objective_function)
     result_storage = solver.solve(
         time_limit=30, callbacks=[NbIterationStopper(nb_iteration_max=1)]
     )

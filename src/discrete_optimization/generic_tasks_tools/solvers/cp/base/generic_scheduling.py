@@ -37,6 +37,9 @@ from discrete_optimization.generic_tasks_tools.solvers.cp.base.non_renewable_res
 from discrete_optimization.generic_tasks_tools.solvers.cp.base.precedence_scheduling import (
     PrecedenceSchedulingCpSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cp.base.routing import (
+    RoutingCpSolver,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cp.base.skill import (
     SkillSchedulingCpSolver,
 )
@@ -50,6 +53,7 @@ from discrete_optimization.generic_tasks_tools.solvers.cp.base.typing import (
 
 
 class GenericSchedulingCpSolver(
+    RoutingCpSolver[Task],
     ExclusionCpSolver[Task, ExclusionResource],
     AlternativeSubproblemCpSolver[Task],
     NoOverlapCpSolver[Task],
@@ -77,6 +81,8 @@ class GenericSchedulingCpSolver(
     - non-renewable resource capacity
     - skills brought to tasks by allocated unary resources
     - resource blocking (gaps and spans)
+    - entity constraints (precedence, time lags, time windows on any SchedulingEntity)
+    - batching (variable task-to-batch assignment)
 
     For a more all-in-one version actually creating variables, constraints and objectives,
     see `GenericSchedulingAutoCpSolver`.

@@ -69,7 +69,7 @@ class CumulativeResourceGenericSolution(
                     )
                     resources_consumption[resource][start:end] += val
             else:
-                mask = self.problem.calendar_preemption_data.get_binary_calendar(
+                mask = self.problem.get_calendar_preemption_data().get_binary_calendar(
                     task, mode
                 )
                 for resource in resources:

@@ -470,6 +470,54 @@ class CpSolver(SolverDO):
         """Construct boolean expression true iff at least expression is true."""
         return self.sum(exprs) >= 1
 
+    @abstractmethod
+    def add_multiple_circuit(self, arcs: Sequence[tuple[int, int, Any]]) -> list[Any]:
+        """Adds a multiple circuit constraint, aka the 'VRP' constraint.
+
+        The direct graph where arc #i (from tails[i] to head[i]) is present iff
+        literals[i] is true must satisfy this set of properties:
+        - #incoming arcs == 1 except for node 0.
+        - #outgoing arcs == 1 except for node 0.
+        - for node zero, #incoming arcs == #outgoing arcs.
+        - There are no duplicate arcs.
+        - Self-arcs are allowed except for node 0.
+        - There is no cycle in this graph, except through node 0.
+
+        Args:
+          arcs: a list of arcs. An arc is a tuple (source_node, destination_node,
+            literal). The arc is selected in the circuit if the literal is true.
+            Both source_node and destination_node must be integers between 0 and the
+            number of nodes - 1.
+
+        Returns:
+          the generated constraints
+
+        """
+        ...
+
+    @abstractmethod
+    def add_circuit(self, arcs: Sequence[tuple[int, int, Any]]) -> list[Any]:
+        """Adds Circuit(arcs).
+
+        Adds a circuit constraint from a sparse list of arcs that encode the graph.
+
+        A circuit is a unique Hamiltonian cycle in a subgraph of the total
+        graph. In case a node 'i' is not in the cycle, then there must be a
+        loop arc 'i -> i' associated with a true literal. Otherwise
+        this constraint will fail.
+
+        Args:
+          arcs: a list of arcs. An arc is a tuple (source_node, destination_node,
+            literal). The arc is selected in the circuit if the literal is true.
+            Both source_node and destination_node must be integers between 0 and the
+            number of nodes - 1.
+
+        Returns:
+          the generated constraints
+
+        """
+        ...
+
     def sum(self, exprs: Iterable[Any]) -> Any:
         """Construct integer expression corresponding to sum of variables or expressions."""
         return sum(exprs)

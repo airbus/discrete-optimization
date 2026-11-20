@@ -273,6 +273,12 @@ class MinizincCpSolver(CpSolver):
     def add_at_least_one(self, exprs: Iterable[Any]) -> list[Any]:
         raise NotImplementedError()
 
+    def add_multiple_circuit(self, arcs: Sequence[tuple[int, int, Any]]) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_circuit(self, arcs: Sequence[tuple[int, int, Any]]) -> list[Any]:
+        raise NotImplementedError()
+
     def hint_solution(self, hints: dict[Any, int | bool]) -> None:
         raise NotImplementedError()
 

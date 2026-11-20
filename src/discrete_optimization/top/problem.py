@@ -43,12 +43,12 @@ class TeamOrienteeringProblem(VrpProblem):
         end_indexes: list[int],
     ):
         super().__init__(
-            vehicle_count,
-            [float("inf")] * vehicle_count,
-            customer_count,
-            customers,
-            start_indexes,
-            end_indexes,
+            vehicle_count=vehicle_count,
+            vehicle_capacities=[float("inf")] * vehicle_count,
+            customer_count=customer_count,
+            customers=customers,
+            start_indexes=start_indexes,
+            end_indexes=end_indexes,
         )
         self.max_length_tours = max_length_tours
 
@@ -74,12 +74,12 @@ class TeamOrienteeringProblem(VrpProblem):
             start = vrp_sol.list_start_index[k]
             end = vrp_sol.list_end_index[k]
             full_path = [start] + path + [end]
-            length = sum(
+            length_of_vehicle_k = sum(
                 self.evaluate_function_indexes(xi, xi1)
                 for xi, xi1 in zip(full_path[:-1], full_path[1:])
             )
             reward = sum(self.customers[xi].reward for xi in path)
-            vals_per_vehicle.append((reward, length))
+            vals_per_vehicle.append((reward, length_of_vehicle_k))
         return vals_per_vehicle
 
     def satisfy(self, variable: VrpSolution) -> bool:

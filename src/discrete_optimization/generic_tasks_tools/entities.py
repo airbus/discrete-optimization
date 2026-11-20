@@ -27,6 +27,7 @@ from dataclasses import dataclass
 from typing import Generic
 
 from discrete_optimization.generic_tasks_tools.base import Task
+from discrete_optimization.generic_tasks_tools.batching import BatchingSolution
 from discrete_optimization.generic_tasks_tools.enums import AbsentValue, StartOrEnd
 from discrete_optimization.generic_tasks_tools.scheduling import SchedulingSolution
 from discrete_optimization.generic_tasks_tools.utils import (
@@ -545,3 +546,188 @@ class ModuloTaskEntity(SchedulingEntity[Task]):
     @property
     def entity_id(self) -> Hashable:
         return "task-modulo", self.task, self.modulo_value
+
+
+@dataclass(frozen=True)
+class VariableBatchEntity(SchedulingEntity[Task]):
+    """Entity representing a batch with variable task membership.
+
+    Unlike GroupEntity where tasks are fixed, VariableBatchEntity's membership
+    is determined by the solution. This is essential for batching problems where:
+    - The problem defines candidate tasks and batch IDs
+    - The solution assigns tasks to batches
+    - Constraints apply to batches (size limits, time windows, resource blocking)
+
+    The entity queries the solution (which must be a BatchingSolution) to determine
+    which tasks belong to this batch.
+
+    Attributes:
+        batch_id: Unique identifier for this batch
+        candidate_tasks: Set of tasks that COULD be in this batch (used for get_tasks())
+
+    Examples:
+        >>> from discrete_optimization.generic_tasks_tools.batching import (
+        ...     BatchingProblem, BatchingSolution
+        ... )
+        >>> # Define batch entities in problem
+        >>> batch1 = VariableBatchEntity("batch_1", frozenset({0, 1, 2, 3, 4}))
+        >>> batch2 = VariableBatchEntity("batch_2", frozenset({0, 1, 2, 3, 4}))
+        >>>
+        >>> # Solution must inherit from BatchingSolution and implement:
+        >>> class MySolution(SchedulingSolution, BatchingSolution):
+        ...     def get_task_batch_assignment(self, task):
+        ...         return self.job_to_batch[task]  # Return batch ID for task
+        >>>
+        >>> # Query batch1 span
+        >>> batch1.get_start_time(solution)  # min(start of jobs 0, 1, 4)
+        >>> batch1.get_end_time(solution)    # max(end of jobs 0, 1, 4)
+        >>> batch1.is_active(solution)       # True (has assigned tasks)
+
+    Requires:
+        Solution must inherit from BatchingSolution mixin (batching.py)
+        which provides get_batch_membership() and get_task_batch_assignment()
+    """
+
+    batch_id: Hashable
+    candidate_tasks: frozenset[Task] = frozenset()
+
+    def _get_assigned_tasks(self, solution: BatchingSolution[Task]) -> frozenset[Task]:
+        """Get tasks actually assigned to this batch in the solution.
+
+        Args:
+            solution: Must be a BatchingSolution instance
+
+        Returns:
+            Frozenset of tasks in this batch
+
+        Raises:
+            AttributeError: If solution doesn't have get_batch_membership method
+        """
+        # Solution must implement BatchingSolution mixin
+        # Use get_batch_membership which is guaranteed by the mixin
+        return frozenset(solution.get_batch_membership(self.batch_id))
+
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        assigned_tasks = self._get_assigned_tasks(solution)
+        if not assigned_tasks:
+            return AbsentValue.ABSENT
+
+        # Start time = earliest start of tasks in batch
+        active_tasks = [task for task in assigned_tasks if solution.is_present(task)]
+        if not active_tasks:
+            return AbsentValue.ABSENT
+
+        return min(solution.get_start_time(task) for task in active_tasks)
+
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        assigned_tasks = self._get_assigned_tasks(solution)
+        if not assigned_tasks:
+            return AbsentValue.ABSENT
+
+        # End time = latest end of tasks in batch
+        active_tasks = [task for task in assigned_tasks if solution.is_present(task)]
+        if not active_tasks:
+            return AbsentValue.ABSENT
+
+        return max(solution.get_end_time(task) for task in active_tasks)
+
+    def is_active(self, solution: SchedulingSolution) -> bool:
+        """Batch is active if it has at least one assigned task."""
+        try:
+            assigned_tasks = self._get_assigned_tasks(solution)
+            return len(assigned_tasks) > 0 and any(
+                solution.is_present(task) for task in assigned_tasks
+            )
+        except AttributeError:
+            # Solution doesn't implement BatchingSolution
+            return False
+
+    def get_tasks(self) -> frozenset[Task]:
+        """Return candidate tasks (actual assignment depends on solution)."""
+        return self.candidate_tasks
+
+    @property
+    def entity_id(self) -> Hashable:
+        return ("variable_batch", self.batch_id)
+
+
+@dataclass(frozen=True)
+class DummyEntity(SchedulingEntity[Task]):
+    start: int
+    end: int
+    attribute: int  # to compute potential setupcost/time
+    id_entity: Hashable
+
+    def get_tasks(self) -> frozenset[Task]:
+        return frozenset()
+
+    def is_active(self, solution: SchedulingSolution) -> bool:
+        return True
+
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        return self.start
+
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        return self.end
+
+    def entity_id(self) -> Hashable:
+        return self.id_entity
+
+
+@dataclass(frozen=True)
+class ModuloTwoEntity(SchedulingEntity[Task]):
+    entity: SchedulingEntity[Task]
+    modulo_entity: SchedulingEntity[Task]
+    modulo_value_start_or_end: StartOrEnd = StartOrEnd.START
+
+    @optional_override_implem
+    def unfold_entities(self):
+        yield self.entity
+        self.entity.unfold_entities()
+        yield self.modulo_entity
+        self.modulo_entity.unfold_entities()
+
+    def get_tasks(self) -> frozenset[Task]:
+        return self.entity.get_tasks()
+
+    def is_active(self, solution: SchedulingSolution) -> bool:
+        return self.entity.is_active(solution)
+
+    def get_start_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        modulo = self.get_modulo_value(solution)
+        if modulo == AbsentValue.ABSENT:
+            return self.entity.get_start_time(solution)
+        else:
+            st = self.entity.get_start_time(solution)
+            if st == AbsentValue.ABSENT:
+                return st
+            else:
+                return st % modulo
+
+    def get_end_time(self, solution: SchedulingSolution) -> int | AbsentValue:
+        if self.entity.is_active(solution):
+            dur = self.entity.get_end_time(solution) - self.entity.get_start_time(
+                solution
+            )
+            st = self.get_start_time(solution)
+            if st != AbsentValue.ABSENT:
+                return st + dur
+        return AbsentValue.ABSENT
+
+    def get_modulo_value(self, solution: SchedulingSolution) -> int | AbsentValue:
+        modulo = None
+        match self.modulo_value_start_or_end:
+            case StartOrEnd.START:
+                modulo = self.modulo_entity.get_start_time(solution)
+            case StartOrEnd.END:
+                modulo = self.modulo_entity.get_end_time(solution)
+        return modulo
+
+    @property
+    def entity_id(self) -> Hashable:
+        return (
+            "entity-modulo",
+            self.entity.entity_id,
+            self.modulo_entity.entity_id,
+            self.modulo_value_start_or_end,
+        )

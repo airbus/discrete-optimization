@@ -26,7 +26,11 @@ def run_cpsat_vrp():
     solver.init_model(optional_node=False, cut_transition=False)
     p = ParametersCp.default_cpsat()
     p.nb_process = 10
-    res = solver.solve(parameters_cp=p, time_limit=20)
+    res = solver.solve(
+        parameters_cp=p,
+        time_limit=20,
+        ortools_cpsat_solver_kwargs={"log_search_progress": True},
+    )
     print(solver.status_solver)
     sol, fit = res.get_best_solution_fit()
     sol: VrpSolution

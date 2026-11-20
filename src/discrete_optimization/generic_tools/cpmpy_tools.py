@@ -657,7 +657,7 @@ class CpmpySolver(CpSolver, WarmstartFromPreviousRunMixin):
     def retrieve_current_solution(self) -> Solution:
         """Construct a do solution from the cpmpy solver internal solution.
 
-        It will be called after self.model.solve()
+        It will be called after self.cp_model.solve()
 
         Returns:
             the solution, at do format.
@@ -816,6 +816,12 @@ class CpmpySolver(CpSolver, WarmstartFromPreviousRunMixin):
 
     def add_at_least_one(self, exprs: Iterable[Any]) -> list[Any]:
         return super().add_at_least_one(exprs)
+
+    def add_multiple_circuit(self, arcs: Sequence[tuple[int, int, Any]]) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_circuit(self, arcs: Sequence[tuple[int, int, Any]]) -> list[Any]:
+        raise NotImplementedError()
 
     def hint_solution(self, hints: dict[Any, int | bool]) -> None:
         self.hints = hints

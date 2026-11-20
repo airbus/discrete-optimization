@@ -275,6 +275,12 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin, WarmstartFromPreviousRunMixin
     def add_modulo_equality(self, target: Any, expr: Any, mod: Any) -> list[Any]:
         raise NotImplementedError()
 
+    def add_multiple_circuit(self, arcs: Sequence[tuple[int, int, Any]]) -> list[Any]:
+        raise NotImplementedError()
+
+    def add_circuit(self, arcs: Sequence[tuple[int, int, Any]]) -> list[Any]:
+        raise NotImplementedError()
+
     def add_implication(self, left_bool_expr: Any, right_bool_expr: Any) -> list[Any]:
         if right_bool_expr is None or isinstance(right_bool_expr, cp.Constraint):
             raise NotImplementedError(

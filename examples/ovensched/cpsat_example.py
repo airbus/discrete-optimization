@@ -55,8 +55,18 @@ def solve_with_cpsat(
 
 def run_cpsat_example():
     """Run a simple example with the CP-SAT solver."""
+    # Best solution fitness: (<discrete_optimization.ovensched.problem.OvenSchedulingSolution object at 0x11af4cad0>, 73040)
+    # ================================================================================
+    # OVEN SCHEDULING SOLUTION SUMMARY
+    # ================================================================================
+    #
+    # Objective Values:
+    #   Processing time: 1040
+    #   Late jobs: 36
+    #   Setup cost: 253
+    #
     instance_name = "50NewRandomOvenSchedulingInstance-n50-k2-a5--2904-15.05.46.dat"
-
+    # instance_name = "32RandomOvenSchedulingInstance-n25-k5-a2-WithInitialStates.dat"
     print(f"Loading instance: {instance_name}")
     problem = load_problem(instance_name)
     print(f"Problem: {problem.n_jobs} jobs, {problem.n_machines} machines")
@@ -78,7 +88,7 @@ def run_cpsat_example():
 def run_cpsat_warmstart():
     """Run CP-SAT with warm start from local search."""
     instance_name = "50NewRandomOvenSchedulingInstance-n50-k2-a5--2904-15.05.46.dat"
-
+    instance_name = "32RandomOvenSchedulingInstance-n25-k5-a2-WithInitialStates.dat"
     print(f"Loading instance: {instance_name}")
     problem = load_problem(instance_name)
     print(f"Problem: {problem.n_jobs} jobs, {problem.n_machines} machines")
@@ -119,5 +129,5 @@ def run_cpsat_warmstart():
 
 
 if __name__ == "__main__":
-    # run_cpsat_example()
-    run_cpsat_warmstart()
+    run_cpsat_example()
+    # run_cpsat_warmstart()

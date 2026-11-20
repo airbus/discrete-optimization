@@ -40,11 +40,14 @@ from discrete_optimization.ovensched.utils import (
 logger = logging.getLogger(__name__)
 
 
-def load_problem(instance_name: str) -> OvenSchedulingProblem:
+def load_problem(
+    instance_name: str, max_nb_batches_per_machine: int = 10
+) -> OvenSchedulingProblem:
     """Load a problem instance by name.
 
     Args:
         instance_name: Name or partial name of the instance file
+        max_nb_batches_per_machine: Maximum number of batches per machine
 
     Returns:
         OvenSchedulingProblem instance
@@ -52,7 +55,9 @@ def load_problem(instance_name: str) -> OvenSchedulingProblem:
     files = get_data_available()
     file_path = [f for f in files if instance_name in f]
     if file_path:
-        return parse_dat_file(file_path[0])
+        return parse_dat_file(
+            file_path[0], max_nb_batches_per_machine=max_nb_batches_per_machine
+        )
     else:
         raise FileNotFoundError(f"Instance {instance_name} not found")
 
@@ -96,7 +101,7 @@ def solve_with_ls(
         )
     elif ls_solver == "sa":
         temperature_handler = TemperatureSchedulingFactor(
-            temperature=0.15673095467235415,
+            initial_temperature=0.15673095467235415,
             restart_handler=restart_handler,
             coefficient=0.9999999997,
         )
