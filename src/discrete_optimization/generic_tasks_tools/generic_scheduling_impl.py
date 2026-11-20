@@ -260,11 +260,11 @@ class GenericSchedulingImplProblem(
     exclusion_resource_boolean: dict[Task, dict[int, dict[ExclusionResource, bool]]] = (
         field(default_factory=dict)
     )
-    """Specify custom constraint on presence of tasks"""
+    # Specify custom constraint on presence of tasks
     linear_cstrs_presence_tasks: list[
         tuple[list[tuple[Task, int]], int | None, int | None]
     ] = field(default_factory=list)
-    """Entity constraints: precedence, time lags, time windows on any SchedulingEntity"""
+    # Entity constraints: precedence, time lags, time windows on any SchedulingEntity
     entity_precedence_constraints: dict[
         SchedulingEntity, Iterable[SchedulingEntity]
     ] = field(default_factory=dict)
@@ -295,7 +295,7 @@ class GenericSchedulingImplProblem(
     entity_time_window_bounds: dict[
         tuple[SchedulingEntity, StartOrEnd], tuple[int | None, int | None]
     ] = field(default_factory=dict)
-    """Batching: variable batch assignment with capacity, compatibility, setup constraints"""
+    # Batching: variable batch assignment with capacity, compatibility, setup constraints
     batch_entities: list = field(default_factory=list)  # list[VariableBatchEntity]
     task_to_batch_assignment: dict[Task, Hashable] = field(default_factory=dict)
     batching_data: BatchingData = field(default_factory=BatchingData)
@@ -305,12 +305,12 @@ class GenericSchedulingImplProblem(
     )
 
     def __post_init__(self):
-        if self.list_objective_computer is None:
-            self.list_objective_computer = [MakespanObjectiveComputer()]
         self.update_problem()
-        # some objective computers need everything completely set in problem so we must do that at the end of __init__
-        for l in self.list_objective_computer:
-            l.set_problem(self)
+
+    @property
+    def default_objective_computer_list(self) -> list[ObjectiveComputer[Task]]:
+        """Default objective: makespan."""
+        return [MakespanObjectiveComputer()]
 
     def update_problem(self):
         """Method to call when some attributes of the problem are modified."""
@@ -330,6 +330,15 @@ class GenericSchedulingImplProblem(
         self.update_precedence_constraints()
         self.update_calendar_preemptive_tasks()
         self.update_allocation_compatibility()
+        # some objective computers need everything completely set in problem
+        # so we must update computers at the end
+        self.update_objective_computer_list()
+
+    def update_objective_computer_list(self):
+        if self.list_objective_computer is None:
+            self.list_objective_computer = self.default_objective_computer_list
+        for l in self.list_objective_computer:
+            l.set_problem(self)
 
     def update_allocation_compatibility(self):
         if len(self.unary_resources_task_mode_compatibility) == 0:
