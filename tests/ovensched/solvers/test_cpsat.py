@@ -5,6 +5,7 @@
 
 import pytest
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -90,9 +91,12 @@ class TestCpSatSolver:
         evaluation = problem.evaluate(solution)
 
         assert isinstance(evaluation, dict)
-        assert "processing_time" in evaluation
-        assert "nb_late_jobs" in evaluation
-        assert "setup_cost" in evaluation
+        for obj in [
+            Objective.WEIGHTED_SUM_START_OR_END,
+            Objective.WEIGHTED_NB_LATE_TASKS_BATCH,
+            Objective.ROUTING_COSTS,
+        ]:
+            assert obj in evaluation
 
     def test_batch_capacity_respected(self, solver_and_result):
         """Test that batch capacity constraints are respected."""

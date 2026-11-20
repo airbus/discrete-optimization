@@ -3,15 +3,11 @@
 #  LICENSE file in the root directory of this source tree.
 import logging
 
-import plotly.io as pio
-
 from discrete_optimization.workforce.scheduling.parser import (
     get_data_available,
     parse_json_to_problem,
 )
 from discrete_optimization.workforce.scheduling.problem import AllocSchedulingProblem
-
-pio.renderers.default = "browser"  # or "vscode", "notebook", "colab", etc.
 
 logging.basicConfig(level=logging.INFO)
 
