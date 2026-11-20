@@ -102,6 +102,8 @@ class TasksCpmpySolver(CpmpySolver, TasksCpSolver[Task]):
                 is_present=is_present,
             )
         else:
+            if len(intervals) == 0:
+                return []
             start, duration = tuple(
                 zip(*((interval.start, interval.duration) for interval in intervals))
             )

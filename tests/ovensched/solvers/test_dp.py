@@ -5,6 +5,7 @@
 
 import pytest
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
 )
@@ -69,5 +70,5 @@ def test_dp_vs_greedy(tiny_problem):
     dp_eval = tiny_problem.evaluate(dp_result.get_best_solution())
 
     # Both should find feasible solutions
-    assert greedy_eval["processing_time"] > 0
-    assert dp_eval["processing_time"] > 0
+    assert greedy_eval[Objective.WEIGHTED_SUM_START_OR_END] > 0
+    assert dp_eval[Objective.WEIGHTED_SUM_START_OR_END] > 0

@@ -5,6 +5,7 @@
 
 import pytest
 
+from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import Objective
 from discrete_optimization.generic_tools.do_solver import SolverDO
 from discrete_optimization.generic_tools.result_storage.result_storage import (
     ResultStorage,
@@ -55,12 +56,14 @@ class TestGreedySolver:
         """Test that solution can be evaluated."""
         solver, result, problem = solver_and_result
         solution = result.get_best_solution()
-
         evaluation = problem.evaluate(solution)
-
         assert isinstance(evaluation, dict)
-        assert "processing_time" in evaluation
-        assert "setup_cost" in evaluation
+        for obj in [
+            Objective.WEIGHTED_SUM_START_OR_END,
+            Objective.WEIGHTED_NB_LATE_TASKS_BATCH,
+            Objective.ROUTING_COSTS,
+        ]:
+            assert obj in evaluation
 
     def test_greedy_is_deterministic(self, tiny_problem):
         """Test that greedy produces same result each time (needs 2 calls)."""
@@ -94,6 +97,6 @@ class TestGreedySolver:
         evaluation = problem.evaluate(solution)
 
         # Solution should have non-zero processing time and finite setup cost
-        assert evaluation["processing_time"] > 0
-        assert evaluation["setup_cost"] >= 0
-        assert evaluation["setup_cost"] < float("inf")
+        assert evaluation[Objective.WEIGHTED_SUM_START_OR_END] > 0
+        assert evaluation[Objective.ROUTING_COSTS] >= 0
+        assert evaluation[Objective.ROUTING_COSTS] < float("inf")
