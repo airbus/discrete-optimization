@@ -1,0 +1,69 @@
+discrete\_optimization.generic\_tasks\_tools package
+====================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.generic_tasks_tools.solvers
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tasks\_tools.allocation module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.allocation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tasks\_tools.base module
+--------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tasks\_tools.enums module
+---------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.enums
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tasks\_tools.multimode module
+-------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.multimode
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tasks\_tools.precedence module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.precedence
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tasks\_tools.scheduling module
+--------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.scheduling
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:

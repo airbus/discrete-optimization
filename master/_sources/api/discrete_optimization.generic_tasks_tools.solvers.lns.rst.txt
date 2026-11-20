@@ -1,0 +1,37 @@
+discrete\_optimization.generic\_tasks\_tools.solvers.lns package
+================================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tasks\_tools.solvers.lns.constraint\_extractor module
+-------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.lns.constraint_extractor
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.lns.constraint\_handler module
+-----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.lns.constraint_handler
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.lns.neighbor\_tools module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.lns.neighbor_tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.lns
+   :members:
+   :show-inheritance:
+   :undoc-members:

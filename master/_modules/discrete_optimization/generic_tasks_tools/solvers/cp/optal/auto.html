@@ -1,0 +1,533 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnaryResource</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbsentValue</span><span class="p">,</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.exclusions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExclusionResource</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.generic_scheduling_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RawSolution</span><span class="p">,</span>
+    <span class="n">TaskVariable</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.non_renewable_resource</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NonRenewableResource</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Task</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.skill</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NonSkillCumulativeResource</span><span class="p">,</span>
+    <span class="n">Skill</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cp.base.auto</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GenericSchedulingAutoCpSolver</span><span class="p">,</span>
+    <span class="n">SinglemodeGenericSchedulingAutoCpSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cp.base.typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">IntervalVar</span><span class="p">,</span>
+    <span class="n">LinearExpr</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cp.optal.generic_scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GenericSchedulingOptalSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Solution</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">optalcp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cp</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">cp</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">AnyResource</span> <span class="o">=</span> <span class="n">NonRenewableResource</span> <span class="o">|</span> <span class="n">UnaryResource</span> <span class="o">|</span> <span class="n">Skill</span> <span class="o">|</span> <span class="n">NonSkillCumulativeResource</span>
+
+
+<div class="viewcode-block" id="GenericSchedulingAutoOptalSolver">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.GenericSchedulingAutoOptalSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenericSchedulingAutoOptalSolver</span><span class="p">(</span>
+    <span class="n">GenericSchedulingOptalSolver</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span>
+        <span class="n">UnaryResource</span><span class="p">,</span>
+        <span class="n">Skill</span><span class="p">,</span>
+        <span class="n">NonSkillCumulativeResource</span><span class="p">,</span>
+        <span class="n">NonRenewableResource</span><span class="p">,</span>
+        <span class="n">AnyResource</span><span class="p">,</span>
+        <span class="n">ExclusionResource</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">GenericSchedulingAutoCpSolver</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span>
+        <span class="n">UnaryResource</span><span class="p">,</span>
+        <span class="n">Skill</span><span class="p">,</span>
+        <span class="n">NonSkillCumulativeResource</span><span class="p">,</span>
+        <span class="n">NonRenewableResource</span><span class="p">,</span>
+        <span class="n">ExclusionResource</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">Generic</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span>
+        <span class="n">UnaryResource</span><span class="p">,</span>
+        <span class="n">Skill</span><span class="p">,</span>
+        <span class="n">NonSkillCumulativeResource</span><span class="p">,</span>
+        <span class="n">NonRenewableResource</span><span class="p">,</span>
+        <span class="n">ExclusionResource</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Generic optal solver for scheduling problems (with or without allocation).</span>
+
+<span class="sd">    The needed variables are automatically created, with common constraints (precedence, resource capacity).</span>
+<span class="sd">    The objective is set by default to global makespan but can be changed by modifying `solver.default_objective` value.</span>
+
+<span class="sd">    This solver class needs still to be derived to create a solution from the proper class.</span>
+<span class="sd">    You will need at least to implement the conversion from the task variables to the actual solution object.</span>
+
+<span class="sd">    If custom constraints are needed, override `init_model()`.</span>
+<span class="sd">    If a custom objective is needed, set `solver.default_objective` to `Objective.CUSTOM` so that no objective is set</span>
+<span class="sd">    by default and override `init_model()` to define your objective.</span>
+
+<span class="sd">    """</span>
+
+    <span class="n">task_interval_variables</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">cp</span><span class="o">.</span><span class="n">IntervalVar</span><span class="p">]</span>
+    <span class="n">modes_intervals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">cp</span><span class="o">.</span><span class="n">IntervalVar</span><span class="p">]]</span>
+    <span class="n">allocation_intervals</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">,</span> <span class="n">cp</span><span class="o">.</span><span class="n">IntervalVar</span><span class="p">]]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_interval_variables</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_interval_mode_variables</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_allocation_intervals</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_skill_variables</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_energy_constraints</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_create_energy_variables</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_interval_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="n">modes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_modes</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
+            <span class="n">possible_durations</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_mode_duration</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">modes</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">task_interval_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                    <span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+                <span class="n">end</span><span class="o">=</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                    <span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+                <span class="n">length</span><span class="o">=</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">possible_durations</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">possible_durations</span><span class="p">)),</span>
+                <span class="n">optional</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">create_present_task_variables_for_all_tasks</span>
+                <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_optional</span><span class="p">(</span><span class="n">task</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_interval_mode_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="n">task_interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_interval_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="n">modes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_modes</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modes_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">modes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">modes</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">modes_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span> <span class="o">=</span> <span class="n">task_interval</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">modes</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">modes_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">interval_var</span><span class="p">(</span>
+                        <span class="n">start</span><span class="o">=</span><span class="p">(</span><span class="n">task_interval</span><span class="o">.</span><span class="n">start_min</span><span class="p">,</span> <span class="n">task_interval</span><span class="o">.</span><span class="n">start_max</span><span class="p">),</span>
+                        <span class="n">end</span><span class="o">=</span><span class="p">(</span><span class="n">task_interval</span><span class="o">.</span><span class="n">end_min</span><span class="p">,</span> <span class="n">task_interval</span><span class="o">.</span><span class="n">end_max</span><span class="p">),</span>
+                        <span class="n">length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_mode_duration</span><span class="p">(</span>
+                            <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span>
+                        <span class="p">),</span>
+                        <span class="n">optional</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_mode_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="c1"># task interval must be one of the mode task intervals</span>
+                <span class="n">task_interval</span><span class="o">.</span><span class="n">alternative</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modes_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_allocation_intervals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allocation_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">task_interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_interval_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">unary_resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">unary_resources_list</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_compatible_task_unary_resource</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span>
+                <span class="p">):</span>
+                    <span class="n">allocation_interval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cp_model</span><span class="o">.</span><span class="n">interval_var</span><span class="p">(</span>
+                        <span class="n">start</span><span class="o">=</span><span class="p">(</span><span class="n">task_interval</span><span class="o">.</span><span class="n">start_min</span><span class="p">,</span> <span class="n">task_interval</span><span class="o">.</span><span class="n">start_max</span><span class="p">),</span>
+                        <span class="n">end</span><span class="o">=</span><span class="p">(</span><span class="n">task_interval</span><span class="o">.</span><span class="n">end_min</span><span class="p">,</span> <span class="n">task_interval</span><span class="o">.</span><span class="n">end_max</span><span class="p">),</span>
+                        <span class="n">length</span><span class="o">=</span><span class="p">(</span><span class="n">task_interval</span><span class="o">.</span><span class="n">length_min</span><span class="p">,</span> <span class="n">task_interval</span><span class="o">.</span><span class="n">length_max</span><span class="p">),</span>
+                        <span class="n">optional</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_allocated_</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">unary_resource</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">allocation_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">unary_resource</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">allocation_interval</span>
+                    <span class="p">)</span>
+                    <span class="c1"># synchro start and end</span>
+                    <span class="n">allocation_interval</span><span class="o">.</span><span class="n">start_at_start</span><span class="p">(</span><span class="n">task_interval</span><span class="p">)</span>
+                    <span class="n">allocation_interval</span><span class="o">.</span><span class="n">end_at_end</span><span class="p">(</span><span class="n">task_interval</span><span class="p">)</span>
+                    <span class="c1"># cannot exist if the task is absent i.e. the main interval is absent</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_implication</span><span class="p">(</span>
+                        <span class="o">~</span><span class="n">task_interval</span><span class="o">.</span><span class="n">presence</span><span class="p">(),</span> <span class="o">~</span><span class="n">allocation_interval</span><span class="o">.</span><span class="n">presence</span><span class="p">()</span>
+                    <span class="p">)</span>
+            <span class="c1"># redundant alternative constraint if exactly one resource will be allocated</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exactly_one_unary_resource_per_task</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="c1"># if use only skill to allocate, at_most_one_unary_resource_per_task is exactly one for each task needing a skill</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">at_most_one_unary_resource_per_task</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_only_skill_to_allocate</span>
+            <span class="p">):</span>
+                <span class="c1"># main interval is one of the allocation intervals</span>
+                <span class="c1"># (this is a redundant constraint but maybe useful to the solver)</span>
+                <span class="n">allocation_intervals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">allocation_intervals</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">task_interval</span><span class="o">.</span><span class="n">alternative</span><span class="p">(</span><span class="n">allocation_intervals</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GenericSchedulingAutoOptalSolver.get_duration_variable">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.GenericSchedulingAutoOptalSolver.get_duration_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_duration_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">task_interval_will_exist</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExpr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_interval_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">length</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingAutoOptalSolver.get_task_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.GenericSchedulingAutoOptalSolver.get_task_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cp</span><span class="o">.</span><span class="n">IntervalVar</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_interval_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingAutoOptalSolver.get_task_is_present_variable">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.GenericSchedulingAutoOptalSolver.get_task_is_present_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_is_present_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExpr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_interval_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">presence</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingAutoOptalSolver.get_task_unary_resource_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.GenericSchedulingAutoOptalSolver.get_task_unary_resource_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_unary_resource_interval</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntervalVar</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">unary_resource</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingAutoOptalSolver.get_task_unary_resource_is_present_variable">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.GenericSchedulingAutoOptalSolver.get_task_unary_resource_is_present_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_unary_resource_is_present_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExpr</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">unary_resource</span><span class="p">]</span><span class="o">.</span><span class="n">presence</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingAutoOptalSolver.get_task_start_or_end_variable">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.GenericSchedulingAutoOptalSolver.get_task_start_or_end_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_start_or_end_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExpr</span><span class="p">:</span>
+        <span class="n">itv</span><span class="p">:</span> <span class="n">cp</span><span class="o">.</span><span class="n">IntervalVar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_interval</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">itv</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">itv</span><span class="o">.</span><span class="n">end</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingAutoOptalSolver.get_task_mode_is_present_variable">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.GenericSchedulingAutoOptalSolver.get_task_mode_is_present_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_mode_is_present_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExpr</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">modes_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">presence</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingAutoOptalSolver.get_task_mode_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.GenericSchedulingAutoOptalSolver.get_task_mode_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_mode_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cp</span><span class="o">.</span><span class="n">IntervalVar</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">modes_intervals</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingAutoOptalSolver.retrieve_solution">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.GenericSchedulingAutoOptalSolver.retrieve_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="s2">"cp.Solution"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="c1"># construct generic tasks variables</span>
+        <span class="n">raw_sol</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_tasks_variables_optal</span><span class="p">(</span><span class="n">solution</span><span class="o">=</span><span class="n">result</span><span class="p">)</span>
+        <span class="c1"># convert to specific solution type</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_task_variables_to_solution</span><span class="p">(</span><span class="n">raw_sol</span><span class="o">=</span><span class="n">raw_sol</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingAutoOptalSolver.retrieve_tasks_variables_optal">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.GenericSchedulingAutoOptalSolver.retrieve_tasks_variables_optal">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_tasks_variables_optal</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="s2">"cp.Solution"</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RawSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">Skill</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Construct each task variable from the optal internal solution.</span>
+
+<span class="sd">        We cannot use the generic `retrieve_tasks_variables()` as the way to retrieve the value of a given expression</span>
+<span class="sd">        or variable may vary. Often we need to go back to the interval variable it is derived from.</span>
+
+<span class="sd">        This method will be called in `self.retrieve_solution()` before `self.convert_task_variables_to_solution()`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            solution:</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            the task variables for the intermediate solution</span>
+
+<span class="sd">        """</span>
+        <span class="n">task_variables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="n">itv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_interval</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="n">is_present</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">is_present</span><span class="p">(</span><span class="n">itv</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_present</span><span class="p">:</span>
+                <span class="n">task_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">TaskVariable</span><span class="p">(</span>
+                    <span class="n">start</span><span class="o">=</span><span class="n">AbsentValue</span><span class="o">.</span><span class="n">ABSENT</span><span class="p">,</span>
+                    <span class="n">end</span><span class="o">=</span><span class="n">AbsentValue</span><span class="o">.</span><span class="n">ABSENT</span><span class="p">,</span>
+                    <span class="n">mode</span><span class="o">=</span><span class="n">AbsentValue</span><span class="o">.</span><span class="n">ABSENT</span><span class="p">,</span>
+                    <span class="n">allocated</span><span class="o">=</span><span class="p">{},</span>
+                    <span class="n">is_present</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">itv</span><span class="p">)</span>
+                <span class="n">modes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_modes</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="n">AbsentValue</span><span class="o">.</span><span class="n">ABSENT</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">modes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">mode</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">modes</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">modes</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">solution</span><span class="o">.</span><span class="n">is_present</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">get_task_mode_interval</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+                        <span class="p">):</span>
+                            <span class="k">break</span>
+
+                <span class="k">def</span><span class="w"> </span><span class="nf">get_skill_used</span><span class="p">(</span>
+                    <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+                <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">Skill</span><span class="p">]:</span>
+<span class="w">                    </span><span class="sd">"""Get set of skills used by unary resource for the task</span>
+
+<span class="sd">                    Hypothesis: the unary resource is allocated to the task. No need to check it again.</span>
+
+<span class="sd">                    Args:</span>
+<span class="sd">                        task:</span>
+<span class="sd">                        unary_resource:</span>
+
+<span class="sd">                    Returns:</span>
+
+<span class="sd">                    """</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">skill_variables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">skill_variables</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">unary_resource</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="nb">set</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">skills</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+                        <span class="k">for</span> <span class="n">skill</span><span class="p">,</span> <span class="n">skill_var</span> <span class="ow">in</span> <span class="n">skill_variables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">skill_var</span><span class="p">,</span> <span class="n">cp</span><span class="o">.</span><span class="n">BoolExpr</span><span class="p">):</span>
+                                <span class="c1"># When skill_var is not a variable but an expression,</span>
+                                <span class="c1"># we cannot use `solution.get_value()` on it (with optal 2026.11.0)</span>
+                                <span class="c1"># It is the case where the use of the skill is directly</span>
+                                <span class="c1"># defined by the fact that the unary resource is allocated to the task.</span>
+                                <span class="c1"># As `get_skill_used()` is called only when `unary_resource` is allocated,</span>
+                                <span class="c1"># we add the skill.</span>
+                                <span class="n">skills</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">skill</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>  <span class="c1"># bool variable</span>
+                                <span class="n">skill_used</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">skill_variables</span><span class="p">[</span><span class="n">skill</span><span class="p">])</span>
+                                <span class="k">if</span> <span class="n">skill_used</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                                    <span class="n">skills</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">skill</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="n">skills</span>
+
+                <span class="n">allocated</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">unary_resource</span><span class="p">:</span> <span class="n">get_skill_used</span><span class="p">(</span>
+                        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="o">=</span><span class="n">unary_resource</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">unary_resource</span><span class="p">,</span> <span class="n">allocation_interval</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_intervals</span><span class="p">[</span>
+                        <span class="n">task</span>
+                    <span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">solution</span><span class="o">.</span><span class="n">is_present</span><span class="p">(</span><span class="n">allocation_interval</span><span class="p">))</span>
+                <span class="p">}</span>
+                <span class="n">task_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">TaskVariable</span><span class="p">(</span>
+                    <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span>
+                    <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">,</span>
+                    <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+                    <span class="n">allocated</span><span class="o">=</span><span class="n">allocated</span><span class="p">,</span>
+                    <span class="n">is_present</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Stores other decision</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_flexible_gap_blocking_constraints</span><span class="p">()</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_span_blocking_constraints</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">has_a_choice</span><span class="p">():</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name_choice</span>
+                <span class="n">choice</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_choices_blocking_constraint_vars</span><span class="p">[</span><span class="n">tag</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_choices_blocking_constraint_vars</span><span class="p">[</span><span class="n">tag</span><span class="p">][</span><span class="n">val</span><span class="p">]</span>
+                    <span class="p">):</span>
+                        <span class="n">choice</span> <span class="o">=</span> <span class="n">val</span>
+                        <span class="k">break</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">choice</span>
+
+        <span class="k">return</span> <span class="n">RawSolution</span><span class="p">(</span><span class="n">task_variables</span><span class="o">=</span><span class="n">task_variables</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SinglemodeGenericSchedulingAutoOptalSolver">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.optal.html#discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto.SinglemodeGenericSchedulingAutoOptalSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SinglemodeGenericSchedulingAutoOptalSolver</span><span class="p">(</span>
+    <span class="n">SinglemodeGenericSchedulingAutoCpSolver</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span>
+        <span class="n">UnaryResource</span><span class="p">,</span>
+        <span class="n">Skill</span><span class="p">,</span>
+        <span class="n">NonSkillCumulativeResource</span><span class="p">,</span>
+        <span class="n">NonRenewableResource</span><span class="p">,</span>
+        <span class="n">ExclusionResource</span><span class="p">,</span>
+    <span class="p">],</span>
+    <span class="n">GenericSchedulingAutoOptalSolver</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span>
+        <span class="n">UnaryResource</span><span class="p">,</span>
+        <span class="n">Skill</span><span class="p">,</span>
+        <span class="n">NonSkillCumulativeResource</span><span class="p">,</span>
+        <span class="n">NonRenewableResource</span><span class="p">,</span>
+        <span class="n">ExclusionResource</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Subclass of GenericSchedulingAutoOptalSolver for single mode problems.</span>
+
+<span class="sd">    Give access to task intervals without dealing with modes.</span>
+
+<span class="sd">    """</span>
+
+    <span class="o">...</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

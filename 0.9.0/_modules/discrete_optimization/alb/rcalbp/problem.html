@@ -1,0 +1,979 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.alb.rcalbp.problem &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.alb.rcalbp.problem</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.alb.rcalbp.problem</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Resource-Constrained Assembly Line Balancing Problem (RC-ALBP)</span>
+
+<span class="sd">This problem combines elements from:</span>
+<span class="sd">- SALBP (Simple Assembly Line Balancing): Task assignment and precedence</span>
+<span class="sd">- Resource constraints at workstations</span>
+
+<span class="sd">Problem Definition:</span>
+<span class="sd">-------------------</span>
+<span class="sd">Given:</span>
+<span class="sd">- A fixed number of workstations (stations)</span>
+<span class="sd">- A set of tasks with processing times, precedence constraints, and resource requirements</span>
+<span class="sd">- Multiple resource types with two allocation models:</span>
+
+<span class="sd">  1. STATION-SPECIFIC RESOURCES:</span>
+<span class="sd">     - Shared taxonomy/names across all stations (e.g., &quot;Workbench&quot;, &quot;Robot_Arm&quot;)</span>
+<span class="sd">     - Tasks consume resources by name (e.g., Task_A needs 1 &quot;Workbench&quot;)</span>
+<span class="sd">     - Each station has its own CAPACITY for each resource type</span>
+<span class="sd">     - Example: Station_1 has 2 Workbenches, Station_2 has 1 Workbench</span>
+<span class="sd">     - A task can only execute at a station with sufficient resource capacity</span>
+
+<span class="sd">  2. SHARED/GLOBAL RESOURCES (optional):</span>
+<span class="sd">     - Global pool shared across ALL stations (e.g., &quot;AGV&quot;, &quot;Quality_Inspector&quot;)</span>
+<span class="sd">     - Tasks consume from the global capacity pool</span>
+<span class="sd">     - Total concurrent demand across all stations must not exceed global capacity</span>
+
+<span class="sd">Decision Variables:</span>
+<span class="sd">- Assignment of tasks to workstations</span>
+<span class="sd">- Start time of each task within the cycle</span>
+
+<span class="sd">Objective:</span>
+<span class="sd">- Minimize the cycle time (makespan)</span>
+
+<span class="sd">Constraints:</span>
+<span class="sd">1. Precedence: Predecessor tasks must finish before successors (or be assigned to earlier stations)</span>
+<span class="sd">2. Station-specific Resource Capacity: At each station, cumulative resource consumption cannot</span>
+<span class="sd">   exceed that station&#39;s capacity for each resource type (tasks CAN overlap if total demand fits)</span>
+<span class="sd">3. Shared Resource Capacity: Across ALL stations simultaneously, cumulative resource consumption</span>
+<span class="sd">   cannot exceed global capacity for each shared resource</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># TODO: goto new api.</span>
+<span class="c1"># from discrete_optimization.generic_tasks_tools.cumulative_resource import (</span>
+<span class="c1">#     CumulativeResourceProblem,</span>
+<span class="c1">#     CumulativeResourceSolution,</span>
+<span class="c1">#     OtherCalendarResource</span>
+<span class="c1"># )</span>
+<span class="c1"># from discrete_optimization.generic_tasks_tools.multimode_scheduling import (</span>
+<span class="c1">#      SinglemodeSchedulingProblem,</span>
+<span class="c1">#      SinglemodeSchedulingSolution</span>
+<span class="c1"># )</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.alb.base.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseALBProblem</span><span class="p">,</span>
+    <span class="n">BaseALBSolution</span><span class="p">,</span>
+    <span class="n">ResourceTaskData</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">UnaryResource</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EncodingRegister</span><span class="p">,</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TypeObjective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.encoding_register</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListInteger</span>
+
+<span class="c1"># Type aliases for clarity</span>
+<span class="n">Task</span> <span class="o">=</span> <span class="n">Hashable</span>
+<span class="n">Station</span> <span class="o">=</span> <span class="n">Hashable</span>
+<span class="n">Resource</span> <span class="o">=</span> <span class="n">Hashable</span>
+
+
+<div class="viewcode-block" id="RCALBPSolution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RCALBPSolution</span><span class="p">(</span>
+    <span class="n">BaseALBSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Station</span><span class="p">],</span>
+    <span class="c1"># SinglemodeSchedulingSolution[Task],</span>
+    <span class="c1"># CumulativeResourceSolution[Task, Resource, OtherCalendarResource]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Solution for RC-ALBP problem.</span>
+
+<span class="sd">    RC-ALBP has explicit scheduling (task_schedule) since resource constraints</span>
+<span class="sd">    require knowing exact start times within the cycle.</span>
+
+<span class="sd">    Uses vectorized representation for task assignments (like SALBP):</span>
+<span class="sd">    - allocation_to_station[i] = station index for task i</span>
+<span class="sd">    - task_assignment property builds dict on-demand</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        problem: Reference to the problem instance</span>
+<span class="sd">        allocation_to_station: List[int] where index i = task i, value = station index</span>
+<span class="sd">        task_schedule: Dict mapping each task to its start time within cycle</span>
+<span class="sd">        cycle_time: The computed cycle time (max end time across all stations)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="s2">&quot;RCALBPProblem&quot;</span>
+
+<div class="viewcode-block" id="RCALBPSolution.get_renewable_resource_consumption">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPSolution.get_renewable_resource_consumption">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_renewable_resource_consumption</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">problem</span><span class="p">:</span> <span class="s2">&quot;RCALBPProblem&quot;</span><span class="p">,</span>
+        <span class="n">allocation_to_station</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">task_assignment</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Station</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">task_schedule</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cycle_time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize RC-ALBP solution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            problem: Problem instance</span>
+<span class="sd">            allocation_to_station: Vectorized task assignments [task_idx -&gt; station_idx]</span>
+<span class="sd">            task_assignment: Dict task assignments (legacy, converted to vector)</span>
+<span class="sd">            task_schedule: Optional schedule (dict)</span>
+<span class="sd">            cycle_time: Optional cycle time</span>
+
+<span class="sd">        Note: Provide either allocation_to_station OR task_assignment, not both.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+
+        <span class="c1"># Vectorized representation (preferred)</span>
+        <span class="k">if</span> <span class="n">allocation_to_station</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span> <span class="o">=</span> <span class="n">allocation_to_station</span>
+        <span class="k">elif</span> <span class="n">task_assignment</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Convert dict to vector for backward compatibility</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">problem</span><span class="o">.</span><span class="n">nb_tasks</span>
+            <span class="k">for</span> <span class="n">task</span><span class="p">,</span> <span class="n">station</span> <span class="ow">in</span> <span class="n">task_assignment</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">task_idx</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="n">station_idx</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">station</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="n">task_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">station_idx</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Empty solution</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">problem</span><span class="o">.</span><span class="n">nb_tasks</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_schedule</span> <span class="o">=</span> <span class="n">task_schedule</span> <span class="k">if</span> <span class="n">task_schedule</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cycle_time</span> <span class="o">=</span> <span class="n">cycle_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_schedule</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Cache for greedy schedule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_task_assignment</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Cache for dict conversion</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">task_assignment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Station</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build task_assignment dict from vectorized representation on-demand.</span>
+
+<span class="sd">        This allows backward compatibility with code expecting dict.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_task_assignment</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cached_task_assignment</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">station_idx</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">):</span>
+                <span class="n">task</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">station</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">[</span><span class="n">station_idx</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cached_task_assignment</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">station</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_task_assignment</span>
+
+    <span class="c1"># BaseALBSolution interface implementation</span>
+<div class="viewcode-block" id="RCALBPSolution.get_station_index">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPSolution.get_station_index">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_station_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the index of the station where task is assigned.&quot;&quot;&quot;</span>
+        <span class="n">task_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="n">task_idx</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="RCALBPSolution.get_start_time_in_cycle">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPSolution.get_start_time_in_cycle">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time_in_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get start time within cycle.</span>
+
+<span class="sd">        If explicit schedule exists, use it.</span>
+<span class="sd">        Otherwise, compute greedy schedule from task assignments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># If we have explicit schedule, use it</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_schedule</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_schedule</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># Otherwise, compute greedy schedule using serial generation</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_schedule</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cached_schedule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_greedy_schedule</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_schedule</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_task_station</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Station</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get station assignment for a task.&quot;&quot;&quot;</span>
+        <span class="n">task_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="n">station_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="n">task_idx</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">[</span><span class="n">station_idx</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_greedy_schedule</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">tasks_per_station</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="n">Station</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute resource-feasible schedule using Serial Generation Scheme (SGS).</span>
+
+<span class="sd">        Given task-to-station assignments, builds a schedule that:</span>
+<span class="sd">        - Respects precedence constraints</span>
+<span class="sd">        - Respects station-specific resource capacities</span>
+<span class="sd">        - Respects shared resource capacities</span>
+
+<span class="sd">        This is a greedy decoder/repair heuristic that finds earliest feasible</span>
+<span class="sd">        start times for each task.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tasks_per_station: Optional pre-computed station grouping</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict mapping task -&gt; start_time_in_cycle</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tasks_per_station</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Group tasks by station</span>
+            <span class="n">tasks_per_station</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                <span class="n">station</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_task_station</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">station</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tasks_per_station</span><span class="p">:</span>
+                    <span class="n">tasks_per_station</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">tasks_per_station</span><span class="p">[</span><span class="n">station</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+        <span class="n">schedule</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Track which tasks have been scheduled</span>
+        <span class="n">scheduled</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># Build predecessor count for each task</span>
+        <span class="n">pred_count</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+            <span class="n">preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_predecessors</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="n">pred_count</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span>
+
+        <span class="c1"># Compute a reasonable time horizon</span>
+        <span class="n">total_duration</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">time_horizon</span> <span class="o">=</span> <span class="n">total_duration</span> <span class="o">*</span> <span class="mi">2</span>  <span class="c1"># Upper bound</span>
+
+        <span class="c1"># Initialize resource usage profiles</span>
+        <span class="c1"># Station-specific: {station: {resource: [usage_over_time]}}</span>
+        <span class="n">station_resource_usage</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">:</span>
+            <span class="n">station_resource_usage</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_station_specific_resources</span><span class="p">():</span>
+                <span class="n">station_resource_usage</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">time_horizon</span>
+
+        <span class="c1"># Shared resources: {resource: [usage_over_time]}</span>
+        <span class="n">shared_resource_usage</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">shared_resources</span><span class="p">:</span>
+            <span class="n">shared_resource_usage</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">time_horizon</span>
+
+        <span class="c1"># Helper: Check if resources are available at [start, end)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">resources_available</span><span class="p">(</span>
+            <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="n">Station</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Check if task can execute at [start, end) without violating resources.&quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">end</span> <span class="o">&gt;</span> <span class="n">time_horizon</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="c1"># Check station-specific resources</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_station_specific_resources</span><span class="p">():</span>
+                <span class="n">demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_station_capacity</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="p">(</span>
+                            <span class="n">station_resource_usage</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">resource</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">demand</span>
+                            <span class="o">&gt;</span> <span class="n">capacity</span>
+                        <span class="p">):</span>
+                            <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="c1"># Check shared resources</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">shared_resources</span><span class="p">:</span>
+                <span class="n">demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_shared_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">shared_resource_usage</span><span class="p">[</span><span class="n">resource</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">+</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="n">capacity</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># Helper: Update resource usage when task is scheduled</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">reserve_resources</span><span class="p">(</span><span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="n">Station</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Reserve resources for task executing at [start, end).&quot;&quot;&quot;</span>
+            <span class="c1"># Station-specific resources</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_station_specific_resources</span><span class="p">():</span>
+                <span class="n">demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+                        <span class="n">station_resource_usage</span><span class="p">[</span><span class="n">station</span><span class="p">][</span><span class="n">resource</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">+=</span> <span class="n">demand</span>
+
+            <span class="c1"># Shared resources</span>
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">shared_resources</span><span class="p">:</span>
+                <span class="n">demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+                        <span class="n">shared_resource_usage</span><span class="p">[</span><span class="n">resource</span><span class="p">][</span><span class="n">t</span><span class="p">]</span> <span class="o">+=</span> <span class="n">demand</span>
+
+        <span class="c1"># Serial Generation Scheme: schedule tasks one by one</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">scheduled</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">):</span>
+            <span class="c1"># Find eligible tasks (all predecessors scheduled)</span>
+            <span class="n">eligible</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">scheduled</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">pred_count</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">eligible</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">eligible</span><span class="p">:</span>
+                <span class="c1"># Deadlock - shouldn&#39;t happen with valid precedence</span>
+                <span class="c1"># Schedule remaining tasks anyway</span>
+                <span class="n">eligible</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span> <span class="k">if</span> <span class="n">t</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">scheduled</span><span class="p">]</span>
+
+            <span class="c1"># Sort eligible tasks for determinism (e.g., by task ID)</span>
+            <span class="n">eligible</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+
+            <span class="c1"># Schedule ONE task per iteration (first eligible that fits)</span>
+            <span class="n">scheduled_this_round</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">eligible</span><span class="p">:</span>
+                <span class="n">station</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_task_station</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                <span class="n">duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+
+                <span class="c1"># Compute earliest start time based on predecessors</span>
+                <span class="n">min_start_precedence</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">pred</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_predecessors</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="k">if</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">schedule</span><span class="p">:</span>
+                        <span class="n">pred_end</span> <span class="o">=</span> <span class="n">schedule</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span>
+                        <span class="n">min_start_precedence</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">min_start_precedence</span><span class="p">,</span> <span class="n">pred_end</span><span class="p">)</span>
+
+                <span class="c1"># Find earliest time slot where resources are available</span>
+                <span class="n">start_time</span> <span class="o">=</span> <span class="n">min_start_precedence</span>
+                <span class="k">while</span> <span class="n">start_time</span> <span class="o">&lt;</span> <span class="n">time_horizon</span><span class="p">:</span>
+                    <span class="n">end_time</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">duration</span>
+
+                    <span class="k">if</span> <span class="n">resources_available</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+                        <span class="c1"># Schedule the task</span>
+                        <span class="n">schedule</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">start_time</span>
+                        <span class="n">reserve_resources</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">station</span><span class="p">,</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">end_time</span><span class="p">)</span>
+                        <span class="n">scheduled</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                        <span class="n">scheduled_this_round</span> <span class="o">=</span> <span class="kc">True</span>
+
+                        <span class="c1"># Update predecessor counts for successors</span>
+                        <span class="k">for</span> <span class="n">succ</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_successors</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="p">[]):</span>
+                            <span class="n">pred_count</span><span class="p">[</span><span class="n">succ</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+
+                        <span class="k">break</span>
+
+                    <span class="c1"># Try next time slot</span>
+                    <span class="n">start_time</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="k">if</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">scheduled</span><span class="p">:</span>
+                    <span class="k">break</span>  <span class="c1"># Schedule one task at a time</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">scheduled_this_round</span> <span class="ow">and</span> <span class="n">eligible</span><span class="p">:</span>
+                <span class="c1"># Force schedule first eligible task even if resources tight</span>
+                <span class="n">task</span> <span class="o">=</span> <span class="n">eligible</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">station</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_task_station</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                <span class="n">duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+
+                <span class="n">min_start</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">pred</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_predecessors</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="k">if</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">schedule</span><span class="p">:</span>
+                        <span class="n">min_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                            <span class="n">min_start</span><span class="p">,</span> <span class="n">schedule</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">pred</span><span class="p">]</span>
+                        <span class="p">)</span>
+
+                <span class="n">schedule</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_start</span>
+                <span class="n">scheduled</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+                <span class="c1"># Update predecessor counts</span>
+                <span class="k">for</span> <span class="n">succ</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_successors</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="n">pred_count</span><span class="p">[</span><span class="n">succ</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">schedule</span>
+
+    <span class="c1"># Legacy SchedulingSolution interface (for backward compatibility)</span>
+<div class="viewcode-block" id="RCALBPSolution.get_start_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPSolution.get_start_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the start time of a task within cycle.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_start_time_in_cycle</span><span class="p">(</span><span class="n">task</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RCALBPSolution.get_end_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPSolution.get_end_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the end time of a task within cycle.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_end_time_in_cycle</span><span class="p">(</span><span class="n">task</span><span class="p">)</span></div>
+
+
+    <span class="c1"># AllocationSolution interface</span>
+<div class="viewcode-block" id="RCALBPSolution.is_allocated">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPSolution.is_allocated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_allocated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if a task is allocated to a given station.&quot;&quot;&quot;</span>
+        <span class="n">task_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+        <span class="n">station_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="n">task_idx</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">stations</span><span class="p">[</span><span class="n">station_idx</span><span class="p">]</span> <span class="o">==</span> <span class="n">unary_resource</span></div>
+
+
+<div class="viewcode-block" id="RCALBPSolution.copy">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPSolution.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;RCALBPSolution&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a deep copy of the solution.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RCALBPSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span>
+            <span class="n">allocation_to_station</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">),</span>
+            <span class="n">task_schedule</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_schedule</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RCALBPSolution.change_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPSolution.change_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_problem</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Change the problem instance.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RCALBPSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="n">new_problem</span><span class="p">,</span>
+            <span class="n">allocation_to_station</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">),</span>
+            <span class="n">task_schedule</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_schedule</span><span class="p">),</span>
+            <span class="n">cycle_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_time</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;RCALBPSolution(cycle_time=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_time</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">),</span>
+                <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_schedule</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">allocation_to_station</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_schedule</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">task_schedule</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="RCALBPProblem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RCALBPProblem</span><span class="p">(</span>
+    <span class="n">BaseALBProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Station</span><span class="p">],</span>
+    <span class="c1"># SinglemodeSchedulingProblem[Task],</span>
+    <span class="c1"># CumulativeResourceProblem[Task, Resource, OtherCalendarResource]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Resource-Constrained Assembly Line Balancing Problem.</span>
+
+<span class="sd">    Extends BaseALBProblem with cumulative resource constraints.</span>
+<span class="sd">    Supports both station-specific and shared/global resources.</span>
+
+<span class="sd">    Inherits from:</span>
+<span class="sd">    - BaseALBProblem: Provides precedence, allocation, and scheduling foundations</span>
+
+<span class="sd">    Attributes (in addition to BaseALBProblem):</span>
+<span class="sd">        resources: List of station-specific resource names (shared taxonomy)</span>
+<span class="sd">        station_resources: Capacity per station {station: {resource: capacity}}</span>
+<span class="sd">        shared_resources: Set of shared resource names (global pool)</span>
+<span class="sd">        shared_resource_capacities: Global capacity {resource: capacity}</span>
+<span class="sd">        nb_resources: Total count (station-specific + shared)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">renewable_resources_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Resource</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">)</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared_resources</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RCALBPProblem.get_resource_availabilities">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.get_resource_availabilities">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_availabilities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_resource_shared</span><span class="p">(</span><span class="n">resource</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_makespan_upper_bound</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_shared_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">))</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+    <span class="c1"># Resource accessor methods (object-oriented API)</span>
+<div class="viewcode-block" id="RCALBPProblem.get_task_demand">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.get_task_demand">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_demand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get resource demand for a task (0 if not specified).</span>
+
+<span class="sd">        Uses ResourceTaskData if available, otherwise falls back to empty demand.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task: Task identifier</span>
+<span class="sd">            resource: Resource identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Consumption amount (0 if not specified)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">task_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_data</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task_data</span><span class="p">,</span> <span class="n">ResourceTaskData</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">task_data</span><span class="o">.</span><span class="n">get_resource_consumption</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="RCALBPProblem.get_station_capacity">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.get_station_capacity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_station_capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">station</span><span class="p">:</span> <span class="n">Station</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get resource capacity at a station (0 if not specified).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">station_resources</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RCALBPProblem.get_shared_capacity">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.get_shared_capacity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_shared_capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get global capacity for a shared resource (0 if not specified).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared_resource_capacities</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RCALBPProblem.is_resource_shared">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.is_resource_shared">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_resource_shared</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if a resource is shared (global pool) or station-specific.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared_resources</span></div>
+
+
+<div class="viewcode-block" id="RCALBPProblem.get_all_resources">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.get_all_resources">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_all_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="n">Resource</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all resources (station-specific + shared).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">)</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared_resources</span></div>
+
+
+<div class="viewcode-block" id="RCALBPProblem.get_station_specific_resources">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.get_station_specific_resources">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_station_specific_resources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="n">Resource</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get only station-specific resources.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tasks_data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ResourceTaskData</span><span class="p">],</span>
+        <span class="n">precedences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">]],</span>
+        <span class="n">stations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Station</span><span class="p">],</span>
+        <span class="n">resources</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Resource</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">station_resources</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Station</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">shared_resources</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="n">Resource</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">shared_resource_capacities</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Resource</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize RC-ALBP problem using ResourceTaskData.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tasks_data: List of ResourceTaskData objects (with resource requirements)</span>
+<span class="sd">            precedences: List of (predecessor, successor) pairs</span>
+<span class="sd">            stations: List of station identifiers (can be str or int)</span>
+<span class="sd">            resources: List of station-specific resource names (shared taxonomy)</span>
+<span class="sd">            station_resources: Capacity per station {station: {resource: capacity}}</span>
+<span class="sd">            shared_resources: Set of shared resource names (global pool)</span>
+<span class="sd">            shared_resource_capacities: Global capacity {resource: capacity}</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            # Create tasks with resource requirements</span>
+<span class="sd">            tasks_data = [</span>
+<span class="sd">                ResourceTaskData(task_id=&quot;T1&quot;, processing_time=5,</span>
+<span class="sd">                                resource_consumption={&quot;Workbench&quot;: 1}),</span>
+<span class="sd">                ResourceTaskData(task_id=&quot;T2&quot;, processing_time=3,</span>
+<span class="sd">                                resource_consumption={&quot;Robot&quot;: 1, &quot;AGV&quot;: 1}),</span>
+<span class="sd">            ]</span>
+
+<span class="sd">            # Station-specific resources (different capacity per station)</span>
+<span class="sd">            station_resources = {</span>
+<span class="sd">                &quot;S1&quot;: {&quot;Workbench&quot;: 2, &quot;Robot&quot;: 1},</span>
+<span class="sd">                &quot;S2&quot;: {&quot;Workbench&quot;: 1, &quot;Robot&quot;: 2},</span>
+<span class="sd">            }</span>
+
+<span class="sd">            # Shared resources (global pool)</span>
+<span class="sd">            shared_resources = {&quot;AGV&quot;}</span>
+<span class="sd">            shared_resource_capacities = {&quot;AGV&quot;: 2}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Initialize base ALB problem</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">tasks_data</span><span class="o">=</span><span class="n">tasks_data</span><span class="p">,</span>
+            <span class="n">precedences</span><span class="o">=</span><span class="n">precedences</span><span class="p">,</span>
+            <span class="n">stations</span><span class="o">=</span><span class="n">stations</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Station-specific resources</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resources</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">resources</span><span class="p">)</span> <span class="k">if</span> <span class="n">resources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">station_resources</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">station_resources</span> <span class="k">if</span> <span class="n">station_resources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Shared/global resources</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shared_resources</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">shared_resources</span> <span class="k">if</span> <span class="n">shared_resources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shared_resource_capacities</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">shared_resource_capacities</span> <span class="k">if</span> <span class="n">shared_resource_capacities</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Validation: resources should not overlap</span>
+        <span class="n">resources_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">)</span>
+        <span class="n">overlap</span> <span class="o">=</span> <span class="n">resources_set</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared_resources</span>
+        <span class="k">if</span> <span class="n">overlap</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Resources cannot be both station-specific and shared: </span><span class="si">{</span><span class="n">overlap</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Station-specific resources go in &#39;resources&#39; list.</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Shared resources go in &#39;shared_resources&#39; set.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Resource count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_resources</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shared_resources</span><span class="p">)</span>
+
+        <span class="c1"># Task index mapping for vectorized solution encoding (like SALBP)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">))}</span>
+
+        <span class="c1"># Backward compatibility: keep successors/predecessors as aliases</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">successors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_successors</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">predecessors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_predecessors</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RCALBPProblem.get_objective_register">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.get_objective_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Define objectives and penalties.</span>
+
+<span class="sd">        Primary objective: Minimize cycle time</span>
+<span class="sd">        Penalties: Precedence violations, resource capacity violations (station + shared)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MINIMIZATION</span><span class="p">,</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;cycle_time&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">1.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;penalty_precedence&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">10000.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;penalty_resource_station&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">10000.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;penalty_resource_shared&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">10000.0</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;penalty_unscheduled&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mf">10000.0</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RCALBPProblem.evaluate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">RCALBPSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate the solution quality and constraint satisfaction.</span>
+
+<span class="sd">        Uses base class for precedence checking (via absolute times) and adds</span>
+<span class="sd">        RC-ALBP-specific resource constraint validation.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with:</span>
+<span class="sd">            - cycle_time: Maximum makespan across all stations</span>
+<span class="sd">            - penalty_precedence: Number of precedence violations (from base)</span>
+<span class="sd">            - penalty_resource_station: Amount of station-specific resource over-consumption</span>
+<span class="sd">            - penalty_resource_shared: Amount of shared resource over-consumption</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get base penalties (precedence + unscheduled) using clean absolute time checking</span>
+        <span class="n">base_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_base_constraints</span><span class="p">(</span><span class="n">solution</span><span class="p">)</span>
+
+        <span class="c1"># Early exit if tasks aren&#39;t properly scheduled</span>
+        <span class="k">if</span> <span class="n">base_eval</span><span class="p">[</span><span class="s2">&quot;penalty_unscheduled&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;cycle_time&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">&quot;penalty_resource_station&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="s2">&quot;penalty_resource_shared&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">base_eval</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="c1"># RC-ALBP-specific: Compute cycle time and validate resources</span>
+        <span class="n">station_makespans</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stations</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_assignment</span><span class="p">:</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="n">station</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_assignment</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="n">station_makespans</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">station_makespans</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">end</span><span class="p">)</span>
+
+        <span class="n">cycle_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">station_makespans</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="n">station_makespans</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">solution</span><span class="o">.</span><span class="n">cycle_time</span> <span class="o">=</span> <span class="n">cycle_time</span>
+
+        <span class="c1"># Check resource constraints using numpy arrays (efficient!)</span>
+        <span class="n">penalty_resource_station</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">penalty_resource_shared</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">if</span> <span class="n">cycle_time</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Station-specific resources</span>
+            <span class="n">penalty_resource_station</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_station_resources_numpy</span><span class="p">(</span>
+                <span class="n">solution</span><span class="p">,</span> <span class="n">cycle_time</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Shared resources</span>
+            <span class="n">penalty_resource_shared</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_shared_resources_numpy</span><span class="p">(</span>
+                <span class="n">solution</span><span class="p">,</span> <span class="n">cycle_time</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;cycle_time&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cycle_time</span><span class="p">),</span>
+            <span class="s2">&quot;penalty_resource_station&quot;</span><span class="p">:</span> <span class="n">penalty_resource_station</span><span class="p">,</span>
+            <span class="s2">&quot;penalty_resource_shared&quot;</span><span class="p">:</span> <span class="n">penalty_resource_shared</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">base_eval</span><span class="p">,</span>  <span class="c1"># Add penalty_precedence and penalty_unscheduled</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_station_resources_numpy</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">RCALBPSolution</span><span class="p">,</span> <span class="n">cycle_time</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate station-specific resource constraints using numpy arrays.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Total penalty (sum of violations across all stations and resources)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">penalty</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">for</span> <span class="n">station</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stations</span><span class="p">:</span>
+            <span class="n">station_tasks</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">t</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_assignment</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="n">station</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">station_tasks</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Create time-indexed resource usage array</span>
+            <span class="n">time_horizon</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">cycle_time</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+
+            <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span>
+                <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_station_capacity</span><span class="p">(</span><span class="n">station</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">capacity</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Build resource usage profile over time</span>
+                <span class="n">usage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">time_horizon</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">station_tasks</span><span class="p">:</span>
+                    <span class="n">demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">start</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time_in_cycle</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                        <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                        <span class="c1"># Mark resource usage during [start, end)</span>
+                        <span class="n">usage</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span> <span class="o">+=</span> <span class="n">demand</span>
+
+                <span class="c1"># Check for violations</span>
+                <span class="n">violations</span> <span class="o">=</span> <span class="n">usage</span> <span class="o">-</span> <span class="n">capacity</span>
+                <span class="n">violations</span> <span class="o">=</span> <span class="n">violations</span><span class="p">[</span><span class="n">violations</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># Keep only positive violations</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">violations</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">penalty</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">violations</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">penalty</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_shared_resources_numpy</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">RCALBPSolution</span><span class="p">,</span> <span class="n">cycle_time</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate shared resource constraints using numpy arrays.</span>
+
+<span class="sd">        For shared resources, we check global usage across ALL stations.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Total penalty (sum of violations across all shared resources)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">penalty</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared_resources</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">penalty</span>
+
+        <span class="n">time_horizon</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">cycle_time</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">shared_resources</span><span class="p">:</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_shared_capacity</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">capacity</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Build GLOBAL resource usage profile (across all stations)</span>
+            <span class="n">usage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">time_horizon</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">solution</span><span class="o">.</span><span class="n">task_assignment</span><span class="p">:</span>
+                <span class="n">demand</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_demand</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">resource</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">demand</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">start</span> <span class="o">=</span> <span class="n">solution</span><span class="o">.</span><span class="n">get_start_time_in_cycle</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                    <span class="c1"># Mark resource usage during [start, end)</span>
+                    <span class="n">usage</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span> <span class="o">+=</span> <span class="n">demand</span>
+
+            <span class="c1"># Check for violations</span>
+            <span class="n">violations</span> <span class="o">=</span> <span class="n">usage</span> <span class="o">-</span> <span class="n">capacity</span>
+            <span class="n">violations</span> <span class="o">=</span> <span class="n">violations</span><span class="p">[</span><span class="n">violations</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">violations</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">penalty</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">violations</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">penalty</span><span class="p">)</span>
+
+    <span class="c1"># satisfy() is inherited from BaseALBProblem - checks all penalty_* == 0</span>
+
+<div class="viewcode-block" id="RCALBPProblem.get_attribute_register">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.get_attribute_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Register for vectorized encoding (enables GA/metaheuristics).</span>
+
+<span class="sd">        Solution is encoded as a list of integers (station assignments).</span>
+<span class="sd">        allocation_to_station[i] = station index for task i</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">encoding</span><span class="p">[</span><span class="s2">&quot;allocation_to_station&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ListInteger</span><span class="p">(</span>
+            <span class="n">length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">,</span> <span class="n">lows</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_stations</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">EncodingRegister</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RCALBPProblem.get_solution_type">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.get_solution_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the solution class type.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RCALBPSolution</span></div>
+
+
+<div class="viewcode-block" id="RCALBPProblem.get_dummy_solution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.rcalbp.html#discrete_optimization.alb.rcalbp.problem.RCALBPProblem.get_dummy_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_dummy_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RCALBPSolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a trivial dummy solution (likely infeasible).</span>
+<span class="sd">        Assigns all tasks to the first station sequentially.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Vectorized: all tasks to station 0</span>
+        <span class="n">allocation_to_station</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_tasks</span>
+        <span class="k">return</span> <span class="n">RCALBPSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">allocation_to_station</span><span class="o">=</span><span class="n">allocation_to_station</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

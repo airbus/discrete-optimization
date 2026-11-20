@@ -1,0 +1,117 @@
+discrete\_optimization.maximum\_independent\_set.solvers package
+================================================================
+
+Submodules
+----------
+
+discrete\_optimization.maximum\_independent\_set.solvers.asp module
+-------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.asp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.cpsat module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.cpsat
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.decomposition module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.decomposition
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.dp module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.dp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.gurobi module
+----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.gurobi
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.kamis module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.kamis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.lns module
+-------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.lns
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.lp module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.lp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.mathopt module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.mathopt
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.mis\_solver module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.mis_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.networkx module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.networkx
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.quantum module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.quantum
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.maximum\_independent\_set.solvers.toulbar module
+-----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers.toulbar
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:

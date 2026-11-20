@@ -1,0 +1,29 @@
+discrete\_optimization.facility.transformations package
+=======================================================
+
+Submodules
+----------
+
+discrete\_optimization.facility.transformations.to\_binpack module
+------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.transformations.to_binpack
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.facility.transformations.to\_salbp module
+----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.facility.transformations.to_salbp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.facility.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

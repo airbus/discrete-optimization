@@ -1,0 +1,21 @@
+discrete\_optimization.alb package
+==================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.alb.base
+   discrete_optimization.alb.rcalbp
+   discrete_optimization.alb.rcalbp_l
+   discrete_optimization.alb.salbp
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.alb
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,205 @@
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base package
+====================================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.generic_tasks_tools.solvers.cp.base.objectives
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.allocation module
+------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.allocation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.alternative\_subproblems module
+--------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.alternative_subproblems
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.auto module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.auto
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.auto\_impl module
+------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.auto_impl
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.base module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.calendar\_preemptive module
+----------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.calendar_preemptive
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.calendar\_resource module
+--------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.calendar_resource
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.calendar\_resource\_generic module
+-----------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.calendar_resource_generic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.cumulative\_resource module
+----------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.cumulative_resource
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.exclusions module
+------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.exclusions
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.generic\_scheduling module
+---------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.generic_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.multimode module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.multimode
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.multimode\_scheduling module
+-----------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.multimode_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.no\_overlap module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.no_overlap
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.non\_renewable\_resource module
+--------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.non_renewable_resource
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.precedence\_scheduling module
+------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.precedence_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.resource\_blocking module
+--------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.resource_blocking
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.resource\_usage\_by\_unary module
+----------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.resource_usage_by_unary
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.scheduling module
+------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.skill module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.skill
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.timelag module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.timelag
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.typing module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.typing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.base.utils module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.base
+   :members:
+   :show-inheritance:
+   :undoc-members:

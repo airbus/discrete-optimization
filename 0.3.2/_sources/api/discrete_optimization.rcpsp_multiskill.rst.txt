@@ -1,0 +1,78 @@
+discrete\_optimization.rcpsp\_multiskill package
+================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.rcpsp_multiskill.plots
+   discrete_optimization.rcpsp_multiskill.solvers
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_multiskill.fast\_function\_ms\_rcpsp module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.fast_function_ms_rcpsp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp\_multiskill.multiskill\_to\_rcpsp module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.multiskill_to_rcpsp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp\_multiskill.rcpsp\_multiskill module
+-----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.rcpsp_multiskill
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp\_multiskill.rcpsp\_multiskill\_mslib\_parser module
+--------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_mslib_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp\_multiskill.rcpsp\_multiskill\_mspsp\_parser module
+--------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_mspsp_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp\_multiskill.rcpsp\_multiskill\_parser module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.rcpsp\_multiskill.rcpsp\_multiskill\_solvers module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill.rcpsp_multiskill_solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_multiskill
+   :members:
+   :undoc-members:
+   :show-inheritance:

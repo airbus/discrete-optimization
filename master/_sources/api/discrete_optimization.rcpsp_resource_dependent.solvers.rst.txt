@@ -1,0 +1,21 @@
+discrete\_optimization.rcpsp\_resource\_dependent.solvers package
+=================================================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_resource\_dependent.solvers.cpsat module
+----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_resource_dependent.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_resource_dependent.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

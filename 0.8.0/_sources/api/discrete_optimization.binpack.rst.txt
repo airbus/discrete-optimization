@@ -1,0 +1,37 @@
+discrete\_optimization.binpack package
+======================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.binpack.solvers
+
+Submodules
+----------
+
+discrete\_optimization.binpack.parser module
+--------------------------------------------
+
+.. automodule:: discrete_optimization.binpack.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.binpack.problem module
+---------------------------------------------
+
+.. automodule:: discrete_optimization.binpack.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.binpack
+   :members:
+   :show-inheritance:
+   :undoc-members:

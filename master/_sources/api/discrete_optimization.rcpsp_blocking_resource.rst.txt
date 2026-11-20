@@ -1,0 +1,29 @@
+discrete\_optimization.rcpsp\_blocking\_resource package
+========================================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_blocking\_resource.blocking\_generator module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_blocking_resource.blocking_generator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_blocking\_resource.problem\_with\_blocking module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_blocking_resource.problem_with_blocking
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_blocking_resource
+   :members:
+   :show-inheritance:
+   :undoc-members:

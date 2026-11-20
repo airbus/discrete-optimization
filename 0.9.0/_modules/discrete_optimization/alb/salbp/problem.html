@@ -1,0 +1,616 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.alb.salbp.problem &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.alb.salbp.problem</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.alb.salbp.problem</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.alb.base.problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseALBProblem</span><span class="p">,</span>
+    <span class="n">BaseALBSolution</span><span class="p">,</span>
+    <span class="n">TaskData</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.allocation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">UnaryResource</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EncodingRegister</span><span class="p">,</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">Problem</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TypeObjective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.encoding_register</span><span class="w"> </span><span class="kn">import</span> <span class="n">ListInteger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.graph_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">Graph</span>
+
+<span class="n">Task</span> <span class="o">=</span> <span class="nb">int</span>
+<span class="n">Resource</span> <span class="o">=</span> <span class="nb">int</span>
+
+
+<div class="viewcode-block" id="SalbpSolution">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SalbpSolution</span><span class="p">(</span><span class="n">BaseALBSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Resource</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Solution for SALBP problem.</span>
+
+<span class="sd">    SALBP only assigns tasks to stations without explicit scheduling.</span>
+<span class="sd">    Scheduling is computed on-demand using greedy sequential scheduling.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="s2">&quot;SalbpProblem&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="s2">&quot;SalbpProblem&quot;</span><span class="p">,</span> <span class="n">allocation_to_station</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_alloc</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span> <span class="o">=</span> <span class="n">allocation_to_station</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nb_stations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_schedule</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Cache for greedy schedule</span>
+
+    <span class="c1"># BaseALBSolution interface implementation</span>
+<div class="viewcode-block" id="SalbpSolution.get_station_index">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution.get_station_index">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_station_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the index of the station where task is assigned.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span></div>
+
+
+<div class="viewcode-block" id="SalbpSolution.get_start_time_in_cycle">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution.get_start_time_in_cycle">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time_in_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get start time within cycle using greedy scheduling.</span>
+
+<span class="sd">        Since SALBP doesn&#39;t have explicit scheduling, we compute it on-demand</span>
+<span class="sd">        and cache the result.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_schedule</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cached_schedule</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_greedy_schedule</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_schedule</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_task_station</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Resource</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get station assignment for a task.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_greedy_schedule</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">tasks_per_station</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute greedy schedule for SALBP.</span>
+
+<span class="sd">        SALBP-specific: Tasks at the same station run SEQUENTIALLY (no parallelism).</span>
+<span class="sd">        This is different from RC-ALBP where tasks can overlap if resources allow.</span>
+
+<span class="sd">        The base class implementation allows parallelism by considering predecessor</span>
+<span class="sd">        end times. For SALBP, we want strictly sequential execution: each task</span>
+<span class="sd">        starts immediately when the previous task ends.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tasks_per_station: Optional pre-computed station grouping</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict mapping task -&gt; start_time_in_cycle</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tasks_per_station</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Group tasks by station</span>
+            <span class="n">tasks_per_station</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">station</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">station</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tasks_per_station</span><span class="p">:</span>
+                    <span class="n">tasks_per_station</span><span class="p">[</span><span class="n">station</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">tasks_per_station</span><span class="p">[</span><span class="n">station</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="n">schedule</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">topo_sort</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">_topological_sort_station_tasks</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">station</span><span class="p">,</span> <span class="n">tasks</span> <span class="ow">in</span> <span class="n">tasks_per_station</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tasks</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="c1"># Topological sort of tasks at this station</span>
+            <span class="n">sorted_tasks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">topo_sort</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="c1"># SEQUENTIAL scheduling: each task starts when previous ends</span>
+            <span class="c1"># No parallelism allowed in SALBP!</span>
+            <span class="n">current_time</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">sorted_tasks</span><span class="p">:</span>
+                <span class="n">schedule</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_time</span>
+                <span class="n">current_time</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">schedule</span>
+
+<div class="viewcode-block" id="SalbpSolution.get_end_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution.get_end_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="SalbpSolution.get_start_time">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution.get_start_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span></div>
+
+
+<div class="viewcode-block" id="SalbpSolution.is_allocated">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution.is_allocated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_allocated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_to_index</span><span class="p">[</span><span class="n">task</span><span class="p">]]</span>
+            <span class="o">==</span> <span class="n">unary_resource</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SalbpSolution.copy">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SalbpSolution&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SalbpSolution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="SalbpSolution.change_problem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpSolution.change_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">change_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_problem</span><span class="p">:</span> <span class="s2">&quot;Problem&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Solution&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SalbpSolution</span><span class="p">(</span><span class="n">new_problem</span><span class="p">,</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;SalbpSolution(nb_stations=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_nb_stations</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">allocation_to_station</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">allocation_to_station</span></div>
+
+
+
+<div class="viewcode-block" id="SalbpProblem">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SalbpProblem</span><span class="p">(</span><span class="n">BaseALBProblem</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple Assembly Line Balancing Problem.</span>
+
+<span class="sd">    Extends BaseALBProblem with cycle time constraints.</span>
+<span class="sd">    Uses PrecedenceProblem mixin for precedence graph handling.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        cycle_time: Maximum allowed time per station</span>
+<span class="sd">        number_of_tasks: Total number of tasks (for compatibility)</span>
+<span class="sd">        tasks_to_index: Mapping from task_id to index</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tasks_data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TaskData</span><span class="p">],</span>
+        <span class="n">cycle_time</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">precedences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+        <span class="n">number_of_stations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize SALBP problem.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tasks_data: List of TaskData objects for each task</span>
+<span class="sd">            cycle_time: Maximum allowed time per station</span>
+<span class="sd">            precedences: List of (predecessor, successor) pairs</span>
+<span class="sd">            number_of_stations: Number of available stations (default: nb_tasks)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Determine number of stations (upper bound = number of tasks)</span>
+        <span class="k">if</span> <span class="n">number_of_stations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">number_of_stations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks_data</span><span class="p">)</span>
+
+        <span class="c1"># Create stations list</span>
+        <span class="n">stations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">number_of_stations</span><span class="p">))</span>
+
+        <span class="c1"># Initialize base class</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">tasks_data</span><span class="o">=</span><span class="n">tasks_data</span><span class="p">,</span>
+            <span class="n">precedences</span><span class="o">=</span><span class="n">precedences</span><span class="p">,</span>
+            <span class="n">stations</span><span class="o">=</span><span class="n">stations</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># SALBP-specific attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cycle_time</span> <span class="o">=</span> <span class="n">cycle_time</span>
+
+        <span class="c1"># Backward compatibility: keep adj and predecessors as aliases</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">adj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_successors</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">predecessors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_predecessors</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span> <span class="o">=</span> <span class="n">precedences</span>  <span class="c1"># For backward compat</span>
+
+        <span class="c1"># Task index mapping for list-based solution encoding</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tasks_to_index</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks</span><span class="p">))}</span>
+
+<div class="viewcode-block" id="SalbpProblem.evaluate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">SalbpSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate the solution.</span>
+
+<span class="sd">        Objective: Minimize the number of stations.</span>
+<span class="sd">        Constraints:</span>
+<span class="sd">        - Cycle time: Each station&#39;s workload must not exceed cycle_time</span>
+<span class="sd">        - Precedence: Handled by base class using absolute times</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with:</span>
+<span class="sd">            - nb_stations: Number of used stations (objective)</span>
+<span class="sd">            - penalty_overtime: Sum of time exceeding cycle_time per station</span>
+<span class="sd">            - penalty_undertime: Sum of idle time per station</span>
+<span class="sd">            - penalty_precedence: Number of precedence violations (from base)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get base penalties (precedence + unscheduled)</span>
+        <span class="n">base_eval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_base_constraints</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span>
+
+        <span class="c1"># SALBP-specific: Group by station and check cycle time</span>
+        <span class="n">stations_time_cumul</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">):</span>
+            <span class="n">station_task_i</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">station_task_i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">stations_time_cumul</span><span class="p">:</span>
+                <span class="n">stations_time_cumul</span><span class="p">[</span><span class="n">station_task_i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">stations_time_cumul</span><span class="p">[</span><span class="n">station_task_i</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+
+        <span class="n">penalty_overtime</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">penalty_undertime</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">s_id</span><span class="p">,</span> <span class="n">total_time</span> <span class="ow">in</span> <span class="n">stations_time_cumul</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">penalty_overtime</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">total_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_time</span><span class="p">)</span>
+            <span class="n">penalty_undertime</span> <span class="o">+=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_time</span> <span class="o">-</span> <span class="n">total_time</span><span class="p">)</span>
+
+        <span class="n">nb_stations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">stations_time_cumul</span><span class="p">)</span>
+
+        <span class="c1"># Combine base and SALBP-specific results</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;nb_stations&quot;</span><span class="p">:</span> <span class="n">nb_stations</span><span class="p">,</span>
+            <span class="s2">&quot;penalty_overtime&quot;</span><span class="p">:</span> <span class="n">penalty_overtime</span><span class="p">,</span>
+            <span class="s2">&quot;penalty_undertime&quot;</span><span class="p">:</span> <span class="n">penalty_undertime</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">base_eval</span><span class="p">,</span>  <span class="c1"># Add penalty_precedence and penalty_unscheduled</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="SalbpProblem.get_solution_type">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem.get_solution_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">SalbpSolution</span></div>
+
+
+<div class="viewcode-block" id="SalbpProblem.satisfy">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">SalbpSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Strict check for validity.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eval_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">eval_res</span><span class="p">[</span><span class="s2">&quot;penalty_overtime&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">eval_res</span><span class="p">[</span><span class="s2">&quot;penalty_precedence&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="SalbpProblem.get_attribute_register">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem.get_attribute_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Register for standard encoding (optional, but good for GA/CP solvers).</span>
+<span class="sd">        We define the solution as a list of integers (station assignments).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Note: Bounding the number of stations is tricky without a heuristic.</span>
+        <span class="c1"># A safe upper bound is the number of tasks (1 task per station).</span>
+        <span class="n">encoding</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">encoding</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;allocation_to_station&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ListInteger</span><span class="p">(</span>
+            <span class="n">length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">,</span> <span class="n">lows</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ups</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_tasks</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">EncodingRegister</span><span class="p">(</span><span class="n">encoding</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SalbpProblem.get_objective_register">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem.get_objective_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Defines the default objective to minimize.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MINIMIZATION</span><span class="p">,</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;nb_stations&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mi">1</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;penalty_overtime&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mi">10000</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;penalty_undertime&quot;</span><span class="p">:</span>
+                <span class="c1"># This is really soft, solver should handle it lexicographically.</span>
+                <span class="n">ObjectiveDoc</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                <span class="s2">&quot;penalty_precedence&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mi">10000</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SalbpProblem.get_solution_type_member">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem.get_solution_type_member">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type_member</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SalbpSolution</span><span class="p">:</span>
+        <span class="c1"># don&#39;t satisfy the constraints ;)</span>
+        <span class="k">return</span> <span class="n">SalbpSolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">allocation_to_station</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SalbpProblem.get_graph_precedence">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem.get_graph_precedence">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_graph_precedence</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Graph</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get precedence graph.</span>
+
+<span class="sd">        Uses the PrecedenceProblem mixin&#39;s get_precedence_graph() method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_precedence_graph</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="calculate_salbp_lower_bounds">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.calculate_salbp_lower_bounds">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_salbp_lower_bounds</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">SalbpProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates lower bounds for the SALBP-1 problem.</span>
+<span class="sd">    Inspired by: https://github.com/domain-independent-dp/didp-rs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">times</span> <span class="o">=</span> <span class="p">[</span><span class="n">problem</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">problem</span><span class="o">.</span><span class="n">tasks</span><span class="p">]</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">problem</span><span class="o">.</span><span class="n">cycle_time</span>
+
+    <span class="c1"># Bound 1: Theoretical minimum based on total work</span>
+    <span class="n">lb1</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">times</span><span class="p">)</span> <span class="o">/</span> <span class="n">c</span><span class="p">)</span>
+
+    <span class="c1"># Bound 2: Based on tasks &gt; c/2</span>
+    <span class="c1"># Two tasks &gt; c/2 cannot share a station.</span>
+    <span class="c1"># One task == c/2 needs half a station.</span>
+    <span class="n">w2_1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">times</span> <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="n">c</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">w2_2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">times</span> <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="n">c</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">lb2</span> <span class="o">=</span> <span class="n">w2_1</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">w2_2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Bound 3: More complex weighting</span>
+    <span class="c1"># Tasks &gt; 2c/3 count as 1</span>
+    <span class="c1"># Tasks == 2c/3 count as 2/3</span>
+    <span class="c1"># Tasks &gt; c/3 count as 1/2</span>
+    <span class="c1"># Tasks == c/3 count as 1/3</span>
+    <span class="n">w3</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">times</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="n">c</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">w3</span> <span class="o">+=</span> <span class="mf">1.0</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="n">c</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">w3</span> <span class="o">+=</span> <span class="mf">0.666</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="n">c</span> <span class="o">/</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">w3</span> <span class="o">+=</span> <span class="mf">0.5</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="n">c</span> <span class="o">/</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">w3</span> <span class="o">+=</span> <span class="mf">0.333</span>
+    <span class="n">lb3</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">w3</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">lb1</span><span class="p">,</span> <span class="n">lb2</span><span class="p">,</span> <span class="n">lb3</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SalbpProblem_1_2">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem_1_2">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SalbpProblem_1_2</span><span class="p">(</span><span class="n">SalbpProblem</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generalisation of SALBP-(1,2) problem.</span>
+
+<span class="sd">    In this variant, both cycle time and number of stations can be optimized.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SalbpProblem_1_2.from_salbp1">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem_1_2.from_salbp1">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_salbp1</span><span class="p">(</span><span class="n">problem</span><span class="p">:</span> <span class="n">SalbpProblem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SalbpProblem_1_2&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create SALBP-1,2 problem from SALBP-1 problem.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SalbpProblem_1_2</span><span class="p">(</span>
+            <span class="n">tasks_data</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_data</span><span class="p">,</span>
+            <span class="n">precedences</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">precedence</span><span class="p">,</span>
+            <span class="n">number_of_stations</span><span class="o">=</span><span class="n">problem</span><span class="o">.</span><span class="n">nb_stations</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tasks_data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TaskData</span><span class="p">],</span>
+        <span class="n">precedences</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+        <span class="n">number_of_stations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize SALBP-1,2 problem (no fixed cycle time).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tasks_data: List of TaskData objects for each task</span>
+<span class="sd">            precedences: List of (predecessor, successor) pairs</span>
+<span class="sd">            number_of_stations: Number of available stations (default: nb_tasks)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Call parent with cycle_time=None (will be optimized)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">tasks_data</span><span class="o">=</span><span class="n">tasks_data</span><span class="p">,</span>
+            <span class="n">cycle_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">precedences</span><span class="o">=</span><span class="n">precedences</span><span class="p">,</span>
+            <span class="n">number_of_stations</span><span class="o">=</span><span class="n">number_of_stations</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="SalbpProblem_1_2.evaluate">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem_1_2.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">SalbpSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate the solution.</span>
+<span class="sd">        Objective: Minimize the number of stations and cycle time</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stations_time_cumul</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">penalty_precedence</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_tasks</span><span class="p">):</span>
+            <span class="n">station_task_i</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">allocation_to_station</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">station_task_i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">stations_time_cumul</span><span class="p">:</span>
+                <span class="n">stations_time_cumul</span><span class="p">[</span><span class="n">station_task_i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">stations_time_cumul</span><span class="p">[</span><span class="n">station_task_i</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_times</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">precedence</span><span class="p">:</span>
+            <span class="n">station_p</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">station_s</span> <span class="o">=</span> <span class="n">variable</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">s</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">station_p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">station_s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">station_p</span> <span class="o">&gt;</span> <span class="n">station_s</span><span class="p">:</span>
+                    <span class="n">penalty_precedence</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">nb_stations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">stations_time_cumul</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;nb_stations&quot;</span><span class="p">:</span> <span class="n">nb_stations</span><span class="p">,</span>
+            <span class="s2">&quot;cycle_time&quot;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">stations_time_cumul</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="s2">&quot;cycle_time_dispersion&quot;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">stations_time_cumul</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="o">-</span> <span class="nb">min</span><span class="p">(</span><span class="n">stations_time_cumul</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="s2">&quot;penalty_precedence&quot;</span><span class="p">:</span> <span class="n">penalty_precedence</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="SalbpProblem_1_2.satisfy">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem_1_2.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">SalbpSolution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Strict check for validity.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">eval_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">eval_res</span><span class="p">[</span><span class="s2">&quot;penalty_precedence&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="SalbpProblem_1_2.get_objective_register">
+<a class="viewcode-back" href="../../../../api/discrete_optimization.alb.salbp.html#discrete_optimization.alb.salbp.problem.SalbpProblem_1_2.get_objective_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Defines the default objective to minimize.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MINIMIZATION</span><span class="p">,</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span><span class="p">,</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;nb_stations&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mi">1</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;cycle_time&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mi">1</span>
+                <span class="p">),</span>
+                <span class="s2">&quot;cycle_time_dispersion&quot;</span><span class="p">:</span>
+                <span class="c1"># This is really soft, solver should handle it lexicographically.</span>
+                <span class="n">ObjectiveDoc</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                <span class="s2">&quot;penalty_precedence&quot;</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="mi">10000</span>
+                <span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

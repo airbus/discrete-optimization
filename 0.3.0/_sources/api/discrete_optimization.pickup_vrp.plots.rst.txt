@@ -1,0 +1,21 @@
+discrete\_optimization.pickup\_vrp.plots package
+================================================
+
+Submodules
+----------
+
+discrete\_optimization.pickup\_vrp.plots.gpdp\_plot\_utils module
+-----------------------------------------------------------------
+
+.. automodule:: discrete_optimization.pickup_vrp.plots.gpdp_plot_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.pickup_vrp.plots
+   :members:
+   :undoc-members:
+   :show-inheritance:
