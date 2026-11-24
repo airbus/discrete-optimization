@@ -419,6 +419,40 @@ class CpSolver(SolverDO):
         ]
 
     @abstractmethod
+    def add_forbidden_assignments(
+        self,
+        variables: Sequence[Any],
+        values: Iterable[Sequence[int]],
+    ) -> list[Any]:
+        """Forbid sequence variables to evaluate in a sequence of values.
+
+        A ForbiddenAssignments constraint is a constraint on an array of variables
+        where the list of impossible combinations is provided in the tuples list.
+
+        Args:
+          variables: A list of variables.
+          values: A list of forbidden tuples. Each tuple must have the same
+            length as the variables, and the *i*th value of a tuple corresponds to
+            the *i*th variable.
+
+        Returns:
+          the created constraints
+
+        """
+        return [
+            self.add_bool_constraint(
+                self.bool_and(
+                    tuple(
+                        self.at_least_one(
+                            tuple(var != value for var, value in zip(variables, row))
+                        )
+                        for row in values
+                    )
+                )
+            )
+        ]
+
+    @abstractmethod
     def add_exactly_one(self, exprs: Iterable[Any]) -> list[Any]:
         """Enforce that exactly one expression is true.
 

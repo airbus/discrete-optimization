@@ -339,6 +339,11 @@ class OptalCpSolver(CpSolver, BoundsProviderMixin, WarmstartFromPreviousRunMixin
     ) -> list[Any]:
         return super().add_allowed_assignments(variables=variables, values=values)
 
+    def add_forbidden_assignments(
+        self, variables: Sequence[Any], values: Iterable[Sequence[int]]
+    ) -> list[Any]:
+        return super().add_forbidden_assignments(variables=variables, values=values)
+
     def sum(self, exprs: Iterable[Any]) -> Any:
         return self.cp_model.sum(exprs)
 
