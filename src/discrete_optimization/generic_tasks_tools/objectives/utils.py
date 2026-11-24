@@ -18,6 +18,7 @@ from discrete_optimization.generic_tasks_tools.objectives.calendar_preempted imp
 from discrete_optimization.generic_tasks_tools.objectives.cumul_cost import (
     CumulCostComputer,
 )
+from discrete_optimization.generic_tasks_tools.objectives.custom import CustomComputer
 from discrete_optimization.generic_tasks_tools.objectives.earliness_tardiness import (
     EarlinessTardinessComputer,
     OnlyEarlinessComputer,
@@ -75,6 +76,7 @@ def get_mapping() -> dict[str, list[type[ObjectiveComputer]]]:
         CalendarPreemptedComputer,
         WeightedNumberLateComputer,
         WeightedNumberLateTasksInBatchComputer,
+        CustomComputer,
     ]
     mapping = {}
     for objective_computer in list_available:
