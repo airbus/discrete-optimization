@@ -297,7 +297,7 @@ class AllocationCpSolver(
             self.exactly_one_unary_resource_per_task
             or self.at_most_one_unary_resource_per_task
         ):
-            for task in self.subset_tasks_of_interest:
+            for task in self.problem.tasks_list:
                 list_is_allocated_variables = [
                     is_present
                     for unary_resource in self.subset_unaryresources_allowed
