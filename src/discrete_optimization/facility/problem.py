@@ -130,6 +130,14 @@ class FacilityProblem(AllocationProblem[Customer, Facility]):
     ):
         assert facility_count == len(facilities)
         assert customer_count == len(customers)
+        assert all(
+            facility.index == i_facility
+            for i_facility, facility in enumerate(facilities)
+        )
+        assert all(
+            customer.index == i_customer
+            for i_customer, customer in enumerate(customers)
+        )
         self.facility_count = facility_count
         self.customer_count = customer_count
         self.facilities = facilities
