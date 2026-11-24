@@ -75,7 +75,7 @@ class TasksCpmpySolver(CpmpySolver, TasksCpSolver[Task]):
         self.cp_model.add(cstr)
         return [cstr]
 
-    def add_cumulative(
+    def add_cumulative_with_scheduling(
         self,
         intervals: Iterable[IntervalVar],
         demands: Iterable[LinearExpr],

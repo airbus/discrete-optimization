@@ -104,14 +104,16 @@ class GenericSchedulingAutoCpSolver(
     """Generic cp solver for scheduling problems (with or without allocation).
 
     The needed variables are automatically created, with common constraints (precedence, resource capacity).
-    The objective is set by default to global makespan but can be changed by modifying `solver.default_objective` value.
+    The objective is set to match the problem objective according to its list of objective computers.
 
     This solver class needs still to be derived to create a solution from the proper class.
     You will need at least to implement the conversion from the task variables to the actual solution object.
 
     If custom constraints are needed, override `init_model()`.
-    If a custom objective is needed, set `solver.default_objective` to `Objective.CUSTOM` so that no objective is set
-    by default and override `init_model()` to define your objective.
+    If a custom objective is needed,
+    - if the original problem was using the CustomObjectiveComputer` class, implement `get_custom_objective_expr()`
+    which will be used to translate the custom objective
+    - or simply override `init_model()` by setting the objective "a la mano".
 
     """
 
@@ -160,6 +162,8 @@ class GenericSchedulingAutoCpSolver(
             default=ModeToValueModeling.ENFORCE_IF,
         ),
     ]
+    # Flag for allocation solver without scheduling (default to False)
+    no_scheduling = False
     # Task start/end bounds settings
     use_cpm_for_task_bounds = False
     """Flag telling whether cpm should be used to refine task bounds."""
@@ -234,7 +238,7 @@ class GenericSchedulingAutoCpSolver(
         If additional custom constraints require them, override it.
 
         """
-        return (
+        return not self.no_scheduling and (
             self.needs_task_intervals
             or (
                 len(self.problem.unary_resources_list) > 0
@@ -253,7 +257,7 @@ class GenericSchedulingAutoCpSolver(
         If additional custom constraints require them, override this property.
 
         """
-        return (
+        return not self.no_scheduling and (
             (
                 # no optional interval per mode created => task intervals needed for end-start=duration constraint
                 self.avoid_interval_optional_for_cumulative_resources
@@ -283,6 +287,9 @@ class GenericSchedulingAutoCpSolver(
         Returns:
 
         """
+        if self.no_scheduling:
+            # cumulative constraints have meaning only in a scheduling setting
+            return False
         if resource in self.problem.skills_list:
             return self.add_redundant_skill_cumulative_constraints
         else:
@@ -454,6 +461,10 @@ class GenericSchedulingAutoCpSolver(
             self._create_energy_variables()
 
     def _create_start_or_end_variables(self):
+        if self.no_scheduling:
+            # do not create start and end variables
+            return
+
         for task in self.problem.tasks_list:
             for start_or_end in StartOrEnd:
                 # lower/upper bound
@@ -515,7 +526,10 @@ class GenericSchedulingAutoCpSolver(
                     self.add_at_most_one(
                         self.modes_is_present[task][mode] for mode in modes
                     )
-            if not self.avoid_interval_optional_for_cumulative_resources:
+            if (
+                not self.avoid_interval_optional_for_cumulative_resources
+                and not self.no_scheduling
+            ):
                 for mode in modes:
                     self._create_mode_interval_on_the_fly(
                         task=task, mode=mode, modes=modes
@@ -652,6 +666,10 @@ class GenericSchedulingAutoCpSolver(
                             )
 
     def _create_energy_variables(self):
+        if self.no_scheduling:
+            # skip energy constraints
+            return
+
         for task in self.problem.tasks_list:
             self.energy_variables[task] = {}
             for unary_resource in self.problem.unary_resources_list:
@@ -710,7 +728,10 @@ class GenericSchedulingAutoCpSolver(
                             ~self.get_task_is_present_variable(task), is_allocated == 0
                         )
                     self.allocation_is_present[task][unary_resource] = is_allocated
-                    if not self.avoid_interval_optional_for_unary_resources:
+                    if (
+                        not self.avoid_interval_optional_for_unary_resources
+                        and not self.no_scheduling
+                    ):
                         self._create_allocation_interval_on_the_fly(
                             task=task, unary_resource=unary_resource
                         )
@@ -789,100 +810,114 @@ class GenericSchedulingAutoCpSolver(
             # cumulative resources
             # TODO : put it in calendar_generic
             for resource in self.problem.cumulative_resources_list:
-                max_capacity = self.problem.get_resource_max_capacity(resource)
-                level_var = self.create_int_var(
-                    lb=0, ub=max_capacity, name=f"level_{resource}"
-                )
-                if max_capacity > 1:
-                    # cumulative constraint on the new "conso" variable
-                    if self.avoid_interval_optional_for_cumulative_resources:
-                        intervals_n_consumptions = (
-                            self.get_resource_consumption_intervals(resource=resource)
+                if self.no_scheduling:
+                    # no scheduling => resource level = sum of conso as for non-renewable resources
+                    self.resource_level_variables[resource] = self.sum(
+                        conso
+                        for task, conso in self.get_resource_task_consumptions(
+                            resource=resource
                         )
-                        intervals = [
-                            interval
-                            for interval, value in intervals_n_consumptions
-                            if not isinstance(value, int) or value > 0
-                        ]
-                        demands = [
-                            value
-                            for interval, value in intervals_n_consumptions
-                            if not isinstance(value, int) or value > 0
-                        ]
-                        if len(intervals) > 0:
-                            self.add_cumulative(
-                                intervals=intervals,
-                                demands=demands,
-                                capacity=level_var,
+                    )
+                else:
+                    # scheduling: max used resource over time -> new var + cumulative constraint
+                    max_capacity = self.problem.get_resource_max_capacity(resource)
+                    level_var = self.create_int_var(
+                        lb=0, ub=max_capacity, name=f"level_{resource}"
+                    )
+                    if max_capacity > 1:
+                        # cumulative constraint on the new "conso" variable
+                        if self.avoid_interval_optional_for_cumulative_resources:
+                            intervals_n_consumptions = (
+                                self.get_resource_consumption_intervals(
+                                    resource=resource
+                                )
                             )
-                            for (
-                                _,
-                                conso_var,
-                            ) in intervals_n_consumptions:
-                                self.add_bool_constraint(level_var >= conso_var)
+                            intervals = [
+                                interval
+                                for interval, value in intervals_n_consumptions
+                                if not isinstance(value, int) or value > 0
+                            ]
+                            demands = [
+                                value
+                                for interval, value in intervals_n_consumptions
+                                if not isinstance(value, int) or value > 0
+                            ]
+                            if len(intervals) > 0:
+                                self.add_cumulative_with_scheduling(
+                                    intervals=intervals,
+                                    demands=demands,
+                                    capacity=level_var,
+                                )
+                                for (
+                                    _,
+                                    conso_var,
+                                ) in intervals_n_consumptions:
+                                    self.add_bool_constraint(level_var >= conso_var)
+                            else:
+                                level_var = 0
                         else:
-                            level_var = 0
+                            mode_intervals_consumptions_is_present = [
+                                (
+                                    self.get_task_mode_interval(task=task, mode=mode),
+                                    conso,
+                                    self.get_task_mode_is_present_variable(
+                                        task=task, mode=mode
+                                    ),
+                                )
+                                for task in self.problem.tasks_list
+                                for mode in self.problem.get_task_modes(task=task)
+                                if (
+                                    conso
+                                    := self.problem.get_cumulative_resource_consumption(
+                                        resource=resource, task=task, mode=mode
+                                    )
+                                )
+                                > 0
+                            ]
+                            intervals = [
+                                interval
+                                for interval, conso, is_present in mode_intervals_consumptions_is_present
+                            ]
+                            demands = [
+                                conso
+                                for interval, conso, is_present in mode_intervals_consumptions_is_present
+                            ]
+                            if len(intervals) > 0:
+                                self.add_cumulative_with_scheduling(
+                                    intervals=intervals,
+                                    demands=demands,
+                                    capacity=level_var,
+                                )
+                                for (
+                                    _,
+                                    conso,
+                                    is_present,
+                                ) in mode_intervals_consumptions_is_present:
+                                    self.add_bool_constraint(
+                                        level_var >= conso * is_present
+                                    )
+                            else:
+                                level_var = 0
                     else:
-                        mode_intervals_consumptions_is_present = [
-                            (
-                                self.get_task_mode_interval(task=task, mode=mode),
-                                conso,
-                                self.get_task_mode_is_present_variable(
-                                    task=task, mode=mode
-                                ),
-                            )
+                        # disjunctive resource, no need to use the interval variables
+                        # (no overlap constraint already handled by `create_calendar_resources_constraint()`
+                        list_is_mode_present_variables = [
+                            self.get_task_mode_is_present_variable(task=task, mode=mode)
                             for task in self.problem.tasks_list
                             for mode in self.problem.get_task_modes(task=task)
-                            if (
-                                conso
-                                := self.problem.get_cumulative_resource_consumption(
-                                    resource=resource, task=task, mode=mode
-                                )
+                            if self.problem.get_cumulative_resource_consumption(
+                                resource=resource, task=task, mode=mode
                             )
                             > 0
                         ]
-                        intervals = [
-                            interval
-                            for interval, conso, is_present in mode_intervals_consumptions_is_present
-                        ]
-                        demands = [
-                            conso
-                            for interval, conso, is_present in mode_intervals_consumptions_is_present
-                        ]
-                        if len(intervals) > 0:
-                            self.add_cumulative(
-                                intervals=intervals,
-                                demands=demands,
-                                capacity=level_var,
+                        if len(list_is_mode_present_variables) > 0:
+                            self.add_max_equality(
+                                level_var, list_is_mode_present_variables
                             )
-                            for (
-                                _,
-                                conso,
-                                is_present,
-                            ) in mode_intervals_consumptions_is_present:
-                                self.add_bool_constraint(
-                                    level_var >= conso * is_present
-                                )
                         else:
                             level_var = 0
-                else:
-                    # disjunctive resource, no need to use the interval variables
-                    # (no overlap constraint already handled by `create_calendar_resources_constraint()`
-                    list_is_mode_present_variables = [
-                        self.get_task_mode_is_present_variable(task=task, mode=mode)
-                        for task in self.problem.tasks_list
-                        for mode in self.problem.get_task_modes(task=task)
-                        if self.problem.get_cumulative_resource_consumption(
-                            resource=resource, task=task, mode=mode
-                        )
-                        > 0
-                    ]
-                    if len(list_is_mode_present_variables) > 0:
-                        self.add_max_equality(level_var, list_is_mode_present_variables)
-                    else:
-                        level_var = 0
 
-                self.resource_level_variables[resource] = level_var
+                    self.resource_level_variables[resource] = level_var
             # non-renewable resources
             for resource in self.problem.non_renewable_resources_list:
                 self.resource_level_variables[resource] = self.sum(
@@ -942,72 +977,75 @@ class GenericSchedulingAutoCpSolver(
                     self.add_bool_constraint(expr <= ub)
 
     def _add_constraints(self) -> None:
-        # define the constraint on presence of optional task
-        # (specified in linear_constraints_presence_tasks())
+        ## Constraints same with or without scheduling
+        # Presence of optional task specified in linear_constraints_presence_tasks()
         self.create_linear_constraint_optional_tasks()
 
-        # Entity constraints (batching + entity precedence/time lags/time windows)
-        # Check if problem has batching or entity constraints
-        if (
-            len(self.problem.get_batch_entities()) > 0
-            or len(self.problem.get_entity_precedence_constraints()) > 0
-            or any(
-                len(self.problem.get_entity_time_lags(se1, se2, mm)) > 0
-                for se1 in [StartOrEnd.START, StartOrEnd.END]
-                for se2 in [StartOrEnd.START, StartOrEnd.END]
-                for mm in [MinOrMax.MIN, MinOrMax.MAX]
-            )
-            or len(self.problem.get_routing_entities()) > 0
-            or len(self.problem.get_ordered_routing_entities()) > 0
-        ):
-            self.init_entity_constraints()
-            self.create_routing_vars_and_constraints()
-
-        # Define the entity variables for resource blocking constraint
-        self.create_resource_blocking_constraints()
-        # Calendar preemptive duration constraint
-        self.create_preemptive_duration_constraints(
-            modeling=self.calendar_preemptive_modeling
-        )
-        # Exclusion resource constraint
-        self.create_exclusion_constraints()
         # mode selection -> presence
         self.create_link_mode_to_presence()
-        # time lag
-        self.create_timelag_constraints()
         # non-renewable resources capacity
         for resource in self.problem.non_renewable_resources_list:
             self.create_non_renewable_resources_constraint(resource=resource)
-        # cumulative + unary resources calendar
-        for resource in self.problem.calendar_resources_list:
-            if not self.problem.is_cumulative_resource(
-                resource
-            ) or self.include_constraint_on_cumulative_resource(resource=resource):
-                self.create_calendar_resources_constraint(resource=resource)
-        # precedence: already included in time lag constraints
-
+        # mode constraint
+        self.add_mode_constraints()
+        # alternative path
+        self.create_alternative_subproblems_constraints()
         # Allocation constraints:
         # 1) at most or exactly one resource allocated per task?
         # 2) Same allocation constraints
         self.add_allocation_constraints()
         # Multimode allocation constraints (compatibility)
         self.create_compatibility_task_mode_unary_resource_constraint()
-
         # skill value per task constraints
         self.create_fine_skill_constraints()
         self.create_coarse_skill_constraints()  # redundant
-        # energy constraints
-        if self.use_energy_constraints:
-            branches = self.prepare_energy_constraints()
-            self.create_energy_constraints(branches=branches)
-        # no overlap
-        self.create_no_overlap_constraints()
-        # forbidden intervals
-        self.create_forbidden_intervals_constraints()
-        # mode constraint
-        self.add_mode_constraints()
-        # alternative path
-        self.create_alternative_subproblems_constraints()
+
+        ## Constraints meaningful only in scheduling setting:
+        if not self.no_scheduling:
+            # Entity constraints (batching + entity precedence/time lags/time windows)
+            # Check if problem has batching or entity constraints
+            if (
+                len(self.problem.get_batch_entities()) > 0
+                or len(self.problem.get_entity_precedence_constraints()) > 0
+                or any(
+                    len(self.problem.get_entity_time_lags(se1, se2, mm)) > 0
+                    for se1 in [StartOrEnd.START, StartOrEnd.END]
+                    for se2 in [StartOrEnd.START, StartOrEnd.END]
+                    for mm in [MinOrMax.MIN, MinOrMax.MAX]
+                )
+                or len(self.problem.get_routing_entities()) > 0
+                or len(self.problem.get_ordered_routing_entities()) > 0
+            ):
+                self.init_entity_constraints()
+                self.create_routing_vars_and_constraints()
+            # Define the entity variables for resource blocking constraint
+            self.create_resource_blocking_constraints()
+            # Calendar preemptive duration constraint
+            self.create_preemptive_duration_constraints(
+                modeling=self.calendar_preemptive_modeling
+            )
+            # time lag
+            self.create_timelag_constraints()
+            # precedence: already included in time lag constraints
+            # energy constraints
+            if self.use_energy_constraints:
+                branches = self.prepare_energy_constraints()
+                self.create_energy_constraints(branches=branches)
+            # no overlap
+            self.create_no_overlap_constraints()
+            # forbidden intervals
+            self.create_forbidden_intervals_constraints()
+            # cumulative + unary resources calendar
+            for resource in self.problem.calendar_resources_list:
+                if not self.problem.is_cumulative_resource(
+                    resource
+                ) or self.include_constraint_on_cumulative_resource(resource=resource):
+                    # to be called *after* create_resource_blocking_constraints()
+                    self.create_calendar_resources_constraint(resource=resource)
+
+        ## Constraints handled differently with scheduling (via intervals)  or without
+        # Exclusion resource constraint (include
+        self.create_exclusion_constraints(no_scheduling=self.no_scheduling)
 
     def init_list_obj_modelers(self):
         mapping_obj_computer_to_modeler = mapping_computer_to_modeler
@@ -1124,6 +1162,11 @@ class GenericSchedulingAutoCpSolver(
         Returns:
 
         """
+        if self.no_scheduling:
+            raise RuntimeError(
+                "You choose to skip scheduling via `no_scheduling` variable. "
+                "No duration variable exists."
+            )
         if task not in self.duration_variables:
             if not self.problem.is_task_in_nooverlap_constraint(task):
                 logger.warning(
@@ -1140,6 +1183,11 @@ class GenericSchedulingAutoCpSolver(
 
     def get_task_interval(self, task: Task) -> IntervalVar:
         """Get interval variable for given task."""
+        if self.no_scheduling:
+            raise RuntimeError(
+                "You choose to skip scheduling via `no_scheduling` variable. "
+                "No task interval variable exists."
+            )
         if task not in self.task_interval_variables:
             if not self.problem.is_task_in_nooverlap_constraint(task):
                 logger.warning(
@@ -1180,6 +1228,11 @@ class GenericSchedulingAutoCpSolver(
     def get_task_unary_resource_interval(
         self, task: Task, unary_resource: UnaryResource
     ) -> IntervalVar:
+        if self.no_scheduling:
+            raise RuntimeError(
+                "You choose to skip scheduling via `no_scheduling` variable. "
+                "No unary resource interval exists."
+            )
         try:
             return self.allocation_intervals[task][unary_resource]
         except KeyError as e:
@@ -1214,6 +1267,11 @@ class GenericSchedulingAutoCpSolver(
     def get_task_start_or_end_variable(
         self, task: Task, start_or_end: StartOrEnd
     ) -> LinearExpr:
+        if self.no_scheduling:
+            raise RuntimeError(
+                "You choose to skip scheduling via `no_scheduling` variable. "
+                "No start or end variable exists."
+            )
         return self.start_or_end_variables[task, start_or_end]
 
     def get_task_mode_is_present_variable(self, task: Task, mode: int) -> LinearExpr:
@@ -1221,6 +1279,11 @@ class GenericSchedulingAutoCpSolver(
 
     def get_task_mode_interval(self, task: Task, mode: int) -> IntervalVar:
         """Get the interval variable corresponding to given task and mode."""
+        if self.no_scheduling:
+            raise RuntimeError(
+                "You choose to skip scheduling via `no_scheduling` variable. "
+                "No mode interval exists."
+            )
         try:
             return self.modes_intervals[task][mode]
         except KeyError as e:
@@ -1279,12 +1342,17 @@ class GenericSchedulingAutoCpSolver(
                     is_present=False,
                 )
             else:
-                start = solution_value_fn(
-                    self.get_task_start_or_end_variable(task, StartOrEnd.START)
-                )
-                end = solution_value_fn(
-                    self.get_task_start_or_end_variable(task, StartOrEnd.END)
-                )
+                if self.no_scheduling:
+                    # no scheduling: as if all tasks happen simultaneously at [0, 1)
+                    start = 0
+                    end = 1
+                else:
+                    start = solution_value_fn(
+                        self.get_task_start_or_end_variable(task, StartOrEnd.START)
+                    )
+                    end = solution_value_fn(
+                        self.get_task_start_or_end_variable(task, StartOrEnd.END)
+                    )
                 modes = self.problem.get_task_modes(task)
                 mode = AbsentValue.ABSENT
                 if len(modes) == 1:
@@ -1608,6 +1676,11 @@ class SinglemodeGenericSchedulingAutoCpSolver(
 
     def get_task_interval(self, task: Task) -> IntervalVar:
         """Task interval with fixed duration, single mode."""
+        if self.no_scheduling:
+            raise RuntimeError(
+                "You choose to skip scheduling via `no_scheduling` variable. "
+                "No task interval variable exists."
+            )
         if self.needs_task_intervals:
             return super().get_task_interval(task=task)
         else:

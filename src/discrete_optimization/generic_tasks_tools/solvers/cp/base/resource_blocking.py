@@ -432,11 +432,11 @@ class ResourceBlockingCpSolver(
                 if self.use_no_overlap_for_capa_1 or not self.use_cumulative_for_capa_1:
                     self.add_no_overlap(intervals_1)
                 if self.use_cumulative_for_capa_1:
-                    self.add_cumulative(
+                    self.add_cumulative_with_scheduling(
                         intervals=intervals_1, demands=demands_1, capacity=capacity
                     )
             else:
-                self.add_cumulative(
+                self.add_cumulative_with_scheduling(
                     intervals=intervals_1, demands=demands_1, capacity=capacity
                 )
 
@@ -469,11 +469,11 @@ class ResourceBlockingCpSolver(
                     ):
                         self.add_no_overlap(intervals_2)
                     if self.use_cumulative_for_capa_1:
-                        self.add_cumulative(
+                        self.add_cumulative_with_scheduling(
                             intervals=intervals_2, demands=demands_2, capacity=capacity
                         )
                 else:
-                    self.add_cumulative(
+                    self.add_cumulative_with_scheduling(
                         intervals=intervals_2, demands=demands_2, capacity=capacity
                     )
 
@@ -498,6 +498,7 @@ class ResourceBlockingCpSolver(
 
         Args:
             resource: The resource to constrain
+
         """
         # Check if this resource has blocking constraints
         has_blocking = (
@@ -507,7 +508,9 @@ class ResourceBlockingCpSolver(
 
         if has_blocking:
             # Use specialized method that includes blocking intervals
-            self.create_cumulative_constraint_including_blocking(resource=resource)
+            return self.create_cumulative_constraint_including_blocking(
+                resource=resource
+            )
         else:
             # Use standard parent method
-            super().create_calendar_resources_constraint(resource=resource)
+            return super().create_calendar_resources_constraint(resource=resource)
