@@ -799,6 +799,13 @@ class CpmpySolver(CpSolver, WarmstartFromPreviousRunMixin):
         self.cp_model.add(cstr)
         return [cstr]
 
+    def add_forbidden_assignments(
+        self, variables: Sequence[Any], values: Iterable[Sequence[int]]
+    ) -> list[Any]:
+        cstr = cpmpy.NegativeTable(array=variables, table=list(values))
+        self.cp_model.add(cstr)
+        return [cstr]
+
     def bool_and(self, exprs: Sequence[Any]) -> Any:
         return cpmpy.all(exprs)
 

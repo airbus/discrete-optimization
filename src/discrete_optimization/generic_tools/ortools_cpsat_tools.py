@@ -300,7 +300,20 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin, WarmstartFromPreviousRun
     def add_allowed_assignments(
         self, variables: Sequence[Any], values: Iterable[Sequence[int]]
     ) -> list[Any]:
-        pass
+        return [
+            self.cp_model.add_allowed_assignments(
+                expressions=variables, tuples_list=values
+            )
+        ]
+
+    def add_forbidden_assignments(
+        self, variables: Sequence[Any], values: Iterable[Sequence[int]]
+    ) -> list[Any]:
+        return [
+            self.cp_model.add_forbidden_assignments(
+                expressions=variables, tuples_list=values
+            )
+        ]
 
     def add_exactly_one(self, exprs: Iterable[Any]) -> list[Any]:
         return [self.cp_model.add_exactly_one(exprs)]

@@ -264,6 +264,11 @@ class MinizincCpSolver(CpSolver):
     ) -> list[Any]:
         raise NotImplementedError()
 
+    def add_forbidden_assignments(
+        self, variables: Sequence[Any], values: Iterable[Sequence[int]]
+    ) -> list[Any]:
+        raise NotImplementedError()
+
     def add_exactly_one(self, exprs: Iterable[Any]) -> list[Any]:
         raise NotImplementedError()
 
