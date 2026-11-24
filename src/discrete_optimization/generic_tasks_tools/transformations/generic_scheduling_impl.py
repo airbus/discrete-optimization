@@ -58,7 +58,9 @@ class ToGenericSchedulingImpl(
 
     """
 
-    def __init__(self, list_objective_computer: list[ObjectiveComputer] = None):
+    def __init__(
+        self, list_objective_computer: list[ObjectiveComputer] | None = None, **kwargs
+    ):
         self._list_objective_computer = list_objective_computer
 
     @abstractmethod
@@ -97,8 +99,6 @@ class ToGenericSchedulingImpl(
         Returns:
 
         """
-        # We put None as problem, it will be linked to its parent scheduling problem, when calling __init__
-        # of GenericSchedulingImplProblem
         if self._list_objective_computer is not None:
             return self._list_objective_computer
         return source_problem.get_list_objective_computer()
@@ -118,7 +118,7 @@ class ToGenericSchedulingImpl(
         (
             resources_consumption,
             resources_consumption_dependent,
-        ) = _extract_resource_consumptions(source_problem)
+        ) = extract_resource_consumptions(source_problem)
         successors: dict[Task, set[Task]] = {
             k: set(v) for k, v in source_problem.get_precedence_constraints().items()
         }
@@ -524,7 +524,7 @@ def _extract_batching_data(
     )
 
 
-def _extract_resource_consumptions(
+def extract_resource_consumptions(
     source_problem: GenericSchedulingProblem,
 ) -> tuple[
     dict[Task, dict[int, dict[CumulativeResource | NonRenewableResource, int]]],
