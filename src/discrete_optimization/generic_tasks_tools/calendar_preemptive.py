@@ -197,6 +197,7 @@ class CalendarPreemptiveProblem(
         cum_resource_calendar_dict = {}
         durations = {}
         task_mode_to_calendar = {}
+        logger.info(f"[Starting] Computing task duration with pre-emptivity")
         for task in self.tasks_list:
             if not self.is_task_calendar_preempted(task):
                 continue
@@ -262,6 +263,7 @@ class CalendarPreemptiveProblem(
             task_mode_to_calendar=task_mode_to_calendar,
         )
         self.initialized_calendar_preemption_data = True
+        logger.info(f"[Finished] Computing task duration with pre-emptivity")
 
     def get_calendar_preemption_data(self) -> CalendarPreemptionData:
         if not self.initialized_calendar_preemption_data:
@@ -524,69 +526,76 @@ def compute_duration_with_calendar_preemption(
     current_interval = [0, 0]
     cur_duration = -1
 
-    for i in range(cumulative_resource_calendar.shape[0]):
-        if resource_calendar[i] == 0:
-            # Resource unavailable at this time
-            if duration[i] == duration[i - 1]:
-                current_interval[1] = i
-            else:
-                prev_d = duration[i - 1]
-                if prev_d not in dict_of_interval_per_duration:
-                    dict_of_interval_per_duration[prev_d] = []
-                dict_of_interval_per_duration[prev_d] += [
-                    [current_interval[0], current_interval[1]]
-                ]
-                current_interval = [i, i]
-            continue
+    if orig_duration == 0:
+        # Zero-duration tasks complete instantly at any available time
+        # VECTORIZED VERSION for performance
 
-        x = cumulative_resource_calendar[i]
-        if x == 0:
-            continue
+        # Set duration = 0 for all available times (vectorized)
+        duration[resource_calendar == 1] = 0
 
-        # Find when we complete orig_duration work units starting at time i
-        # We need cumsum[j] == x + orig_duration - 1
-        # (the -1 accounts for the work unit at time i itself)
-        target_cumsum = x + orig_duration - 1
+        # Find intervals where resource is available using vectorized operations
+        # Add padding to handle edge cases
+        padded = np.pad(resource_calendar.astype(int), (1, 1), constant_values=0)
+        diff = np.diff(padded)
 
-        # Use binary search instead of linear search for O(log n) performance
-        # searchsorted finds the first index where cumsum >= target
-        index = np.searchsorted(
-            cumulative_resource_calendar[i:], target_cumsum, side="left"
-        )
+        # Starts of intervals: where we go from 0 to 1
+        starts = np.where(diff == 1)[0]
+        # Ends of intervals: where we go from 1 to 0
+        ends = np.where(diff == -1)[0] - 1  # -1 because diff is offset by 1
 
-        # Adjust index to absolute position
-        if index < len(cumulative_resource_calendar) - i:
-            index = i + index
+        # Build interval list
+        if len(starts) > 0:
+            intervals_for_zero = [[int(s), int(e)] for s, e in zip(starts, ends)]
+            dict_of_interval_per_duration[0] = intervals_for_zero
 
-            # Verify we found the exact value (not just >=)
-            if cumulative_resource_calendar[index] == target_cumsum:
-                duration[i] = index - i + 1
-                cur_duration = duration[i]
-                if i >= 1:
-                    if duration[i] == duration[i - 1]:
-                        current_interval[1] = i
-                    else:
-                        prev_d = duration[i - 1]
-                        if prev_d not in dict_of_interval_per_duration:
-                            dict_of_interval_per_duration[prev_d] = []
-                        dict_of_interval_per_duration[prev_d] += [
-                            [current_interval[0], current_interval[1]]
-                        ]
-                        current_interval = [i, i]
-            else:
-                # Exact value not found - cannot complete task from this start time
-                break
-        else:
-            # Not enough horizon remaining
-            break
+        return duration, dict_of_interval_per_duration
 
-    if current_interval[0] != current_interval[1]:
-        d = cur_duration
-        if d not in dict_of_interval_per_duration:
-            dict_of_interval_per_duration[d] = []
-        dict_of_interval_per_duration[d] += [[current_interval[0], current_interval[1]]]
+    # FULLY VECTORIZED VERSION for performance
+    # Find all valid start times (where resource is available and cumsum > 0)
+    valid_starts_mask = (resource_calendar == 1) & (cumulative_resource_calendar > 0)
+    valid_starts = np.where(valid_starts_mask)[0]
 
+    if len(valid_starts) > 0:
+        # Get cumsum values at all valid starts
+        cumsum_at_starts = cumulative_resource_calendar[valid_starts]
+
+        # Compute target cumsum for all starts at once
+        targets = cumsum_at_starts + orig_duration - 1
+
+        # For each target, find the index where cumsum equals it
+        # We use searchsorted for each target (still need loop here, but much smaller)
+        for idx, (start_i, target) in enumerate(zip(valid_starts, targets)):
+            # Find first index where cumsum >= target
+            end_idx = np.searchsorted(cumulative_resource_calendar, target, side="left")
+
+            # Verify we found exact match and it's after start
+            if (
+                end_idx < len(cumulative_resource_calendar)
+                and end_idx >= start_i
+                and cumulative_resource_calendar[end_idx] == target
+            ):
+                duration[start_i] = end_idx - start_i + 1
+            # else: duration stays -1 (cannot complete)
+
+    # Build interval dictionary from computed durations (vectorized)
+    # Find where duration changes using diff
+    duration_padded = np.pad(duration, (1, 1), constant_values=-2)  # Different sentinel
+    duration_changes = np.diff(duration_padded)
+
+    # Find start and end of each interval
+    change_indices = np.where(duration_changes != 0)[0]
+
+    for i in range(len(change_indices) - 1):
+        start_idx = change_indices[i]
+        end_idx = change_indices[i + 1] - 1
+        dur_value = duration[start_idx]
+
+        if dur_value not in dict_of_interval_per_duration:
+            dict_of_interval_per_duration[dur_value] = []
+        dict_of_interval_per_duration[dur_value].append([int(start_idx), int(end_idx)])
+
+    # Fallback for empty dict
     if len(dict_of_interval_per_duration) == 0:
-        dict_of_interval_per_duration[orig_duration] = current_interval
+        dict_of_interval_per_duration[orig_duration] = [[0, 0]]
 
     return duration, dict_of_interval_per_duration
