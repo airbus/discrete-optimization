@@ -430,7 +430,7 @@ class EntityIntervalsMixin(
         """Create interval for CompositeEntity (composition of entities)."""
         unfolded_entities = list(entity.unfold_entities())
         only_task_based = all(
-            isinstance(x, (GroupEntity, TaskEntity, TaskModeEntity, CompositeEntity))
+            isinstance(x, (GroupEntity, TaskEntity, CompositeEntity))
             for x in unfolded_entities
         )
         if only_task_based:
