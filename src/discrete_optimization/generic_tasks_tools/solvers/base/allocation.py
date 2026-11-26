@@ -11,7 +11,6 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
     UnaryResource,
-    get_default_tasks_n_unary_resources,
 )
 from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.solvers.base.base import TasksSolver
@@ -66,12 +65,34 @@ class AllocationSolver(TasksSolver[Task], Generic[Task, UnaryResource]):
         self, unary_resource: UnaryResource, sign: SignEnum, target: int
     ) -> list[Any]: ...
 
+    @property
+    def subset_tasks_of_interest(self) -> Iterable[Task]:
+        """Subset of tasks of interest used for the objective.
+
+        By default, all tasks.
+
+        """
+        return self.problem.tasks_list
+
+    @property
+    def subset_unaryresources_allowed(self) -> Iterable[UnaryResource]:
+        """Unary resources allowed to solve the problem.
+
+        By default, all unary resources.
+
+        """
+        return self.problem.unary_resources_list
+
     def get_default_tasks_n_unary_resources(
         self,
         tasks: Optional[Iterable[Task]] = None,
         unary_resources: Optional[Iterable[UnaryResource]] = None,
     ) -> tuple[Iterable[Task], Iterable[UnaryResource]]:
-        return get_default_tasks_n_unary_resources(self.problem, tasks, unary_resources)
+        if tasks is None:
+            tasks = self.subset_tasks_of_interest
+        if unary_resources is None:
+            unary_resources = self.subset_unaryresources_allowed
+        return tasks, unary_resources
 
     def add_constraint_same_allocation_as_ref(
         self,
@@ -134,6 +155,27 @@ class AllocationSolver(TasksSolver[Task], Generic[Task, UnaryResource]):
         But you can override it if you want to have more constraints in the solver than in the problem.
 
         """
-        return self.problem.is_compatible_task_unary_resource(
-            task=task, unary_resource=unary_resource
+        return (
+            unary_resource in self.subset_unaryresources_allowed
+            and self.problem.is_compatible_task_unary_resource(
+                task=task, unary_resource=unary_resource
+            )
         )
+
+    def compatible_unary_resources(self, task: Task) -> set[UnaryResource]:
+        """Compute compatible unary resources with given task.
+
+        Takes into account additional constraints from the solver
+        via potentially overriden `is_compatible_task_unary_resource()` and `subset_unaryresources_allowed`.
+
+        Args:
+            task:
+
+        Returns:
+
+        """
+        return {
+            ur
+            for ur in self.problem.unary_resources_list
+            if self.is_compatible_task_unary_resource(task, ur)
+        }
