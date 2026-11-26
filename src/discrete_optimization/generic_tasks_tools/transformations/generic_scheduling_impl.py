@@ -316,6 +316,7 @@ class ToGenericSchedulingImpl(
             span_blocking_constraints=source_problem.get_span_blocking_constraints(),
             mode_constraints=source_problem.get_mode_constraints(),
             same_unary_allocation=source_problem.get_same_unary_allocation(),
+            incompatible_unary_allocation=source_problem.get_incompatible_unary_allocation(),
             optional_tasks=optional_tasks,
             list_objective_computer=list_objective_computer,
             alternative_scheduling_subproblems=source_problem.get_alternative_scheduling_subproblem(),

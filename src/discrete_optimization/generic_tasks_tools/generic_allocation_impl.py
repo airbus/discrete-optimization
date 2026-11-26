@@ -77,6 +77,8 @@ class GenericAllocationImplProblem(
         unary_resources_task_compatibility: maps a task to its compatible unary resources. Missing key => all unary resources allowed.
         skills: available skills
         non_renewable_resources: non-renewable resources max capacities
+        same_unary_allocation: list of tasks subsets that must have same allocation
+        incompatible_unary_allocation: list of tasks subsets that can not share same allocated unary resource
 
     """
 
@@ -122,6 +124,7 @@ class GenericAllocationImplProblem(
         tuple[ModeConstraintType, list[tuple[Task, set[int]]]]
     ] = field(default_factory=list)
     same_unary_allocation: list[set[Task]] = field(default_factory=list)
+    incompatible_unary_allocation: list[set[Task]] = field(default_factory=list)
     optional_tasks: set[Task] = field(default_factory=set)
     list_objective_computer: list[ObjectiveComputer] = field(
         compare=False, default=None

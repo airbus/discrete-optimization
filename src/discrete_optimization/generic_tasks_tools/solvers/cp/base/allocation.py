@@ -333,8 +333,23 @@ class AllocationCpSolver(
                         )
                     )
 
+    def add_incompatible_unary_allocation_constraints(self):
+        for subtasks in self.problem.get_incompatible_unary_allocation():
+            if len(subtasks) >= 2:
+                potential_unary_resources = set().union(
+                    *(self.compatible_unary_resources(task) for task in subtasks)
+                )
+                for ur in potential_unary_resources:
+                    self.add_at_most_one(
+                        self.get_task_unary_resource_is_present_variable(
+                            task=task, unary_resource=ur
+                        )
+                        for task in subtasks
+                    )
+
     def add_allocation_constraints(self):
         self.add_same_unary_allocation_constraints()
+        self.add_incompatible_unary_allocation_constraints()
         self.add_unary_resources_per_task_constraints()
 
     def get_nb_tasks_allocated_variable(self) -> LinearExpr:

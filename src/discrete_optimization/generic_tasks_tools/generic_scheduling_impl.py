@@ -169,6 +169,8 @@ class GenericSchedulingImplProblem(
         span_blocking_constraints: list of span blocking constraints.
             Each constraint is (tasks, resources, metadata) where tasks is a frozenset.
             Default to no blocking constraints.
+        same_unary_allocation: list of tasks subsets that must have same allocation
+        incompatible_unary_allocation: list of tasks subsets that can not share same allocated unary resource
 
     """
 
@@ -243,6 +245,7 @@ class GenericSchedulingImplProblem(
         tuple[ModeConstraintType, list[tuple[Task, set[int]]]]
     ] = field(default_factory=list)
     same_unary_allocation: list[set[Task]] = field(default_factory=list)
+    incompatible_unary_allocation: list[set[Task]] = field(default_factory=list)
     optional_tasks: set[Task] = field(default_factory=set)
     list_objective_computer: list[ObjectiveComputer] = field(
         compare=False, default=None
@@ -565,6 +568,9 @@ class GenericSchedulingImplProblem(
 
     def get_same_unary_allocation(self) -> list[set[Task]]:
         return self.same_unary_allocation
+
+    def get_incompatible_unary_allocation(self) -> list[set[Task]]:
+        return self.incompatible_unary_allocation
 
     # Entity constraints implementation
     @optional_override_implem

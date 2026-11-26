@@ -136,6 +136,7 @@ class FromPureToGenericAllocationImpl(
             unary_resources=unary_resources,
             unary_resources_task_compatibility=unary_resources_task_compatibility,
             same_unary_allocation=source_problem.get_same_unary_allocation(),
+            incompatible_unary_allocation=source_problem.get_incompatible_unary_allocation(),
             optional_tasks=optional_tasks,
             list_objective_computer=list_objective_computer,
         )
@@ -302,6 +303,7 @@ class FromSpecificToGenericAllocationImpl(
             non_renewable_resources=non_renewable_resources,
             mode_constraints=source_problem.get_mode_constraints(),
             same_unary_allocation=source_problem.get_same_unary_allocation(),
+            incompatible_unary_allocation=source_problem.get_incompatible_unary_allocation(),
             optional_tasks=optional_tasks,
             list_objective_computer=list_objective_computer,
             alternative_scheduling_subproblems=source_problem.get_alternative_scheduling_subproblem(),
