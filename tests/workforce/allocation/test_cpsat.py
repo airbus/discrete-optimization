@@ -36,6 +36,7 @@ def test_cpsat_multiobj(problem):
     sol = res.get_best_solution()
     problem.evaluate(sol)
     assert problem.satisfy(sol)
+    assert sol.check_allocation_consistency()
     assert len(res) == 1
     # check plot
     plot_allocation_solution(

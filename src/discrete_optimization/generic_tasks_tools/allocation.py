@@ -148,14 +148,13 @@ class AllocationSolution(TasksSolution[Task], Generic[Task, UnaryResource]):
                     return False
 
         for set_of_task in self.problem.get_same_unary_allocation():
-            set_unary = set(
-                [frozenset(self.get_task_allocation(t)) for t in set_of_task]
-            )
-            if len(set_unary) >= 2:
+            set_unary = set(frozenset(self.get_task_allocation(t)) for t in set_of_task)
+            if len(set_unary) > 1:
                 logger.debug(
-                    f"Tasks {set_of_task} don't have the same unary resource allocation"
+                    f"Tasks {set_of_task} don't have the same unary resource allocation while they should."
                 )
-            return False
+                return False
+
         return True
 
 
@@ -244,6 +243,11 @@ class AllocationProblem(TasksProblem[Task], Generic[Task, UnaryResource]):
         To be overriden if meaningful in the problem
         :return:
         """
+        return []
+
+    @optional_override
+    def get_incompatible_unary_allocation(self) -> list[set[Task]]:
+        """Get list of tasks subsets that cannot share a same unary resource."""
         return []
 
 
