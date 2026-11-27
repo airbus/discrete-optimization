@@ -71,25 +71,28 @@ class AlternativeSubproblemCpSolver(MultimodeSchedulingCpSolver[Task], Generic[T
                             expr=expr,
                             tasks=(p1, p0),
                         )
-
-                    if p[0] != alternative_problem.source_task:
-                        expr = self.get_task_start_or_end_variable(
-                            p[0], StartOrEnd.START
-                        ) >= self.get_task_start_or_end_variable(
-                            alternative_problem.source_task, StartOrEnd.END
-                        )
-                        self.enforce_only_if_tasks_present(
-                            expr=expr,
-                            tasks=(p[0], alternative_problem.source_task),
-                        )
-                    if p[-1] != alternative_problem.sink_task:
-                        expr = self.get_task_start_or_end_variable(
-                            alternative_problem.sink_task, StartOrEnd.START
-                        ) >= self.get_task_start_or_end_variable(p[-1], StartOrEnd.END)
-                        self.enforce_only_if_tasks_present(
-                            expr=expr,
-                            tasks=(alternative_problem.sink_task, p[-1]),
-                        )
+                    if alternative_problem.has_a_source:
+                        if p[0] != alternative_problem.source_task:
+                            expr = self.get_task_start_or_end_variable(
+                                p[0], StartOrEnd.START
+                            ) >= self.get_task_start_or_end_variable(
+                                alternative_problem.source_task, StartOrEnd.END
+                            )
+                            self.enforce_only_if_tasks_present(
+                                expr=expr,
+                                tasks=(p[0], alternative_problem.source_task),
+                            )
+                    if alternative_problem.has_a_sink:
+                        if p[-1] != alternative_problem.sink_task:
+                            expr = self.get_task_start_or_end_variable(
+                                alternative_problem.sink_task, StartOrEnd.START
+                            ) >= self.get_task_start_or_end_variable(
+                                p[-1], StartOrEnd.END
+                            )
+                            self.enforce_only_if_tasks_present(
+                                expr=expr,
+                                tasks=(alternative_problem.sink_task, p[-1]),
+                            )
         else:
             path_taken = [
                 self.create_bool_var(name=f"{tag_alternative_problem}_{i}")
@@ -120,7 +123,10 @@ class AlternativeSubproblemCpSolver(MultimodeSchedulingCpSolver[Task], Generic[T
                                 ),
                             )
                         )
-                    if path[0] != alternative_problem.source_task:
+                    if (
+                        alternative_problem.has_a_source
+                        and path[0] != alternative_problem.source_task
+                    ):
                         (
                             self.add_implication(
                                 path_taken[i],
@@ -132,7 +138,10 @@ class AlternativeSubproblemCpSolver(MultimodeSchedulingCpSolver[Task], Generic[T
                                 ),
                             )
                         )
-                    if path[-1] != alternative_problem.sink_task:
+                    if (
+                        alternative_problem.has_a_sink
+                        and path[-1] != alternative_problem.sink_task
+                    ):
                         (
                             self.add_implication(
                                 path_taken[i],
