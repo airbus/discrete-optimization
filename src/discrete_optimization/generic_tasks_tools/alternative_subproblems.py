@@ -2,7 +2,7 @@
 #  This source code is licensed under the MIT license found in the
 #  LICENSE file in the root directory of this source tree.
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Generic, Hashable, Optional
 
 import networkx as nx
@@ -19,29 +19,39 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class AlternativeSchedulingSubProblem:
-    source_task: Hashable  # (mandatory task from which originates the alternative)
-    sink_task: Hashable  # (mandatory task from which finished the alternative)
+    source_task: Hashable = (
+        None  # (optional task from which originates the alternative)
+    )
+    sink_task: Hashable = None  # (optional task from which finished the alternative)
     graph: Optional[nx.DiGraph] = None
     is_graph_successors: bool = True
     list_paths: Optional[list[list[Hashable]]] = None
     is_path_successors: bool = True
     nb_path_to_do: int = 1  # by default 1 subpath to follow.
+    has_a_source: bool = field(init=False)
+    has_a_sink: bool = field(init=False)
 
     def __post_init__(self):
+        self.has_a_source = self.source_task is not None
+        self.has_a_sink = self.sink_task is not None
         if self.graph is None:
             if self.list_paths:
                 graph = nx.DiGraph()
-                graph.add_node(self.source_task)
-                graph.add_node(self.sink_task)
+                if self.has_a_source:
+                    graph.add_node(self.source_task)
+                if self.has_a_sink:
+                    graph.add_node(self.sink_task)
                 for p in self.list_paths:
                     for e0, e1 in zip(p[:-1], p[1:]):
                         graph.add_edge(e0, e1)
-                    if p[0] != self.source_task:
-                        graph.add_edge(self.source_task, p[0])
-                    if p[-1] != self.sink_task:
-                        graph.add_edge(self.source_task, p[0])
+                    if self.has_a_source:
+                        if p[0] != self.source_task:
+                            graph.add_edge(self.source_task, p[0])
+                    if self.has_a_sink:
+                        if p[-1] != self.sink_task:
+                            graph.add_edge(self.source_task, p[0])
                 self.graph = graph
-        if self.source_task not in self.graph.nodes:
+        if self.has_a_source and self.source_task not in self.graph.nodes:
             predecessors = {
                 n: list(self.graph.predecessors(n)) for n in self.graph.nodes
             }
@@ -49,16 +59,36 @@ class AlternativeSchedulingSubProblem:
             for n in predecessors:
                 if len(predecessors[n]) == 0:
                     self.graph.add_edge(self.source_task, n)
-        if self.sink_task not in self.graph.nodes:
+        if self.has_a_sink and self.sink_task not in self.graph.nodes:
             successors = {n: list(self.graph.successors(n)) for n in self.graph.nodes}
             self.graph.add_node(self.sink_task)
             for n in successors:
                 if len(successors[n]) == 0:
                     self.graph.add_edge(n, self.sink_task)
         if self.list_paths is None:
-            self.list_paths = list(
-                nx.all_simple_paths(self.graph, self.source_task, self.sink_task)
-            )
+            if self.has_a_source and self.has_a_sink:
+                self.list_paths = list(
+                    nx.all_simple_paths(self.graph, self.source_task, self.sink_task)
+                )
+            else:
+                # let's find node without incoming edge.
+                sources = {
+                    n
+                    for n in self.graph.nodes
+                    if len(list(self.graph.predecessors(n))) == 0
+                }
+                sinks = {
+                    n
+                    for n in self.graph.nodes
+                    if len(list(self.graph.successors(n))) == 0
+                }
+                self.list_paths = []
+                for source in sources:
+                    for sink in sinks:
+                        self.list_paths.extend(
+                            list(nx.all_simple_paths(self.graph, source, sink))
+                        )
+                logger.info(f"{self.list_paths}")
 
 
 class AlternativeSchedulingProblem(MultimodeSchedulingProblem[Task], Generic[Task]):

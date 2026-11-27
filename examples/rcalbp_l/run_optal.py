@@ -1,4 +1,7 @@
-import optalcp as cp
+try:
+    import optalcp as cp
+except ImportError:
+    pass
 
 from discrete_optimization.alb.rcalbp_l import get_data_available, parse_rcalbpl_json
 from discrete_optimization.alb.rcalbp_l.problem import plot_rcalbpl_dashboard
