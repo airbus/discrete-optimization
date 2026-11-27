@@ -49,7 +49,7 @@ class AlternativeSchedulingSubProblem:
                             graph.add_edge(self.source_task, p[0])
                     if self.has_a_sink:
                         if p[-1] != self.sink_task:
-                            graph.add_edge(self.source_task, p[0])
+                            graph.add_edge(p[-1], self.sink_task)
                 self.graph = graph
         if self.has_a_source and self.source_task not in self.graph.nodes:
             predecessors = {
