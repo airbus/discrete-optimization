@@ -1,0 +1,896 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.solvers.cp.base.entity &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.solvers.cp.base.entity</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.solvers.cp.base.entity</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.entities</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CompositeEntity</span><span class="p">,</span>
+    <span class="n">ConstantDurationEntity</span><span class="p">,</span>
+    <span class="n">DummyEntity</span><span class="p">,</span>
+    <span class="n">GroupEntity</span><span class="p">,</span>
+    <span class="n">ModuloTaskEntity</span><span class="p">,</span>
+    <span class="n">ModuloTwoEntity</span><span class="p">,</span>
+    <span class="n">MultiplyTaskEntity</span><span class="p">,</span>
+    <span class="n">SchedulingEntity</span><span class="p">,</span>
+    <span class="n">TaskEntity</span><span class="p">,</span>
+    <span class="n">TaskModeEntity</span><span class="p">,</span>
+    <span class="n">VariableBatchEntity</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span><span class="p">,</span> <span class="n">UndefinedData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.generic_scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GenericSchedulingProblem</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cp.base.batching</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BatchingCpSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cp.base.multimode_scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MultimodeSchedulingCpSolver</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cp.base.typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CpVar</span><span class="p">,</span>
+    <span class="n">IntervalVar</span><span class="p">,</span>
+    <span class="n">LinearExpr</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cp.base.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SpanModeling</span><span class="p">,</span>
+    <span class="n">create_span_start_end_from_vars</span><span class="p">,</span>
+    <span class="n">create_span_start_end_variables</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EntityIntervalsMixin</span><span class="p">(</span>
+    <span class="n">BatchingCpSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">MultimodeSchedulingCpSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Pure mixin for creating interval variables for any SchedulingEntity.</span>
+
+<span class="sd">    This mixin provides methods to create start/end/duration/interval variables</span>
+<span class="sd">    for all entity types, including VariableBatchEntity which requires batch</span>
+<span class="sd">    assignment variables.</span>
+
+<span class="sd">    Can be reused by EntityConstraintsCpSolver, ResourceBlockingCpSolver, etc.</span>
+
+<span class="sd">    Attributes stored:</span>
+<span class="sd">        _starts_entity[entity]: IntVar for entity start time</span>
+<span class="sd">        _ends_entity[entity]: IntVar for entity end time</span>
+<span class="sd">        _durations_entity[entity]: IntVar for entity duration</span>
+<span class="sd">        _intervals_entity[entity]: IntervalVar for entity interval</span>
+<span class="sd">        _entity_active[entity]: BoolVar/int for entity presence</span>
+
+<span class="sd">    """</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">GenericSchedulingProblem</span>
+
+    <span class="c1"># Entity interval variables</span>
+    <span class="n">_starts_entity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">CpVar</span><span class="p">]</span>
+    <span class="n">_ends_entity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">CpVar</span><span class="p">]</span>
+    <span class="n">_durations_entity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">CpVar</span><span class="p">]</span>
+    <span class="n">_intervals_entity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">IntervalVar</span><span class="p">]</span>
+    <span class="n">_entity_active</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">LinearExpr</span><span class="p">]</span>
+
+<div class="viewcode-block" id="EntityIntervalsMixin.init_entity_intervals_storage">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.init_entity_intervals_storage">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_entity_intervals_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Initialize entity interval storage dictionaries."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin.get_entity_start_or_end_variable">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.get_entity_start_or_end_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_entity_start_or_end_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExpr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get start or end time variable for an entity.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            entity: The scheduling entity</span>
+<span class="sd">            start_or_end: Whether to get start or end variable</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            CpVar for entity's start or end time</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">entity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">define_start_and_end_var_and_constraint</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin.get_entity_is_active_variable">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.get_entity_is_active_variable">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_entity_is_active_variable</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExpr</span> <span class="o">|</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get presence/active variable for an entity.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            entity: The scheduling entity</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            IntVar (BoolVar) if entity is optional, or int 1 if always active</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span></div>
+
+
+    <span class="c1"># =====================================================================</span>
+    <span class="c1"># ENTITY INTERVAL CREATION METHODS</span>
+    <span class="c1"># =====================================================================</span>
+<div class="viewcode-block" id="EntityIntervalsMixin.get_lb_ub_entity">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.get_lb_ub_entity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_lb_ub_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Return lbstart, ubstart, lbend, ubend for an entity."""</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="p">(</span><span class="n">TaskEntity</span><span class="p">,</span> <span class="n">TaskModeEntity</span><span class="p">)):</span>
+            <span class="n">lbs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+            <span class="p">)</span>
+            <span class="n">ubs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+            <span class="p">)</span>
+            <span class="n">lbe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+            <span class="p">)</span>
+            <span class="n">ube</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">lbs</span><span class="p">,</span> <span class="n">ubs</span><span class="p">,</span> <span class="n">lbe</span><span class="p">,</span> <span class="n">ube</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">GroupEntity</span><span class="p">):</span>
+            <span class="n">lb_start</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">()</span>
+            <span class="p">]</span>
+            <span class="n">ub_start</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">()</span>
+            <span class="p">]</span>
+            <span class="n">lb_end</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">()</span>
+            <span class="p">]</span>
+            <span class="n">ub_end</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">()</span>
+            <span class="p">]</span>
+            <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">lb_start</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">ub_start</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">lb_end</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">ub_end</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">CompositeEntity</span><span class="p">):</span>
+            <span class="n">array</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_entity</span><span class="p">(</span><span class="n">ent</span><span class="p">)</span> <span class="k">for</span> <span class="n">ent</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">entities</span><span class="p">]</span>
+            <span class="n">lb_start</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">array</span><span class="p">)</span>
+            <span class="n">ub_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">array</span><span class="p">)</span>
+            <span class="n">lb_end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">array</span><span class="p">)</span>
+            <span class="n">ub_end</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">array</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">lb_start</span><span class="p">,</span> <span class="n">ub_start</span><span class="p">,</span> <span class="n">lb_end</span><span class="p">,</span> <span class="n">ub_end</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">ConstantDurationEntity</span><span class="p">):</span>
+            <span class="n">lb_start</span><span class="p">,</span> <span class="n">ub_start</span><span class="p">,</span> <span class="n">lb_end</span><span class="p">,</span> <span class="n">ub_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_entity</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">other_entity</span>
+            <span class="p">)</span>
+            <span class="k">match</span> <span class="n">entity</span><span class="o">.</span><span class="n">start_or_end</span><span class="p">:</span>
+                <span class="k">case</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span>
+                        <span class="n">lb_start</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span>
+                        <span class="n">ub_start</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span>
+                        <span class="n">lb_start</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">offset</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">constant_duration</span><span class="p">,</span>
+                        <span class="n">ub_start</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">offset</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">constant_duration</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">case</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span>
+                        <span class="n">lb_end</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span>
+                        <span class="n">ub_end</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span>
+                        <span class="n">lb_end</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">offset</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">constant_duration</span><span class="p">,</span>
+                        <span class="n">ub_end</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">offset</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">constant_duration</span><span class="p">,</span>
+                    <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">ModuloTaskEntity</span><span class="p">):</span>
+            <span class="n">modulo</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">modulo_value</span>
+            <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="n">modulo</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_makespan_lower_bound</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">MultiplyTaskEntity</span><span class="p">):</span>
+            <span class="n">lbs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+            <span class="p">)</span>
+            <span class="n">ubs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+            <span class="p">)</span>
+            <span class="n">lbe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+            <span class="p">)</span>
+            <span class="n">ube</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">entity</span><span class="o">.</span><span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                <span class="n">min_d</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbe</span> <span class="o">-</span> <span class="n">ubs</span><span class="p">)</span>
+                <span class="n">max_d</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ube</span> <span class="o">-</span> <span class="n">lbs</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">(</span>
+                    <span class="n">lbs</span> <span class="o">*</span> <span class="n">entity</span><span class="o">.</span><span class="n">multiply_factor</span><span class="p">,</span>
+                    <span class="n">ubs</span> <span class="o">*</span> <span class="n">entity</span><span class="o">.</span><span class="n">multiply_factor</span><span class="p">,</span>
+                    <span class="n">lbs</span> <span class="o">*</span> <span class="n">entity</span><span class="o">.</span><span class="n">multiply_factor</span> <span class="o">+</span> <span class="n">min_d</span><span class="p">,</span>
+                    <span class="n">ubs</span> <span class="o">*</span> <span class="n">entity</span><span class="o">.</span><span class="n">multiply_factor</span> <span class="o">+</span> <span class="n">max_d</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">min_d</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbe</span> <span class="o">-</span> <span class="n">ubs</span><span class="p">)</span>
+                <span class="n">max_d</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ube</span> <span class="o">-</span> <span class="n">lbs</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">(</span>
+                    <span class="n">lbe</span> <span class="o">*</span> <span class="n">entity</span><span class="o">.</span><span class="n">multiply_factor</span> <span class="o">-</span> <span class="n">max_d</span><span class="p">,</span>
+                    <span class="n">ube</span> <span class="o">*</span> <span class="n">entity</span><span class="o">.</span><span class="n">multiply_factor</span> <span class="o">-</span> <span class="n">min_d</span><span class="p">,</span>
+                    <span class="n">lbe</span> <span class="o">*</span> <span class="n">entity</span><span class="o">.</span><span class="n">multiply_factor</span><span class="p">,</span>
+                    <span class="n">ube</span> <span class="o">*</span> <span class="n">entity</span><span class="o">.</span><span class="n">multiply_factor</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="n">ModuloTwoEntity</span><span class="p">):</span>
+            <span class="n">lb_start</span><span class="p">,</span> <span class="n">ub_start</span><span class="p">,</span> <span class="n">lb_end</span><span class="p">,</span> <span class="n">ub_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_entity</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">entity</span><span class="p">)</span>
+            <span class="n">lb_start_mod</span><span class="p">,</span> <span class="n">ub_start_mod</span><span class="p">,</span> <span class="n">lb_end_mod</span><span class="p">,</span> <span class="n">ub_end_mod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_entity</span><span class="p">(</span>
+                <span class="n">entity</span><span class="o">.</span><span class="n">modulo_entity</span>
+            <span class="p">)</span>
+            <span class="n">max_dur</span> <span class="o">=</span> <span class="n">ub_end</span> <span class="o">-</span> <span class="n">lb_start</span>
+            <span class="k">match</span> <span class="n">entity</span><span class="o">.</span><span class="n">modulo_value_start_or_end</span><span class="p">:</span>
+                <span class="k">case</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span>
+                        <span class="mi">0</span><span class="p">,</span>
+                        <span class="nb">min</span><span class="p">(</span><span class="n">ub_start</span><span class="p">,</span> <span class="n">ub_start_mod</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                        <span class="mi">0</span><span class="p">,</span>
+                        <span class="nb">min</span><span class="p">(</span><span class="n">ub_start</span><span class="p">,</span> <span class="n">ub_start_mod</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">max_dur</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">case</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span>
+                        <span class="mi">0</span><span class="p">,</span>
+                        <span class="nb">min</span><span class="p">(</span><span class="n">ub_start</span><span class="p">,</span> <span class="n">ub_end_mod</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span>
+                        <span class="mi">0</span><span class="p">,</span>
+                        <span class="nb">min</span><span class="p">(</span><span class="n">ub_start</span><span class="p">,</span> <span class="n">ub_end_mod</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">max_dur</span><span class="p">,</span>
+                    <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Entity type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span><span class="si">}</span><span class="s2"> not supported"</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_entity_is_active_var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LinearExpr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get or create the presence/active variable for an entity.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Either an IntVar (BoolVar) or the constant 1 if always active</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">entity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">:</span>
+            <span class="k">match</span> <span class="n">entity</span><span class="p">:</span>
+                <span class="k">case</span> <span class="n">TaskEntity</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_optional</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_is_present_variable</span><span class="p">(</span>
+                            <span class="n">task</span><span class="o">=</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">case</span> <span class="n">GroupEntity</span><span class="p">():</span>
+                    <span class="n">optional_tasks_in_group</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">task</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">tasks</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_optional</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">optional_tasks_in_group</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="c1"># active if at least one task is active</span>
+                        <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_bool_var</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"is_active_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                        <span class="n">is_present_vars</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">get_task_is_present_variable</span><span class="p">(</span><span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">tasks</span>
+                        <span class="p">]</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_max_equality</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">is_present_vars</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="n">var</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">case</span> <span class="n">TaskModeEntity</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">get_task_mode_is_present_variable</span><span class="p">(</span>
+                            <span class="n">task</span><span class="o">=</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">entity</span><span class="o">.</span><span class="n">mode</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">case</span> <span class="n">CompositeEntity</span><span class="p">():</span>
+                    <span class="n">is_active_subentity_list</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">is_active_subentity</span>
+                        <span class="k">for</span> <span class="n">subentity</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">entities</span>
+                        <span class="c1"># discard always active subentities</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+                            <span class="nb">isinstance</span><span class="p">(</span>
+                                <span class="p">(</span>
+                                    <span class="n">is_active_subentity</span>
+                                    <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">subentity</span><span class="p">)</span>
+                                <span class="p">),</span>
+                                <span class="nb">int</span><span class="p">,</span>
+                            <span class="p">)</span>
+                            <span class="ow">and</span> <span class="n">is_active_subentity</span> <span class="o">==</span> <span class="mi">1</span>
+                        <span class="p">)</span>
+                    <span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">is_active_subentity_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="c1"># active if at least one subentity is active</span>
+                        <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_bool_var</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"is_active_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_max_equality</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="n">is_active_subentity_list</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="n">var</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">case</span> <span class="n">ConstantDurationEntity</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">other_entity</span><span class="p">)</span>
+                <span class="k">case</span> <span class="n">ModuloTaskEntity</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_optional</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_is_present_variable</span><span class="p">(</span>
+                            <span class="n">task</span><span class="o">=</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">case</span> <span class="n">MultiplyTaskEntity</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_optional</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_is_present_variable</span><span class="p">(</span>
+                            <span class="n">task</span><span class="o">=</span><span class="n">entity</span><span class="o">.</span><span class="n">task</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">case</span> <span class="n">ModuloTwoEntity</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span>
+                        <span class="n">entity</span><span class="o">.</span><span class="n">entity</span>
+                    <span class="p">)</span>
+                <span class="k">case</span> <span class="n">VariableBatchEntity</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_used_vars</span><span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">batch_id</span><span class="p">]</span>
+                <span class="k">case</span> <span class="n">DummyEntity</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Entity type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span><span class="si">}</span><span class="s2"> not supported"</span>
+                    <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_entity_active</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span>
+
+<div class="viewcode-block" id="EntityIntervalsMixin.define_start_and_end_var_and_constraint">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.define_start_and_end_var_and_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">define_start_and_end_var_and_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Create start/end/duration/interval variables for an entity.</span>
+
+<span class="sd">        Dispatches to appropriate creation method based on entity type.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">:</span>
+            <span class="c1"># Already defined</span>
+            <span class="k">return</span>
+        <span class="k">match</span> <span class="n">entity</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">TaskEntity</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_task_entity_interval</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">GroupEntity</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_group_entity_interval</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">TaskModeEntity</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_task_entity_interval</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">CompositeEntity</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_composite_entity_interval</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">ConstantDurationEntity</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_constant_duration_interval</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">ModuloTaskEntity</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_modulo_entity_interval</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">MultiplyTaskEntity</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_multiply_entity_interval</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">ModuloTwoEntity</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_modulo_two_entity_interval</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">VariableBatchEntity</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_variable_batch_entity_interval</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">case</span> <span class="n">DummyEntity</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">create_dummy_entity_interval</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Entity type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span><span class="si">}</span><span class="s2"> not supported"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin.create_dummy_entity_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.create_dummy_entity_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_dummy_entity_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">DummyEntity</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">end</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+            <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin.create_task_entity_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.create_task_entity_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_task_entity_interval</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">TaskEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span> <span class="o">|</span> <span class="n">TaskModeEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Create interval for TaskEntity or TaskModeEntity."""</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">task</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span>
+            <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span>
+            <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_duration_variable</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">is_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">is_present</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_present</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_interval</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">presence</span><span class="o">=</span><span class="n">is_present</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin.create_group_entity_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.create_group_entity_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_group_entity_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">GroupEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">"""Create interval for GroupEntity (span of its tasks)."""</span>
+        <span class="n">lb_start</span><span class="p">,</span> <span class="n">ub_start</span><span class="p">,</span> <span class="n">lb_end</span><span class="p">,</span> <span class="n">ub_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_entity</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+            <span class="n">lb</span><span class="o">=</span><span class="n">lb_start</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub_start</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"start_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+            <span class="n">lb</span><span class="o">=</span><span class="n">lb_end</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub_end</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"end_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+            <span class="n">lb</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lb_end</span> <span class="o">-</span> <span class="n">ub_start</span><span class="p">),</span>
+            <span class="n">ub</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub_end</span> <span class="o">-</span> <span class="n">lb_start</span><span class="p">),</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"duration_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">is_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">is_present</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_present</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">presence</span><span class="o">=</span><span class="n">is_present</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="c1"># Link span to task start/end times</span>
+        <span class="n">create_span_start_end_variables</span><span class="p">(</span>
+            <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="n">set_tasks</span><span class="o">=</span><span class="n">entity</span><span class="o">.</span><span class="n">get_tasks</span><span class="p">(),</span>
+            <span class="n">name_span</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">start_span</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+            <span class="n">end_span</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+            <span class="n">span_modeling</span><span class="o">=</span><span class="n">SpanModeling</span><span class="o">.</span><span class="n">INEQUALITIES</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin.create_composite_entity_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.create_composite_entity_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_composite_entity_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">CompositeEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">"""Create interval for CompositeEntity (composition of entities)."""</span>
+        <span class="n">unfolded_entities</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">unfold_entities</span><span class="p">())</span>
+        <span class="n">only_task_based</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">GroupEntity</span><span class="p">,</span> <span class="n">TaskEntity</span><span class="p">,</span> <span class="n">CompositeEntity</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">unfolded_entities</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">only_task_based</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_group_entity_interval</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Create intervals for sub-entities first</span>
+            <span class="k">for</span> <span class="n">ent</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">define_start_and_end_var_and_constraint</span><span class="p">(</span><span class="n">ent</span><span class="p">)</span>
+            <span class="n">entities</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">entities</span><span class="p">)</span>
+            <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">create_span_start_end_from_vars</span><span class="p">(</span>
+                <span class="n">solver</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">starts_list</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">],</span>
+                <span class="n">ends_list</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">],</span>
+                <span class="n">is_present_list</span><span class="o">=</span><span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span> <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span>
+                <span class="p">],</span>
+                <span class="n">name_span</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">span_modeling</span><span class="o">=</span><span class="n">SpanModeling</span><span class="o">.</span><span class="n">INEQUALITIES</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">lb_start</span><span class="p">,</span> <span class="n">ub_start</span><span class="p">,</span> <span class="n">lb_end</span><span class="p">,</span> <span class="n">ub_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_entity</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="n">start</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="n">end</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lb_end</span> <span class="o">-</span> <span class="n">ub_start</span><span class="p">),</span>
+                <span class="n">ub</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub_end</span> <span class="o">-</span> <span class="n">lb_start</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"duration_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">is_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">is_present</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_present</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                    <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                    <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                    <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                    <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                    <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                    <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                    <span class="n">presence</span><span class="o">=</span><span class="n">is_present</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin.create_constant_duration_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.create_constant_duration_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_constant_duration_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">ConstantDurationEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">"""Create interval for ConstantDurationEntity (fixed offset from another entity)."""</span>
+        <span class="c1"># Define the other entity first (recursive)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">define_start_and_end_var_and_constraint</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">other_entity</span><span class="p">)</span>
+        <span class="c1"># Now create this entity's interval</span>
+        <span class="k">if</span> <span class="n">entity</span><span class="o">.</span><span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">other_entity</span><span class="p">]</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">offset</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">other_entity</span><span class="p">]</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">offset</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">other_entity</span><span class="p">]</span> <span class="o">+</span> <span class="n">entity</span><span class="o">.</span><span class="n">constant_duration</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">constant_duration</span>
+        <span class="n">is_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">is_present</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_present</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">presence</span><span class="o">=</span><span class="n">is_present</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin.create_modulo_entity_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.create_modulo_entity_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_modulo_entity_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">ModuloTaskEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">"""Create interval for ModuloTaskEntity (task start modulo value)."""</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">task</span>
+        <span class="n">lb_start</span><span class="p">,</span> <span class="n">ub_start</span><span class="p">,</span> <span class="n">lb_end</span><span class="p">,</span> <span class="n">ub_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_entity</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+            <span class="n">lb</span><span class="o">=</span><span class="n">lb_start</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub_start</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"start_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+            <span class="n">lb</span><span class="o">=</span><span class="n">lb_end</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub_end</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"end_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_duration_variable</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">is_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_modulo_equality</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">),</span>
+            <span class="n">entity</span><span class="o">.</span><span class="n">modulo_value</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">is_present</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_present</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">presence</span><span class="o">=</span><span class="n">is_present</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin.create_multiply_entity_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.create_multiply_entity_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_multiply_entity_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">MultiplyTaskEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">"""Create interval for MultiplyTaskEntity (task time * factor)."""</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">task</span>
+        <span class="n">lb_start</span><span class="p">,</span> <span class="n">ub_start</span><span class="p">,</span> <span class="n">lb_end</span><span class="p">,</span> <span class="n">ub_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_entity</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entity</span><span class="o">.</span><span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="n">lb_start</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub_start</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"start_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">entity</span><span class="o">.</span><span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+                <span class="n">lb</span><span class="o">=</span><span class="n">lb_end</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub_end</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"end_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_duration_variable</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="n">is_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">match</span> <span class="n">entity</span><span class="o">.</span><span class="n">start_or_end</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">entity</span><span class="o">.</span><span class="n">multiply_factor</span>
+                    <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">case</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">entity</span><span class="o">.</span><span class="n">multiply_factor</span>
+                    <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">is_present</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_present</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">presence</span><span class="o">=</span><span class="n">is_present</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin.create_modulo_two_entity_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.create_modulo_two_entity_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_modulo_two_entity_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">ModuloTwoEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">"""Create interval for ModuloTwoEntity (entity start modulo another entity)."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">define_start_and_end_var_and_constraint</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">entity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">define_start_and_end_var_and_constraint</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">modulo_entity</span><span class="p">)</span>
+        <span class="n">lb_start</span><span class="p">,</span> <span class="n">ub_start</span><span class="p">,</span> <span class="n">lb_end</span><span class="p">,</span> <span class="n">ub_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lb_ub_entity</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+            <span class="n">lb</span><span class="o">=</span><span class="n">lb_start</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub_start</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"start_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+            <span class="n">lb</span><span class="o">=</span><span class="n">lb_end</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub_end</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"end_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">entity</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">entity</span><span class="o">.</span><span class="n">modulo_value_start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_modulo_equality</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">mod</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">modulo_entity</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_modulo_equality</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">mod</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">modulo_entity</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="n">is_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">is_present</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_present</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">presence</span><span class="o">=</span><span class="n">is_present</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EntityIntervalsMixin.create_variable_batch_entity_interval">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.entity.EntityIntervalsMixin.create_variable_batch_entity_interval">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_variable_batch_entity_interval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">VariableBatchEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">"""Create interval for VariableBatchEntity (batch with variable membership).</span>
+
+<span class="sd">        The batch interval spans from the earliest start to latest end of tasks</span>
+<span class="sd">        assigned to this batch. Assignment is determined by task_to_batch_vars.</span>
+<span class="sd">        """</span>
+        <span class="n">batch_id</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">batch_id</span>
+        <span class="n">candidate_tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">candidate_tasks</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate_tasks</span><span class="p">:</span>
+            <span class="c1"># Empty batch - shouldn't happen but handle gracefully</span>
+            <span class="n">lb_start</span><span class="p">,</span> <span class="n">ub_start</span><span class="p">,</span> <span class="n">lb_end</span><span class="p">,</span> <span class="n">ub_end</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Get bounds from candidate tasks</span>
+            <span class="n">lb_start</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">candidate_tasks</span>
+            <span class="p">)</span>
+            <span class="n">ub_start</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">candidate_tasks</span>
+            <span class="p">)</span>
+            <span class="n">lb_end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">candidate_tasks</span>
+            <span class="p">)</span>
+            <span class="n">ub_end</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+                    <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="o">=</span><span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">candidate_tasks</span>
+            <span class="p">)</span>
+        <span class="c1"># Create variables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+            <span class="n">lb</span><span class="o">=</span><span class="n">lb_start</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub_start</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"start_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+            <span class="n">lb</span><span class="o">=</span><span class="n">lb_end</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">ub_end</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"end_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_int_var</span><span class="p">(</span>
+            <span class="n">lb</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">lb_end</span> <span class="o">-</span> <span class="n">ub_start</span><span class="p">),</span>
+            <span class="n">ub</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ub_end</span> <span class="o">-</span> <span class="n">lb_start</span><span class="p">),</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"duration_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">is_present</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_entity_is_active_var</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">is_present</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">is_present</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_intervals_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_interval_var</span><span class="p">(</span>
+                <span class="n">start</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">end</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">],</span>
+                <span class="n">presence</span><span class="o">=</span><span class="n">is_present</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"interval_</span><span class="si">{</span><span class="n">entity</span><span class="o">.</span><span class="n">entity_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Link batch span to task assignments</span>
+        <span class="c1"># Batch start = min(task start for tasks assigned to batch)</span>
+        <span class="c1"># Batch end = max(task end for tasks assigned to batch)</span>
+        <span class="k">if</span> <span class="n">candidate_tasks</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">candidate_tasks</span><span class="p">:</span>
+                <span class="c1"># Get assignment variable for this task to this batch</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_to_batch_vars</span>
+                    <span class="ow">and</span> <span class="n">batch_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_to_batch_vars</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+                <span class="p">):</span>
+                    <span class="n">task_assigned</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_to_batch_vars</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">batch_id</span><span class="p">]</span>
+
+                    <span class="c1"># If task assigned to batch: batch_start &lt;= task_start</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_implication</span><span class="p">(</span>
+                        <span class="n">task_assigned</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_starts_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span>
+                        <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="c1"># If task assigned to batch: batch_end &gt;= task_end</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_implication</span><span class="p">(</span>
+                        <span class="n">task_assigned</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_ends_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span>
+                        <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_start_or_end_variable</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">END</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="n">task_min_dur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_min_task_duration_in_batch</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">task_min_dur</span> <span class="o">!=</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_implication</span><span class="p">(</span>
+                            <span class="n">task_assigned</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">task_min_dur</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="n">task_max_dur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_max_task_duration_in_batch</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">task_max_dur</span> <span class="o">!=</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">add_implication</span><span class="p">(</span>
+                            <span class="n">task_assigned</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_durations_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">task_max_dur</span><span class="p">,</span>
+                        <span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

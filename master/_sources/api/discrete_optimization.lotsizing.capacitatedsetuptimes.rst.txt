@@ -1,0 +1,37 @@
+discrete\_optimization.lotsizing.capacitatedsetuptimes package
+==============================================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.lotsizing.capacitatedsetuptimes.solvers
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.capacitatedsetuptimes.parser module
+--------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedsetuptimes.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacitatedsetuptimes.problem module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedsetuptimes.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing.capacitatedsetuptimes
+   :members:
+   :show-inheritance:
+   :undoc-members:

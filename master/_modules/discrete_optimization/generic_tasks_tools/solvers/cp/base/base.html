@@ -1,0 +1,267 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.solvers.cp.base.base &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.solvers.cp.base.base</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.solvers.cp.base.base</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.base.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">TasksSolver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.solvers.cp.base.typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BoolExpr</span><span class="p">,</span>
+    <span class="n">Constraint</span><span class="p">,</span>
+    <span class="n">IntervalVar</span><span class="p">,</span>
+    <span class="n">LinearExpr</span><span class="p">,</span>
+    <span class="n">Model</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">optional_override</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TasksCpSolver">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.base.TasksCpSolver">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TasksCpSolver</span><span class="p">(</span><span class="n">TasksSolver</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+    <span class="n">cp_model</span><span class="p">:</span> <span class="n">Model</span>
+
+<div class="viewcode-block" id="TasksCpSolver.get_task_is_present_variable">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.base.TasksCpSolver.get_task_is_present_variable">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_is_present_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LinearExpr</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get the boolean variable whether the (optional) task is present.</span>
+
+<span class="sd">        Default implementation returns True for mandatory task.</span>
+<span class="sd">        To be overriden when optional tasks to get an actual boolean variable.</span>
+
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_optional</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="TasksCpSolver.enforce_only_if_tasks_present">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.base.TasksCpSolver.enforce_only_if_tasks_present">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">enforce_only_if_tasks_present</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">expr</span><span class="p">:</span> <span class="n">BoolExpr</span><span class="p">,</span>
+        <span class="n">tasks</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Enforce given constraints only if all given tasks are present.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            expr:</span>
+<span class="sd">            tasks:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        """</span>
+        <span class="n">is_present_tasks_variables</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_task_is_present_variable</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_optional</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">is_present_tasks_variables</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_implication</span><span class="p">(</span><span class="n">is_present_tasks_variables</span><span class="p">,</span> <span class="n">expr</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">add_bool_constraint</span><span class="p">(</span><span class="n">expr</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="TasksCpSolver.create_interval_var">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.base.TasksCpSolver.create_interval_var">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_interval_var</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">start</span><span class="p">:</span> <span class="n">LinearExpr</span><span class="p">,</span>
+        <span class="n">duration</span><span class="p">:</span> <span class="n">LinearExpr</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">end</span><span class="p">:</span> <span class="n">LinearExpr</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">presence</span><span class="p">:</span> <span class="n">LinearExpr</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IntervalVar</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Create an interval variable in the underlying cp model.</span>
+
+<span class="sd">        The interval can be</span>
+<span class="sd">        - fixed or not</span>
+<span class="sd">        - with fixed duration or not</span>
+<span class="sd">        - optional (with associated `presence` bool var)</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            start:</span>
+<span class="sd">            duration:</span>
+<span class="sd">            end:</span>
+<span class="sd">            presence: should be a boolean variable if the interval is optional</span>
+<span class="sd">            name:</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            the created interval variable</span>
+
+<span class="sd">        """</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="TasksCpSolver.add_no_overlap">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.base.TasksCpSolver.add_no_overlap">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_no_overlap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">intervals</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">IntervalVar</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Add constraint so that no intervals overlap.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            intervals:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        """</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="TasksCpSolver.add_cumulative">
+<a class="viewcode-back" href="../../../../../../api/discrete_optimization.generic_tasks_tools.solvers.cp.base.html#discrete_optimization.generic_tasks_tools.solvers.cp.base.base.TasksCpSolver.add_cumulative">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_cumulative</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">intervals</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">IntervalVar</span><span class="p">],</span>
+        <span class="n">demands</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">LinearExpr</span><span class="p">],</span>
+        <span class="n">capacity</span><span class="p">:</span> <span class="n">LinearExpr</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Add cumulative constraint</span>
+
+<span class="sd">        Enforces that:</span>
+
+<span class="sd">            for all t:</span>
+<span class="sd">              self.sum(demands[i]</span>
+<span class="sd">                if (start(intervals[i]) &lt;= t &lt; end(intervals[i])) and</span>
+<span class="sd">                (intervals[i] is present)) &lt;= capacity</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            intervals:</span>
+<span class="sd">            demands:</span>
+<span class="sd">            capacity:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        """</span>
+        <span class="o">...</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

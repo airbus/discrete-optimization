@@ -1,0 +1,45 @@
+discrete\_optimization.singlebatch.solvers package
+==================================================
+
+Submodules
+----------
+
+discrete\_optimization.singlebatch.solvers.cpsat module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.singlebatch.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.singlebatch.solvers.dp module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.singlebatch.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.singlebatch.solvers.lp module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.singlebatch.solvers.lp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.singlebatch.solvers.optal module
+-------------------------------------------------------
+
+.. automodule:: discrete_optimization.singlebatch.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.singlebatch.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

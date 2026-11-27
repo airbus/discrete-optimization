@@ -1,0 +1,53 @@
+discrete\_optimization.alb.salbp.solvers package
+================================================
+
+Submodules
+----------
+
+discrete\_optimization.alb.salbp.solvers.asp module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.salbp.solvers.asp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.alb.salbp.solvers.cpsat module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.salbp.solvers.cpsat
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.alb.salbp.solvers.dp module
+--------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.salbp.solvers.dp
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.alb.salbp.solvers.greedy module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.salbp.solvers.greedy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.alb.salbp.solvers.optal module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.alb.salbp.solvers.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.alb.salbp.solvers
+   :members:
+   :show-inheritance:
+   :undoc-members:

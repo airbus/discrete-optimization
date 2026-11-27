@@ -1,0 +1,21 @@
+discrete\_optimization.rcpsp\_resource\_dependent.transformations package
+=========================================================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_resource\_dependent.transformations.generic\_scheduling\_impl module
+--------------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_resource_dependent.transformations.generic_scheduling_impl
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_resource_dependent.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,29 @@
+discrete\_optimization.rcpsp\_exclusion package
+===============================================
+
+Submodules
+----------
+
+discrete\_optimization.rcpsp\_exclusion.problem module
+------------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_exclusion.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.rcpsp\_exclusion.utils module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.rcpsp_exclusion.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.rcpsp_exclusion
+   :members:
+   :show-inheritance:
+   :undoc-members:

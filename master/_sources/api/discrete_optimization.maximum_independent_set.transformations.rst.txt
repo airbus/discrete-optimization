@@ -1,0 +1,21 @@
+discrete\_optimization.maximum\_independent\_set.transformations package
+========================================================================
+
+Submodules
+----------
+
+discrete\_optimization.maximum\_independent\_set.transformations.to\_generic module
+-----------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.transformations.to_generic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.maximum_independent_set.transformations
+   :members:
+   :show-inheritance:
+   :undoc-members:

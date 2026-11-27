@@ -1,0 +1,61 @@
+discrete\_optimization.generic\_tools.mutations package
+=======================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tools.mutations.mixed\_mutation module
+----------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.mutations.mixed_mutation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.mutations.mutation\_bool module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.mutations.mutation_bool
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.mutations.mutation\_catalog module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.mutations.mutation_catalog
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.mutations.mutation\_integer module
+------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.mutations.mutation_integer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.mutations.mutation\_util module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.mutations.mutation_util
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+discrete\_optimization.generic\_tools.mutations.permutation\_mutations module
+-----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tools.mutations.permutation_mutations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tools.mutations
+   :members:
+   :undoc-members:
+   :show-inheritance:

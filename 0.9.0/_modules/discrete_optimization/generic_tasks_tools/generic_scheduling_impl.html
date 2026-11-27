@@ -1,0 +1,849 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.generic_scheduling_impl &mdash; discrete-optimization 0.9.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=39bb1c6d"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.generic_scheduling_impl</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.generic_scheduling_impl</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">wrapt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">StartOrEnd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.generic_scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GenericSchedulingProblem</span><span class="p">,</span>
+    <span class="n">GenericSchedulingSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.generic_scheduling_utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OBJECTIVE_DEFAULT_WEIGHTS</span><span class="p">,</span>
+    <span class="n">PENALTY_DEFAULT_WEIGHTS</span><span class="p">,</span>
+    <span class="n">Objective</span><span class="p">,</span>
+    <span class="n">Penalty</span><span class="p">,</span>
+    <span class="n">RawSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.do_problem</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ModeOptim</span><span class="p">,</span>
+    <span class="n">ObjectiveDoc</span><span class="p">,</span>
+    <span class="n">ObjectiveHandling</span><span class="p">,</span>
+    <span class="n">ObjectiveRegister</span><span class="p">,</span>
+    <span class="n">Solution</span><span class="p">,</span>
+    <span class="n">TypeObjective</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tools.encoding_register</span><span class="w"> </span><span class="kn">import</span> <span class="n">EncodingRegister</span>
+
+<span class="c1"># types for annotations</span>
+<span class="n">Skill</span> <span class="o">=</span> <span class="nb">str</span>
+<span class="n">NonSkillCumulativeResource</span> <span class="o">=</span> <span class="nb">str</span>
+<span class="n">NonRenewableResource</span> <span class="o">=</span> <span class="nb">str</span>
+<span class="n">UnaryResource</span> <span class="o">=</span> <span class="nb">str</span>
+<span class="n">Task</span> <span class="o">=</span> <span class="n">Hashable</span>
+<span class="n">CumulativeResource</span> <span class="o">=</span> <span class="n">NonSkillCumulativeResource</span> <span class="o">|</span> <span class="n">Skill</span>
+<span class="n">Resource</span> <span class="o">=</span> <span class="n">CumulativeResource</span> <span class="o">|</span> <span class="n">UnaryResource</span>  <span class="c1"># calendar resources</span>
+<span class="n">AnyResource</span> <span class="o">=</span> <span class="n">NonRenewableResource</span> <span class="o">|</span> <span class="n">Resource</span>
+<span class="n">UnaryAvailabilityIntervals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>  <span class="c1"># start, end</span>
+<span class="n">AvailabilityIntervals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>  <span class="c1"># start, end, value</span>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenericSchedulingImplProblem</span><span class="p">(</span>
+    <span class="n">GenericSchedulingProblem</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">Skill</span><span class="p">,</span> <span class="n">NonSkillCumulativeResource</span><span class="p">,</span> <span class="n">NonRenewableResource</span>
+    <span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic implementation of a scheduling problem.</span>
+
+<span class="sd">    It implements the abstract class `GenericSchedulingProblem`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">horizon</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">durations_per_mode</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+        <span class="n">resource_consumptions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CumulativeResource</span> <span class="o">|</span> <span class="n">NonRenewableResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">successors</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">unary_resources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">unary_resources_skills</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Skill</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">unary_resources_availabilities</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">,</span> <span class="n">UnaryAvailabilityIntervals</span><span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">skills</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="n">Skill</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">non_skill_cumulative_resources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="n">CumulativeResource</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">AvailabilityIntervals</span><span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">non_renewable_resources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">NonRenewableResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time_windows</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">start_to_start_min_time_lags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">start_to_end_min_time_lags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">end_to_start_min_time_lags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">end_to_end_min_time_lags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">no_overlap_sets</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span> <span class="o">|</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Objective</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Objective</span><span class="o">.</span><span class="n">MAKESPAN</span><span class="p">,</span>
+        <span class="n">custom_evaluate_fn</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="n">Callable</span><span class="p">[[</span><span class="n">GenericSchedulingImplSolution</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">objective_resource_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">AnyResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mode_costs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">unary_resource_costs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">compute_time_penalty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            horizon: max allowed time to finish the tasks</span>
+<span class="sd">            durations_per_mode: task -&gt; mode -&gt; duration. Tasks durations, mode by mode.</span>
+<span class="sd">                This is used to know all available tasks, all available modes for a given task, and corresponding durations.</span>
+<span class="sd">            resource_consumptions: task -&gt; mode -&gt; resource -&gt; conso.</span>
+<span class="sd">                Cumulative or non-renewable resource consumption, task by task, mode by mode. The resource can be a skill.</span>
+<span class="sd">                Missing key =&gt; conso = 0</span>
+<span class="sd">            successors: maps a task to its successors in the precedence graph.</span>
+<span class="sd">                Each successor task must start after the given task ends.</span>
+<span class="sd">                Default to no precedence constraints. Note that a consolidated version of it will</span>
+<span class="sd">                be constructed using the time lags constraints.</span>
+<span class="sd">            unary_resources: available unary resources.  Default to none.</span>
+<span class="sd">            unary_resources_skills: skill values of each unary resource. Mssing key =&gt; skill value = 0</span>
+<span class="sd">            unary_resources_availabilities: availability of unary resources on the form of list of intervals (start, end)</span>
+<span class="sd">                Missing key =&gt; always available.</span>
+<span class="sd">            skills: available skills</span>
+<span class="sd">            non_skill_cumulative_resources: cumulative resources (excluding skills) availabilities.</span>
+<span class="sd">                Format: either int =&gt; always available at the given max capacity,</span>
+<span class="sd">                or list of intervals + capacity (start, end, value)</span>
+<span class="sd">            non_renewable_resources: non-renewable resources max capacities</span>
+<span class="sd">            time_windows: maps task to start_lb, end_lb, start_ub, end_ub s.t.</span>
+<span class="sd">                start_lb &lt;= start(task) &lt;= start_ub and end_lb &lt;= end(task) &lt;= end_ub</span>
+<span class="sd">                missing or none value means 0 (lb) or self.horizon (ub)</span>
+<span class="sd">            start_to_start_min_time_lags: min time lags constraints between task starts.</span>
+<span class="sd">                task1, task2, offset meaning start(task1) + offset &lt;= start(task2)</span>
+<span class="sd">                Note that using negative offset can model start-to-start max time lags.</span>
+<span class="sd">            start_to_end_min_time_lags: min time lags constraints first task start and second task end.</span>
+<span class="sd">                task1, task2, offset meaning start(task1) + offset &lt;= end(task2)</span>
+<span class="sd">                Note that using negative offset can model end-to-start max time lags.</span>
+<span class="sd">            end_to_start_min_time_lags: min time lags constraints between first task end and second task start.</span>
+<span class="sd">                task1, task2, offset meaning end(task1) + offset &lt;= start(task2)</span>
+<span class="sd">                Note that using negative offset can model start-to-end max time lags.</span>
+<span class="sd">            end_to_end_min_time_lags: min time lags constraints between task ends.</span>
+<span class="sd">                task1, task2, offset meaning end(task1) + offset &lt;= end(task2)</span>
+<span class="sd">                Note that using negative offset can model end-to-end max time lags.</span>
+<span class="sd">            no_overlap_sets: a set of (set of tasks that should not overlap together)</span>
+<span class="sd">            objective: objective for the problem. Default to minimization of makespan.</span>
+<span class="sd">                Either an iterable of (objective, weight) so that the problem should *maximize* the aggregated objective</span>
+<span class="sd">                resulting from weighted sum of objectives, or a single objective in which case we use the corresponding</span>
+<span class="sd">                default weight from</span>
+<span class="sd">                `discrete_optimization.generic_tasks_tools.generic_scheduling_utils.OBJECTIVE_DEFAULT_WEIGHTS`</span>
+<span class="sd">                and maximize it. For instance the default weight for makespan is -1 so that it will</span>
+<span class="sd">                actually minimize the makespan.</span>
+<span class="sd">            custom_evaluate_fn: function used to evaluate the &quot;custom&quot; objective (to be maximized).</span>
+<span class="sd">            objective_resource_weights: Weights to be used by the objective when summing used resources</span>
+<span class="sd">                (`Objective.NB_RESOURCES_USED`) or resources levels (`Objective.RESOURCES_LEVELS`).</span>
+<span class="sd">                Default to 1 for resources not mentioned.</span>
+<span class="sd">            mode_costs: cost of choosing each mode. Missing key =&gt; cost = 0.</span>
+<span class="sd">            unary_resource_costs: cost of allocating each unary resource. Missing key =&gt; cost = 0.</span>
+<span class="sd">            compute_time_penalty: whether to include time penalties in evaluation</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">horizon</span> <span class="o">=</span> <span class="n">horizon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">durations_per_mode</span> <span class="o">=</span> <span class="n">durations_per_mode</span>
+        <span class="c1"># default values</span>
+        <span class="k">if</span> <span class="n">resource_consumptions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">resource_consumptions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+                <span class="n">Task</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CumulativeResource</span> <span class="o">|</span> <span class="n">NonRenewableResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">resource_consumptions</span> <span class="o">=</span> <span class="n">resource_consumptions</span>
+        <span class="k">if</span> <span class="n">successors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">successors</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">successors</span> <span class="o">=</span> <span class="n">successors</span>
+        <span class="k">if</span> <span class="n">unary_resources</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources</span> <span class="o">=</span> <span class="n">unary_resources</span>
+        <span class="k">if</span> <span class="n">unary_resources_skills</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources_skills</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Skill</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources_skills</span> <span class="o">=</span> <span class="n">unary_resources_skills</span>
+        <span class="k">if</span> <span class="n">unary_resources_availabilities</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources_availabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+                <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">UnaryAvailabilityIntervals</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources_availabilities</span> <span class="o">=</span> <span class="n">unary_resources_availabilities</span>
+        <span class="k">if</span> <span class="n">skills</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">skills</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">Skill</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">skills</span> <span class="o">=</span> <span class="n">skills</span>
+        <span class="k">if</span> <span class="n">non_skill_cumulative_resources</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">non_skill_cumulative_resources</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+                <span class="n">CumulativeResource</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">AvailabilityIntervals</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">non_skill_cumulative_resources</span> <span class="o">=</span> <span class="n">non_skill_cumulative_resources</span>
+        <span class="k">if</span> <span class="n">non_renewable_resources</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">NonRenewableResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">non_renewable_resources</span> <span class="o">=</span> <span class="n">non_renewable_resources</span>
+        <span class="k">if</span> <span class="n">time_windows</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_windows</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+                <span class="n">Task</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_windows</span> <span class="o">=</span> <span class="n">time_windows</span>
+        <span class="k">if</span> <span class="n">start_to_start_min_time_lags</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_to_start_min_time_lags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_to_start_min_time_lags</span> <span class="o">=</span> <span class="n">start_to_start_min_time_lags</span>
+        <span class="k">if</span> <span class="n">start_to_end_min_time_lags</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_to_end_min_time_lags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_to_end_min_time_lags</span> <span class="o">=</span> <span class="n">start_to_end_min_time_lags</span>
+        <span class="k">if</span> <span class="n">end_to_start_min_time_lags</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end_to_start_min_time_lags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end_to_start_min_time_lags</span> <span class="o">=</span> <span class="n">end_to_start_min_time_lags</span>
+        <span class="k">if</span> <span class="n">end_to_end_min_time_lags</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end_to_end_min_time_lags</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end_to_end_min_time_lags</span> <span class="o">=</span> <span class="n">end_to_end_min_time_lags</span>
+        <span class="k">if</span> <span class="n">no_overlap_sets</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">no_overlap_sets</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">no_overlap_sets</span> <span class="o">=</span> <span class="n">no_overlap_sets</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">Objective</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">weighted_objectives</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Objective</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">OBJECTIVE_DEFAULT_WEIGHTS</span><span class="p">[</span><span class="n">objective</span><span class="p">]),</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">weighted_objectives</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">objective</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">custom_evaluate_fn</span> <span class="o">=</span> <span class="n">custom_evaluate_fn</span>
+        <span class="k">if</span> <span class="n">objective_resource_weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">objective_resource_weights</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">AnyResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">objective_resource_weights</span> <span class="o">=</span> <span class="n">objective_resource_weights</span>
+        <span class="k">if</span> <span class="n">mode_costs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mode_costs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mode_costs</span> <span class="o">=</span> <span class="n">mode_costs</span>
+        <span class="k">if</span> <span class="n">unary_resource_costs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unary_resource_costs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unary_resource_costs</span> <span class="o">=</span> <span class="n">unary_resource_costs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_time_penalty</span> <span class="o">=</span> <span class="n">compute_time_penalty</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_problem</span><span class="p">()</span>
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.update_problem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.update_problem">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to call when some attributes of the problem are modified.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tasks_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">durations_per_mode</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_skills_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">skills</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_non_skill_cumulative_resources_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">non_skill_cumulative_resources</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_non_renewable_resources_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unary_resources_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">unary_resources</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_resources_lists</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_tasks_list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_skills</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_resource_availabilities</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_task_bounds</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_time_lags</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_precedence_constraints</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">Objective</span><span class="o">.</span><span class="n">CUSTOM</span> <span class="ow">in</span> <span class="p">{</span><span class="n">objective</span> <span class="k">for</span> <span class="n">objective</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_objectives</span><span class="p">}</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_evaluate_fn</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;self.custom_evaluate_fn is not defined but custom objective used.&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.update_resource_availabilities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.update_resource_availabilities">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_resource_availabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_resource_availabilities</span><span class="o">.</span><span class="n">cache_clear</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_resource_availabilities</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.check_resources_lists">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.check_resources_lists">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_resources_lists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check duplicates in resources.&quot;&quot;&quot;</span>
+        <span class="n">resources_list</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">calendar_resources_list</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">non_renewable_resources_list</span>
+        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">resources_list</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">resources_list</span><span class="p">)),</span> <span class="p">(</span>
+            <span class="s2">&quot;There are duplicates in resources list, &quot;</span>
+            <span class="s2">&quot;potentially because calendar and non-renewable resources intersect.&quot;</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">skills_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Skill</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skills_list</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">non_skill_cumulative_resources_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Skill</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_skill_cumulative_resources_list</span>
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_unary_resource_skill_value">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_unary_resource_skill_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_unary_resource_skill_value</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">skill</span><span class="p">:</span> <span class="n">Skill</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources_skills</span><span class="p">[</span><span class="n">unary_resource</span><span class="p">][</span><span class="n">skill</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_cumulative_resource_consumption">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_cumulative_resource_consumption">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_cumulative_resource_consumption</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">CumulativeResource</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_consumptions</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">resource</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_no_overlap">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_no_overlap">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_no_overlap</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">no_overlap_sets</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_resource_availabilities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_resource_availabilities">[docs]</a>
+    <span class="nd">@wrapt</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_resource_availabilities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">Resource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">skills</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_skill_availabilities</span><span class="p">(</span><span class="n">resource</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unary_resources_availabilities</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span>
+                <span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">non_skill_cumulative_resources</span><span class="p">:</span>
+            <span class="n">intervals_or_max_capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">non_skill_cumulative_resources</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">intervals_or_max_capacity</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="k">return</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">horizon</span><span class="p">,</span> <span class="n">intervals_or_max_capacity</span><span class="p">)]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">intervals_or_max_capacity</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">resource</span><span class="si">}</span><span class="s2"> is neither an actual cumulative resource, nor a skill, nor a unary resource.&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_task_mode_duration">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_task_mode_duration">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_mode_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">durations_per_mode</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">non_renewable_resources_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">NonRenewableResource</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_renewable_resources_list</span>
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_non_renewable_resource_capacity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_non_renewable_resource_capacity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_non_renewable_resource_capacity</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">NonRenewableResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">non_renewable_resources</span><span class="p">[</span><span class="n">resource</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_non_renewable_resource_consumption">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_non_renewable_resource_consumption">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_non_renewable_resource_consumption</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">resource</span><span class="p">:</span> <span class="n">NonRenewableResource</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_consumptions</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">resource</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_start_to_start_min_time_lags">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_start_to_start_min_time_lags">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_to_start_min_time_lags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_to_start_min_time_lags</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_end_to_start_min_time_lags">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_end_to_start_min_time_lags">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_to_start_min_time_lags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_to_start_min_time_lags</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_end_to_end_min_time_lags">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_end_to_end_min_time_lags">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_to_end_min_time_lags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_to_end_min_time_lags</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_start_to_end_min_time_lags">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_start_to_end_min_time_lags">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_to_end_min_time_lags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Task</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_to_end_min_time_lags</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_task_start_or_end_lower_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_task_start_or_end_lower_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_start_or_end_lower_bound</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">start_lb</span><span class="p">,</span> <span class="n">end_lb</span><span class="p">,</span> <span class="n">start_ub</span><span class="p">,</span> <span class="n">end_ub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_windows</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                <span class="n">lb</span> <span class="o">=</span> <span class="n">start_lb</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">lb</span> <span class="o">=</span> <span class="n">end_lb</span>
+            <span class="k">if</span> <span class="n">lb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">lb</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_task_start_or_end_lower_bound</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_task_start_or_end_upper_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_task_start_or_end_upper_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_start_or_end_upper_bound</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">:</span> <span class="n">StartOrEnd</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">start_lb</span><span class="p">,</span> <span class="n">end_lb</span><span class="p">,</span> <span class="n">start_ub</span><span class="p">,</span> <span class="n">end_ub</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_windows</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">start_or_end</span> <span class="o">==</span> <span class="n">StartOrEnd</span><span class="o">.</span><span class="n">START</span><span class="p">:</span>
+                <span class="n">ub</span> <span class="o">=</span> <span class="n">start_ub</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ub</span> <span class="o">=</span> <span class="n">end_ub</span>
+            <span class="k">if</span> <span class="n">ub</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ub</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_task_start_or_end_upper_bound</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">start_or_end</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_precedence_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_precedence_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_precedence_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Task</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">successors</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_makespan_upper_bound">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_makespan_upper_bound">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_makespan_upper_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">horizon</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_task_modes">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_task_modes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_modes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">durations_per_mode</span><span class="p">[</span><span class="n">task</span><span class="p">])</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unary_resources_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unary_resources_list</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tasks_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tasks_list</span>
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.satisfy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.satisfy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">GenericSchedulingImplSolution</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">satisfy_partial</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">variable</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.satisfy_partial">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.satisfy_partial">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">satisfy_partial</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">variable</span><span class="p">:</span> <span class="n">GenericSchedulingImplSolution</span><span class="p">,</span>
+        <span class="n">duration</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">calendar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">non_renewable_capacity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">precedence</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">skill</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">allocation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">time_lags</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">time_windows</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Partial checks on solution.</span>
+
+<span class="sd">        One can switch off some checks by setting the corresponding parameter to False.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            variable:</span>
+<span class="sd">            duration:</span>
+<span class="sd">            calendar:</span>
+<span class="sd">            non_renewable_capacity:</span>
+<span class="sd">            precedence:</span>
+<span class="sd">            skill:</span>
+<span class="sd">            allocation:</span>
+<span class="sd">            time_lags:</span>
+<span class="sd">            time_windows:</span>
+
+<span class="sd">        Returns:</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="c1"># duration consistency</span>
+            <span class="p">(</span><span class="ow">not</span> <span class="n">duration</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_duration_constraints</span><span class="p">())</span>
+            <span class="c1"># calendar resources capacity violations (unary resources + skills + cumulative resources)</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">calendar</span>
+                <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_all_calendar_resource_capacity_constraints</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="c1"># non-renewable resource violation</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">non_renewable_capacity</span>
+                <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_all_non_renewable_resource_capacity_constraints</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="c1"># precedence relations</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">precedence</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_precedence_constraints</span><span class="p">())</span>
+            <span class="c1"># skill constraints</span>
+            <span class="ow">and</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">skill</span>
+                <span class="ow">or</span> <span class="p">(</span>
+                    <span class="n">variable</span><span class="o">.</span><span class="n">check_skill_constraints</span><span class="p">()</span>
+                    <span class="ow">and</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_only_one_skill_per_task_and_unary_resource</span><span class="p">()</span>
+                    <span class="c1"># Check consistency between compatibility/allocation/skill usage</span>
+                    <span class="ow">and</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_skill_usage_and_allocation_consistency</span><span class="p">()</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">allocation</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_allocation_consistency</span><span class="p">())</span>
+            <span class="c1"># time lags</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">time_lags</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_time_lags</span><span class="p">())</span>
+            <span class="c1"># time window</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">time_windows</span> <span class="ow">or</span> <span class="n">variable</span><span class="o">.</span><span class="n">check_time_windows</span><span class="p">())</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_solution_type">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_solution_type">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_solution_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Solution</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">GenericSchedulingImplSolution</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_attribute_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_attribute_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EncodingRegister</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.set_fixed_attributes">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.set_fixed_attributes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_fixed_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.evaluate">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.evaluate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">:</span> <span class="n">Solution</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="n">dict_eval</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">objective</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_subobjective</span><span class="p">(</span>
+                <span class="n">variable</span><span class="o">=</span><span class="n">variable</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">objective</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_objectives</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_time_penalty</span><span class="p">:</span>
+            <span class="n">penalty</span> <span class="o">=</span> <span class="n">Penalty</span><span class="o">.</span><span class="n">TIME</span>
+            <span class="n">dict_eval</span><span class="p">[</span><span class="n">penalty</span><span class="o">.</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_penalty</span><span class="p">(</span>
+                <span class="n">variable</span><span class="o">=</span><span class="n">variable</span><span class="p">,</span> <span class="n">penalty</span><span class="o">=</span><span class="n">penalty</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">dict_eval</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.compute_subobjective">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.compute_subobjective">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_subobjective</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">variable</span><span class="p">:</span> <span class="n">GenericSchedulingSolution</span><span class="p">,</span>
+        <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span><span class="p">,</span>
+        <span class="n">resource_weights</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="n">AnyResource</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">resource_weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">resource_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective_resource_weights</span>
+        <span class="k">match</span> <span class="n">objective</span><span class="p">:</span>
+            <span class="k">case</span> <span class="n">Objective</span><span class="o">.</span><span class="n">CUSTOM</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_evaluate_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="s2">&quot;self.custom_evaluate_fn is not defined but custom objective used.&quot;</span>
+                    <span class="p">)</span>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">variable</span><span class="p">,</span> <span class="n">GenericSchedulingImplSolution</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_evaluate_fn</span><span class="p">(</span><span class="n">variable</span><span class="p">)</span>
+            <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">compute_subobjective</span><span class="p">(</span>
+                    <span class="n">variable</span><span class="o">=</span><span class="n">variable</span><span class="p">,</span>
+                    <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+                    <span class="n">resource_weights</span><span class="o">=</span><span class="n">resource_weights</span><span class="p">,</span>
+                <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_objective_register">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_objective_register">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_objective_register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ObjectiveRegister</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weighted_objectives</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">handling</span> <span class="o">=</span> <span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">SINGLE</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">handling</span> <span class="o">=</span> <span class="n">ObjectiveHandling</span><span class="o">.</span><span class="n">AGGREGATE</span>
+        <span class="n">dict_objective</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">objective</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">OBJECTIVE</span><span class="p">,</span> <span class="n">default_weight</span><span class="o">=</span><span class="n">weight</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">objective</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_objectives</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_time_penalty</span><span class="p">:</span>
+            <span class="n">penalty</span> <span class="o">=</span> <span class="n">Penalty</span><span class="o">.</span><span class="n">TIME</span>
+            <span class="n">dict_objective</span><span class="p">[</span><span class="n">penalty</span><span class="o">.</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="n">ObjectiveDoc</span><span class="p">(</span>
+                <span class="nb">type</span><span class="o">=</span><span class="n">TypeObjective</span><span class="o">.</span><span class="n">PENALTY</span><span class="p">,</span>
+                <span class="n">default_weight</span><span class="o">=</span><span class="n">PENALTY_DEFAULT_WEIGHTS</span><span class="p">[</span><span class="n">penalty</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ObjectiveRegister</span><span class="p">(</span>
+            <span class="n">objective_sense</span><span class="o">=</span><span class="n">ModeOptim</span><span class="o">.</span><span class="n">MAXIMIZATION</span><span class="p">,</span>
+            <span class="n">objective_handling</span><span class="o">=</span><span class="n">handling</span><span class="p">,</span>
+            <span class="n">dict_objective_to_doc</span><span class="o">=</span><span class="n">dict_objective</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_dummy_solution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_dummy_solution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_dummy_solution</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_mode_cost">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_mode_cost">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_mode_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode_costs</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_mode_cost</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplProblem.get_unary_resource_cost">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplProblem.get_unary_resource_cost">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_unary_resource_cost</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">unary_resource_costs</span><span class="p">[</span><span class="n">task</span><span class="p">][</span><span class="n">mode</span><span class="p">][</span><span class="n">unary_resource</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_unary_resource_cost</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="GenericSchedulingImplSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GenericSchedulingImplSolution</span><span class="p">(</span>
+    <span class="n">GenericSchedulingSolution</span><span class="p">[</span>
+        <span class="n">Task</span><span class="p">,</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">Skill</span><span class="p">,</span> <span class="n">NonSkillCumulativeResource</span><span class="p">,</span> <span class="n">NonRenewableResource</span>
+    <span class="p">]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic implementation of a solution to a scheduling problem.</span>
+
+<span class="sd">    It implements the abstract class `GenericSchedulingSolution`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">GenericSchedulingImplProblem</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">problem</span><span class="p">:</span> <span class="n">GenericSchedulingImplProblem</span><span class="p">,</span> <span class="n">raw_sol</span><span class="p">:</span> <span class="n">RawSolution</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_sol</span> <span class="o">=</span> <span class="n">raw_sol</span>
+
+<div class="viewcode-block" id="GenericSchedulingImplSolution.is_skill_used">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution.is_skill_used">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_skill_used</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span><span class="p">,</span> <span class="n">skill</span><span class="p">:</span> <span class="n">Skill</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">skill</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_sol</span><span class="o">.</span><span class="n">task_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">allocated</span><span class="p">[</span><span class="n">unary_resource</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplSolution.get_end_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution.get_end_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_sol</span><span class="o">.</span><span class="n">task_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">end</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplSolution.get_start_time">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution.get_start_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_sol</span><span class="o">.</span><span class="n">task_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">start</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplSolution.get_mode">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution.get_mode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_sol</span><span class="o">.</span><span class="n">task_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">mode</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplSolution.is_allocated">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution.is_allocated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_allocated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">unary_resource</span><span class="p">:</span> <span class="n">UnaryResource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">unary_resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_sol</span><span class="o">.</span><span class="n">task_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">allocated</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplSolution.get_task_allocation">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution.get_task_allocation">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_allocation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">UnaryResource</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_sol</span><span class="o">.</span><span class="n">task_variables</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="o">.</span><span class="n">allocated</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplSolution.copy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">GenericSchedulingImplSolution</span><span class="p">(</span>
+            <span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">raw_sol</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_sol</span><span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSchedulingImplSolution.lazy_copy">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.generic_scheduling_impl.GenericSchedulingImplSolution.lazy_copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lazy_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">GenericSchedulingImplSolution</span><span class="p">(</span><span class="n">problem</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="p">,</span> <span class="n">raw_sol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_sol</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.9.0
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+discrete\_optimization.generic\_tasks\_tools.solvers.base package
+=================================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tasks\_tools.solvers.base.allocation module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.base.allocation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.base.base module
+---------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.base.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.base.multimode module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.base.multimode
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.base.scheduling module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.base.scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.base
+   :members:
+   :show-inheritance:
+   :undoc-members:

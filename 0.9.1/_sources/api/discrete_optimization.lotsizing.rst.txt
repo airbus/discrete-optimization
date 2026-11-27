@@ -1,0 +1,120 @@
+discrete\_optimization.lotsizing package
+========================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.lotsizing.capacitatedmultiitem
+   discrete_optimization.lotsizing.capacitatedsetuptimes
+   discrete_optimization.lotsizing.generic_solver
+   discrete_optimization.lotsizing.uncapacitatedsingleitem
+
+Submodules
+----------
+
+discrete\_optimization.lotsizing.backlog module
+-----------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.backlog
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.base module
+--------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.capacity module
+------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.capacity
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.changeover module
+--------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.changeover
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.costs module
+---------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.costs
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.demands module
+-----------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.demands
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.generic\_lotsizing module
+----------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.generic_lotsizing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.parallel\_production module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.parallel_production
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.production\_solution module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.production_solution
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.setup\_times module
+----------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.setup_times
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.stock\_limits module
+-----------------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.stock_limits
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.lotsizing.utils module
+---------------------------------------------
+
+.. automodule:: discrete_optimization.lotsizing.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.lotsizing
+   :members:
+   :show-inheritance:
+   :undoc-members:

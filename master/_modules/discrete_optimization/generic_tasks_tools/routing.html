@@ -1,0 +1,444 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.routing &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.routing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.routing</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="c1">#  Class to specify routing kind of constraint between task</span>
+<span class="c1">#  or entities.</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.entities</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SchedulingEntity</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.entity_constraints</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EntityConstraintsProblem</span><span class="p">,</span>
+    <span class="n">EntityConstraintsSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">UndefinedData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.scheduling</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Task</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">optional_override</span><span class="p">,</span>
+    <span class="n">optional_override_implem</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">AttributeEntities</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"AttributeEntities"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Hashable</span><span class="p">)</span>
+<span class="n">CumulDimensions</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"CumulDimensions"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Hashable</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RoutingEntity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingEntity">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RoutingEntity</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">AttributeEntities</span><span class="p">,</span> <span class="n">CumulDimensions</span><span class="p">]):</span>
+    <span class="n">entities</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]]</span>
+    <span class="n">attributes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AttributeEntities</span><span class="p">]</span>
+    <span class="n">cumul_dimensions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CumulDimensions</span><span class="p">]</span>
+    <span class="n">possible_attributes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="n">AttributeEntities</span><span class="p">]]</span>
+    <span class="n">transition_times</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="n">cumul_matrix</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CumulDimensions</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="n">cumul_bounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CumulDimensions</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">has_to_be_visited</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">has_to_be_visited_if_present</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">first_entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">last_entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="nb">set</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="n">nb_means</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entities</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">index_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attributes</span><span class="p">))}</span>
+
+<div class="viewcode-block" id="RoutingEntity.get_possible_attributes">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingEntity.get_possible_attributes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_possible_attributes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">scheduling_entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">AttributeEntities</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">possible_attributes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">scheduling_entity</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="RoutingEntity.get_active_entities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingEntity.get_active_entities">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_active_entities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solution</span><span class="p">:</span> <span class="n">EntityConstraintsSolution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">([</span><span class="n">ent</span> <span class="k">for</span> <span class="n">ent</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">entities</span> <span class="k">if</span> <span class="n">ent</span><span class="o">.</span><span class="n">is_active</span><span class="p">(</span><span class="n">solution</span><span class="p">)])</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OrderedRoutingEntity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.OrderedRoutingEntity">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderedRoutingEntity</span><span class="p">(</span><span class="n">RoutingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">,</span> <span class="n">AttributeEntities</span><span class="p">,</span> <span class="n">CumulDimensions</span><span class="p">]):</span>
+    <span class="n">list_entities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">list_entities</span><span class="p">))</span>
+
+<div class="viewcode-block" id="OrderedRoutingEntity.unfold_entities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.OrderedRoutingEntity.unfold_entities">[docs]</a>
+    <span class="nd">@optional_override_implem</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unfold_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_entities</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">entity</span>
+            <span class="n">entity</span><span class="o">.</span><span class="n">unfold_entities</span><span class="p">()</span></div>
+</div>
+
+
+
+<span class="c1"># @dataclass(frozen=False)</span>
+<div class="viewcode-block" id="RoutingProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RoutingProblem</span><span class="p">(</span><span class="n">EntityConstraintsProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+    <span class="c1"># list_routing_entities: list[RoutingEntity] = field(default_factory=list)</span>
+    <span class="c1"># list_ordered_routing_entities: list[OrderedRoutingEntity] = field(default_factory=list)</span>
+    <span class="n">from_entity_to_routing_entity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">SchedulingEntity</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">RoutingEntity</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">from_entity_to_ordered_routing_entity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+        <span class="n">SchedulingEntity</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">OrderedRoutingEntity</span><span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="RoutingProblem.get_routing_entities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingProblem.get_routing_entities">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_routing_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">RoutingEntity</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="RoutingProblem.get_ordered_routing_entities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingProblem.get_ordered_routing_entities">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_ordered_routing_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">OrderedRoutingEntity</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="RoutingProblem.get_bounds_cumul_dimension">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingProblem.get_bounds_cumul_dimension">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_bounds_cumul_dimension</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">routing_entity</span><span class="p">:</span> <span class="n">RoutingEntity</span><span class="p">,</span> <span class="n">cumul_dimension</span><span class="p">:</span> <span class="n">CumulDimensions</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">routing_entity</span><span class="o">.</span><span class="n">cumul_bounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">cumul_dimension</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">routing_entity</span><span class="o">.</span><span class="n">cumul_bounds</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">routing_entity</span><span class="o">.</span><span class="n">cumul_bounds</span><span class="p">[</span><span class="n">cumul_dimension</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="RoutingProblem.get_routing_entity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingProblem.get_routing_entity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_routing_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RoutingEntity</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_entity_to_ordered_routing_entity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">from_entity_to_ordered_routing_entity</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_ordered_routing_entities</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">o</span><span class="o">.</span><span class="n">list_entities</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">from_entity_to_ordered_routing_entity</span><span class="p">[</span><span class="n">e</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_entity_to_routing_entity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">from_entity_to_routing_entity</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_routing_entities</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">o</span><span class="o">.</span><span class="n">entities</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">from_entity_to_routing_entity</span><span class="p">[</span><span class="n">e</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_entity_to_routing_entity</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_entity_to_routing_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_entity_to_ordered_routing_entity</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_entity_to_ordered_routing_entity</span><span class="p">[</span><span class="n">entity</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="RoutingProblem.get_static_setup_time_between_entities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingProblem.get_static_setup_time_between_entities">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_static_setup_time_between_entities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">entity_from</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">,</span> <span class="n">entity_to</span><span class="p">:</span> <span class="n">SchedulingEntity</span>
+    <span class="p">):</span>
+        <span class="n">routing_entity_from</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_routing_entity</span><span class="p">(</span><span class="n">entity_from</span><span class="p">)</span>
+        <span class="n">routing_entity_to</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_routing_entity</span><span class="p">(</span><span class="n">entity_to</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">routing_entity_from</span> <span class="o">!=</span> <span class="n">routing_entity_to</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span>
+        <span class="k">if</span> <span class="n">routing_entity_from</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">routing_entity_to</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span>
+        <span class="n">possible_attribute_from</span> <span class="o">=</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">possible_attributes</span><span class="p">[</span><span class="n">entity_from</span><span class="p">]</span>
+        <span class="n">possible_attribute_to</span> <span class="o">=</span> <span class="n">routing_entity_to</span><span class="o">.</span><span class="n">possible_attributes</span><span class="p">[</span><span class="n">entity_to</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">possible_attribute_to</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">possible_attribute_from</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">att_from</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">possible_attribute_from</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">att_to</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">possible_attribute_to</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">index_from</span> <span class="o">=</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">index_attributes</span><span class="p">[</span><span class="n">att_from</span><span class="p">]</span>
+            <span class="n">index_to</span> <span class="o">=</span> <span class="n">routing_entity_to</span><span class="o">.</span><span class="n">index_attributes</span><span class="p">[</span><span class="n">att_to</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">transition_times</span><span class="p">[</span><span class="n">index_from</span><span class="p">,</span> <span class="n">index_to</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span></div>
+
+
+<div class="viewcode-block" id="RoutingProblem.get_dynamic_setup_time_between_entities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingProblem.get_dynamic_setup_time_between_entities">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_dynamic_setup_time_between_entities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">entity_from</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">,</span>
+        <span class="n">attribute_from</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">entity_to</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">,</span>
+        <span class="n">attribute_to</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">routing_entity_from</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_routing_entity</span><span class="p">(</span><span class="n">entity_from</span><span class="p">)</span>
+        <span class="n">routing_entity_to</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_routing_entity</span><span class="p">(</span><span class="n">entity_to</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">routing_entity_from</span> <span class="o">!=</span> <span class="n">routing_entity_to</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span>
+        <span class="k">if</span> <span class="n">routing_entity_from</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">routing_entity_to</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span>
+        <span class="n">possible_attribute_from</span> <span class="o">=</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">possible_attributes</span><span class="p">[</span><span class="n">entity_from</span><span class="p">]</span>
+        <span class="n">possible_attribute_to</span> <span class="o">=</span> <span class="n">routing_entity_to</span><span class="o">.</span><span class="n">possible_attributes</span><span class="p">[</span><span class="n">entity_to</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">attribute_from</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">possible_attribute_from</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span>
+        <span class="k">if</span> <span class="n">attribute_to</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">possible_attribute_to</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span>
+        <span class="n">index_from</span> <span class="o">=</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">index_attributes</span><span class="p">[</span><span class="n">attribute_from</span><span class="p">]</span>
+        <span class="n">index_to</span> <span class="o">=</span> <span class="n">routing_entity_to</span><span class="o">.</span><span class="n">index_attributes</span><span class="p">[</span><span class="n">attribute_to</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">routing_entity_from</span><span class="o">.</span><span class="n">transition_times</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">transition_times</span><span class="p">[</span><span class="n">index_from</span><span class="p">,</span> <span class="n">index_to</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">routing_entity_from</span><span class="o">.</span><span class="n">transition_times</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">transition_times</span><span class="p">[</span><span class="n">index_from</span><span class="p">][</span><span class="n">index_to</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="RoutingProblem.get_dynamic_cumul_dimensions_between_entities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingProblem.get_dynamic_cumul_dimensions_between_entities">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_dynamic_cumul_dimensions_between_entities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cumul_dimension</span><span class="p">:</span> <span class="n">CumulDimensions</span><span class="p">,</span>
+        <span class="n">entity_from</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">,</span>
+        <span class="n">attribute_from</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">entity_to</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">,</span>
+        <span class="n">attribute_to</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">routing_entity_from</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_routing_entity</span><span class="p">(</span><span class="n">entity_from</span><span class="p">)</span>
+        <span class="n">routing_entity_to</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_routing_entity</span><span class="p">(</span><span class="n">entity_to</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">routing_entity_from</span> <span class="o">!=</span> <span class="n">routing_entity_to</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span>
+        <span class="k">if</span> <span class="n">routing_entity_from</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">routing_entity_to</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span>
+        <span class="n">possible_attribute_from</span> <span class="o">=</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">possible_attributes</span><span class="p">[</span><span class="n">entity_from</span><span class="p">]</span>
+        <span class="n">possible_attribute_to</span> <span class="o">=</span> <span class="n">routing_entity_to</span><span class="o">.</span><span class="n">possible_attributes</span><span class="p">[</span><span class="n">entity_to</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">attribute_from</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">possible_attribute_from</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span>
+        <span class="k">if</span> <span class="n">attribute_to</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">possible_attribute_to</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span>
+        <span class="n">index_from</span> <span class="o">=</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">index_attributes</span><span class="p">[</span><span class="n">attribute_from</span><span class="p">]</span>
+        <span class="n">index_to</span> <span class="o">=</span> <span class="n">routing_entity_to</span><span class="o">.</span><span class="n">index_attributes</span><span class="p">[</span><span class="n">attribute_to</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">routing_entity_from</span><span class="o">.</span><span class="n">cumul_matrix</span><span class="p">[</span><span class="n">cumul_dimension</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">cumul_matrix</span><span class="p">[</span><span class="n">cumul_dimension</span><span class="p">][</span>
+                <span class="n">index_from</span><span class="p">,</span> <span class="n">index_to</span>
+            <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">routing_entity_from</span><span class="o">.</span><span class="n">cumul_matrix</span><span class="p">[</span><span class="n">cumul_dimension</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">cumul_matrix</span><span class="p">[</span><span class="n">cumul_dimension</span><span class="p">][</span><span class="n">index_from</span><span class="p">][</span>
+                <span class="n">index_to</span>
+            <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="RoutingProblem.get_attribute_of_entity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingProblem.get_attribute_of_entity">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_of_entity</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AttributeEntities</span><span class="p">:</span>
+        <span class="n">routing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_routing_entity</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">routing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span>
+        <span class="n">attr</span> <span class="o">=</span> <span class="n">routing</span><span class="o">.</span><span class="n">possible_attributes</span><span class="p">[</span><span class="n">entity</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">attr</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RoutingSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RoutingSolution</span><span class="p">(</span><span class="n">EntityConstraintsSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+    <span class="n">problem</span><span class="p">:</span> <span class="n">RoutingProblem</span>
+
+<div class="viewcode-block" id="RoutingSolution.get_routing_path">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingSolution.get_routing_path">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_routing_path</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">routing_entity</span><span class="p">:</span> <span class="n">RoutingEntity</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Works for mono vehicle only</span>
+<span class="sd">        """</span>
+        <span class="n">active_entities</span> <span class="o">=</span> <span class="n">routing_entity</span><span class="o">.</span><span class="n">get_active_entities</span><span class="p">(</span><span class="n">solution</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">sched</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">ent</span><span class="o">.</span><span class="n">get_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">ent</span><span class="o">.</span><span class="n">get_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">ent</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ent</span> <span class="ow">in</span> <span class="n">active_entities</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">sched</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span></div>
+
+
+<div class="viewcode-block" id="RoutingSolution.get_attribute_of_entity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingSolution.get_attribute_of_entity">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_attribute_of_entity</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">scheduling_entity</span><span class="p">:</span> <span class="n">SchedulingEntity</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AttributeEntities</span><span class="p">:</span>
+        <span class="n">routing_entity_from</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_routing_entity</span><span class="p">(</span><span class="n">scheduling_entity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">scheduling_entity</span> <span class="ow">in</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">possible_attributes</span><span class="p">:</span>
+            <span class="n">possible_attribute_from</span> <span class="o">=</span> <span class="n">routing_entity_from</span><span class="o">.</span><span class="n">possible_attributes</span><span class="p">[</span>
+                <span class="n">scheduling_entity</span>
+            <span class="p">]</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">possible_attribute_from</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span></div>
+
+
+<div class="viewcode-block" id="RoutingSolution.check_transition_time_constraint">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.routing.RoutingSolution.check_transition_time_constraint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_transition_time_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_routing_entities</span><span class="p">():</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_routing_path</span><span class="p">(</span><span class="n">routing_entity</span><span class="o">=</span><span class="n">r</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p0</span><span class="p">,</span> <span class="n">p1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">path</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+                <span class="n">ent0</span><span class="p">:</span> <span class="n">SchedulingEntity</span> <span class="o">=</span> <span class="n">p0</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">ent1</span><span class="p">:</span> <span class="n">SchedulingEntity</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">attr0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_attribute_of_entity</span><span class="p">(</span><span class="n">ent0</span><span class="p">)</span>
+                <span class="n">attr1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_attribute_of_entity</span><span class="p">(</span><span class="n">ent1</span><span class="p">)</span>
+                <span class="n">transition_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_dynamic_setup_time_between_entities</span><span class="p">(</span>
+                    <span class="n">entity_from</span><span class="o">=</span><span class="n">ent0</span><span class="p">,</span>
+                    <span class="n">attribute_from</span><span class="o">=</span><span class="n">attr0</span><span class="p">,</span>
+                    <span class="n">entity_to</span><span class="o">=</span><span class="n">ent1</span><span class="p">,</span>
+                    <span class="n">attribute_to</span><span class="o">=</span><span class="n">attr1</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="c1"># st0 = p0[0]</span>
+                <span class="n">end0</span> <span class="o">=</span> <span class="n">p0</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">st1</span> <span class="o">=</span> <span class="n">p1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="c1"># end1 = p1[1]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">st1</span> <span class="o">&gt;=</span> <span class="n">end0</span> <span class="o">+</span> <span class="n">transition_time</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Transition time not respected "</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

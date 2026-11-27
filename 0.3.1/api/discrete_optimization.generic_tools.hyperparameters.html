@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tools.hyperparameters package &mdash; discrete-optimization 0.3.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=4621528c"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="../_static/versions.js?v=dd1a30db"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="discrete_optimization.generic_tools.ls package" href="discrete_optimization.generic_tools.ls.html" />
+    <link rel="prev" title="discrete_optimization.generic_tools.ea package" href="discrete_optimization.generic_tools.ea.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+              <div class="version">
+                0.3.1
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="discrete_optimization.html">discrete_optimization package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="discrete_optimization.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.coloring.html">discrete_optimization.coloring package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.facility.html">discrete_optimization.facility package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.generic_rcpsp_tools.html">discrete_optimization.generic_rcpsp_tools package</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.knapsack.html">discrete_optimization.knapsack package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.pickup_vrp.html">discrete_optimization.pickup_vrp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp.html">discrete_optimization.rcpsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.rcpsp_multiskill.html">discrete_optimization.rcpsp_multiskill package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.tsp.html">discrete_optimization.tsp package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="discrete_optimization.vrp.html">discrete_optimization.vrp package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization.datasets">discrete_optimization.datasets module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="discrete_optimization.html#module-discrete_optimization">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API Reference</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.html">discrete_optimization package</a></li>
+          <li class="breadcrumb-item"><a href="discrete_optimization.generic_tools.html">discrete_optimization.generic_tools package</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tools.hyperparameters package</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="discrete-optimization-generic-tools-hyperparameters-package">
+<h1>discrete_optimization.generic_tools.hyperparameters package<a class="headerlink" href="#discrete-optimization-generic-tools-hyperparameters-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-discrete_optimization.generic_tools.hyperparameters.hyperparameter">
+<span id="discrete-optimization-generic-tools-hyperparameters-hyperparameter-module"></span><h2>discrete_optimization.generic_tools.hyperparameters.hyperparameter module<a class="headerlink" href="#module-discrete_optimization.generic_tools.hyperparameters.hyperparameter" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tools.hyperparameters.hyperparameter.</span></span><span class="sig-name descname"><span class="pre">CategoricalHyperparameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default:</span> <span class="pre">~typing.Any</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices:</span> <span class="pre">~typing.List[~typing.Any]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#CategoricalHyperparameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hyperparameter</span></code></a></p>
+<p>Categorical hyperparameter.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter.choices">
+<span class="sig-name descname"><span class="pre">choices</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter.choices" title="Link to this definition"></a></dt>
+<dd><p>List of possible choices.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter.suggest_with_optuna">
+<span class="sig-name descname"><span class="pre">suggest_with_optuna</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optuna.trial.Trial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#CategoricalHyperparameter.suggest_with_optuna"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter.suggest_with_optuna" title="Link to this definition"></a></dt>
+<dd><p>Suggest hyperparameter value for an Optuna trial.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trial</strong> – optuna Trial used for choosing the hyperparameter value</p></li>
+<li><p><strong>choices</strong> – restricts list of choices</p></li>
+<li><p><strong>prefix</strong> – prefix to add to optuna corresponding parameter name
+(useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</p></li>
+<li><p><strong>**kwargs</strong> – passed to <cite>trial.suggest_categorical()</cite></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.EnumHyperparameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tools.hyperparameters.hyperparameter.</span></span><span class="sig-name descname"><span class="pre">EnumHyperparameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enum</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">Enum</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#EnumHyperparameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.EnumHyperparameter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">CategoricalHyperparameter</span></code></a></p>
+<p>Hyperparameter taking value among an enumeration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>enum</strong> – enumeration used to create the hyperparameter</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.EnumHyperparameter.suggest_with_optuna">
+<span class="sig-name descname"><span class="pre">suggest_with_optuna</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optuna.trial.Trial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Enum</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Enum</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#EnumHyperparameter.suggest_with_optuna"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.EnumHyperparameter.suggest_with_optuna" title="Link to this definition"></a></dt>
+<dd><p>Suggest hyperparameter value for an Optuna trial.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trial</strong> – optuna Trial used for choosing the hyperparameter value</p></li>
+<li><p><strong>choices</strong> – restricts list of choices among the enumeration <cite>self.enum</cite></p></li>
+<li><p><strong>prefix</strong> – prefix to add to optuna corresponding parameter name
+(useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</p></li>
+<li><p><strong>**kwargs</strong> – passed to <cite>trial.suggest_categorical()</cite></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tools.hyperparameters.hyperparameter.</span></span><span class="sig-name descname"><span class="pre">FloatHyperparameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#FloatHyperparameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hyperparameter</span></code></a></p>
+<p>Float parameter.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter.default">
+<span class="sig-name descname"><span class="pre">default</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter.default" title="Link to this definition"></a></dt>
+<dd><p>Default value for the hyperparameter.</p>
+<p>None means “no default value”.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter.high">
+<span class="sig-name descname"><span class="pre">high</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter.high" title="Link to this definition"></a></dt>
+<dd><p>Upper bound.</p>
+<p>If None, the hyperparameter value has no upper bound.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter.low">
+<span class="sig-name descname"><span class="pre">low</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter.low" title="Link to this definition"></a></dt>
+<dd><p>Lower bound.</p>
+<p>If None, the hyperparameter value has no lower bound.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter.suggest_with_optuna">
+<span class="sig-name descname"><span class="pre">suggest_with_optuna</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optuna.trial.Trial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#FloatHyperparameter.suggest_with_optuna"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.FloatHyperparameter.suggest_with_optuna" title="Link to this definition"></a></dt>
+<dd><p>Suggest hyperparameter value for an Optuna trial.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trial</strong> – optuna Trial used for choosing the hyperparameter value</p></li>
+<li><p><strong>low</strong> – can be used to restrict lower bound</p></li>
+<li><p><strong>high</strong> – can be used to restrict upper bound</p></li>
+<li><p><strong>prefix</strong> – prefix to add to optuna corresponding parameter name
+(useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</p></li>
+<li><p><strong>**kwargs</strong> – passed to <cite>trial.suggest_float()</cite></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tools.hyperparameters.hyperparameter.</span></span><span class="sig-name descname"><span class="pre">Hyperparameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#Hyperparameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Hyperparameter base class used to specify d-o solver hyperparameters.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter.default">
+<span class="sig-name descname"><span class="pre">default</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter.default" title="Link to this definition"></a></dt>
+<dd><p>Default value for the hyperparameter.</p>
+<p>None means “no default value”.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the hyperparameter.</p>
+<p>Should correspond to how the hyperparameter is specified in the solver
+<cite>__init__()</cite>, <cite>init_model()</cite>, or <cite>solve()</cite> keywords arguments.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter.suggest_with_optuna">
+<span class="sig-name descname"><span class="pre">suggest_with_optuna</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optuna.trial.Trial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#Hyperparameter.suggest_with_optuna"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter.suggest_with_optuna" title="Link to this definition"></a></dt>
+<dd><p>Suggest hyperparameter value for an Optuna trial.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trial</strong> – optuna Trial used for choosing the hyperparameter value</p></li>
+<li><p><strong>prefix</strong> – prefix to add to optuna corresponding parameter name
+(useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</p></li>
+<li><p><strong>**kwargs</strong> – passed to <cite>trial.suggest_xxx()</cite></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tools.hyperparameters.hyperparameter.</span></span><span class="sig-name descname"><span class="pre">IntegerHyperparameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#IntegerHyperparameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hyperparameter</span></code></a></p>
+<p>Integer hyperparameter.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter.default">
+<span class="sig-name descname"><span class="pre">default</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter.default" title="Link to this definition"></a></dt>
+<dd><p>Default value for the hyperparameter.</p>
+<p>None means “no default value”.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter.high">
+<span class="sig-name descname"><span class="pre">high</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter.high" title="Link to this definition"></a></dt>
+<dd><p>Upper bound.</p>
+<p>If None, the hyperparameter value has no upper bound.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter.low">
+<span class="sig-name descname"><span class="pre">low</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter.low" title="Link to this definition"></a></dt>
+<dd><p>Lower bound.</p>
+<p>If None, the hyperparameter value has no lower bound.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter.suggest_with_optuna">
+<span class="sig-name descname"><span class="pre">suggest_with_optuna</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optuna.trial.Trial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">high</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#IntegerHyperparameter.suggest_with_optuna"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.IntegerHyperparameter.suggest_with_optuna" title="Link to this definition"></a></dt>
+<dd><p>Suggest hyperparameter value for an Optuna trial.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trial</strong> – optuna Trial used for choosing the hyperparameter value</p></li>
+<li><p><strong>low</strong> – can be used to restrict lower bound</p></li>
+<li><p><strong>high</strong> – can be used to restrict upper bound</p></li>
+<li><p><strong>prefix</strong> – prefix to add to optuna corresponding parameter name
+(useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</p></li>
+<li><p><strong>**kwargs</strong> – passed to <cite>trial.suggest_int()</cite></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickHyperparameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tools.hyperparameters.hyperparameter.</span></span><span class="sig-name descname"><span class="pre">SubBrickHyperparameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable" title="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable"><span class="pre">Hyperparametrizable</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#SubBrickHyperparameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickHyperparameter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.CategoricalHyperparameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">CategoricalHyperparameter</span></code></a></p>
+<p>Hyperparameter whose values are Hyperparametrizable subclasses themselves.</p>
+<p>For instance subsolvers for meta-solvers.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickHyperparameter.choices">
+<span class="sig-name descname"><span class="pre">choices</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable" title="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable"><span class="pre">Hyperparametrizable</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickHyperparameter.choices" title="Link to this definition"></a></dt>
+<dd><p>List of Hyperparametrizable subclasses to choose from for the subbrick.</p>
+<p>NB: for now, it is not possible to pick the metasolver itself as a choice for its subbrick,
+in order to avoid infinite recursivity issues.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickHyperparameter.suggest_with_optuna">
+<span class="sig-name descname"><span class="pre">suggest_with_optuna</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optuna.trial.Trial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable" title="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable"><span class="pre">Hyperparametrizable</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable" title="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable"><span class="pre">Hyperparametrizable</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#SubBrickHyperparameter.suggest_with_optuna"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickHyperparameter.suggest_with_optuna" title="Link to this definition"></a></dt>
+<dd><p>Suggest hyperparameter value for an Optuna trial.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trial</strong> – optuna Trial used for choosing the hyperparameter value</p></li>
+<li><p><strong>choices</strong> – restricts list of subbricks to choose from</p></li>
+<li><p><strong>prefix</strong> – prefix to add to optuna corresponding parameter name
+(useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</p></li>
+<li><p><strong>**kwargs</strong> – passed to <cite>trial.suggest_categorical()</cite></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickKwargsHyperparameter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tools.hyperparameters.hyperparameter.</span></span><span class="sig-name descname"><span class="pre">SubBrickKwargsHyperparameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subbrick_hyperparameter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#SubBrickKwargsHyperparameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickKwargsHyperparameter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><code class="xref py py-class docutils literal notranslate"><span class="pre">Hyperparameter</span></code></a></p>
+<p>Keyword arguments for subbricks.</p>
+<p>This hyperparameter defines kwargs to be passed to the subbrick defined by another hyperparameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>subbrick_hyperparameter</strong> – name of the SubBrickHyperparameter this hyperparameter corresponds to.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickKwargsHyperparameter.suggest_with_optuna">
+<span class="sig-name descname"><span class="pre">suggest_with_optuna</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optuna.trial.Trial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subbrick</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable" title="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable"><span class="pre">Hyperparametrizable</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs_by_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_hyperparameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparameter.html#SubBrickKwargsHyperparameter.suggest_with_optuna"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.SubBrickKwargsHyperparameter.suggest_with_optuna" title="Link to this definition"></a></dt>
+<dd><p>Suggest hyperparameter value for an Optuna trial.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trial</strong> – optuna Trial used for choosing the hyperparameter value</p></li>
+<li><p><strong>subbrick</strong> – subbrick chosen as hyperparameter value for <cite>self.subbrick_hyperparameter</cite></p></li>
+<li><p><strong>names</strong> – names of the hyperparameters to choose for the subbrick.
+Only relevant names will be considered (i.e. corresponding to existing hyperparameters names for the chosen subbrick),
+the other will be discarded (potentially, being meaningful for other subbricks).
+By default, all available hyperparameters will be suggested.
+Passed to <cite>subbrick.suggest_hyperparameters_with_optuna()</cite>.</p></li>
+<li><p><strong>kwargs_by_name</strong> – options for optuna hyperparameter suggestions, by hyperparameter name.
+Passed to <cite>subbrick.suggest_hyperparameters_with_optuna()</cite>.</p></li>
+<li><p><strong>fixed_hyperparameters</strong> – values of fixed hyperparameters, useful for suggesting subbrick hyperparameters,
+if the subbrick class is not suggested by this method, but already fixed.</p></li>
+<li><p><strong>prefix</strong> – prefix to add to optuna corresponding parameter name
+(useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</p></li>
+<li><p><strong>**kwargs</strong> – passed to <cite>trial.suggest_categorical()</cite></p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.generic_tools.hyperparameters.hyperparametrizable">
+<span id="discrete-optimization-generic-tools-hyperparameters-hyperparametrizable-module"></span><h2>discrete_optimization.generic_tools.hyperparameters.hyperparametrizable module<a class="headerlink" href="#module-discrete_optimization.generic_tools.hyperparameters.hyperparametrizable" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.</span></span><span class="sig-name descname"><span class="pre">Hyperparametrizable</span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparametrizable.html#Hyperparametrizable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for classes like SolverDO having (tunable) hyperparmeters.</p>
+<p>They have utility methods to
+- retrieve available hyperparameters
+- fill kwargs with default hyperparameters values
+- suggest hyperparameters by making use of optuna trials methods</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.complete_with_default_hyperparameters">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">complete_with_default_hyperparameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparametrizable.html#Hyperparametrizable.complete_with_default_hyperparameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.complete_with_default_hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Add missing hyperparameters to kwargs by using default values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kwargs</strong> – keyword arguments to complete (for <cite>__init__</cite>, <cite>init_model</cite>, or <cite>solve</cite>)</p></li>
+<li><p><strong>names</strong> – names of the hyperparameters to add if missing.
+By default, all available hyperparameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a new dictionary, completion of kwargs</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.copy_and_update_hyperparameters">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">copy_and_update_hyperparameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs_by_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparametrizable.html#Hyperparametrizable.copy_and_update_hyperparameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.copy_and_update_hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Copy hyperparameters definition of this class and update them with specified kwargs.</p>
+<p>This is useful to define hyperparameters for a child class
+for which only choices of the hyperparameter change for instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>names</strong> – names of hyperparameters to copy. Default to all.</p></li>
+<li><p><strong>**kwargs_by_name</strong> – for each hyperparameter specified by its name,
+the attributes to update. If a given hyperparameter name is not specified,
+the hyperparameter is copied without further update.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_default_hyperparameters">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_default_hyperparameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparametrizable.html#Hyperparametrizable.get_default_hyperparameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_default_hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Get hyperparameters default values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>names</strong> – names of the hyperparameters to choose.
+By default, all available hyperparameters will be suggested.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a mapping between hyperparameter name and its default value (None if not specified)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_hyperparameter">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_hyperparameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparametrizable.html#Hyperparametrizable.get_hyperparameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_hyperparameter" title="Link to this definition"></a></dt>
+<dd><p>Get hyperparameter from given name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_hyperparameters_by_name">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_hyperparameters_by_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparametrizable.html#Hyperparametrizable.get_hyperparameters_by_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_hyperparameters_by_name" title="Link to this definition"></a></dt>
+<dd><p>Mapping from name to corresponding hyperparameter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_hyperparameters_names">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_hyperparameters_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparametrizable.html#Hyperparametrizable.get_hyperparameters_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.get_hyperparameters_names" title="Link to this definition"></a></dt>
+<dd><p>List of hyperparameters names.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.hyperparameters">
+<span class="sig-name descname"><span class="pre">hyperparameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter" title="discrete_optimization.generic_tools.hyperparameters.hyperparameter.Hyperparameter"><span class="pre">Hyperparameter</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.hyperparameters" title="Link to this definition"></a></dt>
+<dd><p>Hyperparameters available for this solver.</p>
+<dl class="simple">
+<dt>These hyperparameters are to be feed to <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs found in</dt><dd><ul class="simple">
+<li><p>__init__()</p></li>
+<li><p>init_model() (when available)</p></li>
+<li><p>solve()</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.suggest_hyperparameter_with_optuna">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">suggest_hyperparameter_with_optuna</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optuna.trial.Trial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparametrizable.html#Hyperparametrizable.suggest_hyperparameter_with_optuna"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.suggest_hyperparameter_with_optuna" title="Link to this definition"></a></dt>
+<dd><p>Suggest hyperparameter value during an Optuna trial.</p>
+<p>This can be used during Optuna hyperparameters tuning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trial</strong> – optuna trial during hyperparameters tuning</p></li>
+<li><p><strong>name</strong> – name of the hyperparameter to choose</p></li>
+<li><p><strong>prefix</strong> – prefix to add to optuna corresponding parameter name
+(useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</p></li>
+<li><p><strong>**kwargs</strong> – options for optuna hyperparameter suggestions</p></li>
+</ul>
+</dd>
+</dl>
+<p>Returns:</p>
+<p>kwargs can be used to pass relevant arguments to
+- trial.suggest_float()
+- trial.suggest_int()
+- trial.suggest_categorical()</p>
+<p>For instance it can
+- add a low/high value if not existing for the hyperparameter</p>
+<blockquote>
+<div><p>or override it to narrow the search. (for float or int hyperparameters)</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>add a step or log argument (for float or int hyperparameters,
+see optuna.trial.Trial.suggest_float())</p></li>
+<li><p>override choices for categorical or enum parameters to narrow the search</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.suggest_hyperparameters_with_optuna">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">suggest_hyperparameters_with_optuna</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optuna.trial.Trial</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs_by_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_hyperparameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/discrete_optimization/generic_tools/hyperparameters/hyperparametrizable.html#Hyperparametrizable.suggest_hyperparameters_with_optuna"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#discrete_optimization.generic_tools.hyperparameters.hyperparametrizable.Hyperparametrizable.suggest_hyperparameters_with_optuna" title="Link to this definition"></a></dt>
+<dd><p>Suggest hyperparameters values during an Optuna trial.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trial</strong> – optuna trial during hyperparameters tuning</p></li>
+<li><p><strong>names</strong> – names of the hyperparameters to choose.
+By default, all available hyperparameters will be suggested.</p></li>
+<li><p><strong>kwargs_by_name</strong> – options for optuna hyperparameter suggestions, by hyperparameter name</p></li>
+<li><p><strong>fixed_hyperparameters</strong> – values of fixed hyperparameters, useful for suggesting subbrick hyperparameters,
+if the subbrick class is not suggested by this method, but already fixed.</p></li>
+<li><p><strong>prefix</strong> – prefix to add to optuna corresponding parameters
+(useful for disambiguating hyperparameters from subsolvers in case of meta-solvers)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>mapping between the hyperparameter name and its suggested value</p>
+</dd>
+</dl>
+<p>kwargs_by_name[some_name] will be passed as <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs to suggest_hyperparameter_with_optuna(name=some_name)</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-discrete_optimization.generic_tools.hyperparameters">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-discrete_optimization.generic_tools.hyperparameters" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="discrete_optimization.generic_tools.ea.html" class="btn btn-neutral float-left" title="discrete_optimization.generic_tools.ea package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="discrete_optimization.generic_tools.ls.html" class="btn btn-neutral float-right" title="discrete_optimization.generic_tools.ls package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: 0.3.1
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,189 @@
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal package
+=====================================================================
+
+Submodules
+----------
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.alternative\_subproblems module
+---------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.alternative_subproblems
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.auto module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.auto\_impl module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto_impl
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.base module
+-------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.base
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.calendar\_preemptive module
+-----------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.calendar_preemptive
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.calendar\_resource module
+---------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.calendar_resource
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.calendar\_resource\_generic module
+------------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.calendar_resource_generic
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.cumulative\_resource module
+-----------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.cumulative_resource
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.entity module
+---------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.entity
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.entity\_constraints module
+----------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.entity_constraints
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.exclusions module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.exclusions
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.generic\_scheduling module
+----------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.generic_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.multimode\_scheduling module
+------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.multimode_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.no\_overlap module
+--------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.no_overlap
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.precedence\_scheduling module
+-------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.precedence_scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.resource\_blocking module
+---------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.resource_blocking
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.resource\_usage\_by\_unary module
+-----------------------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.resource_usage_by_unary
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.routing module
+----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.routing
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.scheduling module
+-------------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.scheduling
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.skill module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.skill
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.timelag module
+----------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.timelag
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.generic\_tasks\_tools.solvers.cp.optal.utils module
+--------------------------------------------------------------------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.generic_tasks_tools.solvers.cp.optal
+   :members:
+   :show-inheritance:
+   :undoc-members:

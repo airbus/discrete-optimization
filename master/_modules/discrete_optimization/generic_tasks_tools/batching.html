@@ -1,0 +1,910 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>discrete_optimization.generic_tasks_tools.batching &mdash; discrete-optimization master documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=30d551ce"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../../_static/versions.js?v=dd1a30db"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            discrete-optimization
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../notebooks.html">Notebooks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../howto_new_problem_implementation/tutorial_new_problem_or_solver.html">How to write its own problem/solver class?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dashboard.html">Dashboard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contribute.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/airbus/discrete-optimization">Github</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">discrete-optimization</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">discrete_optimization.generic_tasks_tools.batching</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for discrete_optimization.generic_tasks_tools.batching</h1><div class="highlight"><pre>
+<span></span><span class="c1">#  Copyright (c) 2026 AIRBUS and its affiliates.</span>
+<span class="c1">#  This source code is licensed under the MIT license found in the</span>
+<span class="c1">#  LICENSE file in the root directory of this source tree.</span>
+<span class="sd">"""Module for batching problems.</span>
+
+<span class="sd">Provides mixins for problems where tasks are grouped into batches:</span>
+<span class="sd">- Fixed batching: Batch membership is predetermined (Batch dataclass)</span>
+<span class="sd">- Variable batching: Batch membership is determined by the solution (VariableBatchEntity + BatchingSolution)</span>
+
+<span class="sd">Variable batching is useful for:</span>
+<span class="sd">- Single batch processing: Assign jobs to batches on a machine</span>
+<span class="sd">- Multi-machine batching: Assign jobs to batches on multiple machines</span>
+<span class="sd">- Oven scheduling: Group items into batches with compatibility constraints</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hashable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.base</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Task</span><span class="p">,</span>
+    <span class="n">TasksProblem</span><span class="p">,</span>
+    <span class="n">TasksSolution</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.enums</span><span class="w"> </span><span class="kn">import</span> <span class="n">UndefinedData</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">optional_override</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">discrete_optimization.generic_tasks_tools.entities</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariableBatchEntity</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">BatchId</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"BatchId"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Hashable</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Batch">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.Batch">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Batch</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""Fixed batch with predetermined task membership.</span>
+
+<span class="sd">    Used for problems where batching decisions are made upfront.</span>
+<span class="sd">    """</span>
+
+    <span class="n">batch_id</span><span class="p">:</span> <span class="n">Hashable</span>
+    <span class="n">tasks</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+    <span class="n">max_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">min_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="BatchingProblem">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BatchingProblem</span><span class="p">(</span><span class="n">TasksProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""Mixin for problems with variable batch assignment.</span>
+
+<span class="sd">    This mixin supports problems where:</span>
+<span class="sd">    - Tasks can be assigned to different batches</span>
+<span class="sd">    - Batch membership is a decision variable</span>
+<span class="sd">    - Constraints apply to batches (size, time windows, resources)</span>
+
+<span class="sd">    **Architecture**: Batch entities are the PRIMARY abstraction.</span>
+<span class="sd">    Create VariableBatchEntity instances first, then pass them to the problem.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; from discrete_optimization.generic_tasks_tools.entities import VariableBatchEntity</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # 1. Create batch entities FIRST (before problem)</span>
+<span class="sd">        &gt;&gt;&gt; batch_entities = [</span>
+<span class="sd">        ...     VariableBatchEntity(batch_id=0, candidate_tasks=frozenset(tasks)),</span>
+<span class="sd">        ...     VariableBatchEntity(batch_id=1, candidate_tasks=frozenset(tasks)),</span>
+<span class="sd">        ...     VariableBatchEntity(batch_id=2, candidate_tasks=frozenset(tasks)),</span>
+<span class="sd">        ... ]</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # 2. Define problem using entities</span>
+<span class="sd">        &gt;&gt;&gt; class MyProblem(BatchingProblem, EntityConstraintsProblem):</span>
+<span class="sd">        ...     def __init__(self, tasks, batch_entities):</span>
+<span class="sd">        ...         self._tasks = tasks</span>
+<span class="sd">        ...         self.batch_entities = batch_entities  # Store entities</span>
+<span class="sd">        ...</span>
+<span class="sd">        ...     def get_batch_entities(self):</span>
+<span class="sd">        ...         return self.batch_entities  # Return stored entities</span>
+<span class="sd">        ...</span>
+<span class="sd">        ...     def get_entity_precedence_constraints(self):</span>
+<span class="sd">        ...         # Use entities directly in constraints</span>
+<span class="sd">        ...         return {</span>
+<span class="sd">        ...             self.batch_entities[0]: [self.batch_entities[1]]</span>
+<span class="sd">        ...         }</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; # 3. Create problem with entities</span>
+<span class="sd">        &gt;&gt;&gt; problem = MyProblem(tasks, batch_entities)</span>
+<span class="sd">    """</span>
+
+<div class="viewcode-block" id="BatchingProblem.get_batch_entities">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_batch_entities">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_batch_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="s2">"VariableBatchEntity[Task]"</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get all batch entities in the problem.</span>
+
+<span class="sd">        This is the PRIMARY method - batch entities are created first,</span>
+<span class="sd">        before the problem, and stored. This method returns them.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of VariableBatchEntity instances</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; def __init__(self, tasks, batch_entities):</span>
+<span class="sd">            ...     self._tasks = tasks</span>
+<span class="sd">            ...     self.batch_entities = batch_entities</span>
+<span class="sd">            ...</span>
+<span class="sd">            &gt;&gt;&gt; def get_batch_entities(self):</span>
+<span class="sd">            ...     return self.batch_entities</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_batch_ids">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_batch_ids">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_batch_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get list of batch IDs (derived from entities).</span>
+
+<span class="sd">        This is DERIVED from get_batch_entities().</span>
+<span class="sd">        You don't override this - it extracts batch_id from each entity.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of batch IDs (batch_id attribute from each entity)</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">entity</span><span class="o">.</span><span class="n">batch_id</span> <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_batch_entities</span><span class="p">()]</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_batch_entity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_batch_entity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_batch_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"VariableBatchEntity[Task]"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get batch entity for a specific batch_id.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_id: Batch identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            VariableBatchEntity with matching batch_id</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If batch_id not found</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_batch_entities</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">entity</span><span class="o">.</span><span class="n">batch_id</span> <span class="o">==</span> <span class="n">batch_id</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">entity</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Batch entity with batch_id=</span><span class="si">{</span><span class="n">batch_id</span><span class="si">}</span><span class="s2"> not found"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_fixed_batches">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_fixed_batches">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_fixed_batches</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Batch</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get batches with predetermined task membership.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of Batch objects with fixed task assignment.</span>
+
+<span class="sd">        Default: No fixed batches.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_candidate_tasks_for_batch">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_candidate_tasks_for_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_candidate_tasks_for_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get tasks that could potentially be assigned to this batch.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_id: Batch identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Set of tasks that are candidates for this batch</span>
+
+<span class="sd">        Default: Extract from batch entity's candidate_tasks.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_batch_entity</span><span class="p">(</span><span class="n">batch_id</span><span class="p">)</span><span class="o">.</span><span class="n">candidate_tasks</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_batch_size_bounds">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_batch_size_bounds">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_batch_size_bounds</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">:</span> <span class="n">Hashable</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get minimum and maximum NUMBER OF TASKS in a batch.</span>
+
+<span class="sd">        This is about cardinality (count), not weight/capacity.</span>
+<span class="sd">        For capacity constraints, use get_task_size() and get_batch_capacity().</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_id: Batch identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (min_size, max_size). None means no constraint.</span>
+
+<span class="sd">        Default: No size constraints.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_task_size">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_task_size">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get size/weight of a task for bin packing.</span>
+
+<span class="sd">        Task size is used in batch capacity constraints:</span>
+<span class="sd">        sum(task_sizes in batch) &lt;= batch_capacity</span>
+
+<span class="sd">        Size can be:</span>
+<span class="sd">        - Scalar: single dimension (weight, volume, processing time)</span>
+<span class="sd">        - Tuple: multiple dimensions (weight AND volume)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task: Task to query</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Task size (int, float, or tuple for multi-dimensional)</span>
+
+<span class="sd">        Default: Size 1 for all tasks.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Oven scheduling: tasks have physical size</span>
+<span class="sd">            &gt;&gt;&gt; def get_task_size(self, task):</span>
+<span class="sd">            ...     return self.tasks_data[task].size</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; # Multi-dimensional: (weight, volume)</span>
+<span class="sd">            &gt;&gt;&gt; def get_task_size(self, task):</span>
+<span class="sd">            ...     return (self.task_weight[task], self.task_volume[task])</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_batch_capacity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_batch_capacity">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_batch_capacity</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">:</span> <span class="n">Hashable</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get capacity of a batch for bin packing.</span>
+
+<span class="sd">        Batch capacity constrains total size of tasks in batch:</span>
+<span class="sd">        sum(get_task_size(task) for task in batch) &lt;= get_batch_capacity(batch)</span>
+
+<span class="sd">        For multi-dimensional sizes (tuples), capacity is also a tuple and</span>
+<span class="sd">        constraint applies element-wise.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_id: Batch identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Batch capacity (int, float, or tuple for multi-dimensional)</span>
+
+<span class="sd">        Default: Infinite capacity (no constraint).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Oven scheduling: machine has capacity</span>
+<span class="sd">            &gt;&gt;&gt; def get_batch_capacity(self, batch_id):</span>
+<span class="sd">            ...     machine_id = self._get_machine_from_batch(batch_id)</span>
+<span class="sd">            ...     return self.machines_data[machine_id].capacity</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; # Multi-dimensional: (max_weight, max_volume)</span>
+<span class="sd">            &gt;&gt;&gt; def get_batch_capacity(self, batch_id):</span>
+<span class="sd">            ...     return (self.max_weight, self.max_volume)</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.is_batch_optional">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.is_batch_optional">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_batch_optional</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check if batch can be empty (no tasks assigned).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_id: Batch identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if batch can be empty, False if it must have at least one task</span>
+
+<span class="sd">        Default: All batches are optional.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_task_attribute">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_task_attribute">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hashable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get attribute of a task.</span>
+
+<span class="sd">        Task attribute determines batching compatibility and batch characteristics.</span>
+<span class="sd">        Common examples:</span>
+<span class="sd">        - Product type/color/recipe in manufacturing</span>
+<span class="sd">        - Priority class in scheduling</span>
+<span class="sd">        - Resource requirements</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task: Task to query</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Task attribute (any hashable type), or None if no attribute concept</span>
+
+<span class="sd">        Default: No task attributes.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Oven scheduling: tasks have product types</span>
+<span class="sd">            &gt;&gt;&gt; def get_task_attribute(self, task):</span>
+<span class="sd">            ...     return self.tasks_data[task].attribute  # 0, 1, 2, ...</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.can_batch_together">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.can_batch_together">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">can_batch_together</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task1</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span> <span class="n">task2</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check if two tasks are compatible for batching together.</span>
+
+<span class="sd">        Tasks are incompatible if they cannot be in the same batch due to:</span>
+<span class="sd">        - Different attributes (e.g., different product types)</span>
+<span class="sd">        - Conflicting resource requirements</span>
+<span class="sd">        - Incompatible processing characteristics</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task1: First task</span>
+<span class="sd">            task2: Second task</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if tasks can be batched together, False otherwise</span>
+
+<span class="sd">        Default: All tasks are compatible (can batch together).</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Oven scheduling: only same-attribute tasks can batch</span>
+<span class="sd">            &gt;&gt;&gt; def can_batch_together(self, task1, task2):</span>
+<span class="sd">            ...     return self.get_task_attribute(task1) == self.get_task_attribute(task2)</span>
+<span class="sd">            &gt;&gt;&gt;</span>
+<span class="sd">            &gt;&gt;&gt; # Size-based compatibility</span>
+<span class="sd">            &gt;&gt;&gt; def can_batch_together(self, task1, task2):</span>
+<span class="sd">            ...     return self.task_sizes[task1] + self.task_sizes[task2] &lt;= self.max_batch_size</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_batch_attribute">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_batch_attribute">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_batch_attribute</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">tasks</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hashable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Determine batch attribute based on tasks assigned to it.</span>
+
+<span class="sd">        Batch attribute is derived from tasks in the batch and affects:</span>
+<span class="sd">        - Setup time when switching between batches</span>
+<span class="sd">        - Processing time of the batch</span>
+<span class="sd">        - Resource consumption</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_id: Batch identifier</span>
+<span class="sd">            tasks: Tasks assigned to this batch</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Batch attribute, or None if no attribute concept</span>
+
+<span class="sd">        Default: If all tasks have same attribute, return it; else None.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Oven: batch inherits common attribute</span>
+<span class="sd">            &gt;&gt;&gt; def get_batch_attribute(self, batch_id, tasks):</span>
+<span class="sd">            ...     if not tasks:</span>
+<span class="sd">            ...         return None</span>
+<span class="sd">            ...     attrs = {self.get_task_attribute(t) for t in tasks}</span>
+<span class="sd">            ...     return attrs.pop() if len(attrs) == 1 else None  # All must match</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Default: if all tasks have same attribute, batch gets that attribute</span>
+        <span class="n">task_attrs</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">get_task_attribute</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">}</span>
+        <span class="k">if</span> <span class="kc">None</span> <span class="ow">in</span> <span class="n">task_attrs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># No attribute concept</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">task_attrs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">task_attrs</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>  <span class="c1"># All same</span>
+        <span class="k">return</span> <span class="kc">None</span>  <span class="c1"># Mixed attributes - invalid batch</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_batch_duration_bounds">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_batch_duration_bounds">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_batch_duration_bounds</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">,</span> <span class="n">tasks</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get minimum and maximum duration for a batch based on its tasks.</span>
+
+<span class="sd">        Batch duration depends on tasks assigned to it and batch attribute.</span>
+<span class="sd">        This is separate from size bounds (number of tasks).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_id: Batch identifier</span>
+<span class="sd">            tasks: Tasks assigned to this batch</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (min_duration, max_duration). None means no constraint.</span>
+
+<span class="sd">        Default: No duration constraints.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Oven: duration based on task min/max durations</span>
+<span class="sd">            &gt;&gt;&gt; def get_batch_duration_bounds(self, batch_id, tasks):</span>
+<span class="sd">            ...     if not tasks:</span>
+<span class="sd">            ...         return None, None</span>
+<span class="sd">            ...     min_dur = max(self.tasks_data[t].min_duration for t in tasks)</span>
+<span class="sd">            ...     max_dur = min(self.tasks_data[t].max_duration for t in tasks)</span>
+<span class="sd">            ...     return min_dur, max_dur</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_min_task_duration_in_batch">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_min_task_duration_in_batch">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_min_task_duration_in_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_max_task_duration_in_batch">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_max_task_duration_in_batch">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_max_task_duration_in_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">UndefinedData</span><span class="o">.</span><span class="n">UNDEFINED</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.must_be_batched">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.must_be_batched">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">must_be_batched</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check if a task MUST be assigned to a batch.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task: Task to query</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if task must be in a batch, False if batching is optional</span>
+
+<span class="sd">        Default: Batching is optional for all tasks.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Some products must be batched, others can run individually</span>
+<span class="sd">            &gt;&gt;&gt; def must_be_batched(self, task):</span>
+<span class="sd">            ...     return self.tasks_data[task].requires_batching</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.can_be_batched">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.can_be_batched">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">can_be_batched</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check if a task CAN be assigned to a batch.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task: Task to query</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if task can be in a batch, False if it must run individually</span>
+
+<span class="sd">        Default: All tasks can be batched.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; # Large items cannot be batched</span>
+<span class="sd">            &gt;&gt;&gt; def can_be_batched(self, task):</span>
+<span class="sd">            ...     return self.get_task_size(task) &lt;= self.single_task_threshold</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_batching_task_categories">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_batching_task_categories">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_batching_task_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Task</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Categorize tasks based on batching requirements.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with three keys:</span>
+<span class="sd">            - 'mandatory': Tasks that MUST be batched (must_be_batched() = True)</span>
+<span class="sd">            - 'optional': Tasks that CAN be batched but don't have to (can_be_batched() = True, must_be_batched() = False)</span>
+<span class="sd">            - 'forbidden': Tasks that CANNOT be batched (can_be_batched() = False)</span>
+
+<span class="sd">        Note: Tasks with must_be_batched() = True and can_be_batched() = False are invalid</span>
+<span class="sd">        and will raise a ValueError.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; categories = problem.get_batching_task_categories()</span>
+<span class="sd">            &gt;&gt;&gt; print(f"Must batch: {categories['mandatory']}")</span>
+<span class="sd">            &gt;&gt;&gt; print(f"Can batch: {categories['optional']}")</span>
+<span class="sd">            &gt;&gt;&gt; print(f"Cannot batch: {categories['forbidden']}")</span>
+<span class="sd">        """</span>
+        <span class="n">mandatory_batch</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">optional_batch</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">forbidden_batch</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tasks_list</span><span class="p">:</span>
+            <span class="n">must_batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">must_be_batched</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="n">can_batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">can_be_batched</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">must_batch</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">can_batch</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> has contradictory batching requirements: "</span>
+                    <span class="sa">f</span><span class="s2">"must_be_batched=True but can_be_batched=False"</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">must_batch</span><span class="p">:</span>
+                <span class="n">mandatory_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">can_batch</span><span class="p">:</span>
+                <span class="n">optional_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">forbidden_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"mandatory"</span><span class="p">:</span> <span class="n">mandatory_batch</span><span class="p">,</span>
+            <span class="s2">"optional"</span><span class="p">:</span> <span class="n">optional_batch</span><span class="p">,</span>
+            <span class="s2">"forbidden"</span><span class="p">:</span> <span class="n">forbidden_batch</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="BatchingProblem.get_batch_presence_chains">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingProblem.get_batch_presence_chains">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_batch_presence_chains</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Hashable</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Get batch presence ordering chains for symmetry breaking.</span>
+
+<span class="sd">        Returns chains of batches where if batch[i+1] is used, batch[i] must be used.</span>
+<span class="sd">        This helps avoid symmetric solutions by enforcing a canonical ordering.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of batch chains. Each chain is a list of batch IDs in order.</span>
+<span class="sd">            Empty list means no presence constraints (all batches independent).</span>
+
+<span class="sd">        Example - Single machine (one chain):</span>
+<span class="sd">            &gt;&gt;&gt; def get_batch_presence_chains(self):</span>
+<span class="sd">            ...     return [self.get_batch_ids()]  # All batches in one chain</span>
+
+<span class="sd">        Example - Multi-machine (multiple chains):</span>
+<span class="sd">            &gt;&gt;&gt; def get_batch_presence_chains(self):</span>
+<span class="sd">            ...     # Batches 0-4 for machine 1, batches 5-9 for machine 2</span>
+<span class="sd">            ...     return [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]</span>
+
+<span class="sd">        Example - No presence constraints:</span>
+<span class="sd">            &gt;&gt;&gt; def get_batch_presence_chains(self):</span>
+<span class="sd">            ...     return []  # Batches can be used in any order</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BatchingSolution">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingSolution">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BatchingSolution</span><span class="p">(</span><span class="n">TasksSolution</span><span class="p">[</span><span class="n">Task</span><span class="p">],</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Task</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""Mixin for solutions to batching problems.</span>
+
+<span class="sd">    Provides abstract methods for querying batch assignments.</span>
+<span class="sd">    Concrete solutions must implement at least one of:</span>
+<span class="sd">    - get_batch_membership(batch_id) -&gt; set[Task]</span>
+<span class="sd">    - get_task_batch_assignment(task) -&gt; BatchId</span>
+
+<span class="sd">    These methods are used by VariableBatchEntity to determine batch spans.</span>
+<span class="sd">    """</span>
+
+    <span class="n">problem</span><span class="p">:</span> <span class="n">BatchingProblem</span><span class="p">[</span><span class="n">Task</span><span class="p">]</span>
+
+<div class="viewcode-block" id="BatchingSolution.get_task_batch_assignment">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingSolution.get_task_batch_assignment">[docs]</a>
+    <span class="nd">@optional_override</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_task_batch_assignment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hashable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get which batch a task is assigned to.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            task: Task to query</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Batch ID that task is assigned to, or None if unassigned</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="BatchingSolution.get_batch_membership">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingSolution.get_batch_membership">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_batch_membership</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Get all tasks assigned to a batch.</span>
+
+<span class="sd">        Default implementation queries each task. Can be overridden for efficiency.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_id: Batch to query</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Set of tasks in this batch</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">task</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">tasks_list</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_task_batch_assignment</span><span class="p">(</span><span class="n">task</span><span class="p">)</span> <span class="o">==</span> <span class="n">batch_id</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="BatchingSolution.get_batch_size">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingSolution.get_batch_size">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_id</span><span class="p">:</span> <span class="n">Hashable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Get number of tasks in a batch.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            batch_id: Batch to query</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Number of tasks assigned to this batch</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_membership</span><span class="p">(</span><span class="n">batch_id</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="BatchingSolution.check_batch_size_constraints">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingSolution.check_batch_size_constraints">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_batch_size_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check that all batches satisfy size constraints.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if all batch sizes are within bounds, False otherwise</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">batch_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_batch_ids</span><span class="p">():</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_batch_size</span><span class="p">(</span><span class="n">batch_id</span><span class="p">)</span>
+            <span class="n">min_size</span><span class="p">,</span> <span class="n">max_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_batch_size_bounds</span><span class="p">(</span><span class="n">batch_id</span><span class="p">)</span>
+
+            <span class="c1"># Check minimum size</span>
+            <span class="k">if</span> <span class="n">min_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Empty batches allowed if batch is optional</span>
+                <span class="k">if</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">is_batch_optional</span><span class="p">(</span><span class="n">batch_id</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">size</span> <span class="o">&lt;</span> <span class="n">min_size</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"Batch </span><span class="si">{</span><span class="n">batch_id</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2"> tasks, less than minimum </span><span class="si">{</span><span class="n">min_size</span><span class="si">}</span><span class="s2">"</span>
+                        <span class="p">)</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="c1"># Check maximum size</span>
+            <span class="k">if</span> <span class="n">max_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="n">max_size</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Batch </span><span class="si">{</span><span class="n">batch_id</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2"> tasks, exceeds maximum </span><span class="si">{</span><span class="n">max_size</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BatchingSolution.check_task_batch_uniqueness">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingSolution.check_task_batch_uniqueness">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_task_batch_uniqueness</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check that each task is assigned to at most one batch.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if no task appears in multiple batches, False otherwise</span>
+<span class="sd">        """</span>
+        <span class="n">task_to_batches</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">batch_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_batch_ids</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_batch_membership</span><span class="p">(</span><span class="n">batch_id</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">task_to_batches</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Task </span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> appears in multiple batches: "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">task_to_batches</span><span class="p">[</span><span class="n">task</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">batch_id</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="n">task_to_batches</span><span class="p">[</span><span class="n">task</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch_id</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BatchingSolution.check_batch_compatibility">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingSolution.check_batch_compatibility">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_batch_compatibility</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check that all tasks in each batch are compatible.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if all batches contain only compatible tasks, False otherwise</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">batch_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_batch_ids</span><span class="p">():</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_membership</span><span class="p">(</span><span class="n">batch_id</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># Single task or empty batch, always compatible</span>
+
+            <span class="c1"># Check all pairs</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">can_batch_together</span><span class="p">(</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">tasks</span><span class="p">[</span><span class="n">j</span><span class="p">]):</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"Incompatible tasks </span><span class="si">{</span><span class="n">tasks</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">tasks</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="si">}</span><span class="s2"> "</span>
+                            <span class="sa">f</span><span class="s2">"in batch </span><span class="si">{</span><span class="n">batch_id</span><span class="si">}</span><span class="s2">"</span>
+                        <span class="p">)</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BatchingSolution.check_batch_attributes">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingSolution.check_batch_attributes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_batch_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check that each batch has a valid attribute.</span>
+
+<span class="sd">        For batches with task attribute concept, ensures batch can be assigned</span>
+<span class="sd">        a valid attribute based on its tasks.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if all batches have valid attributes, False otherwise</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">batch_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_batch_ids</span><span class="p">():</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_membership</span><span class="p">(</span><span class="n">batch_id</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tasks</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># Empty batch, no attribute needed</span>
+
+            <span class="n">batch_attr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_batch_attribute</span><span class="p">(</span><span class="n">batch_id</span><span class="p">,</span> <span class="n">tasks</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">batch_attr</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_attribute</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">tasks</span><span class="p">)))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">):</span>
+                <span class="c1"># Problem uses attributes, but batch has invalid attribute</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Batch </span><span class="si">{</span><span class="n">batch_id</span><span class="si">}</span><span class="s2"> with tasks </span><span class="si">{</span><span class="n">tasks</span><span class="si">}</span><span class="s2"> has no valid attribute"</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="BatchingSolution.check_batch_capacity">
+<a class="viewcode-back" href="../../../api/discrete_optimization.generic_tasks_tools.html#discrete_optimization.generic_tasks_tools.batching.BatchingSolution.check_batch_capacity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_batch_capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Check that all batches respect capacity constraints.</span>
+
+<span class="sd">        Validates: sum(task_sizes) &lt;= batch_capacity for each batch.</span>
+<span class="sd">        Supports scalar and multi-dimensional sizes/capacities.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if all batches within capacity, False otherwise</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">batch_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_batch_ids</span><span class="p">():</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_batch_membership</span><span class="p">(</span><span class="n">batch_id</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">tasks</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># Empty batch, no capacity constraint</span>
+
+            <span class="c1"># Get batch capacity</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_batch_capacity</span><span class="p">(</span><span class="n">batch_id</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">capacity</span> <span class="o">==</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"inf"</span><span class="p">):</span>
+                <span class="k">continue</span>  <span class="c1"># No capacity constraint</span>
+
+            <span class="c1"># Get task sizes</span>
+            <span class="n">task_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">get_task_size</span><span class="p">(</span><span class="n">task</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">]</span>
+
+            <span class="c1"># Check if multi-dimensional</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task_sizes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="c1"># Multi-dimensional: check each dimension</span>
+                <span class="n">total_size</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                    <span class="nb">sum</span><span class="p">(</span><span class="n">sizes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">sizes</span> <span class="ow">in</span> <span class="n">task_sizes</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">task_sizes</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">capacity</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Multi-dimensional task sizes but scalar capacity for batch </span><span class="si">{</span><span class="n">batch_id</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+                <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="p">(</span><span class="n">total</span><span class="p">,</span> <span class="n">cap</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">total_size</span><span class="p">,</span> <span class="n">capacity</span><span class="p">)):</span>
+                    <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="n">cap</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"Batch </span><span class="si">{</span><span class="n">batch_id</span><span class="si">}</span><span class="s2"> dimension </span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2"> exceeds capacity: "</span>
+                            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> &gt; </span><span class="si">{</span><span class="n">cap</span><span class="si">}</span><span class="s2">"</span>
+                        <span class="p">)</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Scalar: simple sum</span>
+                <span class="n">total_size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">task_sizes</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">total_size</span> <span class="o">&gt;</span> <span class="n">capacity</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Batch </span><span class="si">{</span><span class="n">batch_id</span><span class="si">}</span><span class="s2"> exceeds capacity: </span><span class="si">{</span><span class="n">total_size</span><span class="si">}</span><span class="s2"> &gt; </span><span class="si">{</span><span class="n">capacity</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Airbus.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      <span class="fa fa-book"> Versions</span>
+      v: master
+      <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+      <dl id="docs-versions">
+      </dl>
+    </div>
+  </div>
+<script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

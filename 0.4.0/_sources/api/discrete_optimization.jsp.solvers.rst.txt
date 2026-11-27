@@ -1,0 +1,21 @@
+discrete\_optimization.jsp.solvers package
+==========================================
+
+Submodules
+----------
+
+discrete\_optimization.jsp.solvers.cpsat\_jsp\_solver module
+------------------------------------------------------------
+
+.. automodule:: discrete_optimization.jsp.solvers.cpsat_jsp_solver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.jsp.solvers
+   :members:
+   :undoc-members:
+   :show-inheritance:

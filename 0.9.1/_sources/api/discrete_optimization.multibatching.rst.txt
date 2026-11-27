@@ -1,0 +1,45 @@
+discrete\_optimization.multibatching package
+============================================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   discrete_optimization.multibatching.solvers
+
+Submodules
+----------
+
+discrete\_optimization.multibatching.parser module
+--------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.parser
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.multibatching.problem module
+---------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.problem
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+discrete\_optimization.multibatching.utils module
+-------------------------------------------------
+
+.. automodule:: discrete_optimization.multibatching.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: discrete_optimization.multibatching
+   :members:
+   :show-inheritance:
+   :undoc-members:
