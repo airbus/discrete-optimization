@@ -95,6 +95,7 @@ class ScheduleChangesComputer(ObjectiveComputer[Task]):
                     - self.base_scheduling_solution.get_start_time(task)
                 )
                 for task in self.tasks_with_unit_deviation_cost()
+                if solution.is_present(task)
             ]
         )
 
