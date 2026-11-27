@@ -82,24 +82,43 @@ class ExclusionCpSolver(
             self.initialize_exclusion_resource_demand_vars()
         return self.exclusion_resource_demand_vars[task, resource]
 
-    def create_exclusion_constraints(self):
+    def create_exclusion_constraints(self, no_scheduling: bool = False) -> None:
+        """Create exclusion constraints
+
+        Args:
+            no_scheduling: if True, we avoid referring to scheduling.
+                Equivalent to all tasks happening simultaneously.
+
+        Returns:
+
+        """
         if not self.exclusion_resource_vars_initialized:
             self.initialize_exclusion_resource_demand_vars()
         for r in self.problem.exclusion_resources_list:
             tasks_possibly_blocked = list(self.problem.get_tasks_possibly_excluded(r))
-            intervals_consuming = [
-                self.get_task_interval(task) for task in tasks_possibly_blocked
-            ]
             demands_consuming = [
                 self.get_exclusion_resource_demand_variable(task=task, resource=r)
                 for task in tasks_possibly_blocked
             ]
+            if no_scheduling:
+                # scheduling ignored: no need for interval variables (not even created)
+                intervals_consuming = []
+            else:
+                intervals_consuming = [
+                    self.get_task_interval(task) for task in tasks_possibly_blocked
+                ]
+                is_present_task_consuming = []  # included in intervals
             # Classical cumulative constraint.
             # TODO : create a custom object to specify somehow infinite resource
             if (capacity := self.problem.get_capacity_exclusion_resource(r)) < float(
                 "inf"
             ):
-                self.add_cumulative(intervals_consuming, demands_consuming, capacity)
+                self.add_cumulative(
+                    intervals_consuming,
+                    demands_consuming,
+                    capacity,
+                    no_scheduling=no_scheduling,
+                )
             # Actual exclusion constraint.
             tasks_possibly_blocking = list(
                 self.problem.get_tasks_possibly_exclude_others(r)
@@ -120,7 +139,9 @@ class ExclusionCpSolver(
                 # Therefore, no blocked task can overlap between each other (coherent with capacity=1)
                 # And wont overlap with the blocking tasks neither.
                 # However blocking tasks can still overlap.
-                self.add_cumulative(intervals_, demands_, nb_tasks_blocking)
+                self.add_cumulative(
+                    intervals_, demands_, nb_tasks_blocking, no_scheduling=no_scheduling
+                )
             else:
                 # We need to put some manual no overlap...
                 intervals_blocking = [
@@ -154,4 +175,5 @@ class ExclusionCpSolver(
                                 ],
                                 [blocking, blocked],
                                 1,
+                                no_scheduling=no_scheduling,
                             )

@@ -11,11 +11,20 @@ import pytest
 from pytest_cases import fixture, param_fixture, unpack_fixture
 
 from discrete_optimization.datasets import DO_DEFAULT_DATAHOME_ENVVARNAME
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpmpy.auto_allocation_impl import (
+    GenericAllocationAutoCpmpyImplSolver,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cp.cpmpy.auto_impl import (
     GenericSchedulingAutoCpmpyImplSolver,
 )
+from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_allocation_impl import (
+    GenericAllocationAutoCpSatImplSolver,
+)
 from discrete_optimization.generic_tasks_tools.solvers.cp.cpsat.auto_impl import (
     GenericSchedulingAutoCpSatImplSolver,
+)
+from discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto_allocation_impl import (
+    GenericAllocationAutoOptalImplSolver,
 )
 from discrete_optimization.generic_tasks_tools.solvers.cp.optal.auto_impl import (
     GenericSchedulingAutoOptalImplSolver,
@@ -77,6 +86,38 @@ generic_solver_cls, generic_solver_kwargs, generic_solver_check_solution = (
         "generic_solver_cls, generic_solver_kwargs, generic_solver_check_solution",
         generic_scheduling_solver_cls_kwargs_check,
     )
+)
+
+
+@fixture
+def generic_allocation_solver_cls_kwargs_check(cp_framework, optal_preview_only):
+    kwargs = {}
+    check_solution = True
+    match cp_framework:
+        case "cpsat":
+            cls = GenericAllocationAutoCpSatImplSolver
+        case "cpmpy":
+            cls = GenericAllocationAutoCpmpyImplSolver
+        case "optal":
+            if not optalcp_available:
+                pytest.skip("You need optalcp to test this solver.")
+            cls = GenericAllocationAutoOptalImplSolver
+            if optal_preview_only:
+                kwargs["do_not_retrieve_solutions"] = True
+                check_solution = False
+        case _:
+            raise NotImplementedError()
+
+    return cls, kwargs, check_solution
+
+
+(
+    generic_allocation_solver_cls,
+    generic_allocation_solver_kwargs,
+    generic_allocation_solver_check_solution,
+) = unpack_fixture(
+    "generic_allocation_solver_cls, generic_allocation_solver_kwargs, generic_allocation_solver_check_solution",
+    generic_allocation_solver_cls_kwargs_check,
 )
 
 # common fixtures for non-regression tests

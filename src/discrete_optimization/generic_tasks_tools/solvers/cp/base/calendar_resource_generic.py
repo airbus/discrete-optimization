@@ -326,13 +326,13 @@ class CalendarResourceGenericCpSolver(
                     ):
                         self.add_no_overlap([x[0] for x in all_intervals])
                     if self.use_cumulative_for_capa_1:
-                        self.add_cumulative(
+                        self.add_cumulative_with_scheduling(
                             intervals=[x[0] for x in all_intervals],
                             demands=[x[1] for x in all_intervals],
                             capacity=capacity,
                         )
                 else:
-                    self.add_cumulative(
+                    self.add_cumulative_with_scheduling(
                         [x[0] for x in all_intervals],
                         [x[1] for x in all_intervals],
                         capacity,
@@ -406,11 +406,11 @@ class CalendarResourceGenericCpSolver(
                     ):
                         self.add_no_overlap(intervals_1)
                     if self.use_cumulative_for_capa_1:
-                        self.add_cumulative(
+                        self.add_cumulative_with_scheduling(
                             intervals=intervals_1, demands=demands_1, capacity=capacity
                         )
                 else:
-                    self.add_cumulative(
+                    self.add_cumulative_with_scheduling(
                         intervals=intervals_1, demands=demands_1, capacity=capacity
                     )
             # Get fake tasks for calendar gaps
@@ -496,12 +496,12 @@ class CalendarResourceGenericCpSolver(
                         ):
                             self.add_no_overlap(intervals_2)
                         if self.use_cumulative_for_capa_1:
-                            self.add_cumulative(
+                            self.add_cumulative_with_scheduling(
                                 intervals=intervals_2,
                                 demands=demands_2,
                                 capacity=capacity,
                             )
                     else:
-                        self.add_cumulative(
+                        self.add_cumulative_with_scheduling(
                             intervals=intervals_2, demands=demands_2, capacity=capacity
                         )

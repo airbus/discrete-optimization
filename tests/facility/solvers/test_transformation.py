@@ -5,6 +5,7 @@ from discrete_optimization.facility.transformations.to_binpack import (
     FacilityToBinpackTransformation,
 )
 from discrete_optimization.facility.transformations.to_generic import (
+    FacilityToGenericAllocationTransformation,
     FacilityToGenericSchedulingTransformation,
 )
 from discrete_optimization.facility.transformations.to_salbp import (
@@ -73,4 +74,35 @@ def test_via_generic_scheduling(
     )
     solution, fit = solver.solve().get_best_solution_fit()
     if generic_solver_check_solution:
+        assert problem.satisfy(solution)
+
+
+def test_via_generic_allocation(
+    problem,
+    generic_allocation_solver_cls,
+    generic_allocation_solver_kwargs,
+    generic_allocation_solver_check_solution,
+):
+    p = ParametersCp.default_cpsat()
+    p.nb_process = 1
+    solver = TransformationSolver(
+        transformation=FacilityToGenericAllocationTransformation(),
+        solver_brick=SubBrick(
+            generic_allocation_solver_cls,
+            {
+                "exactly_one_unary_resource_per_task": True,
+                "time_limit": 10,
+                "parameters_cp": p,
+                "callbacks": [NbIterationStopper(1)],
+                # some param should not be passed to the wrapped solver (cpmpy conversion to subsolver could crash)
+                "kwargs_keys_for_init_model_only": [
+                    "exactly_one_unary_resource_per_task"
+                ],
+                **generic_allocation_solver_kwargs,
+            },
+        ),
+        source_problem=problem,
+    )
+    solution, fit = solver.solve().get_best_solution_fit()
+    if generic_allocation_solver_check_solution:
         assert problem.satisfy(solution)

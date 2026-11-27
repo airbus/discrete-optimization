@@ -64,35 +64,6 @@ class AllocationCpSolver(
     task_allocated_variables: dict[Task, LinearExpr]
     """Variables tracking whether a task has at least one unary resource allocated."""
 
-    @property
-    def subset_tasks_of_interest(self) -> Iterable[Task]:
-        """Subset of tasks of interest used for the objective.
-
-        By default, all tasks.
-
-        """
-        return self.problem.tasks_list
-
-    @property
-    def subset_unaryresources_allowed(self) -> Iterable[UnaryResource]:
-        """Unary resources allowed to solve the problem.
-
-        By default, all unary resources.
-
-        """
-        return self.problem.unary_resources_list
-
-    def get_default_tasks_n_unary_resources(
-        self,
-        tasks: Optional[Iterable[Task]] = None,
-        unary_resources: Optional[Iterable[UnaryResource]] = None,
-    ) -> tuple[Iterable[Task], Iterable[UnaryResource]]:
-        if tasks is None:
-            tasks = self.subset_tasks_of_interest
-        if unary_resources is None:
-            unary_resources = self.subset_unaryresources_allowed
-        return tasks, unary_resources
-
     def init_model(self, **kwargs: Any) -> None:
         """Init cp model and reset stored variables if any."""
         super().init_model(**kwargs)
@@ -297,7 +268,7 @@ class AllocationCpSolver(
             self.exactly_one_unary_resource_per_task
             or self.at_most_one_unary_resource_per_task
         ):
-            for task in self.subset_tasks_of_interest:
+            for task in self.problem.tasks_list:
                 list_is_allocated_variables = [
                     is_present
                     for unary_resource in self.subset_unaryresources_allowed
@@ -334,7 +305,7 @@ class AllocationCpSolver(
     def add_same_unary_allocation_constraints(self):
         for set_tasks in self.problem.get_same_unary_allocation():
             common_ur = reduce(
-                lambda x, y: x.intersection(self.problem.compatible_unary_resources(y)),
+                lambda x, y: x.intersection(self.compatible_unary_resources(y)),
                 list(set_tasks),
                 set(self.problem.unary_resources_list),
             )
@@ -362,8 +333,23 @@ class AllocationCpSolver(
                         )
                     )
 
+    def add_incompatible_unary_allocation_constraints(self):
+        for subtasks in self.problem.get_incompatible_unary_allocation():
+            if len(subtasks) >= 2:
+                potential_unary_resources = set().union(
+                    *(self.compatible_unary_resources(task) for task in subtasks)
+                )
+                for ur in potential_unary_resources:
+                    self.add_at_most_one(
+                        self.get_task_unary_resource_is_present_variable(
+                            task=task, unary_resource=ur
+                        )
+                        for task in subtasks
+                    )
+
     def add_allocation_constraints(self):
         self.add_same_unary_allocation_constraints()
+        self.add_incompatible_unary_allocation_constraints()
         self.add_unary_resources_per_task_constraints()
 
     def get_nb_tasks_allocated_variable(self) -> LinearExpr:
@@ -383,7 +369,7 @@ class MultimodeAllocationCpSolver(
 
     def create_compatibility_task_mode_unary_resource_constraint(self):
         for task in self.problem.tasks_list:
-            ur = self.problem.compatible_unary_resources(task)
+            ur = self.compatible_unary_resources(task)
             for u in ur:
                 forbidden_modes = (
                     self.problem.get_forbidden_modes_for_task_and_unary_resource(

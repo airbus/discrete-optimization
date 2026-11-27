@@ -102,13 +102,13 @@ class TasksCpSolver(TasksSolver[Task]):
         ...
 
     @abstractmethod
-    def add_cumulative(
+    def add_cumulative_with_scheduling(
         self,
         intervals: Iterable[IntervalVar],
         demands: Iterable[LinearExpr],
         capacity: LinearExpr,
     ) -> list[Constraint]:
-        """Add cumulative constraint
+        """Add cumulative constraint taking into account scheduled intervals
 
         Enforces that:
 
@@ -126,3 +126,59 @@ class TasksCpSolver(TasksSolver[Task]):
 
         """
         ...
+
+    def add_cumulative(
+        self,
+        intervals: Iterable[IntervalVar],
+        demands: Iterable[LinearExpr],
+        capacity: LinearExpr,
+        no_scheduling: bool = False,
+    ) -> list[Constraint]:
+        """Add cumulative constraint
+
+        Either takes into account scheduled intervals or not, accordind to `no_scheduling` flag.
+
+        Enforces that:
+
+            for all t:
+              self.sum(demands[i]
+                if (start(intervals[i]) <= t < end(intervals[i])) and
+                (intervals[i] is present)) <= capacity
+
+        Args:
+            intervals:
+            demands: demand variables. Should take account presence of tasks if no_scheduling is True
+                (i.e. be 0 or absent if task is not scheduled) .
+                Else, the presence of tasks can be taken into account by intervals instead
+            capacity:
+            no_scheduling: if `True`, assume that all tasks happen simultaneously
+                and ignore interval variables.
+
+        Returns:
+
+        """
+        if no_scheduling:
+            return self.add_cumulative_wo_scheduling(
+                demands=demands,
+                capacity=capacity,
+            )
+        else:
+            return self.add_cumulative_with_scheduling(
+                intervals=intervals,
+                demands=demands,
+                capacity=capacity,
+            )
+
+    def add_cumulative_wo_scheduling(
+        self,
+        demands: Iterable[LinearExpr],
+        capacity: LinearExpr,
+    ) -> list[Constraint]:
+        """Add cumulative constraint when no scheduling is considered.
+
+        We do as if all tasks are happening simultaneously.
+        It amounts to constraints for non-renewable resources i.e.
+            sum(demands[i]) <= capacity
+
+        """
+        return [self.add_bool_constraint(self.sum(demands) <= capacity)]

@@ -71,13 +71,13 @@ class CalendarResourceCpSolver(SchedulingCpSolver[Task], Generic[Task, Resource]
                 if self.use_no_overlap_for_capa_1 or not self.use_cumulative_for_capa_1:
                     self.add_no_overlap(intervals)
                 if self.use_cumulative_for_capa_1:
-                    self.add_cumulative(
+                    self.add_cumulative_with_scheduling(
                         intervals=intervals,
                         demands=demands,
                         capacity=capacity,
                     )
             else:
-                self.add_cumulative(
+                self.add_cumulative_with_scheduling(
                     intervals=intervals,
                     demands=demands,
                     capacity=capacity,

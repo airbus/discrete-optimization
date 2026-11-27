@@ -411,6 +411,12 @@ class TeamAllocationProblem(AllocationProblem[Task, UnaryResource]):
     def unary_resources_list(self) -> list[UnaryResource]:
         return self.teams_name
 
+    def get_same_unary_allocation(self) -> list[set[Task]]:
+        if self.allocation_additional_constraint is not None:
+            if self.allocation_additional_constraint.same_allocation is not None:
+                return self.allocation_additional_constraint.same_allocation
+        return super().get_same_unary_allocation()
+
     def is_compatible_task_unary_resource(
         self, task: Task, unary_resource: UnaryResource
     ) -> bool:

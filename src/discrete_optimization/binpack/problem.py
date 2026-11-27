@@ -13,6 +13,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.enums import AbsentValue
 from discrete_optimization.generic_tasks_tools.scheduling import (
     SchedulingProblem,
@@ -42,9 +43,9 @@ class BinPackSolution(
     AllocationSolution[Item, BinPack],
     SchedulingSolution[Item],
 ):
-    problem: BinPackProblem
+    problem: BinPackProblemBinType
 
-    def __init__(self, problem: BinPackProblem, allocation: list[int]):
+    def __init__(self, problem: BinPackProblemBinType, allocation: list[int]):
         super().__init__(problem=problem)
         self.allocation = allocation
 
@@ -178,6 +179,15 @@ class BinPackProblemBinType(
     def unary_resources_list(self) -> list[BinPack]:
         return list(range(self.nb_items))  # max nb of bin packs: 1 per item
 
+    def is_compatible_task_unary_resource(
+        self, task: Item, unary_resource: BinPack
+    ) -> bool:
+        compatible_items = self.list_bin_instances[unary_resource].compatible_items
+        if compatible_items is None:
+            return True
+        else:
+            return task in compatible_items
+
     def get_makespan_upper_bound(self) -> int:
         return self.nb_items
 
@@ -187,6 +197,9 @@ class BinPackProblemBinType(
 
     def get_makespan_lower_bound(self) -> int:
         return 1
+
+    def get_incompatible_unary_allocation(self) -> list[set[Task]]:
+        return [set(incompatible_pair) for incompatible_pair in self.incompatible_items]
 
 
 class BinPackProblem(BinPackProblemBinType):

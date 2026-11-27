@@ -30,7 +30,7 @@ class ObjectiveComputer(ABC, Generic[Task]):
         self.problem = problem
 
     @abstractmethod
-    def compute_objective(self, solution: TasksSolution) -> float | int: ...
+    def compute_objective(self, solution: TasksSolution[Task]) -> float | int: ...
     @property
     def weight_cost(self) -> float | int:
         return self.weight_objective

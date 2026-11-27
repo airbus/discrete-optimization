@@ -19,6 +19,7 @@ from discrete_optimization.generic_tasks_tools.allocation import (
     AllocationProblem,
     AllocationSolution,
 )
+from discrete_optimization.generic_tasks_tools.base import Task
 from discrete_optimization.generic_tasks_tools.utils import optional_override_implem
 from discrete_optimization.generic_tools.do_problem import (
     ModeOptim,
@@ -301,6 +302,10 @@ class ColoringProblem(AllocationProblem[Node, Color]):
                     unary_resource == self.constraints_coloring.color_constraint[task]
                 )
         return True
+
+    @optional_override_implem
+    def get_incompatible_unary_allocation(self) -> list[set[Task]]:
+        return [{edge[0], edge[1]} for edge in self.graph.edges]
 
     def is_in_subset_index(self, index: int) -> bool:
         if not self.use_subset:

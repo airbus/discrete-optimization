@@ -56,7 +56,7 @@ class TasksCpSatSolver(OrtoolsCpSatSolver, TasksCpSolver[Task]):
     def add_no_overlap(self, intervals: Iterable[IntervalVar]) -> list[Constraint]:
         return [self.cp_model.add_no_overlap(intervals)]
 
-    def add_cumulative(
+    def add_cumulative_with_scheduling(
         self,
         intervals: Iterable[IntervalVar],
         demands: Iterable[LinearExpr],

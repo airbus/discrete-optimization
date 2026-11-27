@@ -28,8 +28,10 @@ def test_transfo_to_from_generic_scheduling(problem):
         parameters_cp=parameters_cp,
         callbacks=[NbIterationStopper(nb_iteration_max=1)],
     ).get_best_solution()
+    assert generic_solution.check_allocation_consistency()
     solution = transfo.back_transform_solution(generic_solution, source_problem=problem)
     problem.satisfy(solution)
+    assert solution.check_allocation_consistency()
 
     back_transfo = GenericSchedulingToWfSchedulingTransformation()
     generic_problem_2 = transfo.transform_problem(
