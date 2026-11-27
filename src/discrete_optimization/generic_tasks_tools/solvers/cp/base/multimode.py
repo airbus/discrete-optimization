@@ -58,61 +58,83 @@ class MultimodeCpSolver(TasksCpSolver[Task], MultimodeSolver[Task]):
                 self.get_task_mode_is_present_variable(task=t, mode=m)
                 for t, m in list_task_mode
             ]
+            tasks = [t for t, _ in list_task_mode]
+            is_optional = [self.problem.is_optional(t) for t in tasks]
+            vars_one_if_not_present = [
+                vars[k]
+                if not is_optional[k]
+                else self.create_bool_var(f"{i}_task_{tasks[k]}_one_by_default")
+                for k in range(len(vars))
+            ]
+            for k in range(len(vars)):
+                if is_optional[k]:
+                    self.add_bool_constraint(
+                        vars_one_if_not_present[k]
+                        == vars[k] + ~self.get_task_is_present_variable(tasks[k])
+                    )
             if mode_constraint == ModeConstraintType.SORTED_IMPLICATION:
                 # All true if vars[0] is true.
-                self.add_implication_bool_and(vars[0], vars)
-                self.add_implication(vars[0], self.sum(vars) == len(vars))
+                self.add_implication_bool_and(vars[0], vars_one_if_not_present)
+                self.add_implication(
+                    vars[0], self.sum(vars_one_if_not_present) == len(vars)
+                )
                 for i in range(1, len(vars)):
-                    self.add_implication(vars[i - 1], vars[i])
+                    self.add_implication(vars[i - 1], vars_one_if_not_present[i])
             if mode_constraint == ModeConstraintType.UNORDERED:
                 or_ = self.create_bool_var(f"constraint_mode_active_{i}")
                 self.add_implication_bool_and(or_, vars)
-                self.add_implication(or_, self.sum(vars) == len(vars))
+                self.add_implication(
+                    or_, self.sum(vars_one_if_not_present) == len(vars)
+                )
                 self.add_implication(~or_, self.sum(vars) == 0)
         self.add_mode_subset_constraints()
 
     def add_mode_subset_constraints(self):
         for i, constraint in enumerate(self.problem.get_mode_subset_constraints()):
             mode_constraint, list_task_mode = constraint
+            tasks = [t for t, _ in list_task_mode]
             vars = [self.create_bool_var(f"{i}_task_{t}_") for t, _ in list_task_mode]
+            is_optional = [self.problem.is_optional(t) for t, _ in list_task_mode]
+            vars_one_if_not_present = [
+                self.create_bool_var(f"{i}_task_{tasks[k]}_one_by_default")
+                for k in range(len(vars))
+            ]
+
             for k in range(len(vars)):
                 task = list_task_mode[k][0]
-                if self.problem.is_optional(task):
+                subset_mode_present = self.sum(
+                    [
+                        self.get_task_mode_is_present_variable(
+                            task=list_task_mode[k][0], mode=m
+                        )
+                        for m in list_task_mode[k][1]
+                    ]
+                )
+                self.add_bool_constraint(vars[k] == subset_mode_present)
+                if is_optional[k]:
                     # Deactivate the constraint when not present
                     self.add_bool_constraint(
-                        vars[k]
-                        == self.sum(
-                            [
-                                self.get_task_mode_is_present_variable(
-                                    task=list_task_mode[k][0], mode=m
-                                )
-                                for m in list_task_mode[k][1]
-                            ]
-                        )
+                        vars_one_if_not_present[k]
+                        == subset_mode_present
                         + ~self.get_task_is_present_variable(task)
                     )
                 else:
-                    self.add_bool_constraint(
-                        vars[k]
-                        == self.sum(
-                            [
-                                self.get_task_mode_is_present_variable(
-                                    task=list_task_mode[k][0], mode=m
-                                )
-                                for m in list_task_mode[k][1]
-                            ]
-                        )
-                    )
+                    self.add_bool_constraint(vars_one_if_not_present[k] == vars[k])
             if mode_constraint == ModeConstraintType.SORTED_IMPLICATION:
                 # All true if vars[0] is true.
-                self.add_implication_bool_and(vars[0], vars)
-                self.add_implication(vars[0], self.sum(vars) == len(vars))
+                self.add_implication_bool_and(vars[0], vars_one_if_not_present)
+                self.add_implication(
+                    vars[0], self.sum(vars_one_if_not_present) == len(vars)
+                )
                 for k in range(1, len(vars)):
-                    self.add_implication(vars[k - 1], vars[k])
+                    self.add_implication(vars[k - 1], vars_one_if_not_present[k])
             if mode_constraint == ModeConstraintType.UNORDERED:
                 or_ = self.create_bool_var(f"constraint_mode_active_{i}")
                 self.add_implication_bool_and(or_, vars)
-                self.add_implication(or_, self.sum(vars) == len(vars))
+                self.add_implication(
+                    or_,
+                    self.sum(vars_one_if_not_present) == len(vars_one_if_not_present),
+                )
                 self.add_implication(~or_, self.sum(vars) == 0)
 
 
