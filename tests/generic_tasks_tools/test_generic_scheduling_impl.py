@@ -20,6 +20,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
     TaskVariable,
 )
+from discrete_optimization.generic_tasks_tools.multimode import ModeConstraintType
 from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
     AllocatedTasksObjective,
 )
@@ -332,6 +333,77 @@ def problem_with_forbidden_task_mode_unary_resource():
             "non_renewable_resource": 1,
         },
         list_objective_computer=[MakespanObjectiveComputer(weight_objective=1)],
+    )
+
+
+@fixture
+def problem_mode_constraints_with_optional():
+    """Problem with mode constraints where first task is optional.
+
+    - task-1: optional, modes {0, 1}
+    - task-2: modes {0, 1}
+    - task-3: modes {0, 1}
+    - Constraint: If task-1 mode 1 → task-2 mode 1 AND task-3 mode 0
+    """
+    return GenericSchedulingImplProblem(
+        horizon=20,
+        durations_per_mode={
+            "task-1": {
+                0: 2,
+                1: 3,
+            },
+            "task-2": {
+                0: 2,
+                1: 4,
+            },
+            "task-3": {
+                0: 1,
+                1: 2,
+            },
+        },
+        optional_tasks={"task-1"},
+        mode_constraints=[
+            (
+                ModeConstraintType.SORTED_IMPLICATION,
+                [("task-1", 1), ("task-2", 1), ("task-3", 0)],
+            )
+        ],
+    )
+
+
+@fixture
+def problem_mode_constraints_conflicting():
+    """Problem with conflicting mode constraints on optional task.
+
+    - task-1: optional, modes {0, 1}
+    - task-2: modes {0, 1}
+    - Constraint 1: If task-1 mode 1 → task-2 mode 0
+    - Constraint 2: If task-1 mode 1 → task-2 mode 1
+    - These conflict! Only valid if task-1 is absent or mode 0
+    """
+    return GenericSchedulingImplProblem(
+        horizon=20,
+        durations_per_mode={
+            "task-1": {
+                0: 2,
+                1: 3,
+            },
+            "task-2": {
+                0: 2,
+                1: 4,
+            },
+        },
+        optional_tasks={"task-1"},
+        mode_constraints=[
+            (
+                ModeConstraintType.SORTED_IMPLICATION,
+                [("task-1", 1), ("task-2", 0)],
+            ),
+            (
+                ModeConstraintType.SORTED_IMPLICATION,
+                [("task-1", 1), ("task-2", 1)],
+            ),
+        ],
     )
 
 
@@ -953,3 +1025,172 @@ def test_subproblem_with_no_overlap_from_partial_solution(problem_no_overlap, ca
     with caplog.at_level(logging.DEBUG):
         assert not problem.satisfy(complete_sol)
     assert "overlap" in caplog.text
+
+
+def test_mode_constraints_with_optional_task(
+    problem_mode_constraints_with_optional, caplog
+):
+    """Test mode_constraints with SORTED_IMPLICATION where first task is optional.
+
+    Scenario:
+    - task-1 is optional with modes {0, 1}
+    - task-2 has modes {0, 1}
+    - task-3 has modes {0, 1}
+    - Mode constraint: If task-1 is in mode 1, then task-2 must be in mode 1 and task-3 must be in mode 0
+    - Test that when task-1 is activated with mode 1, the constraint is enforced
+    """
+    problem = problem_mode_constraints_with_optional
+
+    # Solution 1: task-1 is present with mode 1, task-2 with mode 1, task-3 with mode 0
+    # This should PASS because it satisfies the mode constraint
+    sol_valid = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(start=0, end=3, mode=1),
+                "task-2": TaskVariable(start=5, end=9, mode=1),
+                "task-3": TaskVariable(start=10, end=11, mode=0),
+            }
+        ),
+    )
+    assert problem.satisfy(sol_valid)
+
+    # Solution 2: task-1 is present with mode 1, but task-2 is in mode 0 (wrong!)
+    # This should FAIL because mode constraint is violated
+    sol_invalid = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(start=0, end=3, mode=1),
+                "task-2": TaskVariable(start=5, end=7, mode=0),  # Should be mode 1!
+                "task-3": TaskVariable(start=10, end=11, mode=0),
+            }
+        ),
+    )
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(sol_invalid)
+    assert "Mode constraint not satisfied" in caplog.text
+
+    # Solution 3: task-1 is present with mode 1, but task-3 is in mode 1 (wrong!)
+    # This should FAIL because mode constraint is violated
+    sol_invalid2 = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(start=0, end=3, mode=1),
+                "task-2": TaskVariable(start=5, end=9, mode=1),
+                "task-3": TaskVariable(start=10, end=12, mode=1),  # Should be mode 0!
+            }
+        ),
+    )
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(sol_invalid2)
+    assert "Mode constraint not satisfied" in caplog.text
+
+    # Solution 4: task-1 is present with mode 0 (not mode 1)
+    # This should PASS because constraint is not activated
+    sol_not_activated = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(
+                    start=0, end=2, mode=0
+                ),  # mode 0, so constraint not active
+                "task-2": TaskVariable(start=5, end=7, mode=0),  # Can be any mode now
+                "task-3": TaskVariable(start=10, end=12, mode=1),  # Can be any mode now
+            }
+        ),
+    )
+    assert problem.satisfy(sol_not_activated)
+
+    # Solution 5: task-1 is absent (optional task not scheduled)
+    # This should PASS because constraint is not activated when first task is absent
+    sol_task1_absent = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-2": TaskVariable(start=5, end=7, mode=0),
+                "task-3": TaskVariable(start=10, end=12, mode=1),
+            }
+        ),
+    )
+    assert problem.satisfy(sol_task1_absent)
+
+
+def test_mode_constraints_conflicting_with_optional_task(
+    problem_mode_constraints_conflicting, caplog
+):
+    """Test conflicting mode_constraints where optional task creates contradictory requirements.
+
+    Scenario:
+    - task-1 is optional with modes {0, 1}
+    - task-2 has modes {0, 1}
+    - Constraint 1: If task-1 is in mode 1, then task-2 must be in mode 0
+    - Constraint 2: If task-1 is in mode 1, then task-2 must be in mode 1
+    - These constraints CONFLICT! task-2 can't be both mode 0 and mode 1 simultaneously
+    - The only valid solutions are:
+      a) Leave task-1 absent, OR
+      b) Use task-1 in mode 0 (not mode 1)
+    """
+    problem = problem_mode_constraints_conflicting
+
+    # Solution 1: task-1 is present with mode 1, task-2 with mode 0
+    # This should FAIL because second constraint requires task-2 mode 1
+    sol_violates_constraint2 = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(start=0, end=3, mode=1),
+                "task-2": TaskVariable(start=5, end=7, mode=0),
+            }
+        ),
+    )
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(sol_violates_constraint2)
+    assert "Mode constraint not satisfied" in caplog.text
+
+    # Solution 2: task-1 is present with mode 1, task-2 with mode 1
+    # This should FAIL because first constraint requires task-2 mode 0
+    sol_violates_constraint1 = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(start=0, end=3, mode=1),
+                "task-2": TaskVariable(start=5, end=9, mode=1),
+            }
+        ),
+    )
+    caplog.clear()
+    with caplog.at_level(logging.DEBUG):
+        assert not problem.satisfy(sol_violates_constraint1)
+    assert "Mode constraint not satisfied" in caplog.text
+
+    # Solution 3: task-1 is ABSENT (optional task not scheduled)
+    # This should PASS because constraints are not activated
+    sol_task1_absent = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-2": TaskVariable(start=5, end=9, mode=1),  # Can be any mode now
+            }
+        ),
+    )
+    assert problem.satisfy(sol_task1_absent)
+
+    # Solution 4: task-1 is present but in mode 0 (not mode 1)
+    # This should PASS because constraints are not activated (only trigger when task-1 is mode 1)
+    sol_task1_mode0 = GenericSchedulingImplSolution(
+        problem=problem,
+        raw_sol=RawSolution(
+            task_variables={
+                "task-1": TaskVariable(
+                    start=0, end=2, mode=0
+                ),  # mode 0, so constraints not active
+                "task-2": TaskVariable(start=5, end=7, mode=0),  # Can be any mode now
+            }
+        ),
+    )
+    assert problem.satisfy(sol_task1_mode0)

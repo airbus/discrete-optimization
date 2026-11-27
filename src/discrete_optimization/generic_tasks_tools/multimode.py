@@ -62,13 +62,15 @@ class MultimodeSolution(TasksSolution[Task]):
                     for i in range(1, len(list_task_mode)):
                         t, m = list_task_mode[i]
                         if self.get_mode(t) != m:
-                            logger.debug(
-                                f"Mode constraint not satisfied, mode of {t}!={m}"
-                            )
-                            return False
+                            if self.is_present(t):
+                                logger.debug(
+                                    f"Mode constraint not satisfied, mode of {t}!={m}"
+                                )
+                                return False
             if mode_constraint == ModeConstraintType.UNORDERED:
                 b = (not any(self.get_mode(t) == m for t, m in list_task_mode)) or all(
-                    self.get_mode(t) == m for t, m in list_task_mode
+                    self.get_mode(t) == m or not self.is_present(t)
+                    for t, m in list_task_mode
                 )
                 if not b:
                     logger.debug(f"Mode constraint not satisfied, {list_task_mode}")
