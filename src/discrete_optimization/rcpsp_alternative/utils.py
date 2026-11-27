@@ -17,6 +17,8 @@ def create_problem_rcpsp(
     range_nb_subpath: tuple = (1, 4),
     range_len_subpath: tuple = (1, 5),
     factor_makespan: float = 3.0,
+    with_source: bool = True,
+    with_sink: bool = True,
 ) -> RcpspWithAlternativePath:
     graph = problem.graph
     descendants = graph.descendants_map()
@@ -68,8 +70,8 @@ def create_problem_rcpsp(
             list_paths.append(path)
         list_alternative_subproblem.append(
             AlternativeSchedulingSubProblem(
-                source_task=source,
-                sink_task=sink,
+                source_task=source if with_source else None,
+                sink_task=sink if with_sink else None,
                 list_paths=list_paths,
                 is_path_successors=True,
                 nb_path_to_do=1,

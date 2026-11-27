@@ -4,6 +4,8 @@
 
 import logging
 
+import pytest
+
 from discrete_optimization.generic_tools.cp_tools import ParametersCp
 from discrete_optimization.rcpsp.parser import get_data_available, parse_file
 from discrete_optimization.rcpsp_alternative.solvers.cpsat import (
@@ -15,13 +17,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def test_cpsat():
+@pytest.mark.parametrize("with_source", [False, True])
+@pytest.mark.parametrize("with_sink", [False, True])
+def test_cpsat(with_source, with_sink):
     problem = parse_file([f for f in get_data_available() if "j301_1.sm" in f][0])
     problem = create_problem_rcpsp(
         problem,
         nb_alternative_paths=2,
         range_nb_subpath=(1, 4),
         range_len_subpath=(3, 5),
+        with_source=with_source,
+        with_sink=with_sink,
     )
     solver = CpsatRcpspWithAlternativePathSolver(problem)
     solver.init_model(strict_alternative_path=True)
