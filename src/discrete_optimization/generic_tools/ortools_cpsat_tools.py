@@ -238,7 +238,9 @@ class OrtoolsCpSatSolver(CpSolver, BoundsProviderMixin, WarmstartFromPreviousRun
         return [self.cp_model.add_modulo_equality(target=target, expr=expr, mod=mod)]
 
     def add_implication(self, left_bool_expr: Any, right_bool_expr: Any) -> list[Any]:
-        if isinstance(left_bool_expr, Literal) and isinstance(right_bool_expr, Literal):
+        if isinstance(left_bool_expr, (Literal, int)) and isinstance(
+            right_bool_expr, Literal
+        ):
             return [self.cp_model.add_implication(left_bool_expr, right_bool_expr)]
         elif isinstance(right_bool_expr, Constraint) or (
             isinstance(right_bool_expr, list)

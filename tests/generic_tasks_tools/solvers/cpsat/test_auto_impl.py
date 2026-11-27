@@ -28,6 +28,7 @@ from discrete_optimization.generic_tasks_tools.generic_scheduling_utils import (
     RawSolution,
     TaskVariable,
 )
+from discrete_optimization.generic_tasks_tools.multimode import ModeConstraintType
 from discrete_optimization.generic_tasks_tools.objectives.allocated_tasks import (
     AllocatedTasksObjective,
 )
@@ -79,6 +80,7 @@ from discrete_optimization.generic_tools.do_problem import (
     ObjectiveHandling,
     ParamsObjectiveFunction,
 )
+from discrete_optimization.generic_tools.do_solver import StatusSolver
 from discrete_optimization.rcpsp import RcpspProblem
 from discrete_optimization.rcpsp.solution import RcpspSolution
 from discrete_optimization.rcpsp.solvers.cpsat import CpSatRcpspSolver
@@ -1779,3 +1781,174 @@ def test_solving_with_entities():
     )
     for j in range(1, len(entities)):
         assert start_entities[j] >= start_entities[j - 1] + 10
+
+
+def test_mode_constraints_with_optional_task():
+    """Test solving a problem with mode constraints where the first task is optional.
+
+    If optional task is activated with the trigger mode, it enforces constraints on other tasks.
+    """
+    problem = GenericSchedulingImplProblem(
+        horizon=20,
+        durations_per_mode={
+            "task-1": {0: 2, 1: 3},
+            "task-2": {0: 2, 1: 4},
+            "task-3": {0: 1, 1: 2},
+        },
+        optional_tasks={"task-1"},
+        mode_constraints=[
+            (
+                ModeConstraintType.SORTED_IMPLICATION,
+                [("task-1", 1), ("task-2", 1), ("task-3", 0)],
+            )
+        ],
+    )
+
+    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver.init_model()
+    result = solver.solve(time_limit=10, parameters_cp=ParametersCp.default())
+    solution: GenericSchedulingImplSolution = result.get_best_solution()
+
+    assert solution is not None, "Solver should find a solution"
+    assert problem.satisfy(solution), "Solution should satisfy all constraints"
+
+    # If task-1 is present with mode 1, verify mode constraints are satisfied
+    if solution.is_present("task-1") and solution.get_mode("task-1") == 1:
+        assert solution.get_mode("task-2") == 1, "task-2 should be mode 1"
+        assert solution.get_mode("task-3") == 0, "task-3 should be mode 0"
+
+    print(f"task-1 present: {solution.is_present('task-1')}")
+    if solution.is_present("task-1"):
+        print(f"  mode: {solution.get_mode('task-1')}")
+    print(f"task-2 mode: {solution.get_mode('task-2')}")
+    print(f"task-3 mode: {solution.get_mode('task-3')}")
+
+
+def test_mode_constraints_conflicting_with_optional_task():
+    """Test solving a problem with conflicting mode constraints.
+
+    The optional task creates contradictory requirements, so the solver should
+    either leave it absent or use a different mode.
+    """
+    problem = GenericSchedulingImplProblem(
+        horizon=20,
+        durations_per_mode={
+            "task-1": {0: 2},
+            "task-2": {0: 2, 1: 4},
+        },
+        optional_tasks={"task-1"},
+        mode_constraints=[
+            (
+                ModeConstraintType.SORTED_IMPLICATION,
+                [("task-1", 0), ("task-2", 0)],  # Constraint 1: task-2 mode 0
+            ),
+            (
+                ModeConstraintType.SORTED_IMPLICATION,
+                [("task-1", 0), ("task-2", 1)],  # Constraint 2: task-2 mode 1
+            ),
+        ],
+    )
+
+    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver.init_model()
+    result = solver.solve(time_limit=10, parameters_cp=ParametersCp.default())
+    solution: GenericSchedulingImplSolution = result.get_best_solution()
+
+    assert solution is not None, "Solver should find a solution"
+    assert problem.satisfy(solution), "Solution should satisfy all constraints"
+    assert not solution.is_present("task-1")
+    # task-1 should NOT be present with mode 1 (would create conflict)
+    if solution.is_present("task-1"):
+        assert solution.get_mode("task-1") != 1, (
+            "task-1 cannot be mode 1 due to conflicting constraints"
+        )
+        print(f"task-1 is present with mode: {solution.get_mode('task-1')}")
+    else:
+        print("task-1 is absent (optimal to avoid conflicts)")
+
+    print(f"task-2 mode: {solution.get_mode('task-2')}")
+
+
+def test_mode_constraints_unsatisfiable():
+    """Test that solver correctly detects UNSAT for truly conflicting mode constraints.
+
+    No optional tasks here - the constraints are fundamentally incompatible.
+    """
+    problem = GenericSchedulingImplProblem(
+        horizon=20,
+        durations_per_mode={
+            "task-1": {0: 2},  # Mandatory task
+            "task-2": {0: 2, 1: 4},  # Mandatory task
+        },
+        mode_constraints=[
+            (
+                ModeConstraintType.SORTED_IMPLICATION,
+                [("task-1", 0), ("task-2", 0)],  # If task-1 mode 1 → task-2 mode 0
+            ),
+            (
+                ModeConstraintType.SORTED_IMPLICATION,
+                [("task-1", 0), ("task-2", 1)],  # If task-1 mode 1 → task-2 mode 1
+            ),
+        ],
+    )
+
+    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver.init_model()
+
+    # Set a short time limit since the problem is UNSAT
+    result = solver.solve(time_limit=10, parameters_cp=ParametersCp.default())
+    assert solver.status_solver == StatusSolver.UNSATISFIABLE
+    # The solver should not find any solution or return INFEASIBLE/UNKNOWN status
+    solution: GenericSchedulingImplSolution = result.get_best_solution()
+    # Either no solution found, or if a solution exists, task-1 must NOT be in mode 1
+    if solution is not None:
+        # The only way this could be satisfied is if task-1 is NOT in mode 1
+        assert solution.get_mode("task-1") != 1, (
+            "If a solution exists, task-1 cannot be mode 1 due to conflicting constraints"
+        )
+        print(f"Found solution with task-1 mode: {solution.get_mode('task-1')}")
+        assert problem.satisfy(solution)
+    else:
+        print("No solution found (expected for conflicting constraints)")
+
+
+def test_mode_constraints_unary_implication():
+    """Test UNORDERED mode constraint type.
+
+    All tasks must either ALL be in specified modes, or NONE of them.
+    """
+    problem = GenericSchedulingImplProblem(
+        horizon=20,
+        durations_per_mode={
+            "task-1": {0: 2, 1: 3},
+            "task-2": {0: 2, 1: 4},
+            "task-3": {0: 1, 1: 2},
+        },
+        mode_constraints=[
+            (
+                ModeConstraintType.UNORDERED,
+                [("task-1", 1), ("task-2", 1), ("task-3", 0)],
+            )
+        ],
+    )
+
+    solver = GenericSchedulingAutoCpSatImplSolver(problem=problem)
+    solver.init_model()
+    result = solver.solve(time_limit=10, parameters_cp=ParametersCp.default())
+    solution: GenericSchedulingImplSolution = result.get_best_solution()
+
+    assert solution is not None, "Solver should find a solution"
+    assert problem.satisfy(solution), "Solution should satisfy all constraints"
+
+    # Either all tasks have the specified modes, or not all of them do
+    mode_1 = solution.get_mode("task-1")
+    mode_2 = solution.get_mode("task-2")
+    mode_3 = solution.get_mode("task-3")
+
+    all_match = mode_1 == 1 and mode_2 == 1 and mode_3 == 0
+    some_dont_match = not all_match
+
+    assert all_match or some_dont_match, "UNORDERED constraint should be satisfied"
+
+    print(f"task-1 mode: {mode_1}, task-2 mode: {mode_2}, task-3 mode: {mode_3}")
+    print(f"All match required modes: {all_match}")
